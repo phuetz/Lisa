@@ -31,7 +31,7 @@ describe('WindsurfAgent', () => {
 
   describe('getForecast', () => {
     it('should return a forecast from the mock API', async () => {
-      const mockForecast: WindForecast = { spotId: 'test-spot', time: new Date(), windSpeedKots: 18, windDirection: 270 };
+      const mockForecast: WindForecast = { spotId: 'test-spot', time: new Date(), windSpeedKnots: 18, windDirection: 270 };
       mockedAjax.mockReturnValue(of({ response: mockForecast }));
 
       const result = await new Promise((resolve: (value: WindForecast | null) => void) => agent.getForecast('test-spot', new Date()).subscribe(resolve));
@@ -52,14 +52,14 @@ describe('WindsurfAgent', () => {
 
   describe('recommendGear', () => {
     it('should recommend a small sail and board for strong wind', () => {
-      const strongWind: WindForecast = { spotId: 'any', time: new Date(), windSpeedKots: 25, windDirection: 300 };
+      const strongWind: WindForecast = { spotId: 'any', time: new Date(), windSpeedKnots: 25, windDirection: 300 };
       const recommendation: RecommendedGear = agent.recommendGear(riderProfile, strongWind);
       expect(recommendation.sailSizeSqm).toBeCloseTo(3.6);
       expect(recommendation.boardVolumeLiters).toBe(95);
     });
 
     it('should recommend a large sail and board for light wind', () => {
-      const lightWind: WindForecast = { spotId: 'any', time: new Date(), windSpeedKots: 15, windDirection: 180 };
+      const lightWind: WindForecast = { spotId: 'any', time: new Date(), windSpeedKnots: 15, windDirection: 180 };
       const recommendation: RecommendedGear = agent.recommendGear(riderProfile, lightWind);
       expect(recommendation.sailSizeSqm).toBe(6);
       expect(recommendation.boardVolumeLiters).toBe(95);
