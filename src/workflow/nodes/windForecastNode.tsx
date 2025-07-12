@@ -39,7 +39,7 @@ const WindForecastNode = ({ data }: { data: any }) => {
       </label>
       {forecastResult && (
         <div style={{ marginTop: '10px', background: '#F3F3F3', padding: '8px', borderRadius: '4px' }}>
-          <div><strong>Wind:</strong> {forecastResult.windSpeedKots} kts</div>
+          <div><strong>Wind:</strong> {forecastResult.windSpeedKnots} kts</div>
           <div><strong>Direction:</strong> {forecastResult.windDirection}°</div>
         </div>
       )}

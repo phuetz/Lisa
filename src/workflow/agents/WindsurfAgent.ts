@@ -21,7 +21,7 @@ export interface GeoCoordinates {
 export interface WindForecast {
   spotId: string;
   time: Date;
-  windSpeedKots: number;
+  windSpeedKnots: number;
   windDirection: number; // In degrees
   waveHeightMeters?: number;
 }
@@ -69,7 +69,7 @@ export class WindsurfAgent {
     const mockApiCall$ = of({
       spotId,
       time,
-      windSpeedKots: 18,
+      windSpeedKnots: 18,
       windDirection: 270, // West
       waveHeightMeters: 1.2,
     }).pipe(
@@ -94,9 +94,9 @@ export class WindsurfAgent {
    */
   recommendGear(riderProfile: RiderProfile, forecast: WindForecast): RecommendedGear {
     // Simplified logic placeholder
-    const sailSize = riderProfile.skillLevel === 'beginner' 
-      ? Math.round(75 / forecast.windSpeedKots) 
-      : Math.round(90 / forecast.windSpeedKots);
+    const sailSize = riderProfile.skillLevel === 'beginner'
+      ? Math.round(75 / forecast.windSpeedKnots)
+      : Math.round(90 / forecast.windSpeedKnots);
       
     const boardVolume = riderProfile.weightKg + (riderProfile.skillLevel === 'beginner' ? 40 : 15);
 
