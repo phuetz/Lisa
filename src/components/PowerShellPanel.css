@@ -1,0 +1,352 @@
+.powershell-panel {
+  background-color: #0c0c0c;
+  color: #cccccc;
+  border-radius: 8px;
+  padding: 15px;
+  margin: 10px 0;
+  width: 100%;
+  max-width: 800px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  font-family: 'Cascadia Code', 'Consolas', monospace;
+  display: flex;
+  flex-direction: column;
+  height: 600px;
+}
+
+.powershell-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #383838;
+}
+
+.powershell-header h2 {
+  color: #0078d4;
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 500;
+}
+
+.powershell-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.learning-mode-toggle {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #cccccc;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.learning-mode-toggle input {
+  margin: 0;
+}
+
+.clear-history-button {
+  background-color: #2b2b2b;
+  border: none;
+  color: #cccccc;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.clear-history-button:hover {
+  background-color: #3b3b3b;
+}
+
+.close-button {
+  background-color: transparent;
+  border: none;
+  color: #cccccc;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0 5px;
+  transition: color 0.2s;
+}
+
+.close-button:hover {
+  color: #ff6060;
+}
+
+.terminal-info {
+  margin-bottom: 10px;
+}
+
+.learning-mode-info {
+  background-color: #052742;
+  color: #86d9ff;
+  padding: 8px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.learning-mode-info span {
+  font-weight: bold;
+}
+
+.terminal-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background-color: #0c0c0c;
+  border: 1px solid #383838;
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+
+.terminal-output {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px;
+  font-family: 'Cascadia Code', 'Consolas', monospace;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.terminal-output::-webkit-scrollbar {
+  width: 8px;
+}
+
+.terminal-output::-webkit-scrollbar-track {
+  background: #0c0c0c;
+}
+
+.terminal-output::-webkit-scrollbar-thumb {
+  background-color: #383838;
+  border-radius: 4px;
+}
+
+.terminal-output::-webkit-scrollbar-thumb:hover {
+  background-color: #0078d4;
+}
+
+.terminal-welcome {
+  color: #0078d4;
+  margin-bottom: 15px;
+  padding: 15px;
+  background-color: rgba(0, 120, 212, 0.1);
+  border-radius: 4px;
+  border-left: 4px solid #0078d4;
+}
+
+.terminal-error {
+  color: #ff6060;
+  margin-bottom: 10px;
+  padding: 8px;
+  background-color: rgba(255, 96, 96, 0.1);
+  border-radius: 4px;
+  border-left: 4px solid #ff6060;
+  font-size: 0.9rem;
+}
+
+.command-entry {
+  margin-bottom: 15px;
+}
+
+.command-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 5px;
+  gap: 8px;
+}
+
+.command-prompt {
+  color: #0078d4;
+  font-weight: bold;
+}
+
+.command-text {
+  color: #ffffff;
+  font-weight: 500;
+  word-break: break-all;
+}
+
+.command-time {
+  color: #666666;
+  font-size: 0.8rem;
+  margin-left: auto;
+}
+
+.command-output {
+  background-color: #1c1c1c;
+  padding: 10px;
+  border-radius: 4px;
+  margin-top: 5px;
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-height: 300px;
+  overflow-y: auto;
+  position: relative;
+}
+
+.command-output.success {
+  border-left: 4px solid #13a10e;
+}
+
+.command-output.error {
+  border-left: 4px solid #ff6060;
+}
+
+.command-output.running {
+  border-left: 4px solid #ffa500;
+}
+
+.command-output pre {
+  margin: 0;
+  font-family: 'Cascadia Code', 'Consolas', monospace;
+  font-size: 0.9rem;
+}
+
+.command-form {
+  display: flex;
+  gap: 10px;
+  padding: 10px;
+  background-color: #1c1c1c;
+  border-top: 1px solid #383838;
+  position: relative;
+}
+
+.command-input-container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  background-color: #0c0c0c;
+  border: 1px solid #383838;
+  border-radius: 4px;
+  padding: 0 10px;
+}
+
+.input-prompt {
+  color: #0078d4;
+  font-weight: bold;
+  margin-right: 5px;
+}
+
+.command-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #ffffff;
+  font-family: 'Cascadia Code', 'Consolas', monospace;
+  font-size: 0.9rem;
+  padding: 8px 0;
+}
+
+.execute-button {
+  background-color: #0078d4;
+  border: none;
+  color: #ffffff;
+  padding: 8px 15px;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.execute-button:hover:not(:disabled) {
+  background-color: #106ebe;
+}
+
+.execute-button:disabled {
+  background-color: #383838;
+  color: #666666;
+  cursor: not-allowed;
+}
+
+.suggestions {
+  position: absolute;
+  bottom: 100%;
+  left: 10px;
+  right: 10px;
+  background-color: #1c1c1c;
+  border: 1px solid #383838;
+  border-radius: 4px;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 10;
+}
+
+.suggestion-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid #2b2b2b;
+  transition: background-color 0.2s;
+}
+
+.suggestion-item:last-child {
+  border-bottom: none;
+}
+
+.suggestion-item:hover {
+  background-color: #2b2b2b;
+}
+
+.suggestion-command {
+  color: #0078d4;
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.suggestion-description {
+  color: #999999;
+  font-size: 0.8rem;
+  margin-top: 2px;
+}
+
+.loading-indicator {
+  color: #ffa500;
+  font-style: italic;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.loading-indicator:after {
+  content: "";
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid #ffa500;
+  border-radius: 50%;
+  border-top-color: transparent;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.no-output {
+  color: #666666;
+  font-style: italic;
+}
+
+.powershell-footer {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #383838;
+}
+
+.security-notice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #999999;
+  font-size: 0.8rem;
+}

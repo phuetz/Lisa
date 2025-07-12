@@ -1,0 +1,22 @@
+{
+  "alarms": "Alarmes",
+  "wake_ack": "Oui ?",
+  "timers": "Minuteries",
+  "to_do": "À faire",
+  "delete": "Supprimer",
+  "alarms_timers_panel": "Panneau alarmes / minuteries",
+  "todo_panel": "Panneau to-do",
+  "mcp_resources": "Ressources MCP",
+  "current_temperature": "Il fait actuellement {{temp}}°C.",
+  "tomorrow_forecast": "Demain, la température variera entre {{min}}°C et {{max}}°C.",
+  "loading": "Chargement…",
+  "connect_google_calendar": "Connecter Google Agenda",
+  "upcoming_events": "Prochains événements",
+  "no_upcoming_events": "Aucun événement à venir",
+  "sign_out": "Déconnexion",
+  "silence_banner": "Chut… Je t'écoute quand tu veux 💜",
+  "smile_voice_greeting": "😊 Coucou !",
+  "close": "Fermer",
+  "listening": "J'écoute…",
+  "event_created": "OK, j'ai ajouté {{summary}} à votre calendrier."
+}

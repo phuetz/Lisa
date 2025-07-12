@@ -1,0 +1,24 @@
+{
+  "alarms": "Alarms",
+  "timers": "Timers",
+  "to_do": "To-do",
+  "delete": "Delete",
+  "alarms_timers_panel": "Alarm and timer panel",
+  "todo_panel": "To-do panel",
+  "mcp_resources": "MCP Resources",
+
+  "loading": "Loading…",
+  "connect_google_calendar": "Connect Google Calendar",
+  "upcoming_events": "Upcoming events",
+  "no_upcoming_events": "No upcoming events",
+  "sign_out": "Sign out",
+  "silence_banner": "Shh… I'm listening whenever you want 💜",
+  "smile_voice_greeting": "😊 Hi!",
+  "close": "Close",
+  "resource_viewer": "Resource viewer",
+  "listening": "Listening…",
+  "wake_ack": "Yes?",
+  "current_temperature": "It's currently {{temp}} degrees.",
+  "tomorrow_forecast": "Tomorrow, the forecast is between {{min}} and {{max}} degrees.",
+  "event_created": "OK, I've added {{summary}} to your calendar."
+}

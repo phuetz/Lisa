@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo",
+    "target": "ES2022",
+    "lib": ["ES2023"],
+    "module": "NodeNext",
+    "skipLibCheck": true,
+
+    /* Bundler mode */
+    "moduleResolution": "NodeNext",
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "outDir": "./dist"
+  },
+  "include": ["src/api/**/*.ts"]
+}

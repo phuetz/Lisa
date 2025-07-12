@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test API Lisa</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f5f5f5;
+      color: #333;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+      color: #0066cc;
+      margin-top: 0;
+    }
+    .section {
+      margin-bottom: 20px;
+      padding: 15px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+    .form-group {
+      margin-bottom: 10px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    input, textarea, select {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box;
+      font-family: inherit;
+    }
+    button {
+      background-color: #0066cc;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    button:hover {
+      background-color: #0055b3;
+    }
+    .result {
+      margin-top: 10px;
+      padding: 10px;
+      background-color: #f0f8ff;
+      border-radius: 4px;
+      border: 1px solid #bfe3ff;
+      white-space: pre-wrap;
+    }
+    .error {
+      background-color: #fff0f0;
+      border-color: #ffbfbf;
+      color: #cc0000;
+    }
+    .success {
+      background-color: #f0fff0;
+      border-color: #bfffbf;
+      color: #008800;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Test de l'API Lisa</h1>
+    <p>Cette page vous permet de tester facilement les différentes fonctionnalités de l'API Lisa.</p>
+    
+    <div class="section">
+      <h2>Configuration</h2>
+      <div class="form-group">
+        <label for="api-url">URL de l'API:</label>
+        <input type="text" id="api-url" value="http://localhost:3001" />
+      </div>
+      <div class="form-group">
+        <label for="api-key">Clé API:</label>
+        <input type="text" id="api-key" value="lisa-api-default-key" />
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Vérification de l'état</h2>
+      <button onclick="checkHealth()">Vérifier l'état de l'API</button>
+      <div id="health-result" class="result"></div>
+    </div>
+
+    <div class="section">
+      <h2>Liste des agents</h2>
+      <button onclick="listAgents()">Lister les agents disponibles</button>
+      <div id="agents-result" class="result"></div>
+    </div>
+
+    <div class="section">
+      <h2>Traitement d'une intention</h2>
+      <div class="form-group">
+        <label for="intent-text">Texte de l'intention:</label>
+        <textarea id="intent-text" rows="3" placeholder="Ex: Quel temps fait-il à Paris ?"></textarea>
+      </div>
+      <div class="form-group">
+        <label for="intent-language">Langue:</label>
+        <select id="intent-language">
+          <option value="fr" selected>Français</option>
+          <option value="en">Anglais</option>
+          <option value="es">Espagnol</option>
+        </select>
+      </div>
+      <button onclick="processIntent()">Traiter l'intention</button>
+      <div id="intent-result" class="result"></div>
+    </div>
+
+    <div class="section">
+      <h2>Météo</h2>
+      <div class="form-group">
+        <label for="weather-location">Localisation:</label>
+        <input type="text" id="weather-location" placeholder="Ex: Paris" />
+      </div>
+      <button onclick="getWeather()">Obtenir la météo actuelle</button>
+      <button onclick="getWeatherForecast()">Obtenir les prévisions</button>
+      <div id="weather-result" class="result"></div>
+    </div>
+
+    <div class="section">
+      <h2>Tâches (Todos)</h2>
+      <button onclick="listTodos()">Lister les tâches</button>
+      <div class="form-group">
+        <label for="todo-title">Titre de la tâche:</label>
+        <input type="text" id="todo-title" placeholder="Ex: Acheter du lait" />
+      </div>
+      <div class="form-group">
+        <label for="todo-due-date">Date d'échéance (optionnel):</label>
+        <input type="date" id="todo-due-date" />
+      </div>
+      <button onclick="addTodo()">Ajouter une tâche</button>
+      <div id="todos-result" class="result"></div>
+    </div>
+
+    <div class="section">
+      <h2>Mémoire</h2>
+      <div class="form-group">
+        <label for="memory-query">Recherche:</label>
+        <input type="text" id="memory-query" placeholder="Ex: recette" />
+      </div>
+      <button onclick="searchMemories()">Rechercher dans les mémoires</button>
+      <div class="form-group">
+        <label for="memory-content">Contenu de la mémoire:</label>
+        <textarea id="memory-content" rows="3" placeholder="Ex: Recette de crêpes: 250g de farine, 4 œufs, 50cl de lait, une pincée de sel"></textarea>
+      </div>
+      <div class="form-group">
+        <label for="memory-tags">Tags (séparés par des virgules):</label>
+        <input type="text" id="memory-tags" placeholder="Ex: recette, cuisine, dessert" />
+      </div>
+      <button onclick="createMemory()">Créer une mémoire</button>
+      <div id="memory-result" class="result"></div>
+    </div>
+  </div>
+
+  <script type="module">
+    // Importer le client API Lisa
+    import LisaApiClient from './lisa-api-client.js';
+    
+    // Rendre le client disponible globalement
+    window.LisaApiClient = LisaApiClient;
+    window.getClient = function() {
+      const apiUrl = document.getElementById('api-url').value;
+      const apiKey = document.getElementById('api-key').value;
+      return new LisaApiClient(apiKey, apiUrl);
+    };
+
+    // Initialiser les fonctions de test
+    window.checkHealth = async function() {
+      const resultElement = document.getElementById('health-result');
+      resultElement.textContent = 'Vérification...';
+      resultElement.className = 'result';
+      
+      try {
+        const client = getClient();
+        const isHealthy = await client.isHealthy();
+        
+        resultElement.textContent = isHealthy 
+          ? '✅ API en ligne et fonctionnelle!'
+          : '❌ API hors ligne ou inaccessible';
+        resultElement.className = isHealthy ? 'result success' : 'result error';
+      } catch (error) {
+        resultElement.textContent = `❌ Erreur: ${error.message}`;
+        resultElement.className = 'result error';
+      }
+    };
+
+    window.listAgents = async function() {
+      const resultElement = document.getElementById('agents-result');
+      resultElement.textContent = 'Chargement...';
+      resultElement.className = 'result';
+      
+      try {
+        const client = getClient();
+        const agents = await client.listAgents();
+        
+        resultElement.textContent = JSON.stringify(agents, null, 2);
+      } catch (error) {
+        resultElement.textContent = `❌ Erreur: ${error.message}`;
+        resultElement.className = 'result error';
+      }
+    };
+
+    window.processIntent = async function() {
+      const resultElement = document.getElementById('intent-result');
+      const text = document.getElementById('intent-text').value;
+      const language = document.getElementById('intent-language').value;
+      
+      if (!text) {
+        resultElement.textContent = 'Veuillez saisir un texte d\'intention';
+        resultElement.className = 'result error';
+        return;
+      }
+      
+      resultElement.textContent = 'Traitement...';
+      resultElement.className = 'result';
+      
+      try {
+        const client = getClient();
+        const result = await client.processIntent(text, language);
+        
+        resultElement.textContent = JSON.stringify(result, null, 2);
+      } catch (error) {
+        resultElement.textContent = `❌ Erreur: ${error.message}`;
+        resultElement.className = 'result error';
+      }
+    };
+
+    window.getWeather = async function() {
+      const resultElement = document.getElementById('weather-result');
+      const location = document.getElementById('weather-location').value;
+      
+      if (!location) {
+        resultElement.textContent = 'Veuillez saisir une localisation';
+        resultElement.className = 'result error';
+        return;
+      }
+      
+      resultElement.textContent = 'Chargement...';
+      resultElement.className = 'result';
+      
+      try {
+        const client = getClient();
+        const result = await client.getWeather(location);
+        
+        resultElement.textContent = JSON.stringify(result, null, 2);
+      } catch (error) {
+        resultElement.textContent = `❌ Erreur: ${error.message}`;
+        resultElement.className = 'result error';
+      }
+    };
+
+    window.getWeatherForecast = async function() {
+      const resultElement = document.getElementById('weather-result');
+      const location = document.getElementById('weather-location').value;
+      
+      if (!location) {
+        resultElement.textContent = 'Veuillez saisir une localisation';
+        resultElement.className = 'result error';
+        return;
+      }
+      
+      resultElement.textContent = 'Chargement...';
+      resultElement.className = 'result';
+      
+      try {
+        const client = getClient();
+        const result = await client.getWeatherForecast(location);
+        
+        resultElement.textContent = JSON.stringify(result, null, 2);
+      } catch (error) {
+        resultElement.textContent = `❌ Erreur: ${error.message}`;
+        resultElement.className = 'result error';
+      }
+    };
+
+    window.listTodos = async function() {
+      const resultElement = document.getElementById('todos-result');
+      resultElement.textContent = 'Chargement...';
+      resultElement.className = 'result';
+      
+      try {
+        const client = getClient();
+        const result = await client.listTodos();
+        
+        resultElement.textContent = JSON.stringify(result, null, 2);
+      } catch (error) {
+        resultElement.textContent = `❌ Erreur: ${error.message}`;
+        resultElement.className = 'result error';
+      }
+    };
+
+    window.addTodo = async function() {
+      const resultElement = document.getElementById('todos-result');
+      const title = document.getElementById('todo-title').value;
+      const dueDate = document.getElementById('todo-due-date').value || null;
+      
+      if (!title) {
+        resultElement.textContent = 'Veuillez saisir un titre pour la tâche';
+        resultElement.className = 'result error';
+        return;
+      }
+      
+      resultElement.textContent = 'Ajout...';
+      resultElement.className = 'result';
+      
+      try {
+        const client = getClient();
+        const result = await client.addTodo(title, dueDate);
+        
+        resultElement.textContent = JSON.stringify(result, null, 2);
+        
+        // Vider les champs
+        document.getElementById('todo-title').value = '';
+        document.getElementById('todo-due-date').value = '';
+      } catch (error) {
+        resultElement.textContent = `❌ Erreur: ${error.message}`;
+        resultElement.className = 'result error';
+      }
+    };
+
+    window.searchMemories = async function() {
+      const resultElement = document.getElementById('memory-result');
+      const query = document.getElementById('memory-query').value;
+      
+      if (!query) {
+        resultElement.textContent = 'Veuillez saisir une requête de recherche';
+        resultElement.className = 'result error';
+        return;
+      }
+      
+      resultElement.textContent = 'Recherche...';
+      resultElement.className = 'result';
+      
+      try {
+        const client = getClient();
+        const result = await client.searchMemories(query);
+        
+        resultElement.textContent = JSON.stringify(result, null, 2);
+      } catch (error) {
+        resultElement.textContent = `❌ Erreur: ${error.message}`;
+        resultElement.className = 'result error';
+      }
+    };
+
+    window.createMemory = async function() {
+      const resultElement = document.getElementById('memory-result');
+      const content = document.getElementById('memory-content').value;
+      const tags = document.getElementById('memory-tags').value
+        .split(',')
+        .map(tag => tag.trim())
+        .filter(tag => tag);
+      
+      if (!content) {
+        resultElement.textContent = 'Veuillez saisir un contenu pour la mémoire';
+        resultElement.className = 'result error';
+        return;
+      }
+      
+      resultElement.textContent = 'Création...';
+      resultElement.className = 'result';
+      
+      try {
+        const client = getClient();
+        const result = await client.createMemory(content, tags);
+        
+        resultElement.textContent = JSON.stringify(result, null, 2);
+        
+        // Vider les champs
+        document.getElementById('memory-content').value = '';
+        document.getElementById('memory-tags').value = '';
+      } catch (error) {
+        resultElement.textContent = `❌ Erreur: ${error.message}`;
+        resultElement.className = 'result error';
+      }
+    };
+  </script>
+</body>
+</html>

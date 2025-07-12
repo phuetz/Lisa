@@ -1,0 +1,76 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  password      String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  workflows     Workflow[]
+}
+
+model Workflow {
+  id          String      @id @default(cuid())
+  name        String
+  userId      String
+  user        User        @relation(fields: [userId], references: [id])
+  nodes       Node[]
+  edges       Edge[]
+  executions  Execution[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([userId])
+}
+
+model Node {
+  id          String    @id
+  type        String
+  data        Json
+  positionX   Float
+  positionY   Float
+  workflowId  String
+  workflow    Workflow  @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+
+  sourceEdges Edge[] @relation("SourceNode")
+  targetEdges Edge[] @relation("TargetNode")
+
+  @@index([workflowId])
+}
+
+model Edge {
+  id          String   @id
+  sourceId    String
+  targetId    String
+  workflowId  String
+  workflow    Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+
+  sourceNode  Node     @relation("SourceNode", fields: [sourceId], references: [id], onDelete: Cascade)
+  targetNode  Node     @relation("TargetNode", fields: [targetId], references: [id], onDelete: Cascade)
+
+  @@index([workflowId])
+}
+
+model Execution {
+  id          String    @id @default(cuid())
+  workflowId  String
+  workflow    Workflow  @relation(fields: [workflowId], references: [id])
+  status      String // e.g., 'STARTED', 'COMPLETED', 'FAILED'
+  startedAt   DateTime  @default(now())
+  finishedAt  DateTime?
+  results     Json?
+  error       Json?
+
+  @@index([workflowId])
+}
