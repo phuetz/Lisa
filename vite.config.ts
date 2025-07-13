@@ -1,5 +1,7 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import wasm from 'vite-plugin-wasm';
+import topLevelAwait from 'vite-plugin-top-level-await';
 import path from 'path';
 
 // Middleware to expose Zustand store as REST endpoint during dev
@@ -35,7 +37,8 @@ function cspPlugin() {
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react(), visionStatePlugin(), cspPlugin()],
+  plugins: [react(), wasm(), topLevelAwait(), visionStatePlugin(), cspPlugin()],
+  assetsInclude: ['**/*.wasm', '**/*.tflite', '**/*.task'],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
