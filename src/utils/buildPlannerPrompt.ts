@@ -8,6 +8,7 @@
 import { agentRegistry } from '../agents/registry';
 import { logEvent } from './logger';
 import type { WorkflowStep } from '../types/Planner';
+import { z } from 'zod';
 
 /**
  * Options de personnalisation pour les prompts de planification
