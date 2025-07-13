@@ -37,8 +37,7 @@ class AgentRegistry {
    */
   public register(agent: BaseAgent): void {
     if (this.agents.has(agent.name)) {
-      console.warn(`Agent with name "${agent.name}" is already registered.`);
-      return;
+      throw new Error(`Agent with name "${agent.name}" is already registered.`);
     }
     this.agents.set(agent.name, agent);
   }

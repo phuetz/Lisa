@@ -47,6 +47,7 @@ export interface AgentExecuteProps {
   intent?: string;                // The specific action to perform
   context?: Record<string, any>;  // Contextual information for the execution
   language?: string;              // The language to use for operations (e.g., 'en', 'fr', 'es')
+  command?: string;               // Command to execute
   parameters?: Record<string, any>; // Parameters for the execution
   // Add any other common properties
   

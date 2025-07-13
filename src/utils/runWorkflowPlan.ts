@@ -9,6 +9,9 @@ import type { WorkflowStep, PlannerResult } from '../types/Planner';
 import { agentRegistry } from '../agents/registry';
 import { logEvent } from './logger';
 import { handleAgentError } from './handleAgentError';
+import { performance } from 'perf_hooks';
+
+const perf = typeof performance !== 'undefined' ? performance : { now: Date.now };
 
 /**
  * Executes a workflow plan step by step, respecting dependencies
@@ -21,9 +24,11 @@ export async function runWorkflowPlan(
   plan: WorkflowStep[],
   onPlanUpdate?: (plan: WorkflowStep[]) => void
 ): Promise<PlannerResult> {
-  const totalStartTime = performance.now();
+  const totalStartTime = perf.now();
   let currentPlan = [...plan]; // Work with a copy to avoid mutating the input
   let hasError = false;
+  let progressMade = false;
+  let pending = new Set<WorkflowStep>();
   
   try {
     // Log the start of execution
@@ -37,6 +42,7 @@ export async function runWorkflowPlan(
     while (currentPlan.some(step => step.status === 'pending' || step.status === 'in_progress')) {
       // Find steps that can be started (all dependencies satisfied)
       const runnableSteps = findRunnableSteps(currentPlan);
+      pending = new Set(currentPlan.filter(s => s.status === 'pending'));
       
       if (runnableSteps.length === 0) {
         // No runnable steps but workflow not complete - we're deadlocked
@@ -49,6 +55,7 @@ export async function runWorkflowPlan(
       // Execute runnable steps in parallel
       const executionPromises = runnableSteps.map(step => executeWorkflowStep(step, currentPlan));
       const stepResults = await Promise.all(executionPromises);
+      progressMade = stepResults.some(r => r.success);
       
       // Update the plan with results
       stepResults.forEach(({ step, success, error }) => {
@@ -72,9 +79,13 @@ export async function runWorkflowPlan(
         break;
       }
     }
+
+    if (pending.size && !progressMade) {
+      throw new Error('Dead-lock detected: circular dependencies or all steps failed');
+    }
     
     // Calculate total duration
-    const totalDuration = performance.now() - totalStartTime;
+    const totalDuration = perf.now() - totalStartTime;
     
     // Generate summary and result
     const successCount = currentPlan.filter(s => s.status === 'completed').length;
@@ -119,7 +130,7 @@ export async function runWorkflowPlan(
           )
         : undefined,
       summary: `Workflow execution failed: ${errorMessage}`,
-      totalDuration: performance.now() - totalStartTime,
+      totalDuration: perf.now() - totalStartTime,
     };
   }
 }
@@ -160,7 +171,7 @@ async function executeWorkflowStep(
 ): Promise<{ step: WorkflowStep, success: boolean, error?: Error }> {
   // Mark step as in progress
   step.status = 'in_progress';
-  step.startTime = performance.now();
+  step.startTime = perf.now();
   
   // Log step start
   logEvent(
@@ -177,14 +188,16 @@ async function executeWorkflowStep(
     }
     
     // Execute the command on the agent
+    const context = { plan };
     const result = await agent.execute({
-      request: step.command,
-      ...step.args,
+      command: step.command,
+      parameters: step.args,
+      context,
     });
     
     // Update step with results
     step.status = 'completed';
-    step.endTime = performance.now();
+    step.endTime = perf.now();
     step.duration = step.endTime - step.startTime;
     step.result = result;
     
@@ -200,7 +213,7 @@ async function executeWorkflowStep(
   } catch (error) {
     // Update step with error information
     step.status = 'failed';
-    step.endTime = performance.now();
+    step.endTime = perf.now();
     step.duration = step.endTime - step.startTime;
     
     const errorMessage = error instanceof Error ? error.message : String(error);

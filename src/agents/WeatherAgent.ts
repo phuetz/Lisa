@@ -15,6 +15,34 @@ import type {
 } from './types';
 import { agentRegistry } from './registry';
 
+export interface BuildWeatherUrlOpts {
+  includeHourly?: boolean;
+  includeAlerts?: boolean;
+}
+
+export function buildWeatherUrl(
+  lat: number,
+  lon: number,
+  options: BuildWeatherUrlOpts = {}
+): string {
+  const params = new URLSearchParams({
+    latitude: String(lat),
+    longitude: String(lon),
+    timezone: 'auto',
+    current_weather: 'true'
+  });
+  if (options.includeHourly) {
+    params.append(
+      'hourly',
+      'temperature_2m,relativehumidity_2m,windspeed_10m,winddirection_10m,weathercode'
+    );
+  }
+  if (options.includeAlerts) {
+    params.append('alerts', 'true');
+  }
+  return `https://api.open-meteo.com/v1/forecast?${params.toString()}`;
+}
+
 /**
  * Interface for geolocation data
  */
@@ -48,6 +76,35 @@ export type WeatherCondition =
   | 'fog'
   | 'drizzle'
   | 'hail';
+
+export type WeatherIcon =
+  | 'clear'
+  | 'mainly_clear'
+  | 'partly_cloudy'
+  | 'cloudy'
+  | 'fog'
+  | 'deposit_rime_fog'
+  | 'drizzle_light'
+  | 'drizzle_moderate'
+  | 'drizzle_dense'
+  | 'freezing_drizzle_light'
+  | 'freezing_drizzle_dense'
+  | 'rain_slight'
+  | 'rain_moderate'
+  | 'rain_heavy'
+  | 'freezing_rain_light'
+  | 'freezing_rain_heavy'
+  | 'snow_fall_slight'
+  | 'snow_fall_moderate'
+  | 'snow_fall_heavy'
+  | 'snow_grains'
+  | 'rain_showers_slight'
+  | 'rain_showers_moderate'
+  | 'rain_showers_violent'
+  | 'snow_showers_slight'
+  | 'snow_showers_heavy'
+  | 'thunderstorm'
+  | 'thunderstorm_hail';
   
 /**
  * Interface for formatted weather data
@@ -55,7 +112,7 @@ export type WeatherCondition =
 export interface FormattedWeatherData {
   location: string;
   temperature?: number;
-  condition?: WeatherCondition;
+  condition?: WeatherIcon;
   humidity?: number;
   wind_speed?: number;
   wind_direction?: string;
@@ -63,7 +120,7 @@ export interface FormattedWeatherData {
     day: string;
     min_temp: number;
     max_temp: number;
-    condition: WeatherCondition;
+    condition: WeatherIcon;
   }>;
 }
 
@@ -387,7 +444,7 @@ export class WeatherAgent implements BaseAgent {
         locationName = 'Current Location';
       }
       
-      const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true&hourly=temperature_2m,relativehumidity_2m,windspeed_10m,winddirection_10m&timezone=auto`;
+      const url = buildWeatherUrl(latitude, longitude, { includeHourly: true });
       
       const response = await fetch(url);
       if (!response.ok) {
@@ -432,7 +489,7 @@ export class WeatherAgent implements BaseAgent {
         locationName = 'Current Location';
       }
       
-      const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=auto`;
+      const url = `${buildWeatherUrl(latitude, longitude)}&daily=weathercode,temperature_2m_max,temperature_2m_min`;
       
       const response = await fetch(url);
       if (!response.ok) {
@@ -485,7 +542,7 @@ export class WeatherAgent implements BaseAgent {
         locationName = 'Current Location';
       }
       
-      const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&hourly=temperature_2m,relativehumidity_2m,windspeed_10m,weathercode&forecast_hours=${hours}&timezone=auto`;
+      const url = `${buildWeatherUrl(latitude, longitude, { includeHourly: true })}&forecast_hours=${hours}`;
       
       const response = await fetch(url);
       if (!response.ok) {
@@ -548,23 +605,41 @@ export class WeatherAgent implements BaseAgent {
   }
   
   /**
-   * Map Open-Meteo weather codes to our weather condition type
+   * Map Open-Meteo weather codes to icon names
    */
-  private mapWeatherCode(code: number): WeatherCondition {
-    // WMO codes: https://www.nodc.noaa.gov/archive/arc0021/0002199/1.1/data/0-data/HTML/WMO-CODE/WMO4677.HTM
-    if (code === 0) return 'clear';
-    if (code === 1) return 'partly_cloudy';
-    if (code === 2) return 'partly_cloudy';
-    if (code === 3) return 'cloudy';
-    if (code >= 51 && code <= 67) return 'rain';
-    if (code >= 71 && code <= 77) return 'snow';
-    if (code === 95 || code === 96 || code === 99) return 'thunderstorm';
-    if (code >= 45 && code <= 49) return 'fog';
-    if (code >= 80 && code <= 82) return 'drizzle';
-    if (code >= 85 && code <= 86) return 'snow';
-    if (code >= 95 && code <= 96) return 'thunderstorm';
-    
-    return 'partly_cloudy'; // Default
+  private mapWeatherCode(code: number): WeatherIcon {
+    const WEATHER_MAP: Record<number, WeatherIcon> = {
+      0: 'clear',
+      1: 'mainly_clear',
+      2: 'partly_cloudy',
+      3: 'cloudy',
+      45: 'fog',
+      48: 'deposit_rime_fog',
+      51: 'drizzle_light',
+      53: 'drizzle_moderate',
+      55: 'drizzle_dense',
+      56: 'freezing_drizzle_light',
+      57: 'freezing_drizzle_dense',
+      61: 'rain_slight',
+      63: 'rain_moderate',
+      65: 'rain_heavy',
+      66: 'freezing_rain_light',
+      67: 'freezing_rain_heavy',
+      71: 'snow_fall_slight',
+      73: 'snow_fall_moderate',
+      75: 'snow_fall_heavy',
+      77: 'snow_grains',
+      80: 'rain_showers_slight',
+      81: 'rain_showers_moderate',
+      82: 'rain_showers_violent',
+      85: 'snow_showers_slight',
+      86: 'snow_showers_heavy',
+      95: 'thunderstorm',
+      96: 'thunderstorm',
+      99: 'thunderstorm_hail',
+    };
+
+    return WEATHER_MAP[code] ?? 'partly_cloudy';
   }
 }
 

@@ -30,3 +30,13 @@ jobs:
 
       - name: Build project
         run: npm run build
+
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+      - name: Scan with Trivy
+        uses: aquasecurity/trivy-action@v0.16.0
+        with:
+          scan-type: fs

@@ -14,9 +14,12 @@ import { runWorkflowPlan } from '../utils/runWorkflowPlan';
 import { logEvent } from '../utils/logger';
 import { revisePlan } from '../utils/revisePlan';
 import { planTracer } from '../utils/planTracer';
+import { useAppStore } from '../store/appStore';
 // Import types
 import type { BaseAgent, AgentExecuteResult } from './types';
 import type { WorkflowStep, PlannerAgentExecuteProps, PlannerResult } from '../types/Planner';
+
+type ReviseOpts = Parameters<typeof PlannerAgent['revisePlan']>[4];
 
 // Constants
 const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
@@ -246,7 +249,7 @@ export class PlannerAgent implements BaseAgent {
       }
       
       // Préparer les options pour la révision
-      const revisionOptions: Parameters<typeof revisePlan>[4] = {
+      const revisionOptions: ReviseOpts = {
         apiKey: OPENAI_API_KEY,
         traceId,
         onExplanation: (explanation) => {
@@ -283,9 +286,8 @@ export class PlannerAgent implements BaseAgent {
     traceId?: string
   ): PlannerResult {
     // Mettre à jour le store avec l'explication du plan et l'ID de trace
-    const store = agentRegistry.getStore();
-    if (store && explanation) {
-      store.setLastPlanExplanation(explanation, traceId);
+    if (explanation) {
+      useAppStore.getState().setLastPlanExplanation(explanation, traceId);
     }
     
     // Get API request ID if one was used
