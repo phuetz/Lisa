@@ -97,7 +97,7 @@ function buildBaseTemplate(
   return `
 # ${title}
 
-${detailInstructions}
+Vous êtes un maître planificateur. ${detailInstructions}
 
 ${constraintsSection}
 
@@ -125,7 +125,65 @@ export function buildPlannerPrompt(
   // Obtenir les descriptions de tous les agents disponibles
   const agentDescriptions = agentRegistry
     .getAllAgents()
-    .map(a => ` - ${a.name}: ${a.description || 'Agent sans description'}`)
+    .map(a => {
+      const configSchema = a.configSchema ? 
+        Object.entries(a.configSchema.shape).reduce((acc, [key, schema]) => {
+          const s = schema as z.ZodAny;
+          const isOptional = s.isOptional();
+          const isNullable = s.isNullable();
+          const required = !isOptional && !isNullable;
+
+          let typeName = 'any';
+          let enumValues: string[] | undefined;
+
+          let baseSchema = s;
+          while (baseSchema instanceof z.ZodOptional || baseSchema instanceof z.ZodNullable) {
+            baseSchema = baseSchema.unwrap();
+          }
+
+          switch (baseSchema._def.typeName) {
+            case z.ZodString.name:
+              typeName = 'string';
+              if (baseSchema instanceof z.ZodEnum) {
+                enumValues = baseSchema._def.values;
+              }
+              break;
+            case z.ZodNumber.name:
+              typeName = 'number';
+              break;
+            case z.ZodBoolean.name:
+              typeName = 'boolean';
+              break;
+            case z.ZodObject.name:
+              typeName = 'object';
+              break;
+            case z.ZodArray.name:
+              typeName = 'array';
+              break;
+          }
+
+          acc[key] = {
+            type: typeName,
+            required: required,
+            description: s.description || '',
+            ...(enumValues && { enum: enumValues }),
+          };
+          return acc;
+        }, {} as Record<string, any>) : {};
+
+      const inputs = a.inputs?.map(i => `  - ${i.id} (${i.type}): ${i.label}`).join('\n') || '  - Aucun';
+      const outputs = a.outputs?.map(o => `  - ${o.id} (${o.type}): ${o.label}`).join('\n') || '  - Aucun';
+
+      return ` - ${a.name}: ${a.description || 'Agent sans description'}
+   Catégorie: ${a.category}
+   Entrées:
+${inputs}
+   Sorties:
+${outputs}
+   Configuration (args):
+${JSON.stringify(configSchema, null, 2)}
+`;
+    })
     .join('\n');
   
   const isRevision = Boolean(currentPlan && error);

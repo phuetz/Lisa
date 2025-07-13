@@ -2,9 +2,7 @@
  * WebSearchTool: A tool for searching the web and summarizing results.
  */
 
-const GOOGLE_API_KEY = import.meta.env.VITE_GOOGLE_API_KEY;
-const GOOGLE_CX = import.meta.env.VITE_GOOGLE_CX;
-const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
+
 
 interface SearchResult {
   title: string;
@@ -26,6 +24,7 @@ export class WebSearchTool {
   description = 'Performs a web search and provides a concise answer.';
 
   private async summarize(query: string, searchResults: SearchResult[]): Promise<string> {
+    const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
     if (!OPENAI_API_KEY) {
       throw new Error('OpenAI API key is not configured for summarization.');
     }
@@ -55,6 +54,8 @@ export class WebSearchTool {
   }
 
   async execute({ query }: ExecuteProps): Promise<ExecuteResult> {
+    const GOOGLE_API_KEY = import.meta.env.VITE_GOOGLE_API_KEY;
+    const GOOGLE_CX = import.meta.env.VITE_GOOGLE_CX;
     if (!GOOGLE_API_KEY || !GOOGLE_CX) {
       return { success: false, error: 'Google Search API is not configured.', output: null };
     }

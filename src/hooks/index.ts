@@ -6,3 +6,4 @@ export * from './useAudioClassifier';
 export * from './useSpeechResponder';
 export * from './useVoiceIntent';
 export * from './useMcpClient';
+export * from './useMediaPipeModels';

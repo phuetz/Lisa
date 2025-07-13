@@ -26,4 +26,4 @@ dist-ssr
 /src/generated/prisma
 
 # Environment variables
-.env
+# .env

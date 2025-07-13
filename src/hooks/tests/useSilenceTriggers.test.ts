@@ -8,30 +8,28 @@ import { useSilenceTriggers } from '../useSilenceTriggers';
 import { useVisionAudioStore } from '../../store/visionAudioStore';
 
 // Mock pour le store Zustand
-vi.mock('../../store/visionAudioStore', () => ({
-  useVisionAudioStore: vi.fn(() => ({
-    lastSilenceMs: Date.now() - 10000, // Par défaut, 10 secondes depuis la dernière interaction
-    speechDetected: false,
-    setState: vi.fn((update) => {
-      if (typeof update === 'function') {
-        mockState = { ...mockState, ...update(mockState) };
-      } else {
-        mockState = { ...mockState, ...update };
-      }
-    }),
-  }))
-}));
-
-// État mockée pour les tests
-let mockState = {
+let mockStoreState = {
   lastSilenceMs: Date.now() - 10000,
   speechDetected: false,
 };
 
+vi.mock('../../store/visionAudioStore', () => ({
+  useVisionAudioStore: vi.fn((selector) => {
+    const store = {
+      lastSilenceMs: mockStoreState.lastSilenceMs,
+      speechDetected: mockStoreState.speechDetected,
+      setState: vi.fn((updater) => {
+        mockStoreState = typeof updater === 'function' ? updater(mockStoreState) : { ...mockStoreState, ...updater };
+      }),
+    };
+    return selector(store);
+  }),
+}));
+
 describe('useSilenceTriggers', () => {
   beforeEach(() => {
     vi.useFakeTimers();
-    mockState = {
+    mockStoreState = {
       lastSilenceMs: Date.now() - 10000,
       speechDetected: false,
     };
@@ -64,7 +62,7 @@ describe('useSilenceTriggers', () => {
     const onSilenceDetected = vi.fn();
     
     // Simuler un silence plus ancien que le seuil
-    mockState.lastSilenceMs = Date.now() - 35000; // 35 secondes de silence (seuil par défaut: 30s)
+    mockStoreState.lastSilenceMs = Date.now() - 35000; // 35 secondes de silence (seuil par défaut: 30s)
     
     const { result } = renderHook(() => useSilenceTriggers({
       onSilenceDetected,
@@ -84,7 +82,7 @@ describe('useSilenceTriggers', () => {
     const onSilenceDetected = vi.fn();
     
     // Simuler un silence plus récent que le seuil
-    mockState.lastSilenceMs = Date.now() - 15000; // 15 secondes de silence (seuil par défaut: 30s)
+    mockStoreState.lastSilenceMs = Date.now() - 15000; // 15 secondes de silence (seuil par défaut: 30s)
     
     const { result } = renderHook(() => useSilenceTriggers({
       onSilenceDetected,
@@ -100,11 +98,11 @@ describe('useSilenceTriggers', () => {
     expect(onSilenceDetected).not.toHaveBeenCalled();
   });
 
-  it('devrait réinitialiser le silence quand l\'utilisateur parle', () => {
+  it('devrait réinitialiser le silence quand l'utilisateur parle', () =>{
     const onSilenceDetected = vi.fn();
     
     // Simuler un silence plus ancien que le seuil
-    mockState.lastSilenceMs = Date.now() - 35000; // 35 secondes de silence (seuil par défaut: 30s)
+    mockStoreState.lastSilenceMs = Date.now() - 35000; // 35 secondes de silence (seuil par défaut: 30s)
     
     const { result } = renderHook(() => useSilenceTriggers({
       onSilenceDetected,
@@ -119,7 +117,7 @@ describe('useSilenceTriggers', () => {
     
     // Simuler que l'utilisateur commence à parler
     act(() => {
-      mockState.speechDetected = true;
+      mockStoreState.speechDetected = true;
       // Déclencher le useEffect qui surveille speechDetected
       vi.runOnlyPendingTimers();
     });
@@ -128,11 +126,11 @@ describe('useSilenceTriggers', () => {
     expect(result.current.isSilent).toBe(false);
   });
 
-  it('devrait permettre d\'activer/désactiver la détection', () => {
+  it('devrait permettre d'activer/désactiver la détection', () => {
     const onSilenceDetected = vi.fn();
     
     // Simuler un silence plus ancien que le seuil
-    mockState.lastSilenceMs = Date.now() - 35000; // 35 secondes de silence (seuil par défaut: 30s)
+    mockStoreState.lastSilenceMs = Date.now() - 35000; // 35 secondes de silence (seuil par défaut: 30s)
     
     const { result } = renderHook(() => useSilenceTriggers({
       onSilenceDetected,

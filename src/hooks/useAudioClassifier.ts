@@ -6,24 +6,13 @@ import { loadTask } from '../utils/loadTask';
 /**
  * Classify microphone audio and publish to Zustand, handles silence timer.
  */
-export function useAudioClassifier(audioCtx?: AudioContext, micStream?: MediaStream) {
-  const taskRef = useRef<AudioClassifier>();
+export function useAudioClassifier(audioCtx?: AudioContext, micStream?: MediaStream, audioClassifier?: AudioClassifier | null) {
   const setState = useVisionAudioStore((s) => s.setState);
   const silenceTimeout = useRef<number>();
 
-  // Load task
-  useEffect(() => {
-    (async () => {
-      const audioPkg = await import('@mediapipe/tasks-audio');
-      const AC = audioPkg.AudioClassifier as unknown as typeof AudioClassifier;
-      taskRef.current = await loadTask(AC as any, false);
-    })();
-    return () => taskRef.current?.close();
-  }, []);
-
   // Connect to mic
   useEffect(() => {
-    if (!audioCtx || !micStream || !taskRef.current) return;
+    if (!audioCtx || !micStream || !audioClassifier) return;
 
     const source = audioCtx.createMediaStreamSource(micStream);
     const processor = audioCtx.createScriptProcessor(4096, 1, 1);
@@ -34,7 +23,7 @@ export function useAudioClassifier(audioCtx?: AudioContext, micStream?: MediaStr
     processor.onaudioprocess = (e) => {
       if ((frame++ & 1) === 1) return;
       const buffer = e.inputBuffer.getChannelData(0);
-      const res: AudioClassifierResult | undefined = taskRef.current!.classify(buffer);
+      const res: AudioClassifierResult | undefined = audioClassifier.classify(buffer);
       if (res && res.classifications.length) {
         const top = res.classifications[0].categories[0];
         setState({

@@ -4,7 +4,7 @@ import { agentRegistry } from '../agents/registry';
 
 export default function TodoPanel() {
   const { t } = useTranslation();
-  const { todos } = useVisionAudioStore();
+  const todos = useVisionAudioStore((s) => s.todos);
   const todoAgent = agentRegistry.getAgent('TodoAgent');
 
   const removeTodo = (id: string) => {

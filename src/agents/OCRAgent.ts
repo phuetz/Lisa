@@ -6,6 +6,7 @@
  */
 
 // L'import de agentRegistry est supprimé car il n'est pas utilisé directement dans ce fichier
+import { createWorker, OEM } from 'tesseract.js';
 import type { 
   AgentCapability, 
   AgentDomain,
@@ -69,45 +70,148 @@ export class OCRAgent implements BaseAgent {
     return true;
   }
 
+  private worker: Tesseract.Worker | null = null;
+  private isInitialized = false;
+
+  constructor() {
+    this.initializeWorker();
+  }
+
+  private async initializeWorker() {
+    try {
+      const worker = await createWorker({
+        logger: m => console.log(m), // Optional: log progress
+      });
+      await worker.loadLanguage('eng+fra');
+      await worker.initialize('eng+fra');
+      this.worker = worker;
+      this.isInitialized = true;
+      console.log('Tesseract worker initialized.');
+    } catch (error) {
+      console.error('Failed to initialize Tesseract worker:', error);
+    }
+  }
+
   // Extrait du texte d'une image
   private async extractTextFromImage(
     _imageSource: OCRSource,
-    _imageData: string | Blob | File,
+    imageData: string | Blob | File,
     options?: OCROptions
   ): Promise<OCRResult> {
-    // Dans une implémentation réelle, on utiliserait Tesseract.js ou une API cloud
-    
-    // Simulation d'une réponse OCR
+    if (!this.isInitialized || !this.worker) {
+      throw new Error('Tesseract worker is not initialized.');
+    }
+
+    const lang = options?.language === 'fr' ? 'fra' : 'eng';
+
+    const { data } = await this.worker.recognize(imageData, {
+      tessedit_char_whitelist: '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ',
+    }, { imageColor: true, imageGrey: true, imageBinary: true });
+
     return {
-      text: "Ceci est un texte extrait d'une image par l'OCRAgent",
-      confidence: 0.95,
-      regions: [
-        {
-          text: "Ceci est un texte extrait d'une image par l'OCRAgent",
-          confidence: 0.95,
-          boundingBox: {
-            x: 10,
-            y: 10,
-            width: 300,
-            height: 50
-          }
-        }
-      ],
-      language: options?.language || 'auto',
-      processingTimeMs: 120
+      text: data.text,
+      confidence: data.confidence,
+      regions: data.words.map(w => ({
+        text: w.text,
+        confidence: w.confidence,
+        boundingBox: {
+          x: w.bbox.x0,
+          y: w.bbox.y0,
+          width: w.bbox.x1 - w.bbox.x0,
+          height: w.bbox.y1 - w.bbox.y0,
+        },
+      })),
+      language: lang,
     };
   }
 
   // Prendre une capture d'écran
   private async captureScreenshot(
-    _region?: { x: number; y: number; width: number; height: number }
+    region?: { x: number; y: number; width: number; height: number }
   ): Promise<string> {
-    // Dans une vraie implémentation, on utiliserait des APIs comme:
-    // - MediaDevices.getDisplayMedia() pour la capture d'écran dans le navigateur
-    // - Ou une extension navigateur spécifique avec des permissions
-    
-    // Pour cette démo, on simule une capture d'écran encodée en base64
-    return "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
+    try {
+      const stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+      const track = stream.getVideoTracks()[0];
+      const imageCapture = new ImageCapture(track);
+      const bitmap = await imageCapture.grabFrame();
+      track.stop(); // Stop the screen sharing
+
+      const canvas = document.createElement('canvas');
+      canvas.width = bitmap.width;
+      canvas.height = bitmap.height;
+      const context = canvas.getContext('2d');
+      if (!context) {
+        throw new Error('Could not get canvas context');
+      }
+
+      if (region) {
+        context.drawImage(bitmap, region.x, region.y, region.width, region.height, 0, 0, region.width, region.height);
+        canvas.width = region.width;
+        canvas.height = region.height;
+      } else {
+        context.drawImage(bitmap, 0, 0);
+      }
+
+      return canvas.toDataURL();
+    } catch (error) {
+      console.error('Error capturing screenshot:', error);
+      throw new Error('Failed to capture screenshot.');
+    }
+  }
+
+  // Capture an image from the webcam
+  private async captureWebcamImage(): Promise<string> {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+    return new Promise((resolve, reject) => {
+      const video = document.createElement('video');
+      video.srcObject = stream;
+      video.onloadedmetadata = () => {
+        video.play();
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const context = canvas.getContext('2d');
+        if (!context) {
+          stream.getTracks().forEach(track => track.stop());
+          return reject(new Error('Could not get canvas context'));
+        }
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        stream.getTracks().forEach(track => track.stop());
+        resolve(canvas.toDataURL('image/png'));
+      };
+      video.onerror = (err) => {
+        stream.getTracks().forEach(track => track.stop());
+        reject(new Error(`Video error: ${err}`));
+      };
+    });
+  }
+
+  // Read image data from clipboard
+  private async readClipboardImage(): Promise<Blob> {
+    try {
+      const clipboardItems = await navigator.clipboard.read();
+      for (const clipboardItem of clipboardItems) {
+        for (const type of clipboardItem.types) {
+          if (type.startsWith('image/')) {
+            return await clipboardItem.getType(type);
+          }
+        }
+      }
+      throw new Error('No image found in clipboard.');
+    } catch (error) {
+      console.error('Error reading clipboard image:', error);
+      throw new Error('Failed to read image from clipboard.');
+    }
+  }
+
+  // Read image data from a File object
+  private async readFileImage(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
   }
 
   // Exécution de l'agent
@@ -137,26 +241,12 @@ export class OCRAgent implements BaseAgent {
           if (source === 'screenshot') {
             imageData = await this.captureScreenshot(options.region);
           } else if (source === 'webcam') {
-            // Implémentation future: capture webcam
-            return {
-              success: false,
-              error: "Webcam capture not implemented yet",
-              output: null
-            };
+            imageData = await this.captureWebcamImage();
           } else if (source === 'clipboard') {
-            // Implémentation future: récupération du presse-papiers
-            return {
-              success: false,
-              error: "Clipboard capture not implemented yet",
-              output: null
-            };
+            imageData = await this.readClipboardImage();
           } else if (source === 'file') {
-            // Implémentation future: chargement de fichier
-            return {
-              success: false,
-              error: "File loading not implemented yet",
-              output: null
-            };
+            if (!parameters.file) throw new Error('File object is required for file source.');
+            imageData = await this.readFileImage(parameters.file as File);
           } else {
             return {
               success: false,

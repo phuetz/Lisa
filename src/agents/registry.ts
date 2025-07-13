@@ -3,6 +3,14 @@
  * This follows the Singleton pattern to ensure only one instance exists.
  */
 import type { BaseAgent } from './types.js';
+import { RobotAgent } from './RobotAgent';
+import { TriggerAgent } from './TriggerAgent';
+import { TransformAgent } from './TransformAgent';
+import { ConditionAgent } from './ConditionAgent';
+import { DelayAgent } from './DelayAgent';
+import { WorkflowHTTPAgent } from './WorkflowHTTPAgent';
+import { WorkflowCodeAgent } from './WorkflowCodeAgent';
+import { RosAgent } from './RosAgent';
 
 class AgentRegistry {
   private static instance: AgentRegistry;
@@ -60,3 +68,12 @@ class AgentRegistry {
 
 // Export a single instance of the registry for use throughout the application.
 export const agentRegistry = AgentRegistry.getInstance();
+
+agentRegistry.register(new RobotAgent());
+agentRegistry.register(new TriggerAgent());
+agentRegistry.register(new TransformAgent());
+agentRegistry.register(new ConditionAgent());
+agentRegistry.register(new DelayAgent());
+agentRegistry.register(new WorkflowHTTPAgent());
+agentRegistry.register(new WorkflowCodeAgent());
+agentRegistry.register(new RosAgent());

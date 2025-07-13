@@ -1,8 +1,10 @@
 import React, { useCallback, useMemo } from 'react';
-import { Node } from 'reactflow';
+import type { Node } from 'reactflow';
 import useWorkflowStore from '../store/useWorkflowStore';
 import { nodeTypes } from '../nodes/nodeTypes';
+import { getNodeConfigComponent } from '../nodeConfigRegistry';
 import CodeEditor from './CodeEditor';
+import { z } from 'zod';
 
 interface NodeConfigPanelProps {
   node: Node;
@@ -12,9 +14,13 @@ interface NodeConfigPanelProps {
 // Configuration dynamique des champs du nœud
 const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({ node, onClose }) => {
   const updateNode = useWorkflowStore(state => state.updateNode);
+  const executionResults = useWorkflowStore(state => state.executionResults);
   const darkMode = useWorkflowStore(state => state.darkMode);
+  const [activeTab, setActiveTab] = React.useState('config');
   
   const nodeType = node.data.type;
+  // Cherche un panneau de config spécifique enregistré
+  const SpecificConfigPanel = getNodeConfigComponent(nodeType);
   const nodeInfo = nodeTypes[nodeType];
   
   // Thème et styles
@@ -51,19 +57,35 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({ node, onClose }) => {
     updateNode(node.id, { label: e.target.value });
   }, [node, updateNode]);
   
-  // Rendu des champs de configuration selon le schéma
+  // Rendu des champs de configuration selon le schéma Zod
   const renderConfigFields = useMemo(() => {
     if (!nodeInfo?.configSchema) return null;
-    
-    return Object.entries(nodeInfo.configSchema).map(([key, schema]) => {
-      const value = node.data.config?.[key] ?? schema.default ?? '';
-      const required = schema.required ? '*' : '';
-      
-      // Affichage du champ selon son type
-      switch (schema.type) {
-        case 'string':
-          // Éditeur de code pour les champs de code
-          if (schema.format === 'code') {
+
+    // Iterate over the Zod schema to render fields
+    return Object.entries(nodeInfo.configSchema.shape).map(([key, schema]) => {
+      const currentSchema = schema as z.ZodAny; // Cast to ZodAny to access properties
+      const value = node.data.config?.[key] ?? currentSchema.default ?? '';
+      const isOptional = currentSchema.isOptional();
+      const isNullable = currentSchema.isNullable();
+      const required = isOptional || isNullable ? '' : '*' ; // Adjust required logic
+      const description = currentSchema.description; // Zod's .describe() method
+
+      // Determine the base schema type
+      let baseSchema = currentSchema;
+      while (baseSchema instanceof z.ZodOptional || baseSchema instanceof z.ZodNullable) {
+        baseSchema = baseSchema.unwrap();
+      }
+
+      const typeName = baseSchema._def.typeName;
+
+      switch (typeName) {
+        case z.ZodString.name: {
+          const stringSchema = baseSchema as z.ZodString;
+          const isCode = stringSchema._def.metadata?.format === 'code';
+          const isExpression = stringSchema._def.metadata?.expression === true;
+          const isEnum = stringSchema._def.enum !== undefined;
+
+          if (isCode || isExpression) {
             return (
               <div key={key} className="mb-4">
                 <label className={`block mb-2 font-medium ${theme.text}`}>
@@ -71,16 +93,16 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({ node, onClose }) => {
                 </label>
                 <CodeEditor
                   value={value as string || ''}
-                  language={node.data.config?.language || 'javascript'}
+                  language={isCode ? (node.data.config?.language || 'javascript') : 'javascript'}
                   onChange={(code) => handleConfigChange(key, code)}
                   height="200px"
                 />
+                {description && (
+                  <p className={`mt-1 text-xs ${theme.textSecondary}`}>{description}</p>
+                )}
               </div>
             );
-          }
-          
-          // Select pour les énumérations
-          if (schema.enum) {
+          } else if (isEnum) {
             return (
               <div key={key} className="mb-4">
                 <label className={`block mb-2 font-medium ${theme.text}`}>
@@ -91,38 +113,39 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({ node, onClose }) => {
                   value={value as string}
                   onChange={(e) => handleConfigChange(key, e.target.value)}
                 >
-                  {schema.enum.map((option: string) => (
+                  {stringSchema._def.enum.map((option: string) => (
                     <option key={option} value={option}>
                       {option}
                     </option>
                   ))}
                 </select>
-                {schema.description && (
-                  <p className={`mt-1 text-xs ${theme.textSecondary}`}>{schema.description}</p>
+                {description && (
+                  <p className={`mt-1 text-xs ${theme.textSecondary}`}>{description}</p>
+                )}
+              </div>
+            );
+          } else {
+            return (
+              <div key={key} className="mb-4">
+                <label className={`block mb-2 font-medium ${theme.text}`}>
+                  {key} {required}
+                </label>
+                <input
+                  type="text"
+                  className={`w-full px-3 py-2 border rounded-md ${theme.input}`}
+                  value={value as string}
+                  onChange={(e) => handleConfigChange(key, e.target.value)}
+                />
+                {description && (
+                  <p className={`mt-1 text-xs ${theme.textSecondary}`}>{description}</p>
                 )}
               </div>
             );
           }
-          
-          // Input texte standard
-          return (
-            <div key={key} className="mb-4">
-              <label className={`block mb-2 font-medium ${theme.text}`}>
-                {key} {required}
-              </label>
-              <input
-                type="text"
-                className={`w-full px-3 py-2 border rounded-md ${theme.input}`}
-                value={value as string}
-                onChange={(e) => handleConfigChange(key, e.target.value)}
-              />
-              {schema.description && (
-                <p className={`mt-1 text-xs ${theme.textSecondary}`}>{schema.description}</p>
-              )}
-            </div>
-          );
-          
-        case 'number':
+        }
+
+        case z.ZodNumber.name: {
+          const numberSchema = baseSchema as z.ZodNumber;
           return (
             <div key={key} className="mb-4">
               <label className={`block mb-2 font-medium ${theme.text}`}>
@@ -132,18 +155,19 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({ node, onClose }) => {
                 type="number"
                 className={`w-full px-3 py-2 border rounded-md ${theme.input}`}
                 value={value as number}
-                min={schema.min}
-                max={schema.max}
-                step={schema.step || 1}
+                min={numberSchema._def.checks.find((c: any) => c.kind === 'min')?.value}
+                max={numberSchema._def.checks.find((c: any) => c.kind === 'max')?.value}
+                step={numberSchema._def.checks.find((c: any) => c.kind === 'step')?.value || 1}
                 onChange={(e) => handleConfigChange(key, parseFloat(e.target.value))}
               />
-              {schema.description && (
-                <p className={`mt-1 text-xs ${theme.textSecondary}`}>{schema.description}</p>
+              {description && (
+                <p className={`mt-1 text-xs ${theme.textSecondary}`}>{description}</p>
               )}
             </div>
           );
-          
-        case 'boolean':
+        }
+
+        case z.ZodBoolean.name: {
           return (
             <div key={key} className="mb-4 flex items-center">
               <input
@@ -159,13 +183,14 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({ node, onClose }) => {
               >
                 {key} {required}
               </label>
-              {schema.description && (
-                <p className={`ml-6 text-xs ${theme.textSecondary}`}>{schema.description}</p>
+              {description && (
+                <p className={`ml-6 text-xs ${theme.textSecondary}`}>{description}</p>
               )}
             </div>
           );
-          
-        case 'object':
+        }
+
+        case z.ZodObject.name: {
           return (
             <div key={key} className="mb-4">
               <label className={`block mb-2 font-medium ${theme.text}`}>
@@ -184,13 +209,46 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({ node, onClose }) => {
                   }
                 }}
               />
-              {schema.description && (
-                <p className={`mt-1 text-xs ${theme.textSecondary}`}>{schema.description}</p>
+              {description && (
+                <p className={`mt-1 text-xs ${theme.textSecondary}`}>{description}</p>
               )}
             </div>
           );
-          
+        }
+
+        case z.ZodArray.name: {
+          // For arrays, we'll render a textarea for JSON input for simplicity
+          return (
+            <div key={key} className="mb-4">
+              <label className={`block mb-2 font-medium ${theme.text}`}>
+                {key} {required}
+              </label>
+              <textarea
+                className={`w-full px-3 py-2 border rounded-md font-mono text-sm ${theme.input}`}
+                value={Array.isArray(value) ? JSON.stringify(value, null, 2) : '[]'}
+                rows={5}
+                onChange={(e) => {
+                  try {
+                    const parsed = JSON.parse(e.target.value);
+                    if (Array.isArray(parsed)) {
+                      handleConfigChange(key, parsed);
+                    } else {
+                      // Handle invalid array input
+                    }
+                  } catch {
+                    // Ignore parsing errors during typing
+                  }
+                }}
+              />
+              {description && (
+                <p className={`mt-1 text-xs ${theme.textSecondary}`}>{description}</p>
+              )}
+            </div>
+          );
+        }
+
         default:
+          console.warn(`Unsupported Zod type: ${typeName} for key: ${key}`);
           return null;
       }
     });
@@ -220,6 +278,11 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({ node, onClose }) => {
     );
   }, [nodeInfo, updateNode, node.id, theme]);
   
+  // Si un panneau spécifique existe, délègue entièrement le rendu
+  if (SpecificConfigPanel) {
+    return <SpecificConfigPanel node={node} onClose={onClose} />;
+  }
+
   return (
     <div 
       className={`w-80 border-l overflow-y-auto h-full ${theme.panel} border-gray-200 dark:border-gray-700`}
@@ -235,38 +298,65 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({ node, onClose }) => {
         </button>
       </div>
       
+      <div className="flex border-b border-gray-200 dark:border-gray-700">
+        <button
+          className={`flex-1 py-2 text-center text-sm font-medium ${activeTab === 'config' ? 'border-b-2 border-blue-500 text-blue-500' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'}`}
+          onClick={() => setActiveTab('config')}
+        >
+          Configuration
+        </button>
+        <button
+          className={`flex-1 py-2 text-center text-sm font-medium ${activeTab === 'data' ? 'border-b-2 border-blue-500 text-blue-500' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'}`}
+          onClick={() => setActiveTab('data')}
+        >
+          Données
+        </button>
+      </div>
+
       <div className="p-4">
-        {/* Type de nœud et description */}
-        <div className="mb-6">
-          <div className={`font-medium ${theme.textSecondary} text-sm mb-1`}>
-            Type de nœud
+        {activeTab === 'config' && (
+          <>
+            {/* Type de nœud et description */}
+            <div className="mb-6">
+              <div className={`font-medium ${theme.textSecondary} text-sm mb-1`}>
+                Type de nœud
+              </div>
+              <div className={`font-bold text-lg ${theme.text}`}>
+                {nodeInfo?.name || nodeType}
+              </div>
+              <div className={`mt-1 text-sm ${theme.textSecondary}`}>
+                {nodeInfo?.description || ''}
+              </div>
+            </div>
+            
+            {/* Nom du nœud */}
+            <div className="mb-6">
+              <label className={`block mb-2 font-medium ${theme.text}`}>
+                Nom du nœud
+              </label>
+              <input
+                type="text"
+                className={`w-full px-3 py-2 border rounded-md ${theme.input}`}
+                value={node.data.label}
+                onChange={handleLabelChange}
+              />
+            </div>
+            
+            {/* Champs de configuration dynamiques */}
+            <div>{renderConfigFields}</div>
+            
+            {/* Exemples prédéfinis */}
+            {renderExamples}
+          </>
+        )}
+        {activeTab === 'data' && (
+          <div className="mt-4">
+            <h3 className={`font-bold ${theme.text} mb-2`}>Données d'exécution</h3>
+            <pre className={`p-2 rounded-md overflow-auto text-xs ${theme.input}`}>
+              {JSON.stringify(executionResults[node.id], null, 2) || 'Aucune donnée d\'exécution pour ce nœud.'}
+            </pre>
           </div>
-          <div className={`font-bold text-lg ${theme.text}`}>
-            {nodeInfo?.name || nodeType}
-          </div>
-          <div className={`mt-1 text-sm ${theme.textSecondary}`}>
-            {nodeInfo?.description || ''}
-          </div>
-        </div>
-        
-        {/* Nom du nœud */}
-        <div className="mb-6">
-          <label className={`block mb-2 font-medium ${theme.text}`}>
-            Nom du nœud
-          </label>
-          <input
-            type="text"
-            className={`w-full px-3 py-2 border rounded-md ${theme.input}`}
-            value={node.data.label}
-            onChange={handleLabelChange}
-          />
-        </div>
-        
-        {/* Champs de configuration dynamiques */}
-        <div>{renderConfigFields}</div>
-        
-        {/* Exemples prédéfinis */}
-        {renderExamples}
+        )}
       </div>
     </div>
   );

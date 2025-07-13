@@ -2,8 +2,6 @@
  * WebContentReaderTool: A tool for fetching, parsing, and summarizing the content of a web page.
  */
 
-const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
-
 interface ExecuteProps {
   url: string;
 }
@@ -19,9 +17,11 @@ export class WebContentReaderTool {
   description = 'Reads and summarizes the content of a given URL.';
 
   private async summarize(url: string, textContent: string): Promise<string> {
+    const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
     if (!OPENAI_API_KEY) {
       throw new Error('OpenAI API key is not configured for summarization.');
     }
+  
 
     const prompt = `Please provide a concise summary of the following web page content from ${url}. Focus on the main points and key takeaways.\n\n---\n\n${textContent}`;
 

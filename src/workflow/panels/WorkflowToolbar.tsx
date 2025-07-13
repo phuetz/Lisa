@@ -27,6 +27,13 @@ const WorkflowToolbar: React.FC<WorkflowToolbarProps> = ({ sidebarOpen, toggleSi
   const workflows = useWorkflowStore(state => state.workflows);
   const loadWorkflow = useWorkflowStore(state => state.loadWorkflow);
   const toggleDarkMode = useWorkflowStore(state => state.toggleDarkMode);
+  const undo = useWorkflowStore(state => state.undo);
+  const redo = useWorkflowStore(state => state.redo);
+  const canUndo = useWorkflowStore(state => state.canUndo);
+  const canRedo = useWorkflowStore(state => state.canRedo);
+  const copy = useWorkflowStore(state => state.copy);
+  const cut = useWorkflowStore(state => state.cut);
+  const paste = useWorkflowStore(state => state.paste);
   
   // Exécution du workflow
   const executeWorkflow = useCallback(async () => {
@@ -273,6 +280,47 @@ const WorkflowToolbar: React.FC<WorkflowToolbarProps> = ({ sidebarOpen, toggleSi
           title={darkMode ? 'Mode clair' : 'Mode sombre'}
         >
           {darkMode ? '☀️' : '🌙'}
+        </button>
+
+        {/* Boutons Undo/Redo */}
+        <button
+          className="px-3 py-1 rounded hover:bg-gray-200 hover:bg-opacity-20"
+          onClick={undo}
+          disabled={!canUndo}
+          title="Annuler"
+        >
+          ↩️
+        </button>
+        <button
+          className="px-3 py-1 rounded hover:bg-gray-200 hover:bg-opacity-20"
+          onClick={redo}
+          disabled={!canRedo}
+          title="Rétablir"
+        >
+          ↪️
+        </button>
+
+        {/* Boutons Copier/Couper/Coller */}
+        <button
+          className="px-3 py-1 rounded hover:bg-gray-200 hover:bg-opacity-20"
+          onClick={copy}
+          title="Copier les nœuds sélectionnés"
+        >
+          📋
+        </button>
+        <button
+          className="px-3 py-1 rounded hover:bg-gray-200 hover:bg-opacity-20"
+          onClick={cut}
+          title="Couper les nœuds sélectionnés"
+        >
+          ✂️
+        </button>
+        <button
+          className="px-3 py-1 rounded hover:bg-gray-200 hover:bg-opacity-20"
+          onClick={paste}
+          title="Coller les nœuds"
+        >
+          貼り付け
         </button>
       </div>
       

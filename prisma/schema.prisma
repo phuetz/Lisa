@@ -30,6 +30,7 @@ model Workflow {
   executions  Execution[]
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
+  version     Int         @default(1)
 
   @@index([userId])
 }

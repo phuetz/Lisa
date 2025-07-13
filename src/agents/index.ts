@@ -23,6 +23,11 @@ import { ScreenShareAgent } from './ScreenShareAgent';
 import { PowerShellAgent } from './PowerShellAgent';
 import { WorkflowHTTPAgent } from './WorkflowHTTPAgent';
 import { WorkflowCodeAgent } from './WorkflowCodeAgent';
+import { MetaHumanAgent } from './MetaHumanAgent';
+import { GeminiCliAgent } from './GeminiCliAgent';
+import { NLUAgent } from './NLUAgent';
+import { MQTTAgent } from './MQTTAgent';
+import { KnowledgeGraphAgent } from './KnowledgeGraphAgent';
 
 // Fonction d'initialisation pour enregistrer tous les agents
 export const registerAllAgents = (): void => {
@@ -46,6 +51,11 @@ export const registerAllAgents = (): void => {
   agentRegistry.register(new PowerShellAgent());
   agentRegistry.register(new WorkflowHTTPAgent());
   agentRegistry.register(new WorkflowCodeAgent());
+  agentRegistry.register(new MetaHumanAgent());
+  agentRegistry.register(new GeminiCliAgent());
+  agentRegistry.register(new NLUAgent());
+  agentRegistry.register(new MQTTAgent());
+  agentRegistry.register(new KnowledgeGraphAgent());
   
   // Log le nombre d'agents enregistrés
   const agents = agentRegistry.getAllAgents();
@@ -76,6 +86,9 @@ export * from './ScreenShareAgent';
 export * from './PowerShellAgent';
 export * from './WorkflowHTTPAgent';
 export * from './WorkflowCodeAgent';
+export * from './MetaHumanAgent';
+export * from './GeminiCliAgent';
+export * from './GeminiCodeAgent';
 
 // Export du registre d'agents
 export { agentRegistry } from './registry';

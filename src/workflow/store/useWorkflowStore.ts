@@ -1,12 +1,20 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, devtools } from 'zustand/middleware';
 import type { Node, Edge } from 'reactflow';
+import { useStore } from 'reactflow';
 
 // Définition des types pour le store
 export interface WorkflowState {
   // État de base
   nodes: Node[];
   edges: Edge[];
+  // Undo/Redo actions
+  undo: () => void;
+  redo: () => void;
+  takeSnapshot: () => void;
+  canUndo: boolean;
+  canRedo: boolean;
+  clipboard: { nodes: Node[]; edges: Edge[] } | null;
   selectedNode: Node | null;
   isExecuting: boolean;
   executionResults: Record<string, any>;
@@ -94,16 +102,29 @@ export interface WorkflowState {
   setCurrentEnvironment: (env: string) => void;
   addWorkflow: (workflow: any) => void;
   loadWorkflow: (workflowId: string) => void;
+  copy: () => void;
+  cut: () => void;
+  paste: () => void;
 }
 
 // Store Zustand complet avec toutes les fonctionnalités n8n
 const useWorkflowStore = create<WorkflowState>()(
-  persist(
-    (set, get) => ({
-      // État de base
-      nodes: [],
-      edges: [],
-      selectedNode: null,
+  devtools(
+    persist(
+      (set, get) => {
+        const rfStore = useStore.getState();
+        return {
+          // État de base
+          nodes: [],
+          edges: [],
+          // Undo/Redo actions
+          undo: () => rfStore.undo(),
+          redo: () => rfStore.redo(),
+          takeSnapshot: () => rfStore.takeSnapshot(),
+          canUndo: rfStore.canUndo,
+          canRedo: rfStore.canRedo,
+          clipboard: null,
+          selectedNode: null,
       isExecuting: false,
       executionResults: {},
       executionErrors: {},
@@ -190,8 +211,14 @@ const useWorkflowStore = create<WorkflowState>()(
       },
 
       // Actions de base
-      setNodes: (nodes) => set({ nodes }),
-      setEdges: (edges) => set({ edges }),
+      setNodes: (nodes) => {
+        set({ nodes });
+        get().takeSnapshot();
+      },
+      setEdges: (edges) => {
+        set({ edges });
+        get().takeSnapshot();
+      },
       setSelectedNode: (node) => set({ selectedNode: node }),
       setLastAddedNodeId: (nodeId) => set({ lastAddedNodeId: nodeId }),
 
@@ -337,6 +364,60 @@ const useWorkflowStore = create<WorkflowState>()(
             currentWorkflowId: workflowId
           });
         }
+      },
+
+      copy: () => {
+        const { getNodes, getEdges, setClipboard } = rfStore;
+        const selectedNodes = getNodes().filter((node) => node.selected);
+        const selectedEdges = getEdges().filter((edge) => edge.selected);
+        setClipboard({ nodes: selectedNodes, edges: selectedEdges });
+      },
+
+      cut: () => {
+        const { getNodes, getEdges, setNodes, setEdges, setClipboard } = rfStore;
+        const selectedNodes = getNodes().filter((node) => node.selected);
+        const selectedEdges = getEdges().filter((edge) => edge.selected);
+        setClipboard({ nodes: selectedNodes, edges: selectedEdges });
+        setNodes(getNodes().filter((node) => !node.selected));
+        setEdges(getEdges().filter((edge) => !edge.selected));
+      },
+
+      paste: () => {
+        const { getNodes, getEdges, setNodes, setEdges, clipboard } = rfStore;
+        if (!clipboard || clipboard.nodes.length === 0) return;
+
+        const newNodes: Node[] = [];
+        const newEdges: Edge[] = [];
+        const oldNodeIdMap = new Map<string, string>();
+
+        clipboard.nodes.forEach((node) => {
+          const newNodeId = `${node.id}_copy_${Date.now()}`;
+          newNodes.push({
+            ...node,
+            id: newNodeId,
+            position: { x: node.position.x + 50, y: node.position.y + 50 },
+            selected: false,
+          });
+          oldNodeIdMap.set(node.id, newNodeId);
+        });
+
+        clipboard.edges.forEach((edge) => {
+          const newSource = oldNodeIdMap.get(edge.source);
+          const newTarget = oldNodeIdMap.get(edge.target);
+
+          if (newSource && newTarget) {
+            newEdges.push({
+              ...edge,
+              id: `${edge.id}_copy_${Date.now()}`,
+              source: newSource,
+              target: newTarget,
+              selected: false,
+            });
+          }
+        });
+
+        setNodes([...getNodes(), ...newNodes]);
+        setEdges([...getEdges(), ...newEdges]);
       }
     }),
     {

@@ -4,6 +4,7 @@
  * Implements the BaseAgent interface for integration with PlannerAgent.
  */
 import { agentRegistry } from './registry';
+import { z } from 'zod';
 import {
   AgentDomains
 } from './types';
@@ -19,6 +20,33 @@ import { useVisionAudioStore } from '../store/visionAudioStore';
 /**
  * Supported todo intents
  */
+export const AddItemParamsSchema = z.object({
+  text: z.string().min(1, 'Todo item text is required'),
+  priority: z.enum(['low', 'medium', 'high']).optional(),
+  dueDate: z.string().datetime().optional(),
+});
+
+export const RemoveItemParamsSchema = z.object({
+  id: z.string().min(1, 'Todo ID is required'),
+});
+
+export const ListItemsParamsSchema = z.object({
+  filter: z.enum(['all', 'active', 'completed']).default('all'),
+});
+
+export const UpdateItemParamsSchema = z.object({
+  id: z.string().min(1, 'Todo ID is required'),
+  text: z.string().min(1, 'Todo item text is required').optional(),
+  priority: z.enum(['low', 'medium', 'high']).optional(),
+  dueDate: z.string().datetime().optional(),
+});
+
+export const MarkStatusParamsSchema = z.object({
+  id: z.string().min(1, 'Todo ID is required'),
+});
+
+export const ClearCompletedParamsSchema = z.object({});
+
 export type TodoIntent =
   | 'add_item'
   | 'remove_item'
@@ -59,6 +87,27 @@ export class TodoAgent implements BaseAgent {
     'clear_completed_todos'
   ];
 
+  // Define inputs and outputs for the workflow editor
+  inputs = [
+    { id: 'trigger', type: 'any', label: 'Déclencheur' },
+  ];
+
+  outputs = [
+    { id: 'result', type: 'object', label: 'Résultat' },
+    { id: 'error', type: 'object', label: 'Erreur' },
+  ];
+
+  // Define a combined config schema for all intents
+  configSchema = z.discriminatedUnion('intent', [
+    AddItemParamsSchema.extend({ intent: z.literal('add_item') }),
+    RemoveItemParamsSchema.extend({ intent: z.literal('remove_item') }),
+    ListItemsParamsSchema.extend({ intent: z.literal('list_items') }),
+    UpdateItemParamsSchema.extend({ intent: z.literal('update_item') }),
+    MarkStatusParamsSchema.extend({ intent: z.literal('mark_complete') }),
+    MarkStatusParamsSchema.extend({ intent: z.literal('mark_incomplete') }),
+    ClearCompletedParamsSchema.extend({ intent: z.literal('clear_completed') }),
+  ]);
+
   /**
    * Main execution method for the TodoAgent
    */
@@ -68,12 +117,36 @@ export class TodoAgent implements BaseAgent {
     const parameters = props.parameters || {};
 
     try {
-      // Validate input
-      const validation = await this.validateInput(props);
-      if (!validation.valid) {
+      // Validate input using Zod schemas
+      let validationResult;
+      switch (intent) {
+        case 'add_item':
+          validationResult = AddItemParamsSchema.safeParse(parameters);
+          break;
+        case 'remove_item':
+          validationResult = RemoveItemParamsSchema.safeParse(parameters);
+          break;
+        case 'list_items':
+          validationResult = ListItemsParamsSchema.safeParse(parameters);
+          break;
+        case 'update_item':
+          validationResult = UpdateItemParamsSchema.safeParse(parameters);
+          break;
+        case 'mark_complete':
+        case 'mark_incomplete':
+          validationResult = MarkStatusParamsSchema.safeParse(parameters);
+          break;
+        case 'clear_completed':
+          validationResult = ClearCompletedParamsSchema.safeParse(parameters);
+          break;
+        default:
+          validationResult = { success: false, error: 'Unsupported intent' };
+      }
+
+      if (!validationResult.success) {
         return {
           success: false,
-          error: validation.errors?.join(', '),
+          error: validationResult.error.errors.map(err => err.message).join(', '),
           output: null,
           metadata: {
             executionTime: Date.now() - startTime
@@ -188,82 +261,89 @@ export class TodoAgent implements BaseAgent {
    * Returns required parameters for a specific task
    */
   async getRequiredParameters(task: string): Promise<AgentParameter[]> {
+    let schema: z.ZodObject<any> | undefined;
     switch (task) {
       case 'add_item':
-        return [
-          {
-            name: 'text',
-            type: 'string',
-            required: true,
-            description: 'Text content of the todo item'
-          },
-          {
-            name: 'priority',
-            type: 'string',
-            required: false,
-            description: 'Priority level: low, medium, or high',
-            defaultValue: 'medium'
-          },
-          {
-            name: 'dueDate',
-            type: 'string',
-            required: false,
-            description: 'Due date for the todo item (ISO string)'
-          }
-        ];
+        schema = AddItemParamsSchema;
+        break;
       case 'remove_item':
+        schema = RemoveItemParamsSchema;
+        break;
+      case 'list_items':
+        schema = ListItemsParamsSchema;
+        break;
+      case 'update_item':
+        schema = UpdateItemParamsSchema;
+        break;
       case 'mark_complete':
       case 'mark_incomplete':
-        return [
-          {
-            name: 'id',
-            type: 'string',
-            required: true,
-            description: 'ID of the todo item'
-          }
-        ];
-      case 'update_item':
-        return [
-          {
-            name: 'id',
-            type: 'string',
-            required: true,
-            description: 'ID of the todo item to update'
-          },
-          {
-            name: 'text',
-            type: 'string',
-            required: false,
-            description: 'New text content for the todo item'
-          },
-          {
-            name: 'priority',
-            type: 'string',
-            required: false,
-            description: 'New priority level: low, medium, or high'
-          },
-          {
-            name: 'dueDate',
-            type: 'string',
-            required: false,
-            description: 'New due date for the todo item (ISO string)'
-          }
-        ];
-      case 'list_items':
-        return [
-          {
-            name: 'filter',
-            type: 'string',
-            required: false,
-            description: 'Filter by: all, active, completed',
-            defaultValue: 'all'
-          }
-        ];
+        schema = MarkStatusParamsSchema;
+        break;
       case 'clear_completed':
-        return [];
+        schema = ClearCompletedParamsSchema;
+        break;
       default:
         return [];
     }
+
+    if (!schema) return [];
+
+    const params: AgentParameter[] = [];
+    for (const key in schema.shape) {
+      const fieldSchema = schema.shape[key] as z.ZodAny;
+      const isOptional = fieldSchema.isOptional();
+      const isNullable = fieldSchema.isNullable();
+      const isRequired = !isOptional && !isNullable;
+
+      let type: string;
+      let defaultValue: any;
+      let enumValues: string[] | undefined;
+
+      let baseSchema = fieldSchema;
+      while (baseSchema instanceof z.ZodOptional || baseSchema instanceof z.ZodNullable) {
+        baseSchema = baseSchema.unwrap();
+      }
+
+      switch (baseSchema._def.typeName) {
+        case z.ZodString.name:
+          type = 'string';
+          if (baseSchema instanceof z.ZodEnum) {
+            enumValues = baseSchema._def.values;
+          }
+          break;
+        case z.ZodNumber.name:
+          type = 'number';
+          break;
+        case z.ZodBoolean.name:
+          type = 'boolean';
+          break;
+        case z.ZodObject.name:
+          type = 'object';
+          break;
+        case z.ZodArray.name:
+          type = 'array';
+          break;
+        default:
+          type = 'any';
+      }
+
+      // Extract default value if available
+      if (fieldSchema._def.defaultValue !== undefined) {
+        defaultValue = fieldSchema._def.defaultValue();
+      } else if (fieldSchema._def.typeName === z.ZodEnum.name && fieldSchema._def.default !== undefined) {
+        defaultValue = fieldSchema._def.default;
+      }
+
+      params.push({
+        name: key,
+        type: type,
+        required: isRequired,
+        description: fieldSchema.description || '',
+        defaultValue: defaultValue,
+        enum: enumValues,
+      });
+    }
+    return params;
   }
   
   /**

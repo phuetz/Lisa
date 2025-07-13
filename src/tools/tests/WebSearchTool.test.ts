@@ -4,6 +4,11 @@ import { WebSearchTool } from '../WebSearchTool';
 // Mock global fetch
 vi.stubGlobal('fetch', vi.fn());
 
+// Mock the environment variables for API keys
+vi.stubEnv('VITE_GOOGLE_API_KEY', 'test-google-api-key');
+vi.stubEnv('VITE_GOOGLE_CX', 'test-google-cx');
+vi.stubEnv('VITE_OPENAI_API_KEY', 'test-openai-api-key');
+
 describe('WebSearchTool', () => {
   let tool: WebSearchTool;
 

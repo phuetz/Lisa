@@ -15,6 +15,7 @@ import { weatherRoutes } from './routes/weatherRoutes.js';
 import { todoRoutes } from './routes/todoRoutes.js';
 import { memoryRoutes } from './routes/memoryRoutes.js';
 import { authRoutes } from './routes/authRoutes.js';
+import { apiLimiter, authLimiter } from './middleware/rateLimiter.js';
 import { authenticateToken } from './middleware/auth.js';
 
 
@@ -24,6 +25,9 @@ export const createServer = () => {
   
   // Middlewares de sécurité
   app.use(helmet());
+  // Rate limiting
+  app.use('/api/', apiLimiter);
+  app.use('/api/auth/', authLimiter);
   app.use(cors({
     origin: API_CONFIG.corsOrigins,
     methods: ['GET', 'POST', 'PUT', 'DELETE'],

@@ -8,7 +8,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Box, Typography, Button, Select, MenuItem, FormControl, 
-  InputLabel, CircularProgress, Paper, Chip, Grid, Alert } from '@mui/material';
+  InputLabel, CircularProgress, Paper, Chip, Grid, Alert, Switch, FormControlLabel } from '@mui/material';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 import ScreenshotIcon from '@mui/icons-material/Screenshot';
@@ -18,14 +18,23 @@ import ColorLensIcon from '@mui/icons-material/ColorLens';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import { agentRegistry } from '../agents/registry';
+import { useMediaPermissions } from '../hooks/useMediaPermissions';
 import { VisionAgent } from '../agents/VisionAgent';
 import type { VisionSource, VisionTask, VisionResult } from '../agents/VisionAgent';
+import { useAppStore } from '../store/appStore';
 
 interface VisionPanelProps {
   expanded?: boolean;
 }
 
 export const VisionPanel: React.FC<VisionPanelProps> = ({ expanded = false }) => {
+  // Media permissions hook
+  const { permissions, requestCamera } = useMediaPermissions();
+  // Global state
+  const { featureFlags, setState } = useAppStore((s) => ({
+    featureFlags: s.featureFlags,
+    setState: s.setState,
+  }));
   // États du composant
   const [isExpanded, setIsExpanded] = useState(expanded);
   const [source, setSource] = useState<VisionSource>('webcam');
@@ -35,6 +44,15 @@ export const VisionPanel: React.FC<VisionPanelProps> = ({ expanded = false }) =>
   const [error, setError] = useState<string | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [webcamActive, setWebcamActive] = useState(false);
+
+  const handleAdvancedVisionToggle = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setState((state) => ({
+      featureFlags: {
+        ...state.featureFlags,
+        advancedVision: event.target.checked,
+      },
+    }));
+  };
 
   // Référence à l'élément vidéo pour la webcam
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -68,7 +86,10 @@ export const VisionPanel: React.FC<VisionPanelProps> = ({ expanded = false }) =>
         throw new Error('La fonctionnalité de webcam n\'est pas disponible dans ce navigateur');
       }
 
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      const stream = await requestCamera({ video: true });
+      if (!stream) {
+        throw new Error('Permission caméra refusée');
+      }
       
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
@@ -214,7 +235,7 @@ export const VisionPanel: React.FC<VisionPanelProps> = ({ expanded = false }) =>
                       </Paper>
                     </Box>
                   ))}
-                </Grid>
+                </Box>
               </>
             ) : (
               <Typography variant="body1">Aucun objet détecté.</Typography>
@@ -275,7 +296,7 @@ export const VisionPanel: React.FC<VisionPanelProps> = ({ expanded = false }) =>
                       </Typography>
                     </Box>
                   ))}
-                </Grid>
+                </Box>
               </>
             ) : (
               <Typography variant="body1">Aucune analyse de couleur disponible.</Typography>
@@ -325,6 +346,20 @@ export const VisionPanel: React.FC<VisionPanelProps> = ({ expanded = false }) =>
             </Alert>
           ) : (
             <>
+              <Box sx={{ mb: 2 }}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={featureFlags.advancedVision}
+                      onChange={handleAdvancedVisionToggle}
+                      name="advancedVision"
+                      color="primary"
+                    />
+                  }
+                  label="Activer la Vision Avancée (YOLOv8-n)"
+                />
+              </Box>
+
               <Box sx={{ mb: 2 }}>
                 <FormControl fullWidth>
                   <InputLabel>Source</InputLabel>

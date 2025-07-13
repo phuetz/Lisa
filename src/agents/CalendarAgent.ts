@@ -6,6 +6,7 @@
  */
 
 import { AgentDomains } from './types';
+import { z } from 'zod';
 import type {
   AgentCapability,
   AgentExecuteProps,
@@ -18,6 +19,46 @@ import { agentRegistry } from './registry';
 /**
  * Supported calendar intents
  */
+export const CreateEventParamsSchema = z.object({
+  summary: z.string().min(1, 'Event summary/title is required'),
+  start: z.object({
+    dateTime: z.string().datetime(),
+    timeZone: z.string().optional(),
+  }).refine(data => new Date(data.dateTime).toString() !== 'Invalid Date', { message: 'Invalid start date/time' }),
+  end: z.object({
+    dateTime: z.string().datetime(),
+    timeZone: z.string().optional(),
+  }).refine(data => new Date(data.dateTime).toString() !== 'Invalid Date', { message: 'Invalid end date/time' }),
+  description: z.string().optional(),
+  location: z.string().optional(),
+  attendees: z.array(z.object({ email: z.string().email(), name: z.string().optional() })).optional(),
+}).refine(data => new Date(data.end.dateTime) > new Date(data.start.dateTime), { message: 'Event end time must be after start time' });
+
+export const ListEventsParamsSchema = z.object({
+  period: z.enum(['today', 'tomorrow', 'week', 'month', 'custom']).default('today'),
+  startDate: z.string().datetime().optional(),
+  endDate: z.string().datetime().optional(),
+}).refine(data => {
+  if (data.period === 'custom' && (!data.startDate || !data.endDate)) {
+    return false; // Custom period requires both start and end dates
+  }
+  return true;
+}, { message: 'Custom period requires both startDate and endDate' });
+
+export const DeleteEventParamsSchema = z.object({
+  eventId: z.string().min(1, 'Event ID is required'),
+});
+
+export const UpdateEventParamsSchema = z.object({
+  eventId: z.string().min(1, 'Event ID is required'),
+  eventData: CreateEventParamsSchema.partial(), // Partial allows updating only some fields
+});
+
+export const FindAvailableTimeParamsSchema = z.object({
+  duration: z.number().int().positive('Duration must be a positive number of minutes'),
+  date: z.string().datetime().optional(),
+});
+
 export type CalendarIntent = 
   | 'create_event'
   | 'list_events'
@@ -78,6 +119,25 @@ export class CalendarAgent implements BaseAgent {
   ];
   requiresAuthentication = true;
 
+  // Define inputs and outputs for the workflow editor
+  inputs = [
+    { id: 'trigger', type: 'any', label: 'Déclencheur' },
+  ];
+
+  outputs = [
+    { id: 'result', type: 'object', label: 'Résultat' },
+    { id: 'error', type: 'object', label: 'Erreur' },
+  ];
+
+  // Define a combined config schema for all intents
+  configSchema = z.discriminatedUnion('intent', [
+    CreateEventParamsSchema.extend({ intent: z.literal('create_event') }),
+    ListEventsParamsSchema.extend({ intent: z.literal('list_events') }),
+    DeleteEventParamsSchema.extend({ intent: z.literal('delete_event') }),
+    UpdateEventParamsSchema.extend({ intent: z.literal('update_event') }),
+    FindAvailableTimeParamsSchema.extend({ intent: z.literal('find_available_time') }),
+  ]);
+
   /**
    * Main execution method for the agent
    */
@@ -87,12 +147,32 @@ export class CalendarAgent implements BaseAgent {
     const parameters = props.parameters || {};
 
     try {
-      // Validate input
-      const validation = await this.validateInput(props);
-      if (!validation.valid) {
+      // Validate input using Zod schemas
+      let validationResult;
+      switch (intent) {
+        case 'create_event':
+          validationResult = CreateEventParamsSchema.safeParse(parameters);
+          break;
+        case 'list_events':
+          validationResult = ListEventsParamsSchema.safeParse(parameters);
+          break;
+        case 'delete_event':
+          validationResult = DeleteEventParamsSchema.safeParse(parameters);
+          break;
+        case 'update_event':
+          validationResult = UpdateEventParamsSchema.safeParse(parameters);
+          break;
+        case 'find_available_time':
+          validationResult = FindAvailableTimeParamsSchema.safeParse(parameters);
+          break;
+        default:
+          validationResult = { success: false, error: 'Unsupported intent' };
+      }
+
+      if (!validationResult.success) {
         return {
           success: false,
-          error: validation.errors?.join(', '),
+          error: validationResult.error.errors.map(err => err.message).join(', '),
           output: null,
           metadata: {
             executionTime: Date.now() - startTime
@@ -211,99 +291,85 @@ export class CalendarAgent implements BaseAgent {
    * Returns required parameters for a specific task
    */
   async getRequiredParameters(task: string): Promise<AgentParameter[]> {
+    let schema: z.ZodObject<any> | undefined;
     switch (task) {
       case 'create_event':
-        return [
-          {
-            name: 'summary',
-            type: 'string',
-            required: true,
-            description: 'Title or summary of the event'
-          },
-          {
-            name: 'start',
-            type: 'object',
-            required: true,
-            description: 'Start date and time of the event (ISO string or object with dateTime property)'
-          },
-          {
-            name: 'end',
-            type: 'object',
-            required: true,
-            description: 'End date and time of the event (ISO string or object with dateTime property)'
-          },
-          {
-            name: 'description',
-            type: 'string',
-            required: false,
-            description: 'Detailed description of the event'
-          },
-          {
-            name: 'location',
-            type: 'string',
-            required: false,
-            description: 'Location where the event takes place'
-          },
-          {
-            name: 'attendees',
-            type: 'array',
-            required: false,
-            description: 'List of attendees (objects with email property)'
-          }
-        ];
+        schema = CreateEventParamsSchema;
+        break;
       case 'list_events':
-        return [
-          {
-            name: 'period',
-            type: 'string',
-            required: true,
-            description: 'Time period to list events for (today, week, etc.)',
-            defaultValue: 'today'
-          }
-        ];
+        schema = ListEventsParamsSchema;
+        break;
       case 'delete_event':
-        return [
-          {
-            name: 'eventId',
-            type: 'string',
-            required: true,
-            description: 'ID of the event to delete'
-          }
-        ];
+        schema = DeleteEventParamsSchema;
+        break;
       case 'update_event':
-        return [
-          {
-            name: 'eventId',
-            type: 'string',
-            required: true,
-            description: 'ID of the event to update'
-          },
-          {
-            name: 'eventData',
-            type: 'object',
-            required: true,
-            description: 'New data for the event'
-          }
-        ];
+        schema = UpdateEventParamsSchema;
+        break;
       case 'find_available_time':
-        return [
-          {
-            name: 'duration',
-            type: 'number',
-            required: true,
-            description: 'Duration in minutes'
-          },
-          {
-            name: 'date',
-            type: 'string',
-            required: false,
-            description: 'Date to find available time (ISO string or YYYY-MM-DD)',
-            defaultValue: new Date().toISOString().split('T')[0]
-          }
-        ];
+        schema = FindAvailableTimeParamsSchema;
+        break;
       default:
         return [];
     }
+
+    if (!schema) return [];
+
+    const params: AgentParameter[] = [];
+    for (const key in schema.shape) {
+      const fieldSchema = schema.shape[key] as z.ZodAny;
+      const isOptional = fieldSchema.isOptional();
+      const isNullable = fieldSchema.isNullable();
+      const isRequired = !isOptional && !isNullable;
+
+      let type: string;
+      let defaultValue: any;
+      let enumValues: string[] | undefined;
+
+      let baseSchema = fieldSchema;
+      while (baseSchema instanceof z.ZodOptional || baseSchema instanceof z.ZodNullable) {
+        baseSchema = baseSchema.unwrap();
+      }
+
+      switch (baseSchema._def.typeName) {
+        case z.ZodString.name:
+          type = 'string';
+          if (baseSchema instanceof z.ZodEnum) {
+            enumValues = baseSchema._def.values;
+          }
+          break;
+        case z.ZodNumber.name:
+          type = 'number';
+          break;
+        case z.ZodBoolean.name:
+          type = 'boolean';
+          break;
+        case z.ZodObject.name:
+          type = 'object';
+          break;
+        case z.ZodArray.name:
+          type = 'array';
+          break;
+        default:
+          type = 'any';
+      }
+
+      // Extract default value if available
+      if (fieldSchema._def.defaultValue !== undefined) {
+        defaultValue = fieldSchema._def.defaultValue();
+      } else if (fieldSchema._def.typeName === z.ZodEnum.name && fieldSchema._def.default !== undefined) {
+        defaultValue = fieldSchema._def.default;
+      }
+
+      params.push({
+        name: key,
+        type: type,
+        required: isRequired,
+        description: fieldSchema.description || '',
+        defaultValue: defaultValue,
+        enum: enumValues,
+      });
+    }
+    return params;
   }
   
   /**

@@ -2,42 +2,42 @@ import { useEffect, useRef } from 'react';
 import type { ObjectDetector, ObjectDetectorResult } from '@mediapipe/tasks-vision';
 import { useVisionAudioStore } from '../store/visionAudioStore';
 import { loadTask } from '../utils/loadTask';
+import { Percept, VisionPayload } from '../types'; // Import Percept and VisionPayload
 
-export function useObjectDetector(video?: HTMLVideoElement) {
-  const taskRef = useRef<ObjectDetector>();
+export function useObjectDetector(video?: HTMLVideoElement, objectDetector?: ObjectDetector | null) {
   const setState = useVisionAudioStore((s) => s.setState);
 
   useEffect(() => {
-    (async () => {
-      const vision = await import('@mediapipe/tasks-vision');
-      const OD = vision.ObjectDetector as unknown as typeof ObjectDetector;
-      taskRef.current = await loadTask(OD as any);
-    })();
-    return () => taskRef.current?.close();
-  }, []);
-
-  useEffect(() => {
-    if (!video || !taskRef.current) return;
+    if (!video || !objectDetector) return;
     let rafId: number;
     let frame = 0;
     const loop = () => {
       if ((frame++ & 1) === 1) { rafId = requestAnimationFrame(loop); return; }
-      const res: ObjectDetectorResult | undefined = taskRef.current!.detectForVideo(
+      const res: ObjectDetectorResult | undefined = objectDetector.detectForVideo(
         video,
         performance.now()
       );
       if (res) {
-        setState({
-          objects: res.detections.map((d) => ({
-            box: new DOMRect(d.boundingBox.originX, d.boundingBox.originY, d.boundingBox.width, d.boundingBox.height),
-            category: d.categories[0].categoryName,
-            score: d.categories[0].score,
-          })),
-        });
+        setState(state => ({
+          percepts: [
+            ...(state.percepts || []),
+            ...res.detections.map((d): Percept<VisionPayload> => ({
+              modality: 'vision',
+              payload: {
+                type: 'object',
+                box: new DOMRect(d.boundingBox.originX, d.boundingBox.originY, d.boundingBox.width, d.boundingBox.height),
+                category: d.categories[0].categoryName,
+                score: d.categories[0].score,
+              },
+              confidence: d.categories[0].score,
+              ts: Date.now(),
+            })),
+          ],
+        }));
       }
       rafId = requestAnimationFrame(loop);
     };
     loop();
     return () => cancelAnimationFrame(rafId);
-  }, [video, taskRef.current]);
+  }, [video, objectDetector]); // Changed taskRef.current to objectDetector
 }

@@ -7,7 +7,7 @@ import { Mic, MicOff } from '@mui/icons-material';
  * Displays a microphone icon when Lisa is actively listening after the wake-word.
  */
 export default function MicIndicator() {
-  const { listeningActive } = useVisionAudioStore();
+  const listeningActive = useVisionAudioStore((s) => s.listeningActive);
   const { t } = useTranslation();
 
   return (

@@ -1,5 +1,7 @@
 // Lisa AI Service Worker
-const CACHE_NAME = 'lisa-cache-v1';
+// Update this version string on each deploy to invalidate old caches
+const CACHE_VERSION = 'v2';
+const CACHE_NAME = `lisa-cache-${CACHE_VERSION}`;
 
 // Assets to cache for offline use
 const assetsToCache = [
@@ -18,6 +20,13 @@ self.addEventListener('install', event => {
       })
       .then(() => self.skipWaiting())
   );
+});
+
+// Listen for 'skipWaiting' message from client to activate new SW immediately
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });
 
 // Activate event - clean up old caches

@@ -6,6 +6,9 @@
  */
 
 // L'import de agentRegistry est supprimé car il n'est pas utilisé directement dans ce fichier
+import * as tf from '@tensorflow/tfjs';
+import * as faceapi from 'face-api.js';
+import { ObjectDetector, FilesetResolver } from '@mediapipe/tasks-vision';
 import type { 
   AgentCapability, 
   AgentDomain,
@@ -91,93 +94,256 @@ export class VisionAgent implements BaseAgent {
     const stream = await this.getWebcamStream();
     if (!stream) return null;
 
-    return new Promise((resolve) => {
-      // Dans une implémentation réelle, on créerait un élément video,
-      // on y attacherait le stream, puis on capturerait une frame sur un canvas
-      
-      // Pour cette démo, on simule une capture d'image encodée en base64
-      setTimeout(() => {
-        // Arrêter le stream après capture
+    return new Promise((resolve, reject) => {
+      const video = document.createElement('video');
+      video.srcObject = stream;
+      video.onloadedmetadata = () => {
+        video.play();
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const context = canvas.getContext('2d');
+        
+        if (!context) {
+          stream.getTracks().forEach(track => track.stop());
+          reject(new Error('Could not get canvas context'));
+          return;
+        }
+
+        // Draw video frame to canvas
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        
+        // Stop the stream
         stream.getTracks().forEach(track => track.stop());
         
-        // Retourner une image factice
-        resolve("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==");
-      }, 500);
+        // Resolve with base64 encoded image
+        resolve(canvas.toDataURL('image/png'));
+      };
+      video.onerror = (err) => {
+        stream.getTracks().forEach(track => track.stop());
+        reject(new Error(`Video error: ${err}`));
+      };
     });
   }
 
   // Capturer une capture d'écran
   private async captureScreenshot(): Promise<string | null> {
-    // Dans une vraie implémentation, on utiliserait des APIs comme:
-    // - MediaDevices.getDisplayMedia() pour la capture d'écran dans le navigateur
-    
-    // Pour cette démo, on simule une capture d'écran
-    return "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
+    try {
+      const stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+      const track = stream.getVideoTracks()[0];
+      const imageCapture = new ImageCapture(track);
+      const bitmap = await imageCapture.grabFrame();
+      track.stop(); // Stop the screen sharing
+
+      const canvas = document.createElement('canvas');
+      canvas.width = bitmap.width;
+      canvas.height = bitmap.height;
+      const context = canvas.getContext('2d');
+      if (!context) {
+        throw new Error('Could not get canvas context');
+      }
+      context.drawImage(bitmap, 0, 0);
+
+      return canvas.toDataURL();
+    } catch (error) {
+      console.error('Error capturing screenshot:', error);
+      return null;
+    }
+  }
+
+  private objectDetector: ObjectDetector | null = null;
+  private faceLandmarker: FaceLandmarker | null = null;
+  private isInitialized = false;
+
+  constructor() {
+    this.initializeDetectors();
+  }
+
+  private async initializeDetectors() {
+    try {
+      const vision = await FilesetResolver.forVisionTasks(
+        'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm'
+      );
+      this.objectDetector = await ObjectDetector.createFromOptions(vision, {
+        baseOptions: {
+          modelAssetPath: `https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite0/float16/1/efficientdet_lite0.tflite`,
+        },
+        scoreThreshold: 0.5,
+        runningMode: 'IMAGE',
+      });
+      this.faceLandmarker = await FaceLandmarker.createFromOptions(vision, {
+        baseOptions: {
+          modelAssetPath: `https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker_with_blendshapes.task`,
+        },
+        runningMode: 'IMAGE',
+        outputFaceBlendshapes: true,
+        outputFacialTransformationMatrixes: true,
+      });
+
+      // Load face-api.js models
+      const MODEL_URL = '/models'; // Assuming models are served from /public/models
+      await faceapi.nets.tinyFaceDetector.load(MODEL_URL);
+      await faceapi.nets.faceLandmark68Net.load(MODEL_URL);
+      await faceapi.nets.faceExpressionNet.load(MODEL_URL);
+      await faceapi.nets.ssdMobilenetv1.load(MODEL_URL); // For general object detection if needed
+      await faceapi.nets.tinyYolov2.load(MODEL_URL); // Another option for object detection
+      await faceapi.nets.mtcnn.load(MODEL_URL); // For more robust face detection
+
+      // Load DeepLab v3 model for semantic segmentation
+      this.deeplabModel = await tf.loadGraphModel('https://tfhub.dev/tensorflow/deeplabv3/1/lite/1');
+
+      this.isInitialized = true;
+      this.deeplabModel = await tf.loadGraphModel('https://tfhub.dev/tensorflow/deeplabv3/1/lite/1');
+
+      console.log('MediaPipe Object Detector, Face Landmarker, face-api.js models, and DeepLab v3 initialized.');
+    } catch (error) {
+      console.error('Failed to initialize MediaPipe detectors and face-api.js models:', error);
+    }
   }
 
   // Analyser une image
   private async analyzeImage(
-    _imageData: string, 
+    imageData: string, 
     task: VisionTask,
-    _options?: VisionOptions
+    options?: VisionOptions
   ): Promise<VisionResult> {
-    // Dans une implémentation réelle, on utiliserait un modèle ML local ou une API cloud
-    
-    // Simulation de différentes tâches d'analyse d'image
+    const startTime = Date.now();
+    if (!this.isInitialized || (!this.objectDetector && !this.faceLandmarker)) {
+      throw new Error('MediaPipe detectors are not initialized.');
+    }
+
+    const imageElement = new Image();
+    imageElement.src = imageData;
+    await new Promise(resolve => { imageElement.onload = resolve; });
+
     switch (task) {
-      case 'general_description':
-        return {
-          description: "An office workspace with a computer monitor displaying a coding interface. There are some papers and a coffee mug on the desk.",
-          sceneCategories: [
-            { category: 'indoor', confidence: 0.98 },
-            { category: 'office', confidence: 0.95 },
-            { category: 'workspace', confidence: 0.92 }
-          ],
-          processingTimeMs: 200
-        };
-        
       case 'object_detection':
+        if (!this.objectDetector) throw new Error('Object Detector not initialized.');
+        const detections = this.objectDetector.detect(imageElement);
         return {
-          objects: [
-            { name: 'monitor', confidence: 0.98, boundingBox: { x: 100, y: 50, width: 400, height: 300 } },
-            { name: 'keyboard', confidence: 0.95, boundingBox: { x: 200, y: 400, width: 300, height: 100 } },
-            { name: 'coffee mug', confidence: 0.87, boundingBox: { x: 500, y: 300, width: 80, height: 100 } }
-          ],
-          processingTimeMs: 180
+          objects: detections.detections.map(d => ({
+            name: d.categories[0].categoryName,
+            confidence: d.categories[0].score,
+            boundingBox: {
+              x: d.boundingBox.originX,
+              y: d.boundingBox.originY,
+              width: d.boundingBox.width,
+              height: d.boundingBox.height,
+            },
+          })),
+          processingTimeMs: Date.now() - startTime
         };
-        
+      case 'general_description':
+        let description = "";
+        let objectsDetected: DetectedObject[] = [];
+        let faceCount = 0;
+        let emotions: any[] = [];
+
+        if (this.objectDetector) {
+          const objDetections = this.objectDetector.detect(imageElement);
+          objectsDetected = objDetections.detections.map(d => ({
+            name: d.categories[0].categoryName,
+            confidence: d.categories[0].score,
+          }));
+          if (objectsDetected.length > 0) {
+            description += `I see ${objectsDetected.length} objects including ${objectsDetected.map(o => o.name).join(', ')}. `;
+          }
+        }
+
+        const faceapiDetections = await faceapi.detectAllFaces(imageElement, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceExpressions();
+        faceCount = faceapiDetections.length;
+        if (faceCount > 0) {
+          description += `I also see ${faceCount} face(s). `;
+          emotions = faceapiDetections.map(d => d.expressions);
+        }
+
+        if (!description) {
+          description = "I don't see anything specific, but it's an image.";
+        }
+
+        return {
+          description,
+          objects: objectsDetected,
+          faceCount,
+          emotions,
+          processingTimeMs: Date.now() - startTime
+        };
       case 'face_detection':
+        const fullFaceDescriptions = await faceapi.detectAllFaces(imageElement, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceExpressions();
         return {
-          faceCount: 1,
-          objects: [
-            { 
-              name: 'face', 
-              confidence: 0.96, 
-              boundingBox: { x: 250, y: 150, width: 100, height: 120 },
-              attributes: {
-                'sentiment': 'neutral',
-                'glasses': 'yes',
-                'age_estimate': 30
-              }
+          faceCount: fullFaceDescriptions.length,
+          objects: fullFaceDescriptions.map(d => ({
+            name: "face",
+            confidence: d.detection.score,
+            boundingBox: {
+              x: d.detection.box.x,
+              y: d.detection.box.y,
+              width: d.detection.box.width,
+              height: d.detection.box.height,
+            },
+            attributes: {
+              expressions: d.expressions,
+              age: d.age, // face-api.js can also estimate age if age model is loaded
+              gender: d.gender // face-api.js can also estimate gender if gender model is loaded
             }
-          ],
-          processingTimeMs: 150
+          })),
+          processingTimeMs: Date.now() - startTime
         };
-        
       case 'color_analysis':
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        if (!ctx) throw new Error('Could not get canvas context for color analysis.');
+
+        canvas.width = imageElement.width;
+        canvas.height = imageElement.height;
+        ctx.drawImage(imageElement, 0, 0, canvas.width, canvas.height);
+
+        const imageDataPixels = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+        const colorMap: { [key: string]: number } = {};
+        const step = 10; // Analyze every 10th pixel to speed up
+
+        for (let i = 0; i < imageDataPixels.length; i += 4 * step) {
+          const r = imageDataPixels[i];
+          const g = imageDataPixels[i + 1];
+          const b = imageDataPixels[i + 2];
+          const rgb = `${r},${g},${b}`;
+          colorMap[rgb] = (colorMap[rgb] || 0) + 1;
+        }
+
+        const sortedColors = Object.entries(colorMap).sort(([, countA], [, countB]) => countB - countA);
+        const totalPixels = (canvas.width * canvas.height) / (step * step);
+
+        const dominantColors = sortedColors.slice(0, 5).map(([rgb, count]) => {
+          const [r, g, b] = rgb.split(',').map(Number);
+          return {
+            color: `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`,
+            percentage: count / totalPixels
+          };
+        });
+
         return {
-          dominantColors: [
-            { color: '#FFFFFF', percentage: 0.45 },
-            { color: '#000000', percentage: 0.22 },
-            { color: '#0078D7', percentage: 0.15 },
-            { color: '#777777', percentage: 0.10 }
-          ],
-          processingTimeMs: 80
+          dominantColors,
+          processingTimeMs: Date.now() - startTime
         };
-        
+      case 'semantic_segmentation':
+        if (!this.deeplabModel) throw new Error('DeepLab v3 model not initialized.');
+        const segmentationResult = tf.tidy(() => {
+          const tfImage = tf.browser.fromPixels(imageElement);
+          const resized = tf.image.resizeBilinear(tfImage, [257, 257]);
+          const normalized = resized.div(255);
+          const batched = normalized.expandDims(0);
+          const prediction = this.deeplabModel.predict(batched) as tf.Tensor;
+          const result = tf.argMax(prediction.squeeze(), 2);
+          return result.arraySync();
+        });
+        return {
+          segmentationMap: segmentationResult,
+          processingTimeMs: Date.now() - startTime
+        };
       default:
         return {
-          description: "Image analysis complete, but no specific insights available for the requested task."
+          description: "Image analysis complete, but no specific insights available for the requested task.",
+          processingTimeMs: Date.now() - startTime
         };
     }
   }
@@ -337,7 +503,8 @@ export class VisionAgent implements BaseAgent {
                 'general_description',
                 'object_detection',
                 'face_detection',
-                'color_analysis'
+                'color_analysis',
+                'semantic_segmentation'
               ]
             }
           };
@@ -369,7 +536,8 @@ export class VisionAgent implements BaseAgent {
     const visionKeywords = [
       'see', 'look', 'describe', 'identify', 'what is', 'what are', 
       'camera', 'webcam', 'objects', 'image', 'picture', 'photo',
-      'detect', 'recognize', 'scene', 'visual'
+      'detect', 'recognize', 'scene', 'visual',
+      'segmentation', 'segment'
     ];
     
     // Vérifier la présence de mots-clés dans la requête
@@ -446,7 +614,7 @@ export class VisionAgent implements BaseAgent {
             name: "task",
             type: "string",
             required: false,
-            description: "Analysis task (general_description, object_detection, face_detection, color_analysis)",
+            description: "Analysis task (general_description, object_detection, face_detection, color_analysis, semantic_segmentation)",
             defaultValue: "general_description"
           },
           {

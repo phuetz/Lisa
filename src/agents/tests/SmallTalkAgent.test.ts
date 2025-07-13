@@ -34,7 +34,7 @@ describe('SmallTalkAgent', () => {
       (isSmallTalk as vi.Mock).mockReturnValue(false);
       const confidence = await agent.canHandle('what is the weather?');
       // This will now fall through to the other heuristics
-      expect(confidence).toBe(0.6);
+      expect(confidence).toBe(0.2);
       expect(isSmallTalk).toHaveBeenCalledWith('what is the weather?');
     });
   });

@@ -3,6 +3,10 @@
  */
 
 export const API_CONFIG = {
+  featureFlags: {
+    advancedVision: false, // Default to false, can be overridden by env variable
+    advancedHearing: false, // Default to false, can be overridden by env variable
+  },
   port: process.env.LISA_API_PORT || 3001,
   apiKey: process.env.LISA_API_KEY || 'lisa-api-default-key', // À remplacer par une clé sécurisée en production
   corsOrigins: process.env.LISA_CORS_ORIGINS ? 

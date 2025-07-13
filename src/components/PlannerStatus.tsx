@@ -11,7 +11,8 @@ const statusIcon = {
 };
 
 const PlannerStatus: React.FC = () => {
-  const { plan, setPlan } = useVisionAudioStore();
+  const plan = useVisionAudioStore((s) => s.plan);
+  const setPlan = useVisionAudioStore((s) => s.setPlan);
 
   if (plan === null) {
     return null; // Don't render anything if there's no active plan

@@ -268,6 +268,11 @@ export class PlannerAgent implements BaseAgent {
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       logEvent('plan_revision_failed', { error: message }, `Plan revision failed: ${message}`);
+    }
+  }
+
+  /**
+   * Finalize plan execution, save templates, and clean up checkpoints.
    */
   private finalizePlan(
     result: { success: boolean; error?: string; summary?: string },
@@ -328,7 +333,18 @@ export class PlannerAgent implements BaseAgent {
     }
   }
 
-// ... (rest of the code remains the same)
+  private async callLLM(prompt: string): Promise<string> {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${OPENAI_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: 'gpt-4-turbo', // ou un autre modèle puissant
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.2,
+        response_format: { type: 'json_object' }
       }),
     });
     

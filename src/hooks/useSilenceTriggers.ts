@@ -38,8 +38,10 @@ export function useSilenceTriggers(options: Partial<SilenceTriggerOptions> = {})
     ...options,
   };
   
-  // Récupère l'état du store pour le suivi du silence
-  const store = useVisionAudioStore();
+  // Sélecteurs ciblés du store
+  const lastSilenceMs = useVisionAudioStore((s) => s.lastSilenceMs);
+  const speechDetected = useVisionAudioStore((s) => s.speechDetected);
+  const setState = useVisionAudioStore((s) => s.setState);
   
   /**
    * Vérifier le temps écoulé depuis la dernière interaction audio
@@ -48,7 +50,7 @@ export function useSilenceTriggers(options: Partial<SilenceTriggerOptions> = {})
     if (!isActive) return;
     
     const now = Date.now();
-    const lastInteraction = store.lastSilenceMs;
+    const lastInteraction = lastSilenceMs;
     const elapsed = now - lastInteraction;
     
     setSilenceDuration(elapsed);
@@ -64,13 +66,13 @@ export function useSilenceTriggers(options: Partial<SilenceTriggerOptions> = {})
       
       // Réinitialise le compteur si configuré ainsi
       if (config.resetAfterTrigger) {
-        store.setState({ lastSilenceMs: now });
+        setState({ lastSilenceMs: now });
       }
     } else if (elapsed < config.silenceThreshold && isSilent) {
       // L'utilisateur a interagi, on n'est plus en état de silence
       setIsSilent(false);
     }
-  }, [config, isSilent, isActive, store]);
+  }, [config, isSilent, isActive, lastSilenceMs, setState]);
   
   /**
    * Démarre la détection de silence
@@ -92,10 +94,10 @@ export function useSilenceTriggers(options: Partial<SilenceTriggerOptions> = {})
    */
   const resetSilenceTimer = useCallback(() => {
     const now = Date.now();
-    store.setState({ lastSilenceMs: now });
+    setState({ lastSilenceMs: now });
     setSilenceDuration(0);
     setIsSilent(false);
-  }, [store]);
+  }, [setState]);
   
   // Effet pour configurer la vérification périodique du silence
   useEffect(() => {
@@ -111,10 +113,10 @@ export function useSilenceTriggers(options: Partial<SilenceTriggerOptions> = {})
   
   // Effet pour réinitialiser le compteur de silence quand l'utilisateur parle
   useEffect(() => {
-    if (store.speechDetected) {
+    if (speechDetected) {
       resetSilenceTimer();
     }
-  }, [store.speechDetected, resetSilenceTimer]);
+  }, [speechDetected, resetSilenceTimer]);
   
   return {
     // État

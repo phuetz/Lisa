@@ -23,7 +23,11 @@ export const authenticateToken = (req: AuthenticatedRequest, res: Response, next
     } as ApiResponse);
   }
 
-  jwt.verify(token, process.env.JWT_SECRET || '', (err, user) => {
+  if (!process.env.JWT_SECRET) {
+    console.error('JWT secret not configured on server (process.env.JWT_SECRET)');
+    return res.status(500).json({ success: false, error: 'Configuration serveur manquante (JWT_SECRET)' } as ApiResponse);
+  }
+  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
     if (err) {
       return res.status(403).json({
         success: false,

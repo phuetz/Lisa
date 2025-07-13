@@ -1,6 +1,6 @@
 import { memo, useEffect } from 'react';
 import { Handle, Position, type NodeProps } from 'reactflow';
-import useWorkflowStore from '../store/useWorkflowStore';
+import { useAppStore } from '../../store/appStore';
 import { nodeTypes, nodeStyles, nodeShapes } from './nodeTypes';
 import type { NodeType } from './nodeTypes';
 
@@ -15,13 +15,9 @@ interface CustomNodeData {
 
 // Composant de nœud personnalisé avec styles dynamiques
 const CustomNode = memo(({ id, data, isConnectable, selected, xPos, yPos }: NodeProps<CustomNodeData>) => {
-  const { setSelectedNode, lastAddedNodeId, setLastAddedNodeId } = useWorkflowStore();
-  
-  const executionResults = useWorkflowStore(state => state.executionResults[id]);
-  const executionErrors = useWorkflowStore(state => state.executionErrors[id]);
-  const isExecuting = useWorkflowStore(state => state.isExecuting);
-  const currentExecutingNode = useWorkflowStore(state => state.currentExecutingNode);
-  
+  const { setSelectedNode, lastAddedNodeId, setLastAddedNodeId } = useAppStore(state => state.workflow);
+  const nodeExecutionStatus = useAppStore(state => state.workflow.nodeExecutionStatus[id]);
+
   const nodeType = data.type;
   const nodeInfo = nodeTypes[nodeType] as NodeType;
   
@@ -31,9 +27,9 @@ const CustomNode = memo(({ id, data, isConnectable, selected, xPos, yPos }: Node
   const shape = nodeShapes[category] || nodeShapes.default;
 
   // État d'exécution du nœud
-  const isCurrentlyExecuting = isExecuting && currentExecutingNode === id;
-  const hasExecuted = executionResults !== undefined;
-    const hasError = executionErrors !== undefined;
+  const isCurrentlyExecuting = nodeExecutionStatus === 'running';
+  const hasExecuted = nodeExecutionStatus === 'success' || nodeExecutionStatus === 'failed' || nodeExecutionStatus === 'skipped';
+  const hasError = nodeExecutionStatus === 'failed';
   const isNew = lastAddedNodeId === id;
 
   useEffect(() => {
@@ -46,21 +42,25 @@ const CustomNode = memo(({ id, data, isConnectable, selected, xPos, yPos }: Node
     }
   }, [isNew, setLastAddedNodeId]);
   
-  return (
-    <div
-      className={`
-        bg-white border-2 border-dashed shadow-md transition-all flex flex-col justify-center items-center
-        ${shape.width} ${shape.height} ${shape.shapeClass}
-        ${style.border}
-        ${selected ? 'ring-2 ring-offset-2 ring-blue-500' : ''}
-                ${isCurrentlyExecuting ? 'animate-pulse' : ''}
-        ${isNew ? 'node-enter' : ''}
-        ${hasError ? 'ring-2 ring-red-500' : ''}
-      `}
-      onClick={() => setSelectedNode({ id, data, position: { x: xPos, y: yPos } })}
-    >
-      {/* Input Handles */}
-      {nodeInfo?.inputs?.map((input, index) => (
+  const borderClass = () => {
+    switch (nodeExecutionStatus) {
+      case 'running': return 'border-blue-500 ring-2 ring-blue-500';
+      case 'success': return 'border-green-500 ring-2 ring-green-500';
+      case 'failed': return 'border-red-500 ring-2 ring-red-500';
+      case 'skipped': return 'border-gray-400 opacity-50';
+      default: return style.border || 'border-gray-300';
+    }
+  };
+
+  const backgroundClass = () => {
+    switch (nodeExecutionStatus) {
+      case 'running': return 'bg-blue-100';
+      case 'success': return 'bg-green-100';
+      case 'failed': return 'bg-red-100';
+      case 'skipped': return 'bg-gray-100';
+      default: return 'bg-white';
+    }
+  };
         <Handle
           key={`input-${index}`}
           type="target"
@@ -84,11 +84,7 @@ const CustomNode = memo(({ id, data, isConnectable, selected, xPos, yPos }: Node
         )}
       </div>
 
-      {/* Status Indicators */}
-      <div className="absolute top-1 right-1 flex items-center space-x-1">
-        {hasExecuted && !hasError && <div className="w-2 h-2 bg-green-500 rounded-full" title="Success"></div>}
-        {hasError && <div className="w-2 h-2 bg-red-500 rounded-full" title="Error"></div>}
-      </div>
+      
 
       {/* Output Handles */}
       {nodeInfo?.outputs?.map((output, index) => (

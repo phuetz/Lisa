@@ -17,6 +17,9 @@ beforeAll(() => {
     return 1;
   });
   vi.stubGlobal('cancelAnimationFrame', () => {});
+  vi.stubGlobal('MediaStream', vi.fn(() => ({
+  getTracks: vi.fn(() => []),
+})));
 });
 
 beforeEach(() => {

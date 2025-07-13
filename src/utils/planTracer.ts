@@ -110,6 +110,22 @@ class PlanTracer {
       .slice(0, count)
       .map(trace => ({ ...trace }));
   }
+
+  /**
+   * Nettoie les traces anciennes (plus de 24h)
+   */
+  cleanup(thresholdMs = 24 * 60 * 60 * 1000): number {
+    const now = Date.now();
+    let cleanedCount = 0;
+    
+    for (const [traceId, trace] of this.traces.entries()) {
+      if (now - trace.startTime > thresholdMs) {
+        this.traces.delete(traceId);
+        cleanedCount++;
+      }
+    }
+    return cleanedCount;
+  }
   
   /**
    * Supprime une trace

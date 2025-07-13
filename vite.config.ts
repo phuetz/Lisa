@@ -36,6 +36,12 @@ function cspPlugin() {
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react(), visionStatePlugin(), cspPlugin()],
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+      '@agents': path.resolve(__dirname, './src/agents')
+    }
+  },
   test: {
     globals: true,
     environment: 'jsdom',

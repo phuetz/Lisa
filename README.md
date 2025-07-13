@@ -11,6 +11,41 @@ Lisa est conçue comme un assistant virtuel moderne qui:
 - **Utilise des technologies web modernes**: WebRTC, TensorFlow.js, Web Speech API, Notifications API
 - **S'adapte à l'utilisateur**: Interface contextuelle qui répond à l'attention et aux intentions de l'utilisateur
 
+## Les Cinq Sens de Lisa
+
+Lisa vise à développer une perception multi-modale inspirée des cinq sens humains, en allant au-delà de la vision et de l'audition pour interagir plus richement avec son environnement.
+
+-   **Vue (Vision)**:
+    *   **Améliorations**: Compréhension approfondie des scènes, reconnaissance faciale (identification d'individus), détection d'émotions, reconnaissance d'activités, perception 3D (profondeur).
+    *   **Technologies**: MediaPipe (FaceLandmarker, ObjectDetector, PoseLandmarker), Tesseract.js.
+
+-   **Vue (Vision avancée)**:
+    *   **Améliorations**: Détection d'objets avancée (EfficientDet-Lite / YOLOv8-n), segmentation sémantique, estimation de pose 3D.
+    *   **Technologies**: TensorFlow.js (modèles `EfficientDet-Lite`, `YOLOv8-n`), Web Workers, WebGL/WebGPU (pour l'accélération).
+
+-   **Ouïe (Audition)**:
+    *   **Améliorations**: Détection de mots-clés (wake word), classification audio, reconnaissance vocale (STT).
+    *   **Technologies**: MediaPipe AudioClassifier, Web Speech API, Picovoice Porcupine.
+
+-   **Ouïe (Audition avancée)**:
+    *   **Améliorations**: Reconnaissance vocale (STT) offline, compréhension du langage naturel (NLU) pour le sentiment et l'intention, reconnaissance d'émotion vocale (SER).
+    *   **Technologies**: `Whisper-tiny` (WASM/ONNX), `@xenova/transformers` (DistilBERT), TensorFlow.js (pour SER), Web Workers.
+
+-   **Toucher (Tactile/Proprioception)**:
+    *   **Approche**: Simulation indirecte via l'intégration avec des capteurs externes et des appareils intelligents fournissant des données sur l'environnement physique.
+    *   **Technologies**: MQTT.js (ou bibliothèques de protocoles IoT similaires), Web Bluetooth / Web USB APIs.
+
+-   **Odorat (Olfaction)**:
+    *   **Approche**: Intégration avec des capteurs de "nez électronique" (e-nose) capables de détecter et de classifier les odeurs.
+    *   **Technologies**: MQTT.js / Plateformes IoT, Bibliothèques d'analyse de données.
+
+-   **Goût (Gustation)**:
+    *   **Approche**: Très indirecte, via des capteurs chimiques spécialisés intégrés via des plateformes IoT. Principalement conceptuel pour une IA généraliste.
+
+**Intégration Cognitive Générale**: 
+-   **Graphes de Connaissances**: Pour construire une compréhension structurée et interconnectée du monde.
+-   **Modèles d'IA Multi-modaux**: Pour traiter et raisonner sur des entrées sensorielles combinées.
+
 ## Configuration
 
 ### Variables d'environnement
@@ -125,6 +160,7 @@ Lisa dispose d'un ensemble complet d'agents spécialisés couvrant différents d
 | **TranslationAgent** | Traduit le contenu entre différentes langues | Traduction contextuelle, adaptation culturelle |
 | **PersonalizationAgent** | Adapte l'expérience à l'utilisateur | Apprentissage des préférences, suggestions personnalisées |
 | **SecurityAgent** | Surveille et protège la vie privée | Détection de risques, recommendations de sécurité |
+| **RosAgent** | Interagit avec les systèmes ROS (Robot Operating System) | Publication de messages, souscription à des topics, appel de services ROS |
 
 #### Architecture du registre d'agents
 
@@ -470,16 +506,21 @@ src/
 ├── agents/              # Système d'agents intelligents
 │   ├── registry.ts     # Registre central des agents
 │   ├── types.ts        # Types et interfaces des agents
-│   └── PlannerAgent.ts # Agent d'orchestration principal
+│   ├── PlannerAgent.ts # Agent d'orchestration principal
+│   └── MetaHumanAgent.ts # Agent de contrôle du MetaHuman
 ├── components/         # Composants React réutilisables
 │   ├── UI/             # Éléments d'interface générique
-│   └── panels/         # Panneaux fonctionnels (alarmes, todos, etc.)
+│   ├── panels/         # Panneaux fonctionnels (alarmes, todos, etc.)
+│   ├── MetaHumanCanvas.tsx # Composant de rendu 3D pour le MetaHuman
+│   ├── ModelLoader.tsx # Chargeur de modèles 3D
+│   └── MetaHumanControlsPanel.tsx # Panneau de contrôle du MetaHuman
 ├── hooks/              # Hooks React personnalisés
 │   ├── useAlarmTimerScheduler.ts  # Gestion des alarmes et minuteurs
 │   ├── useClipboardSummarizer.ts  # Surveillance et résumé du presse-papiers
 │   └── useNotifications.ts        # Gestion des notifications push
 ├── store/              # État global de l'application
-│   └── visionAudioStore.ts        # Store Zustand principal
+│   ├── visionAudioStore.ts        # Store Zustand principal
+│   └── metaHumanStore.ts # Store Zustand pour le MetaHuman
 ├── tools/              # Outils spécifiques
 ├── locales/            # Fichiers de traduction
 │   ├── en/             # Anglais
@@ -493,6 +534,31 @@ src/
 npm install
 npm run dev
 # http://localhost:5173
+```
+
+### Stack complète (Base de données, API et Frontend)
+
+Un script PowerShell simplifie le lancement de **tout** l'environnement local :
+
+```powershell
+# Applique les migrations Prisma puis lance DB + API + Frontend
+pwsh ./scripts/launch.ps1
+
+# Si la base est déjà migrée, saute l'étape Prisma
+pwsh ./scripts/launch.ps1 -SkipMigrate
+```
+
+Prérequis :
+1. **Docker Desktop** en cours d'exécution.
+2. `.env` contient :`DATABASE_URL=postgresql://lisa:lisa@127.0.0.1:5433/lisa?schema=public`.
+3. `npm install` a été exécuté pour installer les dépendances Node.
+
+Le script `scripts/launch.ps1` :
+- (Re)démarre le conteneur Postgres défini dans `docker-compose.yml` (port **5433** → 5432 interne).
+- Applique les migrations Prisma avec `npx prisma migrate deploy` (sauf si `-SkipMigrate`).
+- Compile et démarre l'API Node (TypeScript → JavaScript) en arrière-plan.
+- Lance le serveur **Vite** (`npm run dev`) au premier plan pour le frontend.
+
 ```
 
 - [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh

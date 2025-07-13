@@ -19,9 +19,6 @@ const mockNodeRegistry = {
   unregister: vi.fn(),
 };
 
-// Mock the global fetch function
-global.fetch = vi.fn();
-
 describe('PluginLoader', () => {
   let pluginLoader: PluginLoader;
 
@@ -38,6 +35,8 @@ describe('PluginLoader', () => {
   };
 
   beforeEach(() => {
+    // Mock the global fetch function
+    vi.stubGlobal('fetch', vi.fn());
     // Instantiate PluginLoader with mock dependencies
     pluginLoader = new PluginLoader(mockAgentRegistry, mockNodeRegistry);
   });
@@ -45,6 +44,7 @@ describe('PluginLoader', () => {
   afterEach(() => {
     // Clear all mocks after each test
     vi.clearAllMocks();
+    vi.restoreAllMocks();
   });
 
   it('should load a plugin from a manifest URL and register its resources', async () => {

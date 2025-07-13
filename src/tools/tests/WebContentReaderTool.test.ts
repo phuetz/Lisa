@@ -9,6 +9,9 @@ const mockDOMParser = {
 };
 vi.stubGlobal('DOMParser', vi.fn(() => mockDOMParser));
 
+// Mock the environment variable for OpenAI API key
+vi.stubEnv('VITE_OPENAI_API_KEY', 'test-openai-key');
+
 describe('WebContentReaderTool', () => {
   let tool: WebContentReaderTool;
 
@@ -53,6 +56,7 @@ describe('WebContentReaderTool', () => {
     (fetch as Mock).mockResolvedValueOnce({
       ok: false,
       status: 404,
+      text: () => Promise.resolve('Not Found'), // Add text method for error handling
     });
 
     const result = await tool.execute({ url: mockUrl });

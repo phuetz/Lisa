@@ -9,6 +9,8 @@ import { useState, useCallback, useEffect } from 'react';
 import { useVisionAudioStore } from '../store/visionAudioStore';
 import { agentRegistry } from '../agents/registry';
 import type { VoiceSettings, SpeechSynthesisIntent, SpeechFormat } from '../agents/SpeechSynthesisAgent';
+import { useMetaHumanStore } from '../store/metaHumanStore';
+import { MetaHumanAgent } from '../agents/MetaHumanAgent';
 
 export interface SpeechSynthesisOptions {
   autoStart?: boolean;
@@ -91,6 +93,15 @@ export const useSpeechSynthesis = (options: SpeechSynthesisOptions = {}) => {
       setState('speaking');
       setError(null);
       setLastSpokenText(text);
+
+      // Trigger MetaHuman speech animation
+      const metaHumanAgent = agentRegistry.getAgent('MetaHumanAgent') as MetaHumanAgent | undefined;
+      if (metaHumanAgent) {
+        metaHumanAgent.execute({
+          intent: 'animate_speech',
+          parameters: { text: text, duration: text.length * 0.08 } // Estimate duration for animation
+        });
+      }
       
       const registry = agentRegistry;
       const agent = registry.getAgent('SpeechSynthesisAgent');

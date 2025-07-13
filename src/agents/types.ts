@@ -69,6 +69,16 @@ export interface AgentExecuteResult {
   };
 }
 
+import { z } from 'zod';
+
+export interface NodeInputOutput {
+  id: string;
+  type: string;
+  label: string;
+  description?: string;
+  required?: boolean;
+}
+
 /**
  * The base interface that every agent must implement.
  */
@@ -80,6 +90,11 @@ export interface BaseAgent {
   domain: AgentDomain;              // The domain this agent belongs to
   capabilities: string[];           // List of specific capabilities this agent provides
   requiresAuthentication?: boolean; // Whether this agent requires authentication
+
+  // Input/Output definitions for workflow editor
+  inputs?: NodeInputOutput[];
+  outputs?: NodeInputOutput[];
+  configSchema?: z.ZodObject<any>; // Zod schema for agent-specific configuration
 
   // Core methods
   execute(props: AgentExecuteProps): Promise<AgentExecuteResult>;  // Main execution method

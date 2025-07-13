@@ -10,6 +10,7 @@ import {
   useAudioClassifier,
   useSpeechResponder,
   useVoiceIntent,
+  useMediaPipeModels,
 } from './hooks';
 import LisaCanvas from './components/LisaCanvas';
 import WeatherBanner from './components/WeatherBanner';
@@ -23,6 +24,7 @@ import { ClipboardSummaryPanel } from './components/ClipboardSummaryPanel';
 import { SpeechSynthesisPanel } from './components/SpeechSynthesisPanel';
 import OCRPanel from './components/OCRPanel';
 import VisionPanel from './components/VisionPanel';
+import HearingPanel from './components/HearingPanel';
 import CodeInterpreterPanel from './components/CodeInterpreterPanel';
 import ProactiveSuggestionsPanel from './components/ProactiveSuggestionsPanel';
 import useAlarmTimerScheduler from './hooks/useAlarmTimerScheduler';
@@ -39,11 +41,15 @@ import useSpeechSynthesis from './hooks/useSpeechSynthesis';
 import GitHubPanel from './components/GitHubPanel';
 import PowerShellPanel from './components/PowerShellPanel';
 import ScreenSharePanel from './components/ScreenSharePanel';
+import { MetaHumanCanvas } from './components/MetaHumanCanvas';
+import { MetaHumanControlsPanel } from './components/MetaHumanControlsPanel';
 
 function App() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [micStream, setMicStream] = useState<MediaStream>();
   const [audioCtx] = useState(() => new AudioContext());
+  const [advancedVision, setAdvancedVision] = useState(false);
+  const [advancedHearing, setAdvancedHearing] = useState(false);
 
   useEffect(() => {
     navigator.mediaDevices
@@ -55,14 +61,39 @@ function App() {
         if (videoRef.current) videoRef.current.srcObject = stream;
         setMicStream(stream);
       });
-  }, []);
+  }, [featureFlags.advancedVision]);
+
+  // Subscribe to hearingSense percepts and update store
+  useEffect(() => {
+    const handleHearingPercept = (percept: Percept<HearingPerceptPayload>) => {
+      useAppStore.setState((state) => ({
+        hearingPercepts: [...(state.hearingPercepts || []), percept],
+      }));
+    };
+
+    if (featureFlags.advancedHearing) {
+      hearingSense.setOnPerceptCallback(handleHearingPercept);
+      hearingSense.initialize(audioCtx, micStream!); // Pass audioCtx and micStream
+    } else {
+      hearingSense.terminate();
+      hearingSense.setOnPerceptCallback(null);
+    }
+
+    return () => {
+      hearingSense.terminate();
+      hearingSense.setOnPerceptCallback(null);
+    };
+  }, [featureFlags.advancedHearing, audioCtx, micStream]);
+
+  // Load MediaPipe models
+  const { models, loading, error } = useMediaPipeModels();
 
   // Activate hooks
-  useFaceLandmarker(videoRef.current!);
-  useHandLandmarker(videoRef.current!);
-  useObjectDetector(videoRef.current!);
-  usePoseLandmarker(videoRef.current!);
-  useAudioClassifier(audioCtx, micStream);
+  useFaceLandmarker(videoRef.current!, models.faceLandmarker);
+  useHandLandmarker(videoRef.current!, models.handLandmarker);
+  useObjectDetector(videoRef.current!, models.objectDetector);
+  usePoseLandmarker(videoRef.current!, models.poseLandmarker);
+  useAudioClassifier(audioCtx, micStream, models.audioClassifier);
   useWakeWord(audioCtx, micStream);
   useSpeechResponder();
   useVoiceIntent();
@@ -97,18 +128,29 @@ function App() {
         <ProactiveSuggestionsPanel />
         <SpeechSynthesisPanel />
         <VisionPanel />
+        <HearingPanel />
         <OCRPanel />
         <CodeInterpreterPanel />
         <ClipboardSummaryPanel />
         <GitHubPanel />
         <PowerShellPanel />
         <ScreenSharePanel />
+        <MetaHumanControlsPanel />
       </div>
       <div className="fixed bottom-4 right-4 flex gap-2">
         <GoogleCalendarButton />
         <AlarmTimerPanel />
         <TodoPanel />
       </div>
+      <div className="fixed bottom-4 left-4 flex gap-2">
+        <button onClick={() => setAdvancedVision(!advancedVision)}>
+          {advancedVision ? 'Disable' : 'Enable'} Advanced Vision
+        </button>
+        <button onClick={() => setAdvancedHearing(!advancedHearing)}>
+          {advancedHearing ? 'Disable' : 'Enable'} Advanced Hearing
+        </button>
+      </div>
+      <MetaHumanCanvas />
     </div>
   );
 }
