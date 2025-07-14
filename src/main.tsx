@@ -5,32 +5,37 @@ import './i18n'
 import App from './App.tsx'
 
 // Register service worker for PWA functionality
-const registerServiceWorker = async () => {
+const registerServiceWorker = () => {
   if ('serviceWorker' in navigator) {
-    try {
-      const registration = await navigator.serviceWorker.register('/service-worker.js');
-      console.log('Service Worker registered with scope:', registration.scope);
-      // If there's a waiting service worker, activate it immediately
-      if (registration.waiting) {
-        registration.waiting.postMessage({ type: 'SKIP_WAITING' });
-      }
-      // Listen for updates
+    navigator.serviceWorker.register('/service-worker.js').then(registration => {
       registration.addEventListener('updatefound', () => {
         const newWorker = registration.installing;
-        if (newWorker) {
-          newWorker.addEventListener('statechange', () => {
-            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-              console.log('New content available, refreshing...');
-              newWorker.postMessage({ type: 'SKIP_WAITING' });
-            }
-          });
-        }
+
+        newWorker?.addEventListener('statechange', () => {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            // Notify user that an update is available
+            showUpdateNotification();
+          }
+        });
       });
-    } catch (error) {
+    }).catch(error => {
       console.error('Service Worker registration failed:', error);
-    }
+    });
   }
 };
+
+function showUpdateNotification() {
+  const notification = document.createElement('div');
+  notification.className = 'update-notification';
+  notification.innerHTML = `
+    <p>Une nouvelle version de Lisa est disponible!</p>
+    <button>Mettre à jour</button>
+  `;
+  notification.querySelector('button')?.addEventListener('click', () => {
+    window.location.reload();
+  });
+  document.body.appendChild(notification);
+}
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -41,7 +46,3 @@ createRoot(document.getElementById('root')!).render(
 // Register service worker after app has loaded
 window.addEventListener('load', registerServiceWorker);
 
-// Reload the page when the new service worker activates
-navigator.serviceWorker?.addEventListener('controllerchange', () => {
-  window.location.reload();
-});
