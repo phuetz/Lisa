@@ -63,7 +63,7 @@ describe('buildPlannerPrompt', () => {
     expect(prompt).toContain('Le plan précédent a échoué.');
     expect(prompt).toContain(`**Objectif initial:** "${goal}"`);
     expect(prompt).toContain(`**Message d'erreur:** "${errorMsg}"`);
-    expect(prompt).toContain('Analysez l'erreur et créez un plan révisé.');
+    expect(prompt).toContain("Analysez l'erreur et créez un plan révisé.");
     
     // Verify it contains the failed plan
     expect(prompt).toContain('WeatherAgent');
