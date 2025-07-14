@@ -15,6 +15,7 @@ import type {
   BaseAgent
 } from './types';
 import { agentRegistry } from './registry';
+import { secureTokenStorage } from '../utils/secureTokenStorage';
 
 /**
  * Supported calendar intents
@@ -101,8 +102,8 @@ export interface CalendarEvent {
  * Helper function to get auth token from session storage
  * This is a temporary solution. In the future, the agent should handle its own auth.
  */
-function getAuthToken(): string | null {
-  return sessionStorage.getItem('google_access_token');
+async function getAuthToken(): Promise<string | null> {
+  return secureTokenStorage.getToken();
 }
 
 export class CalendarAgent implements BaseAgent {
@@ -181,7 +182,7 @@ export class CalendarAgent implements BaseAgent {
       }
 
       // Check authentication
-      const token = getAuthToken();
+      const token = await getAuthToken();
       if (!token) {
         return {
           success: false,
@@ -461,7 +462,7 @@ export class CalendarAgent implements BaseAgent {
    * Creates a new event in Google Calendar
    */
   private async createEvent(props: CalendarEvent): Promise<any> {
-    const token = getAuthToken();
+    const token = await getAuthToken();
     if (!token) return { success: false, error: 'Not authenticated', output: null };
 
     try {
@@ -506,7 +507,7 @@ export class CalendarAgent implements BaseAgent {
    * Deletes an event from Google Calendar
    */
   private async deleteEvent(eventId: string): Promise<any> {
-    const token = getAuthToken();
+    const token = await getAuthToken();
     if (!token) throw new Error('Not authenticated with Google Calendar');
     
     try {
@@ -538,7 +539,7 @@ export class CalendarAgent implements BaseAgent {
    * Updates an existing event in Google Calendar
    */
   private async updateEvent(eventId: string, eventData: Partial<CalendarEvent>): Promise<any> {
-    const token = getAuthToken();
+    const token = await getAuthToken();
     if (!token) throw new Error('Not authenticated with Google Calendar');
     
     try {
@@ -610,7 +611,7 @@ export class CalendarAgent implements BaseAgent {
    * Finds available time slots in the calendar
    */
   private async findAvailableTime(durationMinutes: number, date?: string): Promise<any> {
-    const token = getAuthToken();
+    const token = await getAuthToken();
     if (!token) throw new Error('Not authenticated with Google Calendar');
     
     try {
@@ -689,7 +690,7 @@ export class CalendarAgent implements BaseAgent {
    * Lists events from Google Calendar for a specified period
    */
   private async listEvents(props: { period: TimePeriod, startDate?: string, endDate?: string }): Promise<any> {
-    const token = getAuthToken();
+    const token = await getAuthToken();
     if (!token) throw new Error('Not authenticated with Google Calendar');
 
     try {
