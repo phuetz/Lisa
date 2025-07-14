@@ -27,3 +27,4 @@ dist-ssr
 
 # Environment variables
 # .env
+pnpm-lock.yaml
