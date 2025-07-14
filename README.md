@@ -83,7 +83,7 @@ npm i @picovoice/porcupine-web @picovoice/web-voice-processor
 4. (Optionnel) Pour un mot-clé personnalisé, placez le fichier `lisa.ppn` dans `public/porcupine/` et remplacez `BuiltInKeyword.PORCUPINE` par le chemin du modèle dans `useWakeWord.ts`.
 
 ### Sécurité
-- Le jeton Google OAuth est désormais stocké dans **`sessionStorage`** (au lieu de `localStorage`) et sera purgé à la fermeture de l'onglet.
+- Le jeton Google OAuth est désormais chiffré et stocké dans **`sessionStorage`** via `SecureTokenStorage`, puis purgé à la fermeture de l'onglet.
 - Un **Content-Security-Policy** strict est injecté via un plugin Vite (`csp-headers`). Vous pouvez l'ajuster dans `vite.config.ts`.
 - Les appels MCP utilisent un en-tête `Authorization: Bearer <VITE_MCP_TOKEN>` si la variable est définie.
 - Les notifications push utilisent un **Service Worker** conforme aux bonnes pratiques de sécurité.

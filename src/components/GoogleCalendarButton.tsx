@@ -24,8 +24,8 @@ export function GoogleCalendarButton() {
     }
   };
 
-  const handleSignOut = () => {
-    signOut();
+  const handleSignOut = async () => {
+    await signOut();
   };
 
   const upcomingEvents = events.slice(0, 3); // Show next 3 events

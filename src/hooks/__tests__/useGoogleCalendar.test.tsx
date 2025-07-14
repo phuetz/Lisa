@@ -1,6 +1,7 @@
 import { renderHook, act } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { useGoogleCalendar } from '../useGoogleCalendar';
+import { secureTokenStorage } from '../../utils/secureTokenStorage';
 
 // Mock global google object
 const mockGoogle = {
@@ -21,11 +22,10 @@ describe('useGoogleCalendar', () => {
     // @ts-ignore
     global.window.google = mockGoogle;
     mockGoogle.accounts.oauth2.initTokenClient.mockImplementation(() => mockTokenClient);
-    
-    // Mock localStorage
-    Storage.prototype.setItem = vi.fn();
-    Storage.prototype.getItem = vi.fn();
-    Storage.prototype.removeItem = vi.fn();
+
+    vi.spyOn(secureTokenStorage, 'storeToken').mockResolvedValue();
+    vi.spyOn(secureTokenStorage, 'getToken').mockResolvedValue(null);
+    vi.spyOn(secureTokenStorage, 'removeToken').mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -57,12 +57,12 @@ describe('useGoogleCalendar', () => {
 
   it('should handle sign out', async () => {
     const { result } = renderHook(() => useGoogleCalendar());
-    
+
     await act(async () => {
-      result.current.signOut();
+      await result.current.signOut();
     });
-    
-    expect(sessionStorage.removeItem).toHaveBeenCalledWith('google_access_token');
+
+    expect(secureTokenStorage.removeToken).toHaveBeenCalled();
   });
 
   it('should handle token callback', async () => {
@@ -82,7 +82,7 @@ describe('useGoogleCalendar', () => {
       expect(result.current.isSignedIn).toBe(true);
     });
     
-    expect(sessionStorage.setItem).toHaveBeenCalledWith('google_access_token', mockToken);
+    expect(secureTokenStorage.storeToken).toHaveBeenCalledWith(mockToken);
   });
 
   it('should handle token error', async () => {

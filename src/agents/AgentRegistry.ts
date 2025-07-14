@@ -85,7 +85,14 @@ class AgentRegistry {
         error: `Agent ${name} not found`
       };
     }
-    return await agent.execute(props);
+
+    const timeout = props.timeout ?? 30000;
+    return Promise.race([
+      agent.execute(props),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Agent timeout')), timeout)
+      )
+    ]);
   }
 
   /**

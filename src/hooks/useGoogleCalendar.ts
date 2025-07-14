@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useVisionAudioStore } from '../store/visionAudioStore';
 import { agentRegistry } from '../agents/registry';
+import { secureTokenStorage } from '../utils/secureTokenStorage';
 
 // Google OAuth2 configuration
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
@@ -19,7 +20,7 @@ interface UseGoogleCalendarReturn {
   user: GoogleUser | null;
   events: GoogleCalendarEvent[];
   signIn: () => Promise<void>;
-  signOut: () => void;
+  signOut: () => Promise<void>;
   createEvent: (event: CreateEventInput) => Promise<GoogleCalendarEvent>;
   isLoading: boolean;
   error: Error | null;
@@ -50,12 +51,14 @@ export function useGoogleCalendar(): UseGoogleCalendarReturn {
 
   // Check for existing token on mount
   useEffect(() => {
-    const token = sessionStorage.getItem('google_access_token');
-    if (token) {
-      fetchUserProfile(token);
-      fetchEvents();
-    }
-  }, []);
+    (async () => {
+      const token = await secureTokenStorage.getToken();
+      if (token) {
+        fetchUserProfile(token);
+        fetchEvents();
+      }
+    })();
+  }, [fetchEvents, fetchUserProfile]);
 
   const fetchUserProfile = useCallback(async (accessToken: string) => {
     try {
@@ -67,7 +70,7 @@ export function useGoogleCalendar(): UseGoogleCalendarReturn {
       setUser(userData);
     } catch (err) {
       console.error('Error fetching user profile:', err);
-      signOut();
+      await signOut();
     }
   }, []);
 
@@ -107,7 +110,7 @@ export function useGoogleCalendar(): UseGoogleCalendarReturn {
           scope: SCOPES,
           callback: async (tokenResponse: any) => {
             if (tokenResponse && tokenResponse.access_token) {
-              sessionStorage.setItem('google_access_token', tokenResponse.access_token);
+              await secureTokenStorage.storeToken(tokenResponse.access_token);
               await fetchUserProfile(tokenResponse.access_token);
               await fetchEvents();
               resolve();
@@ -141,9 +144,9 @@ export function useGoogleCalendar(): UseGoogleCalendarReturn {
     }
   }, [fetchEvents]);
 
-  const signOut = useCallback(() => {
-    const token = sessionStorage.getItem('google_access_token');
-    sessionStorage.removeItem('google_access_token');
+  const signOut = useCallback(async () => {
+    const token = await secureTokenStorage.getToken();
+    secureTokenStorage.removeToken();
     setUser(null);
     setEvents([]);
     // Revoke token with Google
