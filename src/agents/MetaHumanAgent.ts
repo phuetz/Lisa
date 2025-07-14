@@ -47,7 +47,7 @@ export class MetaHumanAgent implements BaseAgent {
     return [
       { name: 'set_expression', description: 'Sets a facial expression on the MetaHuman.', parameters: [{ name: 'expression', type: 'string', required: true }, { name: 'intensity', type: 'number', required: false }] },
       { name: 'set_pose', description: 'Sets a body pose on the MetaHuman.', parameters: [{ name: 'pose', type: 'string', required: true }] },
-      { name: 'animate_speech', description: 'Animates the MetaHuman's face and body based on speech.', parameters: [{ name: 'text', type: 'string', required: true }, { name: 'duration', type: 'number', required: false }] },
+      { name: 'animate_speech', description: "Animates the MetaHuman's face and body based on speech.", parameters: [{ name: 'text', type: 'string', required: true }, { name: 'duration', type: 'number', required: false }] },
     ];
   }
 }

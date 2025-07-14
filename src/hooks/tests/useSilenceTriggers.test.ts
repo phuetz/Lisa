@@ -98,7 +98,7 @@ describe('useSilenceTriggers', () => {
     expect(onSilenceDetected).not.toHaveBeenCalled();
   });
 
-  it('devrait réinitialiser le silence quand l'utilisateur parle', () =>{
+  it("devrait réinitialiser le silence quand l'utilisateur parle", () =>{
     const onSilenceDetected = vi.fn();
     
     // Simuler un silence plus ancien que le seuil
@@ -126,7 +126,7 @@ describe('useSilenceTriggers', () => {
     expect(result.current.isSilent).toBe(false);
   });
 
-  it('devrait permettre d'activer/désactiver la détection', () => {
+  it("devrait permettre d'activer/désactiver la détection", () => {
     const onSilenceDetected = vi.fn();
     
     // Simuler un silence plus ancien que le seuil
