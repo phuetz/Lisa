@@ -16,6 +16,8 @@ import { GeminiCodeAgent } from './GeminiCodeAgent';
 class AgentRegistry {
   private static instance: AgentRegistry;
   private agents: Map<string, BaseAgent> = new Map<string, BaseAgent>();
+  private lastAccess: Map<string, number> = new Map<string, number>();
+  private maxAgents = 50;
 
   // Private constructor to prevent direct instantiation.
   private constructor() {}
@@ -39,7 +41,11 @@ class AgentRegistry {
     if (this.agents.has(agent.name)) {
       throw new Error(`Agent with name "${agent.name}" is already registered.`);
     }
+    if (this.agents.size >= this.maxAgents) {
+      this.cleanupOldAgents();
+    }
     this.agents.set(agent.name, agent);
+    this.lastAccess.set(agent.name, Date.now());
   }
 
   /**
@@ -48,7 +54,11 @@ class AgentRegistry {
    * @returns The agent instance, or undefined if not found.
    */
   public getAgent(name: string): BaseAgent | undefined {
-    return this.agents.get(name);
+    const agent = this.agents.get(name);
+    if (agent) {
+      this.lastAccess.set(name, Date.now());
+    }
+    return agent;
   }
 
   /**
@@ -90,6 +100,19 @@ class AgentRegistry {
    */
   public listAgents(): BaseAgent[] {
     return Array.from(this.agents.values());
+  }
+
+  /**
+   * Removes the least recently accessed agents when the maximum limit is reached.
+   */
+  private cleanupOldAgents(): void {
+    const sorted = Array.from(this.lastAccess.entries()).sort((a, b) => a[1] - b[1]);
+    const toRemove = Math.floor(this.maxAgents * 0.1);
+    for (let i = 0; i < toRemove && i < sorted.length; i++) {
+      const [name] = sorted[i];
+      this.agents.delete(name);
+      this.lastAccess.delete(name);
+    }
   }
 }
 
