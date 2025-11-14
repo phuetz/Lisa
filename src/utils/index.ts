@@ -165,6 +165,15 @@ export {
   type WorkflowTemplate,
 } from '../workflow/templates';
 
+// Migration system
+export {
+  MigrationManager,
+  migrationManager,
+  autoMigrate,
+  type MigrationStep,
+  type MigrationState,
+} from './migration';
+
 /**
  * Commonly used utility bundles
  */
