@@ -90,6 +90,7 @@ Lisa a bénéficié d'améliorations majeures pour atteindre un niveau de qualit
 
 - [IMPROVEMENTS.md](./IMPROVEMENTS.md) - Détails techniques de toutes les fonctionnalités
 - [EXAMPLES.md](./EXAMPLES.md) - 20+ exemples d'utilisation
+- [INTEGRATION_GUIDE.md](./INTEGRATION_GUIDE.md) - **Guide d'intégration complet (Phase 5)**
 - [MIGRATION_GUIDE.md](./MIGRATION_GUIDE.md) - Guide de migration
 - [CONTRIBUTING.md](./CONTRIBUTING.md) - Guide de contribution
 - [CHANGELOG.md](./CHANGELOG.md) - Historique des versions

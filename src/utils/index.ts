@@ -44,6 +44,18 @@ export {
   type AnalyticsOptions,
 } from './agentAnalytics';
 
+// Agent instrumentation
+export {
+  instrumentAgent,
+  InstrumentAgent,
+  instrumentAgents,
+  getAgentPerformance,
+  getAllAgentPerformance,
+  exportAgentAnalytics,
+  resetAgentAnalytics,
+  resetAllAgentAnalytics,
+} from './agentInstrumentation';
+
 // Performance profiling
 export {
   PerformanceProfiler,

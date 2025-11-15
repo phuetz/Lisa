@@ -43,6 +43,9 @@ import PowerShellPanel from './components/PowerShellPanel';
 import ScreenSharePanel from './components/ScreenSharePanel';
 import { MetaHumanCanvas } from './components/MetaHumanCanvas';
 import { MetaHumanControlsPanel } from './components/MetaHumanControlsPanel';
+import { MonitoringDashboard } from './components/MonitoringDashboard';
+import { SettingsPanel } from './components/panels/SettingsPanel';
+import { FeatureGate } from './utils/featureFlags';
 
 function App() {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -151,6 +154,14 @@ function App() {
         </button>
       </div>
       <MetaHumanCanvas />
+
+      {/* Monitoring Dashboard (Feature Flag Gated) */}
+      <FeatureGate flag="monitoring-dashboard">
+        <MonitoringDashboard />
+      </FeatureGate>
+
+      {/* Settings Panel (Always Available) */}
+      <SettingsPanel />
     </div>
   );
 }

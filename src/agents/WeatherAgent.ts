@@ -1,19 +1,54 @@
 /**
  * WeatherAgent - Fetches and processes weather data
- * 
+ *
  * This agent handles weather-related queries including current conditions,
  * forecasts, and weather alerts using the Open-Meteo API.
+ *
+ * Enhanced with retry logic for improved reliability.
  */
 
 import { AgentDomains } from './types';
-import type { 
-  AgentCapability, 
+import type {
+  AgentCapability,
   AgentExecuteProps,
-  AgentExecuteResult, 
-  AgentParameter, 
-  BaseAgent 
+  AgentExecuteResult,
+  AgentParameter,
+  BaseAgent
 } from './types';
 import { agentRegistry } from './registry';
+import { retryWithBackoff, RetryPredicates } from '../utils/retry';
+import { featureFlags } from '../utils/featureFlags';
+
+/**
+ * Fetch with automatic retry logic
+ * Uses exponential backoff for failed requests
+ */
+async function fetchWithRetry(url: string, options?: RequestInit): Promise<Response> {
+  if (!featureFlags.isEnabled('retry-logic')) {
+    return fetch(url, options);
+  }
+
+  const result = await retryWithBackoff(
+    () => fetch(url, options),
+    {
+      maxAttempts: 3,
+      initialDelay: 500,
+      maxDelay: 5000,
+      shouldRetry: (error) => {
+        // Retry on network errors or 5xx server errors
+        if (RetryPredicates.isNetworkError(error)) return true;
+        if (error instanceof Response && error.status >= 500) return true;
+        return false;
+      },
+    }
+  );
+
+  if (!result.success) {
+    throw result.error;
+  }
+
+  return result.data;
+}
 
 export interface BuildWeatherUrlOpts {
   includeHourly?: boolean;
@@ -445,8 +480,9 @@ export class WeatherAgent implements BaseAgent {
       }
       
       const url = buildWeatherUrl(latitude, longitude, { includeHourly: true });
-      
-      const response = await fetch(url);
+
+      // Use fetchWithRetry for improved reliability
+      const response = await fetchWithRetry(url);
       if (!response.ok) {
         throw new Error('Failed to fetch weather data from API');
       }
