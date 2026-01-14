@@ -85,9 +85,9 @@ This roadmap is structured in four phases, moving from foundational architectura
 
 - [x] **4.1: Enhance Vision (Deeper Scene Understanding)**
     - **4.1.1: Choix & test modèle:** Implement a notebook/TS to compare EfficientDet-Lite vs YOLOv8-n tfjs on 50 COCO images (val 2017). Generate `docs/vision/benchmark_v1.md` report. (Placeholder created, requires manual execution and data filling).
-    - **4.1.2: Module front `src/senses/vision.ts`:** Implement Web Worker + WebGL/WebGPU; fallback CPU. Asynchronous pipeline → `postMessage` events. (Implemented).
+    - **4.1.2: Module front `src/senses/vision.ts`:** Implement Web Worker + WebGL/WebGPU; fallback CPU (MediaPipe). Asynchronous pipeline → `postMessage` events. (Implemented: YOLOv8-n in worker, MediaPipe on CPU for objects, poses, faces, and hands).
     - **4.1.3: Événement bus:** New `Percept<V>` type. Encapsulate existing MediaPipe BBox into this format. (Implemented).
-    - **4.1.4: UI:** Extend overlay (SVG/Canvas) to display multiple sources + color per model. Toggle `"advancedVision"` in `config.json`. (Implemented).
+    - **4.1.4: UI:** Extend overlay (SVG/Canvas) to display multiple sources + color per model. Toggle `"advancedVision"` in `config.json`. (Implemented: Objects=Cyan, Poses=Magenta, Faces=Pink, Hands=Yellow).
     - **4.1.5: Perf & tests:** Mini benchmarks (COCO val 2017) ⇒ FPS, latency, RAM, heating. (Requires manual execution).
 
 - [x] **4.2: Enhance Audition (Advanced NLU & Emotional Tone)**

@@ -1,8 +1,8 @@
 import type { Percept } from '../types';
 import config, { AVAILABLE_VISION_MODELS } from '../config';
-import { ObjectDetector, FilesetResolver, PoseLandmarker } from '@mediapipe/tasks-vision';
+import { ObjectDetector, FilesetResolver, PoseLandmarker, FaceLandmarker, HandLandmarker } from '@mediapipe/tasks-vision';
 import { useAppStore } from '../store/appStore';
-import type { SdkVisualPercept, SdkVisualObject, SdkVisualPayload } from './types';
+import type { SdkVisualPercept } from './types';
 import { adapterSdkToLegacy } from './converters/vision.converter';
 
 // --- SDK TYPES & ADAPTERS ---
@@ -19,6 +19,8 @@ let onSdkPerceptCallback: ((percept: SdkVisualPercept) => void) | null = null;
 // CPU Fallback state
 let cpuObjectDetector: ObjectDetector | null = null;
 let cpuPoseLandmarker: PoseLandmarker | null = null;
+let cpuFaceLandmarker: FaceLandmarker | null = null;
+let cpuHandLandmarker: HandLandmarker | null = null;
 let isCpuFallbackInitialized = false;
 let isCpuProcessing = false;
 
@@ -166,6 +168,36 @@ async function initializeCpuFallback(): Promise<void> {
       console.warn('[Vision] CPU PoseLandmarker failed to initialize:', e);
     }
 
+    // Initialize Face Landmarker
+    try {
+      cpuFaceLandmarker = await FaceLandmarker.createFromOptions(vision, {
+        baseOptions: {
+          modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task',
+          delegate: 'CPU'
+        },
+        runningMode: 'VIDEO',
+        outputFaceBlendshapes: true
+      });
+      console.log('[Vision] CPU FaceLandmarker initialized.');
+    } catch (e) {
+      console.warn('[Vision] CPU FaceLandmarker failed to initialize:', e);
+    }
+
+    // Initialize Hand Landmarker
+    try {
+      cpuHandLandmarker = await HandLandmarker.createFromOptions(vision, {
+        baseOptions: {
+          modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task',
+          delegate: 'CPU'
+        },
+        runningMode: 'VIDEO',
+        numHands: 2
+      });
+      console.log('[Vision] CPU HandLandmarker initialized.');
+    } catch (e) {
+      console.warn('[Vision] CPU HandLandmarker failed to initialize:', e);
+    }
+
     isCpuFallbackInitialized = true;
     isModelLoaded = true; // Consider system ready if fallback is ready
     console.log('[Vision] CPU fallback initialized successfully.');
@@ -259,7 +291,7 @@ async function processCpuFrame(frame: ImageData | HTMLVideoElement): Promise<voi
         emitPercept({
           modality: 'vision',
           confidence: Math.max(...scores),
-          timestamp: Date.now(),
+          ts: Date.now(),
           payload: {
             timestamp: Date.now(),
             objects: boxes.map((box, i) => ({
@@ -275,6 +307,16 @@ async function processCpuFrame(frame: ImageData | HTMLVideoElement): Promise<voi
     // Run Pose Detection if enabled
     if (config.features.fallDetector && cpuPoseLandmarker) {
       await processCpuPose(frame);
+    }
+
+    // Run Face Detection
+    if (cpuFaceLandmarker) {
+      await processCpuFace(frame);
+    }
+
+    // Run Hand Detection
+    if (cpuHandLandmarker) {
+      await processCpuHand(frame);
     }
 
   } catch (error) {
@@ -314,6 +356,96 @@ async function processCpuPose(frame: ImageData | HTMLVideoElement): Promise<void
 }
 
 /**
+ * Process Face on CPU
+ */
+async function processCpuFace(frame: ImageData | HTMLVideoElement): Promise<void> {
+  if (!cpuFaceLandmarker) return;
+
+  try {
+    const startTimeMs = performance.now();
+    const res = cpuFaceLandmarker.detectForVideo(frame, startTimeMs);
+
+    if (res && res.faceLandmarks.length > 0) {
+      const boxes: Array<[number, number, number, number]> = [];
+      const scores: number[] = [];
+
+      for (let i = 0; i < res.faceLandmarks.length; i++) {
+        const landmarks = res.faceLandmarks[i];
+        // Calculate bounding box from landmarks
+        let xMin = 1, yMin = 1, xMax = 0, yMax = 0;
+        for (const lm of landmarks) {
+          xMin = Math.min(xMin, lm.x);
+          yMin = Math.min(yMin, lm.y);
+          xMax = Math.max(xMax, lm.x);
+          yMax = Math.max(yMax, lm.y);
+        }
+        boxes.push([xMin, yMin, xMax, yMax]);
+        scores.push(0.9);
+
+        emitLegacyPercept({
+          modality: 'vision',
+          payload: {
+            type: 'face',
+            boxes: [[xMin, yMin, xMax, yMax]],
+            landmarks: landmarks,
+            classes: ['face'],
+            scores: [0.9],
+            isSmiling: false // Could be calculated from blendshapes
+          },
+          confidence: 0.9,
+          ts: Date.now()
+        });
+      }
+    }
+  } catch (error) {
+    console.error('[Vision] CPU Face processing error:', error);
+  }
+}
+
+/**
+ * Process Hand on CPU
+ */
+async function processCpuHand(frame: ImageData | HTMLVideoElement): Promise<void> {
+  if (!cpuHandLandmarker) return;
+
+  try {
+    const startTimeMs = performance.now();
+    const res = cpuHandLandmarker.detectForVideo(frame, startTimeMs);
+
+    if (res && res.landmarks.length > 0) {
+      for (let i = 0; i < res.landmarks.length; i++) {
+        const landmarks = res.landmarks[i];
+        const handedness = res.handednesses[i][0].displayName as 'Left' | 'Right';
+        
+        // Calculate bounding box
+        let xMin = 1, yMin = 1, xMax = 0, yMax = 0;
+        for (const lm of landmarks) {
+          xMin = Math.min(xMin, lm.x);
+          yMin = Math.min(yMin, lm.y);
+          xMax = Math.max(xMax, lm.x);
+          yMax = Math.max(yMax, lm.y);
+        }
+
+        emitLegacyPercept({
+          modality: 'vision',
+          payload: {
+            type: 'hand',
+            boxes: [[xMin, yMin, xMax, yMax]],
+            landmarks: landmarks,
+            handedness,
+            scores: [0.9]
+          },
+          confidence: 0.9,
+          ts: Date.now()
+        });
+      }
+    }
+  } catch (error) {
+    console.error('[Vision] CPU Hand processing error:', error);
+  }
+}
+
+/**
  * Check if the vision model is loaded and ready
  */
 export function isVisionModelReady(): boolean {
@@ -335,6 +467,21 @@ export function terminateVisionWorker(): void {
     cpuObjectDetector.close();
     cpuObjectDetector = null;
     isCpuFallbackInitialized = false;
+  }
+
+  if (cpuPoseLandmarker) {
+    cpuPoseLandmarker.close();
+    cpuPoseLandmarker = null;
+  }
+
+  if (cpuFaceLandmarker) {
+    cpuFaceLandmarker.close();
+    cpuFaceLandmarker = null;
+  }
+
+  if (cpuHandLandmarker) {
+    cpuHandLandmarker.close();
+    cpuHandLandmarker = null;
   }
 }
 
@@ -409,7 +556,8 @@ export type VisionPayload =
   | MediaPipeSegmentationPayload;
 
 // Re-export Percept type with VisionPayload
-export type { Percept, SdkVisualPercept };
+export type { Percept };
+export type { SdkVisualPercept, SdkVisualObject, SdkVisualPayload } from './types';
 export { adapterSdkToLegacy };
 
 // Back-compat API expected by LisaCanvas
