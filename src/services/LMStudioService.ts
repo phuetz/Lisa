@@ -1,10 +1,13 @@
-import { Capacitor, CapacitorHttp, HttpResponse } from '@capacitor/core';
+import { Capacitor, CapacitorHttp, type HttpResponse } from '@capacitor/core';
 import { getLMStudioUrl } from '../config/networkConfig';
 
 /**
  * LM Studio Service
  * Service pour communiquer avec LM Studio (API compatible OpenAI)
  * Modèle: mistralai/devstral-small-2-2512
+ *
+ * MOBILE: Utilise CapacitorHttp pour contourner les limitations CORS
+ * WEB: Utilise fetch standard avec le proxy Vite
  */
 
 export interface ChatMessage {
@@ -22,6 +25,19 @@ export interface LMStudioConfig {
 export interface StreamChunk {
   content: string;
   done: boolean;
+}
+
+// Types pour les réponses API LM Studio
+interface ChatCompletionResponse {
+  choices?: Array<{
+    message?: {
+      content?: string;
+    };
+  }>;
+}
+
+interface ModelsResponse {
+  data?: Array<{ id: string }>;
 }
 
 // Try multiple URLs in order of preference
@@ -66,42 +82,48 @@ class LMStudioService {
   }
 
   /**
-   * Helper to make HTTP requests using either fetch (Web) or CapacitorHttp (Native)
+   * Helper to make HTTP requests using CapacitorHttp on mobile, fetch on web
    */
-  private async makeRequest(endpoint: string, options: any): Promise<any> {
+  private async makeRequest(endpoint: string, options: RequestInit): Promise<unknown> {
     const url = `${this.config.baseUrl}${endpoint}`;
     const isNative = Capacitor.isNativePlatform();
-    
-    console.log(`[LMStudioService] Requesting ${url} (${isNative ? 'Native' : 'Web'})`);
+
+    console.log(`[LMStudioService] Requesting ${url} (${isNative ? 'CapacitorHttp' : 'fetch'})`);
 
     try {
       if (isNative) {
-        // Use CapacitorHttp for native devices to bypass CORS
+        // Use CapacitorHttp for mobile to bypass CORS
         const response: HttpResponse = await CapacitorHttp.request({
-          method: options.method,
-          url: url,
+          url,
+          method: (options.method as string) || 'GET',
           headers: {
             'Content-Type': 'application/json',
-            ...(options.headers || {})
+            ...(options.headers as Record<string, string> || {}),
           },
-          data: options.body ? JSON.parse(options.body) : undefined,
-          readTimeout: 30000, // 30s timeout
-          connectTimeout: 15000,
+          data: options.body ? JSON.parse(options.body as string) : undefined,
         });
 
+        console.log(`[LMStudioService] CapacitorHttp response status: ${response.status}`);
+
         if (response.status < 200 || response.status >= 300) {
-          throw new Error(`LM Studio error (Native): ${response.status} ${JSON.stringify(response.data)}`);
+          throw new Error(`LM Studio error: ${response.status}`);
         }
-        
+
         return response.data;
       } else {
-        // Use standard fetch for Web
-        const response = await fetch(url, options);
-        
+        // Use standard fetch for web
+        const response = await fetch(url, {
+          ...options,
+          headers: {
+            'Content-Type': 'application/json',
+            ...(options.headers || {}),
+          },
+        });
+
         if (!response.ok) {
-          throw new Error(`LM Studio error (Web): ${response.status} ${response.statusText}`);
+          throw new Error(`LM Studio error: ${response.status} ${response.statusText}`);
         }
-        
+
         return await response.json();
       }
     } catch (error) {
@@ -167,7 +189,7 @@ class LMStudioService {
           max_tokens: this.config.maxTokens,
           stream: false,
         }),
-      });
+      }) as ChatCompletionResponse;
 
       return data.choices?.[0]?.message?.content || 'Désolé, je n\'ai pas pu générer de réponse.';
     } catch (error) {
@@ -178,138 +200,133 @@ class LMStudioService {
 
   /**
    * Envoie un message et reçoit une réponse en streaming
-   * NOTE: Streaming is not fully supported on CapacitorHttp native plugin yet.
-   * Fallback to standard fetch on native, but if that fails (CORS), we might need to fallback to non-streaming.
+   * Sur mobile: utilise une requête non-streamée (fallback) car CapacitorHttp ne supporte pas le streaming
+   * Sur web: utilise fetch avec streaming SSE
    */
   async *chatStream(messages: ChatMessage[]): AsyncGenerator<StreamChunk> {
-    const isNative = Capacitor.isNativePlatform();
-    
-    // If native, we can't easily stream with CapacitorHttp.
-    // We try fetch first (requires correct IP/CORS), if it fails, we fallback to non-streaming chat using CapacitorHttp.
-    
     const sanitized = this.sanitizeMessages(messages);
     const messagesWithSystem: ChatMessage[] = [
       { role: 'system', content: SYSTEM_PROMPT },
       ...sanitized,
     ];
 
-    console.log('[LMStudioService] chatStream starting');
+    const isNative = Capacitor.isNativePlatform();
+    console.log('[LMStudioService] chatStream starting', isNative ? '(mobile fallback)' : '(web streaming)');
 
-    try {
-      // Attempt streaming via Fetch
-      const response = await fetch(`${this.config.baseUrl}/chat/completions`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: this.config.model,
-          messages: messagesWithSystem,
-          temperature: this.config.temperature,
-          max_tokens: this.config.maxTokens,
-          stream: true,
-        }),
-      });
+    // Mobile: Fallback to non-streaming request
+    if (isNative) {
+      try {
+        const fullResponse = await this.chat(messages);
+        // Simulate streaming by yielding the full response at once
+        yield { content: fullResponse, done: false };
+        yield { content: '', done: true };
+        return;
+      } catch (error) {
+        console.error('[LMStudioService] Mobile fallback error:', error);
+        throw error;
+      }
+    }
 
-      if (!response.ok) {
-        throw new Error(`LM Studio error: ${response.status} ${response.statusText}`);
+    // Web: Use fetch streaming
+    const response = await fetch(`${this.config.baseUrl}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: this.config.model,
+        messages: messagesWithSystem,
+        temperature: this.config.temperature,
+        max_tokens: this.config.maxTokens,
+        stream: true,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`LM Studio error: ${response.status} ${response.statusText}`);
+    }
+
+    const reader = response.body?.getReader();
+    if (!reader) throw new Error('No response body');
+
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) {
+        yield { content: '', done: true };
+        break;
       }
 
-      const reader = response.body?.getReader();
-      if (!reader) throw new Error('No response body');
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
 
-      const decoder = new TextDecoder();
-      let buffer = '';
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) {
-          yield { content: '', done: true };
-          break;
-        }
-
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || '';
-
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const data = line.slice(6);
-            if (data === '[DONE]') {
-              yield { content: '', done: true };
-              return;
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const data = line.slice(6);
+          if (data === '[DONE]') {
+            yield { content: '', done: true };
+            return;
+          }
+          try {
+            const parsed = JSON.parse(data);
+            const content = parsed.choices?.[0]?.delta?.content || '';
+            if (content) {
+              yield { content, done: false };
             }
-            try {
-              const parsed = JSON.parse(data);
-              const content = parsed.choices?.[0]?.delta?.content || '';
-              if (content) {
-                yield { content, done: false };
-              }
-            } catch {
-              // Ignore parsing errors for incomplete chunks
-            }
+          } catch {
+            // Ignore parsing errors for incomplete chunks
           }
         }
-      }
-    } catch (error) {
-      console.error('[LMStudioService] Stream error:', error);
-      
-      if (isNative) {
-        console.warn('[LMStudioService] Streaming failed on native, falling back to non-streaming via CapacitorHttp');
-        // Fallback to non-streaming request using CapacitorHttp (bypasses CORS)
-        try {
-          const content = await this.chat(messages);
-          // Yield the whole content as one chunk
-          yield { content, done: false };
-          yield { content: '', done: true };
-        } catch (fallbackError) {
-          console.error('[LMStudioService] Fallback error:', fallbackError);
-          throw fallbackError;
-        }
-      } else {
-        throw error;
       }
     }
   }
 
   /**
    * Vérifie si LM Studio est accessible et trouve l'URL qui fonctionne
+   * Utilise CapacitorHttp sur mobile, fetch sur web
    */
   async isAvailable(): Promise<boolean> {
-    // Refresh URLs list with potentially updated config
     const currentUrls = [
-       this.config.baseUrl, // Current config first
-       getLMStudioUrl(),    // Network config second
+       this.config.baseUrl,
+       getLMStudioUrl(),
        ...LM_STUDIO_URLS.filter(u => u !== this.config.baseUrl && u !== getLMStudioUrl())
     ];
 
+    const isNative = Capacitor.isNativePlatform();
+
     for (const url of currentUrls) {
       try {
-        console.log(`[LMStudioService] Testing availability of ${url}...`);
-        
-        // Use makeRequest logic but simplified for health check
-        const isNative = Capacitor.isNativePlatform();
-        let ok = false;
+        console.log(`[LMStudioService] Testing availability of ${url}... (${isNative ? 'CapacitorHttp' : 'fetch'})`);
 
         if (isNative) {
-             const response = await CapacitorHttp.get({
-                 url: `${url}/models`,
-                 connectTimeout: 2000,
-                 readTimeout: 2000
-             });
-             ok = response.status >= 200 && response.status < 300;
-        } else {
-             const response = await fetch(`${url}/models`, {
-                method: 'GET',
-                signal: AbortSignal.timeout(2000),
-             });
-             ok = response.ok;
-        }
+          // Use CapacitorHttp on mobile
+          const response = await CapacitorHttp.request({
+            url: `${url}/models`,
+            method: 'GET',
+            readTimeout: 2000,
+            connectTimeout: 2000,
+          });
 
-        if (ok) {
-          console.log(`[LMStudioService] ✅ Connected to ${url}`);
-          this.config.baseUrl = url;
-          return true;
+          if (response.status >= 200 && response.status < 300) {
+            console.log(`[LMStudioService] ✅ Connected to ${url}`);
+            this.config.baseUrl = url;
+            return true;
+          }
+        } else {
+          // Use fetch on web
+          const response = await fetch(`${url}/models`, {
+            method: 'GET',
+            signal: AbortSignal.timeout(2000),
+          });
+
+          if (response.ok) {
+            console.log(`[LMStudioService] ✅ Connected to ${url}`);
+            this.config.baseUrl = url;
+            return true;
+          }
         }
       } catch (error) {
         console.log(`[LMStudioService] ❌ ${url}:`, error instanceof Error ? error.message : error);
@@ -324,8 +341,8 @@ class LMStudioService {
    */
   async getModels(): Promise<string[]> {
     try {
-      const data = await this.makeRequest('/models', { method: 'GET' });
-      return data.data?.map((m: { id: string }) => m.id) || [];
+      const data = await this.makeRequest('/models', { method: 'GET' }) as ModelsResponse;
+      return data.data?.map((m) => m.id) || [];
     } catch {
       return [];
     }
@@ -354,10 +371,10 @@ class LMStudioService {
     const startTime = Date.now();
     
     try {
-      const data = await this.makeRequest('/models', { method: 'GET' });
+      const data = await this.makeRequest('/models', { method: 'GET' }) as ModelsResponse;
       const latencyMs = Date.now() - startTime;
       
-      const models = data.data?.map((m: { id: string }) => m.id) || [];
+      const models = data.data?.map((m) => m.id) || [];
       const currentModel = models.find((m: string) => m.includes('devstral') || m.includes('mistral')) || models[0] || null;
       
       return {

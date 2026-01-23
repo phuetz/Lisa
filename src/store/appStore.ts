@@ -1,7 +1,8 @@
 import { create } from 'zustand';
 import { persist, subscribeWithSelector } from 'zustand/middleware';
-import { immer } from 'zustand/middleware/immer';
-import { Percept, VisionPayload } from '../senses/vision'; // Import new types
+import type { Percept, VisionPayload } from '../features/vision/api'; // Import new types
+import config from '../config'; // Import config for feature flags
+import type { Medication, MedicationTake, HydrationEntry, HydrationGoal, EmergencyContact, SOSCallRecord } from '../types/assistance';
 
 /* ---------- Shared domain types (copied from previous store) ---------- */
 export interface CalendarEvent {
@@ -20,7 +21,7 @@ export interface CalendarEvent {
 export type PoseResult = { landmarks: Float32Array; score: number }[];
 export type AudioResult = { category: string; score: number; timestamp: number };
 
-import { HearingPerceptPayload } from '../senses/hearing';
+import type { HearingPerceptPayload } from '../features/hearing/api';
 
 export interface Alarm { id: string; time: number; label?: string; triggered?: boolean; recurrence?: 'daily' | 'weekdays' }
 export interface Timer { id: string; finish: number; label?: string; triggered?: boolean }
@@ -43,14 +44,14 @@ export interface WorkflowStep {
   description: string;
   agent: string;
   command: string;
-  args: Record<string, any>;
+  args: Record<string, unknown>;
   dependencies: number[];
   status: 'pending' | 'in_progress' | 'completed' | 'failed';
-  result?: any;
+  result?: unknown;
   startTime?: number;
   endTime?: number;
   duration?: number;
-  output?: any;
+  output?: unknown;
   error?: string;
 }
 
@@ -102,7 +103,31 @@ interface UiSlice {
   featureFlags: {
     advancedVision: boolean;
     advancedHearing: boolean;
+    fallDetector: boolean;
   };
+  // AI Models
+  selectedLLM: string;
+  selectedVisionModel: string;
+  hearingLanguage: string;
+  // Fall detection
+  fallDetected: boolean;
+  fallEventTimestamp: number | null;
+  // Medications
+  medications?: Medication[];
+  medicationTakes?: MedicationTake[];
+  currentMedicationReminder?: { medication: Medication; time: string } | null;
+  // Hydration
+  hydrationLog?: HydrationEntry[];
+  hydrationGoal?: HydrationGoal;
+  hydrationReminderActive?: boolean;
+  // Inactivity
+  lastActivityTime?: number;
+  inactivityAlertActive?: boolean;
+  inactivityAlertType?: 'warning' | 'critical' | null;
+  inactivityDuration?: number;
+  // Emergency
+  emergencyContacts?: EmergencyContact[];
+  sosCallHistory?: SOSCallRecord[];
   setLastPlanExplanation: (explanation: string | null, traceId?: string) => void;
 }
 
@@ -125,14 +150,14 @@ const createVisionSlice = (): VisionSlice => ({
   speechDetected: false,
 });
 
-const createAudioSlice = (set: any): AudioSlice => ({
+const createAudioSlice = (set: (partial: Partial<AppState>) => void): AudioSlice => ({
   audio: undefined,
   audioEnabled: true,
   hearingPercepts: [],
   setAudioEnabled: (enabled) => set({ audioEnabled: enabled }),
 });
 
-const createWorkflowSlice = (set: any): WorkflowSlice => ({
+const createWorkflowSlice = (set: (partial: Partial<AppState> | ((state: AppState) => Partial<AppState>)) => void): WorkflowSlice => ({
   plan: null,
   templates: [],
   checkpoints: [],
@@ -142,21 +167,21 @@ const createWorkflowSlice = (set: any): WorkflowSlice => ({
   setTemplates: (templates) => set({ templates }),
   setCheckpoints: (checkpoints) => set({ checkpoints }),
   setNodeExecutionStatus: (nodeId, status) =>
-    set((state: AppState) => {
-      state.workflow.nodeExecutionStatus[nodeId] = status;
-    }),
+    set((state: AppState) => ({
+      nodeExecutionStatus: { ...state.nodeExecutionStatus, [nodeId]: status },
+    })),
   setEdgeExecutionStatus: (edgeId, status) =>
-    set((state: AppState) => {
-      state.workflow.edgeExecutionStatus[edgeId] = status;
-    }),
+    set((state: AppState) => ({
+      edgeExecutionStatus: { ...state.edgeExecutionStatus, [edgeId]: status },
+    })),
   resetExecutionStatus: () =>
-    set((state: AppState) => {
-      state.workflow.nodeExecutionStatus = {};
-      state.workflow.edgeExecutionStatus = {};
-    }),
+    set(() => ({
+      nodeExecutionStatus: {} as Record<string, NodeExecutionStatus>,
+      edgeExecutionStatus: {} as Record<string, EdgeExecutionStatus>,
+    })),
 });
 
-const createUiSlice = (set: any): UiSlice => ({
+const createUiSlice = (set: (partial: Partial<AppState>) => void): UiSlice => ({
   todos: [],
   alarms: [],
   timers: [],
@@ -169,16 +194,43 @@ const createUiSlice = (set: any): UiSlice => ({
   intentPayload: undefined,
   conversationContext: undefined,
   featureFlags: {
-    advancedVision: false,
-    advancedHearing: false,
+    advancedVision: config.features.advancedVision,
+    advancedHearing: config.features.advancedHearing,
+    fallDetector: config.features.fallDetector || false,
   },
+  // AI Models defaults
+  selectedLLM: 'gpt-4o',
+  selectedVisionModel: 'yolov8n',
+  hearingLanguage: 'fr-FR',
+  // Fall detection
+  fallDetected: false,
+  fallEventTimestamp: null,
+  // Medications
+  medications: [],
+  medicationTakes: [],
+  currentMedicationReminder: null,
+  // Hydration
+  hydrationLog: [],
+  hydrationGoal: undefined,
+  hydrationReminderActive: false,
+  // Inactivity
+  lastActivityTime: Date.now(),
+  inactivityAlertActive: false,
+  inactivityAlertType: null,
+  inactivityDuration: 0,
+  // Emergency
+  emergencyContacts: [],
+  sosCallHistory: [],
   setLastPlanExplanation: (explanation, traceId) =>
     set({ lastPlanExplanation: explanation, lastPlanTraceId: traceId }),
 });
 
-const createCommonSlice = (set: any, get: any): CommonSlice => ({
+const createCommonSlice = (
+  set: (partial: Partial<AppState> | ((state: AppState) => Partial<AppState>)) => void,
+  get: () => AppState
+): CommonSlice => ({
   setState: (partial) =>
-    set(typeof partial === 'function' ? (partial as any)(get()) : partial),
+    set(typeof partial === 'function' ? partial(get()) : partial),
 });
 
 /* ---------- Store ---------- */
@@ -186,13 +238,13 @@ const createCommonSlice = (set: any, get: any): CommonSlice => ({
 export const useAppStore = create<AppState>()(
   subscribeWithSelector(
     persist(
-      immer((set, get) => ({
+      (set, get) => ({
         ...createVisionSlice(),
         ...createAudioSlice(set),
         ...createWorkflowSlice(set),
         ...createUiSlice(set),
         ...createCommonSlice(set, get),
-      })),
+      }),
       { name: 'lisa-store' }
     )
   )

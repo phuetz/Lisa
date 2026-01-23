@@ -1,11 +1,12 @@
-import { Ros, Topic, Message, Service, ServiceRequest } from 'roslib';
+import ROSLIB from 'roslib';
+const { Ros, Topic, Service } = ROSLIB;
 
 export class RosService {
-  private ros: Ros;
+  private ros: InstanceType<typeof Ros>;
   private isConnected: boolean = false;
   private connectionPromise: Promise<void>;
-  private resolveConnection: () => void;
-  private rejectConnection: (error: Error) => void;
+  private resolveConnection!: () => void;
+  private rejectConnection!: (error: Error) => void;
 
   constructor(url: string) {
     this.ros = new Ros({ url });

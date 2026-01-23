@@ -5,8 +5,9 @@
 
 import { getLMStudioUrl, getOllamaUrl, logNetworkConfig } from '../config/networkConfig';
 import { lmStudioService } from './LMStudioService';
+import { useChatSettingsStore } from '../store/chatSettingsStore';
 
-export type AIProvider = 'openai' | 'anthropic' | 'gemini' | 'local' | 'lmstudio' | 'ollama';
+export type AIProvider = 'openai' | 'anthropic' | 'gemini' | 'xai' | 'local' | 'lmstudio' | 'ollama';
 
 export interface AIMessage {
   role: 'system' | 'user' | 'assistant';
@@ -30,6 +31,7 @@ export interface AIServiceConfig {
 }
 
 const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta';
+const XAI_API_BASE = 'https://api.x.ai/v1';
 
 class AIService {
   private config: AIServiceConfig;
@@ -44,15 +46,34 @@ class AIService {
       ...config
     };
 
-    // Récupérer les clés API depuis l'environnement
+    // Récupérer les clés API depuis le store ou l'environnement
     if (!this.config.apiKey) {
-      if (this.config.provider === 'openai') {
-        this.config.apiKey = import.meta.env.VITE_OPENAI_API_KEY;
-      } else if (this.config.provider === 'anthropic') {
-        this.config.apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY;
-      } else if (this.config.provider === 'gemini') {
-        this.config.apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-      }
+      this.config.apiKey = this.getApiKeyForProvider(this.config.provider);
+    }
+  }
+
+  /**
+   * Récupérer la clé API pour un provider donné
+   * Priorité: store > environment
+   */
+  private getApiKeyForProvider(provider: AIProvider): string | undefined {
+    // Essayer d'abord le store (clés configurées par l'utilisateur)
+    const store = useChatSettingsStore.getState();
+    const storeKey = store.getApiKeyForProvider(provider);
+    if (storeKey) return storeKey;
+
+    // Fallback sur les variables d'environnement
+    switch (provider) {
+      case 'openai':
+        return import.meta.env.VITE_OPENAI_API_KEY;
+      case 'anthropic':
+        return import.meta.env.VITE_ANTHROPIC_API_KEY;
+      case 'gemini':
+        return import.meta.env.VITE_GEMINI_API_KEY;
+      case 'xai':
+        return import.meta.env.GROK_API_KEY;
+      default:
+        return undefined;
     }
   }
 
@@ -67,6 +88,8 @@ class AIService {
       return this.sendAnthropic(messages, false);
     } else if (provider === 'gemini') {
       return this.sendGemini(messages, false);
+    } else if (provider === 'xai') {
+      return this.sendXAI(messages);
     } else if (provider === 'local' || provider === 'lmstudio' || provider === 'ollama') {
       return this.sendLocal(messages);
     }
@@ -85,6 +108,8 @@ class AIService {
       yield* this.streamAnthropic(messages);
     } else if (provider === 'gemini') {
       yield* this.streamGemini(messages);
+    } else if (provider === 'xai') {
+      yield* this.streamXAI(messages);
     } else if (provider === 'local' || provider === 'lmstudio' || provider === 'ollama') {
       yield* this.streamLocal(messages);
     } else {
@@ -583,6 +608,112 @@ class AIService {
             } else if (json.type === 'message_stop') {
               yield { content: '', done: true };
               return;
+            }
+          } catch { /* ignore */ }
+        }
+      }
+
+      yield { content: '', done: true };
+    } catch (error) {
+      yield { content: '', done: true, error: (error as Error).message };
+    }
+  }
+
+  /**
+   * xAI (Grok) API - Non-streaming
+   */
+  private async sendXAI(messages: AIMessage[]): Promise<string> {
+    if (!this.config.apiKey) {
+      throw new Error('GROK_API_KEY non configurée');
+    }
+
+    const response = await fetch(`${XAI_API_BASE}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.config.apiKey}`
+      },
+      body: JSON.stringify({
+        model: this.config.model || 'grok-2-latest',
+        messages: this.formatMessagesForOpenAI(messages),
+        temperature: this.config.temperature,
+        max_tokens: this.config.maxTokens,
+        stream: false
+      })
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: { message: response.statusText } }));
+      throw new Error(`xAI API Error: ${error.error?.message || response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data.choices[0]?.message?.content || '';
+  }
+
+  /**
+   * xAI (Grok) API - Streaming
+   */
+  private async *streamXAI(messages: AIMessage[]): AsyncGenerator<AIStreamChunk> {
+    if (!this.config.apiKey) {
+      yield { content: '', done: true, error: 'GROK_API_KEY non configurée' };
+      return;
+    }
+
+    try {
+      const response = await fetch(`${XAI_API_BASE}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.config.apiKey}`
+        },
+        body: JSON.stringify({
+          model: this.config.model || 'grok-2-latest',
+          messages: this.formatMessagesForOpenAI(messages),
+          temperature: this.config.temperature,
+          max_tokens: this.config.maxTokens,
+          stream: true
+        })
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: { message: response.statusText } }));
+        yield { content: '', done: true, error: error.error?.message || response.statusText };
+        return;
+      }
+
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+
+      if (!reader) {
+        yield { content: '', done: true, error: 'No response body' };
+        return;
+      }
+
+      let buffer = '';
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          const trimmedLine = line.trim();
+          if (!trimmedLine || !trimmedLine.startsWith('data: ')) continue;
+          
+          const data = trimmedLine.slice(6);
+          if (data === '[DONE]') {
+            yield { content: '', done: true };
+            return;
+          }
+
+          try {
+            const json = JSON.parse(data);
+            const content = json.choices[0]?.delta?.content || '';
+            if (content) {
+              yield { content, done: false };
             }
           } catch { /* ignore */ }
         }

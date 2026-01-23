@@ -5,13 +5,12 @@
  * à l'API GitHub pour améliorer les performances et réduire les appels API.
  */
 
-import { openDB, DBSchema, IDBPDatabase } from 'idb';
 import { createLogger } from '../utils/logger';
 
 const logger = createLogger('GitHubCacheService');
 
 // Définition des types pour la base de données
-interface GitHubCacheDB extends DBSchema {
+interface GitHubCacheDB {
   repositories: {
     key: string;
     value: {
@@ -77,7 +76,7 @@ const CACHE_DURATION = {
 };
 
 class GitHubCacheService {
-  private db: Promise<IDBPDatabase<GitHubCacheDB>>;
+  private db: Promise<any>;
   private static instance: GitHubCacheService;
 
   private constructor() {
@@ -91,46 +90,54 @@ class GitHubCacheService {
     return GitHubCacheService.instance;
   }
 
-  private async initDatabase(): Promise<IDBPDatabase<GitHubCacheDB>> {
+  private async initDatabase(): Promise<any> {
     try {
-      const db = await openDB<GitHubCacheDB>('github-cache', 1, {
-        upgrade(db) {
+      // Import dynamique d'idb pour éviter l'échec de résolution au build si non installé
+      const modName = 'idb';
+      const idbMod: any = await import(/* @vite-ignore */ modName);
+      const openDB = (idbMod as any)?.openDB as (name: string, version: number, opts: any) => Promise<any>;
+      if (!openDB) throw new Error('openDB not available');
+
+      const db = await openDB('github-cache', 1, {
+        upgrade(db: any) {
           // Créer les object stores pour chaque type de données
           if (!db.objectStoreNames.contains('repositories')) {
             const reposStore = db.createObjectStore('repositories', { keyPath: 'key' });
             reposStore.createIndex('by-username', 'username');
           }
-          
           if (!db.objectStoreNames.contains('repository')) {
             db.createObjectStore('repository', { keyPath: 'key' });
           }
-          
           if (!db.objectStoreNames.contains('issues')) {
             const issuesStore = db.createObjectStore('issues', { keyPath: 'key' });
             issuesStore.createIndex('by-repo', 'repoFullName');
           }
-          
           if (!db.objectStoreNames.contains('pullRequests')) {
             const prsStore = db.createObjectStore('pullRequests', { keyPath: 'key' });
             prsStore.createIndex('by-repo', 'repoFullName');
           }
-          
           if (!db.objectStoreNames.contains('commits')) {
             const commitsStore = db.createObjectStore('commits', { keyPath: 'key' });
             commitsStore.createIndex('by-repo', 'repoFullName');
           }
-          
           if (!db.objectStoreNames.contains('readmes')) {
             db.createObjectStore('readmes', { keyPath: 'key' });
           }
         },
       });
-      
       logger.info('Base de données GitHubCache initialisée avec succès');
       return db;
     } catch (error) {
-      logger.error('Erreur lors de l\'initialisation de la base de données GitHubCache', error);
-      throw error;
+      // Fallback no-op cache (désactive le cache si idb indisponible)
+      logger.warn('IndexedDB (idb) indisponible, désactivation du cache GitHub', error as any);
+      const noop = async () => undefined;
+      return {
+        get: noop,
+        put: noop,
+        clear: noop,
+        transaction: () => ({ store: { openCursor: async () => null } }),
+        objectStoreNames: { contains: () => false },
+      };
     }
   }
 

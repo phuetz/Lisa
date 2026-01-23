@@ -1,7 +1,8 @@
-// eslint-disable-next-line no-restricted-globals
+ 
 const ctxMap: { ctx?: OffscreenCanvasRenderingContext2D } = {};
 
-import { Percept, VisionPayload, MediaPipeFacePayload, MediaPipeHandPayload, DetectionResult } from '../types';
+import type { Percept } from '../types';
+import type { VisionPayload, MediaPipeFacePayload, MediaPipeHandPayload, DetectionResult } from '../features/vision/api';
 
 interface DrawData {
   width: number;
@@ -17,6 +18,16 @@ self.onmessage = (e: MessageEvent) => {
     // Initial handshake, receive OffscreenCanvas
     const canvas: OffscreenCanvas = e.data.canvas;
     ctxMap.ctx = canvas.getContext('2d')!;
+    return;
+  }
+
+  // Handle resize message
+  if (e.data.type === 'resize') {
+    const { width, height } = e.data;
+    if (ctxMap.ctx?.canvas) {
+      ctxMap.ctx.canvas.width = width;
+      ctxMap.ctx.canvas.height = height;
+    }
     return;
   }
 
@@ -61,11 +72,17 @@ self.onmessage = (e: MessageEvent) => {
           ctx.fillStyle = payload.handedness === 'Left' ? 'red' : 'blue';
           ctx.fillText(`${payload.handedness} Hand (${(payload.scores[0] * 100).toFixed(0)}%)`, x, y - 4);
         });
-      } else if ((p.payload as any).type === 'object') { // Existing MediaPipe Object Detection
-        ctx.strokeStyle = 'lime';
-        ctx.strokeRect((p.payload as any).box.x, (p.payload as any).box.y, (p.payload as any).box.width, (p.payload as any).box.height);
-        ctx.fillStyle = 'lime';
-        ctx.fillText(`${(p.payload as any).category} (${(p.payload as any).score.toFixed(2)})`, (p.payload as any).box.x, (p.payload as any).box.y - 4);
+      } else if ((p.payload as DetectionResult).type === 'object') {
+        const payload = p.payload as DetectionResult;
+        payload.boxes.forEach((box, i) => {
+          const [x1, y1, x2, y2] = box;
+          const width = x2 - x1;
+          const height = y2 - y1;
+          ctx.strokeStyle = 'lime';
+          ctx.strokeRect(x1 * data.width, y1 * data.height, width * data.width, height * data.height);
+          ctx.fillStyle = 'lime';
+          ctx.fillText(`${payload.classes[i]} (${(payload.scores[i] * 100).toFixed(0)}%)`, x1 * data.width, y1 * data.height - 4);
+        });
       }
     }
   });

@@ -1,100 +1,87 @@
+/**
+ * Hearing Worker - Audio processing in background thread
+ * Handles audio analysis for speech detection and processing
+ */
 
-// src/workers/hearingWorker.ts
-import { pipeline, env } from '@xenova/transformers';
-import { HearingPerceptPayload, Percept } from '../senses/hearing';
-
-// Disable local model checks
-env.allowLocalModels = false;
-
-// Use the CDN for models
-env.use  = 'cdn';
-
-let sttPipeline: any = null;
-let sentimentPipeline: any = null;
-let intentPipeline: any = null;
-let emotionPipeline: any = null;
-
-// Function to load the STT model (Whisper-tiny)
-async function loadSttModel() {
-  try {
-    console.log('Loading Whisper-tiny STT model...');
-    sttPipeline = await pipeline('automatic-speech-recognition', 'Xenova/whisper-tiny');
-    console.log('Whisper-tiny STT model loaded successfully.');
-
-    console.log('Loading sentiment analysis model...');
-    sentimentPipeline = await pipeline('sentiment-analysis', 'Xenova/distilbert-base-uncased-finetuned-sst-2-english');
-    console.log('Sentiment analysis model loaded successfully.');
-
-    console.log('Loading intent recognition model...');
-    intentPipeline = await pipeline('text-classification', 'Xenova/distilbert-base-uncased-mnli');
-    console.log('Intent recognition model loaded successfully.');
-
-    console.log('Loading speech emotion recognition model...');
-    emotionPipeline = await pipeline('audio-classification', 'Xenova/wav2vec2-base-finetuned-emotion');
-    console.log('Speech emotion recognition model loaded successfully.');
-
-  } catch (error) {
-    console.error('Failed to load STT or NLU/SER models:', error);
-  }
-}
+interface HearingMessage {
+  type: 'init' | 'process' | 'stop';
+  data?: Float32Array | ArrayBuffer;
+  sampleRate?: number;
 }
 
-// Function to process audio chunk and perform STT
-async function processAudio(audioData: Float32Array) {
-  if (!sttPipeline || !sentimentPipeline || !intentPipeline || !emotionPipeline) {
-    console.warn('STT or NLU/SER models not loaded yet. Skipping audio processing.');
-    return;
-  }
-
-  try {
-    const transcription = await sttPipeline(audioData);
-    const text = transcription.text;
-
-    let sentiment: string | undefined;
-    if (text) {
-      const sentimentResult = await sentimentPipeline(text);
-      sentiment = sentimentResult[0]?.label; // Assuming the first label is the sentiment
-    }
-
-    let intent: string | undefined;
-    if (text) {
-      const intentResult = await intentPipeline(text);
-      intent = intentResult[0]?.label; // Assuming the first label is the intent
-    }
-
-    let emotion: string | undefined;
-    if (audioData) {
-      const emotionResult = await emotionPipeline(audioData);
-      // Assuming the emotion pipeline returns a classification with labels and scores
-      emotion = emotionResult[0]?.label; // Get the top emotion label
-    }
-
-    const percept: Percept<HearingPerceptPayload> = {
-      modality: 'hearing',
-      payload: { text, sentiment, intent, emotion },
-      confidence: transcription.score || 1.0,
-      ts: Date.now(),
-    };
-
-    self.postMessage(percept);
-
-  } catch (error) {
-    console.error('Error during audio processing:', error);
-  }
+interface HearingResult {
+  type: 'ready' | 'result' | 'error';
+  data?: {
+    isSpeech: boolean;
+    volume: number;
+    frequency?: number;
+  };
+  error?: string;
 }
 
-// Listen for messages from the main thread
-self.onmessage = (event: MessageEvent) => {
-  const { type, payload } = event.data;
+let isInitialized = false;
+let sampleRate = 16000;
+
+self.onmessage = (event: MessageEvent<HearingMessage>) => {
+  const { type, data, sampleRate: newSampleRate } = event.data;
 
   switch (type) {
-    case 'LOAD_STT_MODEL':
-      loadSttModel();
+    case 'init':
+      if (newSampleRate) sampleRate = newSampleRate;
+      isInitialized = true;
+      postResult({ type: 'ready' });
       break;
-    case 'PROCESS_AUDIO':
-      processAudio(payload);
+
+    case 'process':
+      if (!isInitialized) {
+        postResult({ type: 'error', error: 'Worker not initialized' });
+        return;
+      }
+      
+      if (data) {
+        const audioData = data instanceof Float32Array 
+          ? data 
+          : new Float32Array(data);
+        
+        const result = processAudio(audioData);
+        postResult({ type: 'result', data: result });
+      }
       break;
-    default:
-      console.warn('Unknown message type:', type);
+
+    case 'stop':
+      isInitialized = false;
+      break;
   }
 };
+
+function processAudio(audioData: Float32Array): { isSpeech: boolean; volume: number; frequency?: number } {
+  // Calculate RMS volume
+  let sum = 0;
+  for (let i = 0; i < audioData.length; i++) {
+    sum += audioData[i] * audioData[i];
+  }
+  const rms = Math.sqrt(sum / audioData.length);
+  const volume = Math.min(1, rms * 10); // Normalize to 0-1
+  
+  // Simple voice activity detection based on volume threshold
+  const isSpeech = volume > 0.01;
+  
+  // Basic frequency estimation using zero-crossing rate
+  let zeroCrossings = 0;
+  for (let i = 1; i < audioData.length; i++) {
+    if ((audioData[i] >= 0 && audioData[i - 1] < 0) ||
+        (audioData[i] < 0 && audioData[i - 1] >= 0)) {
+      zeroCrossings++;
+    }
+  }
+  
+  const frequency = (zeroCrossings * sampleRate) / (2 * audioData.length);
+  
+  return { isSpeech, volume, frequency };
+}
+
+function postResult(result: HearingResult): void {
+  self.postMessage(result);
+}
+
+export {};
