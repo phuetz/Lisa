@@ -11,7 +11,7 @@ class HelloAgent implements BaseAgent {
   public name = 'HelloAgent';
   public description = 'Test agent that increments a counter';
   public version = '1.0.0';
-  public domain = AgentDomains.GENERAL;
+  public domain = AgentDomains.KNOWLEDGE;
   public capabilities = ['greet'];
   public valid = true;
   
@@ -43,13 +43,6 @@ class HelloAgent implements BaseAgent {
 }
 
 describe('WorkflowExecutor - Basic Flow', () => {
-  // Mock agent registry
-  const mockRegistry = {
-    register: vi.fn(),
-    getAgent: vi.fn(() => new HelloAgent()),
-    hasAgent: vi.fn(() => true)
-  };
-  
   // Reset counter before each test
   beforeEach(() => {
     HelloAgent.resetCounter();

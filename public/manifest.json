@@ -8,21 +8,21 @@
   "theme_color": "#6e8efb",
   "icons": [
     {
-      "src": "/icon-192x192.png",
+      "src": "/icon-192x192.svg",
       "sizes": "192x192",
-      "type": "image/png",
+      "type": "image/svg+xml",
       "purpose": "any maskable"
     },
     {
-      "src": "/icon-512x512.png",
+      "src": "/icon-512x512.svg",
       "sizes": "512x512",
-      "type": "image/png",
+      "type": "image/svg+xml",
       "purpose": "any maskable"
     },
     {
-      "src": "/badge-96x96.png",
+      "src": "/badge-96x96.svg",
       "sizes": "96x96",
-      "type": "image/png",
+      "type": "image/svg+xml",
       "purpose": "badge"
     }
   ],
@@ -30,12 +30,12 @@
     {
       "name": "Weather",
       "url": "/?intent=weather",
-      "icons": [{ "src": "/weather-icon.png", "sizes": "96x96" }]
+      "icons": [{ "src": "/weather-icon.svg", "sizes": "96x96", "type": "image/svg+xml" }]
     },
     {
       "name": "Timers",
       "url": "/?intent=timer",
-      "icons": [{ "src": "/timer-icon.png", "sizes": "96x96" }]
+      "icons": [{ "src": "/timer-icon.svg", "sizes": "96x96", "type": "image/svg+xml" }]
     }
   ],
   "orientation": "portrait",
