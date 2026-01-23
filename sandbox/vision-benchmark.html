@@ -420,7 +420,7 @@
       markdown += `- **EfficientDet-Lite** offre un mAP de ${(benchmarkResults['EfficientDet-Lite'].mAP * 100).toFixed(1)}% à ${benchmarkResults['EfficientDet-Lite'].fps.toFixed(1)} FPS\n\n`;
       markdown += `**Modèle recommandé pour Lisa** : ${recommendedModel} (${reason}).\n\n`;
       markdown += `## Prochaines Étapes\n\n`;
-      markdown += `Implémenter le module front \`src/senses/vision.ts\` en utilisant ${recommendedModel}, avec Web Worker + WebGL/WebGPU et fallback CPU.`;
+      markdown += `Implémenter le module front \`src/features/vision/api.ts\` en utilisant ${recommendedModel}, avec Web Worker + WebGL/WebGPU et fallback CPU.`;
       
       document.getElementById('markdown-output').textContent = markdown;
       return markdown;

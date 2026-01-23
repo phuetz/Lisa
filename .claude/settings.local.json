@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm typecheck:*)",
+      "Bash(pnpm build:*)",
+      "Bash(npx cap sync:*)",
+      "Bash(npx cap:*)",
+      "Bash(ls:*)",
+      "Bash(\"$env:LOCALAPPDATA\\\\Android\\\\Sdk\\\\platform-tools\\\\adb.exe\" logcat -d)",
+      "Bash(Select-String -Pattern \"LMStudio|aiService|NetworkConfig|streamMessage|coucou|chat/completions\")",
+      "Bash(Select-Object -Last 50)",
+      "Bash(powershell:*)",
+      "Bash(pnpm mobile:build:*)",
+      "Bash(adb reverse:*)",
+      "Bash(Select-String -Pattern \"ChatInputMobile|AIService|LMStudioService|NetworkConfig|CapacitorHttp\")",
+      "Bash(pnpm lint:*)",
+      "Bash(pnpm test:*)"
+    ]
+  }
+}
