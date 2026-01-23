@@ -1,0 +1,160 @@
+# Default values for Lisa Helm Chart
+# This is a YAML-formatted file.
+
+# Global settings
+global:
+  environment: production
+  domain: yourdomain.com
+
+# API Deployment
+api:
+  enabled: true
+  replicaCount: 3
+  
+  image:
+    repository: ghcr.io/your-org/lisa
+    tag: latest
+    pullPolicy: Always
+  
+  service:
+    type: ClusterIP
+    port: 3001
+  
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 80
+    targetMemoryUtilizationPercentage: 80
+  
+  env:
+    NODE_ENV: production
+    LOG_LEVEL: info
+  
+  secrets:
+    databaseUrl: postgresql://user:password@postgres:5432/lisa
+    jwtSecret: your-64-char-jwt-secret-here
+
+# Frontend Deployment
+frontend:
+  enabled: true
+  replicaCount: 2
+  
+  image:
+    repository: ghcr.io/your-org/lisa-frontend
+    tag: latest
+    pullPolicy: Always
+  
+  service:
+    type: ClusterIP
+    port: 80
+  
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+  
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 80
+
+# Ingress
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+  hosts:
+    - host: yourdomain.com
+      paths:
+        - path: /
+          pathType: Prefix
+    - host: www.yourdomain.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: lisa-tls-cert
+      hosts:
+        - yourdomain.com
+        - www.yourdomain.com
+
+# PostgreSQL
+postgresql:
+  enabled: true
+  auth:
+    username: lisa
+    password: changeme
+    database: lisa
+  primary:
+    persistence:
+      enabled: true
+      size: 10Gi
+
+# Redis (optional)
+redis:
+  enabled: false
+  auth:
+    enabled: true
+    password: changeme
+
+# Monitoring
+monitoring:
+  enabled: true
+  prometheus:
+    enabled: true
+    retention: 15d
+  grafana:
+    enabled: true
+    adminPassword: admin
+
+# Logging
+logging:
+  enabled: true
+  elasticsearch:
+    enabled: false
+  loki:
+    enabled: true
+
+# Network Policies
+networkPolicy:
+  enabled: true
+  ingress:
+    - from:
+      - namespaceSelector:
+          matchLabels:
+            name: ingress-nginx
+
+# Pod Disruption Budget
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+# Service Account
+serviceAccount:
+  create: true
+  name: lisa
+  annotations: {}
+
+# RBAC
+rbac:
+  create: true
+
+# Security Context
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 1001
+  fsGroup: 1001

@@ -1,0 +1,76 @@
+
+> lisa@0.0.0 lint
+> eslint .
+
+
+C:\Users\patri\CascadeProjects\Lisa\sandbox\vision-benchmark.ts
+  187:33  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  199:63  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\patri\CascadeProjects\Lisa\src\__tests__\PlannerAgent.test.ts
+  3:10  warning  'agentRegistry' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\Users\patri\CascadeProjects\Lisa\src\__tests__\buildPlannerPrompt.test.ts
+  66:41  error  Parsing error: ',' expected
+
+C:\Users\patri\CascadeProjects\Lisa\src\agents\AgentRegistry.ts
+  85:45  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  85:59  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\patri\CascadeProjects\Lisa\src\agents\CalendarAgent.ts
+  204:57   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  207:56   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  237:21   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  253:45   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  294:29   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  325:25   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  463:60   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  499:21   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  508:55   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  531:21   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  540:90   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  603:21   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  612:84   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  682:21   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  691:106  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  754:50   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  776:21   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\patri\CascadeProjects\Lisa\src\agents\CodeInterpreterAgent.ts
+  30:21  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\patri\CascadeProjects\Lisa\src\agents\ConditionAgent.ts
+  33:21  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\patri\CascadeProjects\Lisa\src\agents\ContentGeneratorAgent.ts
+  149:44   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  384:103  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  419:103  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  446:99   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  466:136  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  501:138  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  540:121  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\patri\CascadeProjects\Lisa\src\agents\ContextAgent.ts
+   39:49  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   43:13  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   72:40  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  473:32  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  495:32  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\patri\CascadeProjects\Lisa\src\agents\DataAnalysisAgent.ts
+   60:37  warning  Unexpected any. Specify a different type                                                 @typescript-eslint/no-explicit-any
+   61:19  warning  'analysisType' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+   76:45  warning  Unexpected any. Specify a different type                                                 @typescript-eslint/no-explicit-any
+   90:38  warning  Unexpected any. Specify a different type                                                 @typescript-eslint/no-explicit-any
+  104:42  warning  Unexpected any. Specify a different type                                                 @typescript-eslint/no-explicit-any
+  122:40  warning  Unexpected any. Specify a different type                                                 @typescript-eslint/no-explicit-any
+  136:42  warning  Unexpected any. Specify a different type                                                 @typescript-eslint/no-explicit-any
+  155:48  warning  Unexpected any. Specify a different type                                                 @typescript-eslint/no-explicit-any
+  171:43  warning  Unexpected any. Specify a different type                                                 @typescript-eslint/no-explicit-any
+  215:48  warning  Unexpected any. Specify a different type                                                 @typescript-eslint/no-explicit-any
+  231:34  warning  'context' is defined but never used. Allowed unused args must match /^_/u                @typescript-eslint/no-unused-vars
+  231:44  warning  Unexpected any. Specify a different type                                                 @typescript-eslint/no-explicit-any
+
+C:\Users\patri\CascadeProjects\Lisa\src\agents\DelayAgent.ts
+  31:21  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any

@@ -1,0 +1,61 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: lisa-api
+  namespace: default
+  labels:
+    app: lisa
+    component: api
+spec:
+  type: ClusterIP
+  ports:
+  - port: 3001
+    targetPort: http
+    protocol: TCP
+    name: http
+  selector:
+    app: lisa
+    component: api
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: lisa-frontend
+  namespace: default
+  labels:
+    app: lisa
+    component: frontend
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: http
+    protocol: TCP
+    name: http
+  selector:
+    app: lisa
+    component: frontend
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: lisa-ingress
+  namespace: default
+  labels:
+    app: lisa
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 80
+    targetPort: 80
+    protocol: TCP
+    name: http
+  - port: 443
+    targetPort: 443
+    protocol: TCP
+    name: https
+  selector:
+    app: lisa
+    component: frontend

@@ -1,0 +1,592 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Lisa AI Bridge API",
+    "description": "API pour connecter ChatGPT à Lisa, une assistante IA avancée avec vision, mémoire, domotique et workflows.",
+    "version": "1.0.0",
+    "contact": {
+      "name": "Lisa AI"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://your-lisa-server.com/api/bridge",
+      "description": "Serveur Lisa Production - REMPLACER PAR VOTRE URL"
+    },
+    {
+      "url": "http://localhost:3000/api/bridge",
+      "description": "Serveur Lisa Local (développement)"
+    }
+  ],
+  "paths": {
+    "/chat": {
+      "post": {
+        "operationId": "chatWithLisa",
+        "summary": "Envoyer un message à Lisa",
+        "description": "Envoie un message à Lisa et reçoit une réponse contextuelle. Lisa peut utiliser ses outils internes pour répondre.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "message": {
+                    "type": "string",
+                    "description": "Le message à envoyer à Lisa"
+                  },
+                  "sessionId": {
+                    "type": "string",
+                    "description": "ID de session pour maintenir le contexte (optionnel)"
+                  },
+                  "context": {
+                    "type": "object",
+                    "description": "Contexte additionnel (optionnel)"
+                  }
+                },
+                "required": ["message"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Réponse de Lisa",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "response": { "type": "string" },
+                    "sessionId": { "type": "string" },
+                    "toolsUsed": {
+                      "type": "array",
+                      "items": { "type": "string" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/invoke": {
+      "post": {
+        "operationId": "invokeLisaTool",
+        "summary": "Invoquer un outil Lisa",
+        "description": "Appelle directement un outil Lisa spécifique avec des arguments.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "tool": {
+                    "type": "string",
+                    "enum": [
+                      "lisa_chat",
+                      "lisa_vision_analyze",
+                      "lisa_calendar_query",
+                      "lisa_smart_home",
+                      "lisa_memory_store",
+                      "lisa_memory_recall",
+                      "lisa_workflow_execute",
+                      "lisa_agent_invoke",
+                      "lisa_system_status"
+                    ],
+                    "description": "Nom de l'outil à invoquer"
+                  },
+                  "arguments": {
+                    "type": "object",
+                    "description": "Arguments pour l'outil"
+                  }
+                },
+                "required": ["tool"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Résultat de l'outil",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "tool": { "type": "string" },
+                    "result": { "type": "object" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/vision/analyze": {
+      "post": {
+        "operationId": "analyzeImage",
+        "summary": "Analyser une image avec Lisa",
+        "description": "Utilise la vision de Lisa pour analyser une image.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "image": {
+                    "type": "string",
+                    "description": "Image en base64 ou URL"
+                  },
+                  "prompt": {
+                    "type": "string",
+                    "description": "Question ou instruction pour l'analyse"
+                  }
+                },
+                "required": ["image"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Résultat de l'analyse",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "result": {
+                      "type": "object",
+                      "properties": {
+                        "analysis": { "type": "string" },
+                        "objects": { "type": "array" },
+                        "description": { "type": "string" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/calendar": {
+      "post": {
+        "operationId": "manageCalendar",
+        "summary": "Gérer le calendrier Lisa",
+        "description": "Créer, lister, modifier ou supprimer des événements du calendrier.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "action": {
+                    "type": "string",
+                    "enum": ["list", "create", "update", "delete"],
+                    "description": "Action à effectuer"
+                  },
+                  "date": {
+                    "type": "string",
+                    "description": "Date au format ISO"
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "Titre de l'événement"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Description de l'événement"
+                  }
+                },
+                "required": ["action"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Résultat de l'opération calendrier",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "result": { "type": "object" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/smarthome": {
+      "post": {
+        "operationId": "controlSmartHome",
+        "summary": "Contrôler la domotique",
+        "description": "Contrôler les appareils domotiques (lumières, thermostats, etc.).",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "device": {
+                    "type": "string",
+                    "description": "Nom ou ID de l'appareil"
+                  },
+                  "action": {
+                    "type": "string",
+                    "enum": ["on", "off", "toggle", "set", "status"],
+                    "description": "Action à effectuer"
+                  },
+                  "value": {
+                    "type": "number",
+                    "description": "Valeur (pour set, ex: luminosité 0-100)"
+                  }
+                },
+                "required": ["device", "action"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Résultat du contrôle",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "result": { "type": "object" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/memory/store": {
+      "post": {
+        "operationId": "storeMemory",
+        "summary": "Stocker une information en mémoire",
+        "description": "Sauvegarde une information dans la mémoire persistante de Lisa.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "key": {
+                    "type": "string",
+                    "description": "Clé de stockage"
+                  },
+                  "value": {
+                    "type": "string",
+                    "description": "Valeur à stocker"
+                  },
+                  "category": {
+                    "type": "string",
+                    "enum": ["preference", "fact", "context"],
+                    "description": "Catégorie de la mémoire"
+                  }
+                },
+                "required": ["key", "value"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Confirmation du stockage",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "result": { "type": "object" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/memory/recall": {
+      "post": {
+        "operationId": "recallMemory",
+        "summary": "Rappeler une information de la mémoire",
+        "description": "Recherche et récupère des informations de la mémoire de Lisa.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "key": {
+                    "type": "string",
+                    "description": "Clé à rechercher"
+                  },
+                  "category": {
+                    "type": "string",
+                    "description": "Catégorie à filtrer"
+                  },
+                  "semantic_query": {
+                    "type": "string",
+                    "description": "Recherche sémantique par texte"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Informations trouvées",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "result": { "type": "object" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workflow/execute": {
+      "post": {
+        "operationId": "executeWorkflow",
+        "summary": "Exécuter un workflow",
+        "description": "Lance un workflow automatisé prédéfini dans Lisa.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "workflow_id": {
+                    "type": "string",
+                    "description": "ID du workflow à exécuter"
+                  },
+                  "workflow_name": {
+                    "type": "string",
+                    "description": "Nom du workflow"
+                  },
+                  "parameters": {
+                    "type": "object",
+                    "description": "Paramètres pour le workflow"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Résultat du workflow",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "result": { "type": "object" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/agent/invoke": {
+      "post": {
+        "operationId": "invokeAgent",
+        "summary": "Invoquer un agent spécialisé",
+        "description": "Appelle un agent spécialisé de Lisa (planner, critic, memory, vision, etc.).",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "agent": {
+                    "type": "string",
+                    "description": "Nom de l'agent (planner, critic, memory, vision, hearing, etc.)"
+                  },
+                  "input": {
+                    "type": "string",
+                    "description": "Entrée pour l'agent"
+                  },
+                  "options": {
+                    "type": "object",
+                    "description": "Options supplémentaires"
+                  }
+                },
+                "required": ["agent", "input"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Réponse de l'agent",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "result": { "type": "object" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/system/status": {
+      "post": {
+        "operationId": "getSystemStatus",
+        "summary": "Obtenir le statut système",
+        "description": "Récupère l'état actuel de Lisa et de ses composants.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "components": {
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "description": "Composants à vérifier (all, agents, services, memory)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Statut système",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "result": {
+                      "type": "object",
+                      "properties": {
+                        "status": { "type": "string" },
+                        "uptime": { "type": "number" },
+                        "agents": { "type": "object" },
+                        "memory": { "type": "object" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tools": {
+      "get": {
+        "operationId": "listTools",
+        "summary": "Lister les outils disponibles",
+        "description": "Retourne la liste de tous les outils Lisa disponibles.",
+        "responses": {
+          "200": {
+            "description": "Liste des outils",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "openai": { "type": "array" },
+                    "anthropic": { "type": "array" },
+                    "count": { "type": "integer" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "operationId": "healthCheck",
+        "summary": "Vérifier la santé du service",
+        "description": "Vérifie que le bridge Lisa est opérationnel.",
+        "responses": {
+          "200": {
+            "description": "Statut de santé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string" },
+                    "service": { "type": "string" },
+                    "version": { "type": "string" },
+                    "capabilities": { "type": "object" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-Lisa-API-Key",
+        "description": "Clé API pour accéder à Lisa"
+      },
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Token JWT pour l'authentification"
+      }
+    }
+  },
+  "security": [
+    { "ApiKeyAuth": [] },
+    { "BearerAuth": [] }
+  ]
+}
