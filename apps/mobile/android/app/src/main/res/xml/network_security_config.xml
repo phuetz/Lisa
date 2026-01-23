@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Network Security Configuration for Lisa AI
+  Allows cleartext (HTTP) traffic only to local network for LM Studio connection
+-->
+<network-security-config>
+    <!-- Default: HTTPS only for external traffic -->
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+    
+    <!-- Allow cleartext only for local network (LM Studio, local API) -->
+    <domain-config cleartextTrafficPermitted="true">
+        <!-- Localhost -->
+        <domain includeSubdomains="true">localhost</domain>
+        <domain includeSubdomains="true">127.0.0.1</domain>
+        
+        <!-- Local IP ranges for LM Studio -->
+        <domain includeSubdomains="true">192.168.0.1</domain>
+        <domain includeSubdomains="true">192.168.1.1</domain>
+        <domain includeSubdomains="true">10.0.0.1</domain>
+        <domain includeSubdomains="true">172.16.0.1</domain>
+        
+        <!-- Common local network patterns -->
+        <domain includeSubdomains="false">192.168.0.0</domain>
+        <domain includeSubdomains="false">192.168.1.0</domain>
+        <domain includeSubdomains="false">10.0.0.0</domain>
+    </domain-config>
+</network-security-config>

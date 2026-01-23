@@ -1,0 +1,37 @@
+{
+  "name": "@lisa-sdk/vision",
+  "version": "1.0.0",
+  "description": "Standalone Computer Vision SDK for React - Powered by YOLOv8 and MediaPipe",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./worker": "./dist/visionWorker.global.js"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "clean": "rimraf dist"
+  },
+  "peerDependencies": {
+    "react": ">=18.0.0"
+  },
+  "dependencies": {
+    "@tensorflow/tfjs": "^4.17.0",
+    "@tensorflow/tfjs-converter": "^4.17.0",
+    "@mediapipe/tasks-vision": "^0.10.9",
+    "@lisa-sdk/core": "workspace:*",
+    "zustand": "^4.5.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.8.3",
+    "rimraf": "^5.0.0"
+  }
+}

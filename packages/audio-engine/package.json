@@ -1,0 +1,32 @@
+{
+  "name": "@lisa-sdk/hearing",
+  "version": "1.0.0",
+  "description": "Standalone Hearing SDK for React - Powered by Whisper and Web Speech API",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./worker": "./dist/hearingWorker.global.js",
+    "./processor": "./dist/audioProcessor.global.js"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "clean": "rimraf dist"
+  },
+  "dependencies": {
+    "@xenova/transformers": "^2.16.0",
+    "@lisa-sdk/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.3.0",
+    "rimraf": "^5.0.0"
+  }
+}
