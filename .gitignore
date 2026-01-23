@@ -29,3 +29,20 @@ dist-ssr
 
 # Environment variables
 .env
+
+# Build artifacts
+*.zip
+playwright-report/
+test-results/
+
+# Audit/lint reports
+audit-eslint.json
+eslint-audit.json
+eslint-detailed.json
+eslint-report.txt
+
+# Tesseract data
+*.traineddata
+
+# One-time scripts
+fix_agent_types.py
