@@ -43,15 +43,97 @@ const { percepts, status, enableSense } = useSenses({
 
 ## 🤖 50+ Agents IA
 
-| Catégorie | Agents | Exemple |
-|-----------|--------|---------|
-| **Communication** | SmallTalkAgent, EmailAgent, TranslationAgent | Conversations naturelles |
-| **Perception** | VisionAgent, HearingAgent, OCRAgent, ImageAnalysisAgent | Analyse d'images/audio |
-| **Productivité** | CalendarAgent, TodoAgent, SchedulerAgent | Gestion du quotidien |
-| **Développement** | CodeInterpreterAgent, GitHubAgent, GeminiCodeAgent | Assistance code |
-| **Intégration** | RosAgent, MQTTAgent, SmartHomeAgent | IoT et robotique |
-| **Workflow** | PlannerAgent, TriggerAgent, TransformAgent | Automatisation |
-| **Santé** | HealthMonitorAgent, SecurityAgent | Surveillance bien-être |
+### Agents de Perception
+
+| Agent | Description |
+|-------|-------------|
+| **VisionAgent** | Analyse et décrit le contenu visuel (webcam, captures d'écran, images) |
+| **HearingAgent** | Traite l'audio avec transcription et détection d'émotions |
+| **AudioAnalysisAgent** | Analyse audio avancée avec transcription, émotions et filtrage |
+| **ImageAnalysisAgent** | Analyse d'images avec détection d'objets et description |
+| **OCRAgent** | Extraction de texte depuis images, captures d'écran ou zones sélectionnées |
+
+### Agents de Communication
+
+| Agent | Description |
+|-------|-------------|
+| **SmallTalkAgent** | Conversations décontractées avec réponses personnalisées et contexte émotionnel |
+| **EmailAgent** | Composition et gestion d'emails avec templates intelligents |
+| **TranslationAgent** | Traduction entre langues avec adaptation culturelle et contextuelle |
+| **SpeechSynthesisAgent** | Convertit le texte en parole pour communication verbale |
+| **ContentGeneratorAgent** | Génère et manipule du contenu textuel avec options stylistiques |
+
+### Agents de Productivité
+
+| Agent | Description |
+|-------|-------------|
+| **CalendarAgent** | Gestion des événements Google Calendar (création, mise à jour, consultation) |
+| **TodoAgent** | Gestion de liste de tâches (ajout, suppression, mise à jour) |
+| **SchedulerAgent** | Optimisation de planning avec analyse de disponibilité |
+| **MemoryAgent** | Gestion de la mémoire épisodique et long terme |
+| **ProactiveSuggestionsAgent** | Suggestions proactives basées sur le contexte utilisateur |
+| **PersonalizationAgent** | Adaptation de l'expérience selon préférences et comportements |
+
+### Agents de Développement
+
+| Agent | Description |
+|-------|-------------|
+| **CodeInterpreterAgent** | Exécution de code Python pour calculs et analyse de données |
+| **GitHubAgent** | Interaction avec GitHub (repos, issues, PRs, commits) |
+| **GeminiCodeAgent** | Génération de code via l'API Gemini |
+| **GeminiCliAgent** | Interaction avec le CLI Gemini |
+| **GrokCliAgent** | Interaction avec le CLI Grok |
+| **WorkflowCodeAgent** | Exécution sécurisée de code JS/TS dans les workflows |
+| **PowerShellAgent** | Exécution sécurisée de commandes PowerShell |
+
+### Agents d'Intégration IoT/Robotique
+
+| Agent | Description |
+|-------|-------------|
+| **RosAgent** | Interaction avec topics et services ROS via rosbridge |
+| **RosPublisherAgent** | Publication de messages sur topics ROS |
+| **RobotAgent** | Contrôle et interaction avec robots |
+| **MQTTAgent** | Communication via protocole MQTT |
+| **SmartHomeAgent** | Contrôle des appareils connectés et scénarios domotiques |
+| **SystemIntegrationAgent** | Intégration avec systèmes externes |
+
+### Agents de Workflow
+
+| Agent | Description |
+|-------|-------------|
+| **PlannerAgent** | Génère et exécute des workflows multi-étapes complexes |
+| **TriggerAgent** | Gestion des triggers et webhooks dans les workflows |
+| **TransformAgent** | Transformation de données dans les workflows |
+| **ConditionAgent** | Évaluation de conditions dans les workflows |
+| **DelayAgent** | Introduction de délais dans les workflows |
+| **ForEachAgent** | Itération sur collections dans les workflows |
+| **SetAgent** | Gestion des variables et état dans les workflows |
+| **WorkflowHTTPAgent** | Requêtes HTTP dans les workflows |
+| **UserWorkflowAgent** | Gestion des workflows utilisateur personnalisés |
+
+### Agents d'Analyse
+
+| Agent | Description |
+|-------|-------------|
+| **NLUAgent** | Analyse NLU (sentiment, émotions, entités) |
+| **DataAnalysisAgent** | Analyse de données et génération de rapports |
+| **KnowledgeGraphAgent** | Gestion du graphe de connaissances (entités, relations) |
+| **ContextAgent** | Gestion du contexte avancé pour mémoire et cohérence |
+| **CriticAgent** | Évaluation critique et amélioration des réponses |
+
+### Agents Spécialisés
+
+| Agent | Description |
+|-------|-------------|
+| **WeatherAgent** | Données météo actuelles et prévisions |
+| **WebSearchAgent** | Recherche web et réponses concises |
+| **WebContentReaderAgent** | Lecture et résumé de contenu web |
+| **ScreenShareAgent** | Gestion du partage d'écran |
+| **MetaHumanAgent** | Contrôle du MetaHuman (expressions, poses) |
+| **HealthMonitorAgent** | Surveillance de la santé et bien-être |
+| **SecurityAgent** | Surveillance sécurité et détection de risques |
+| **CoordinatorAgent** | Coordination entre agents multiples |
+| **LLMAgent** | Assistant LLM universel pour texte et code |
 
 ---
 
