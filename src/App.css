@@ -1,8 +1,28 @@
+/* Fix viewport height for Android WebView */
+:root {
+  --app-height: 100dvh;
+  --bottom-nav-height: 72px;
+  --composer-height: 56px;
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --chat-bottom-offset: calc(var(--bottom-nav-height) + var(--safe-area-bottom));
+}
+
+html, body {
+  height: 100%;
+  height: 100dvh;
+  height: -webkit-fill-available;
+  overflow: hidden;
+}
+
 #root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  width: 100%;
+  height: 100dvh;
+  height: var(--app-height);
+  min-height: -webkit-fill-available;
+  margin: 0;
+  padding: 0;
+  text-align: left;
+  overflow: hidden;
 }
 
 .logo {
@@ -39,4 +59,447 @@
 
 .read-the-docs {
   color: #888;
+}
+
+/* ========================================
+   ACCESSIBILITÉ - Styles globaux
+   ======================================== */
+
+/* Skip Link (sr-only puis visible on focus) */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.sr-only.focus\:not-sr-only:focus {
+  position: fixed;
+  width: auto;
+  height: auto;
+  padding: 0.75rem 1rem;
+  margin: 0;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+}
+
+/* Mode Mouvement Réduit */
+.motion-safe-none * {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Mode Contraste Élevé */
+.high-contrast {
+  --text-primary: #ffffff;
+  --text-secondary: #e0e0e0;
+  --bg-primary: #000000;
+  --bg-secondary: #1a1a1a;
+  --border-color: #ffffff;
+  --accent-color: #00ff00;
+}
+
+.high-contrast * {
+  border-color: var(--border-color, #ffffff) !important;
+}
+
+.high-contrast button,
+.high-contrast a,
+.high-contrast input,
+.high-contrast select,
+.high-contrast textarea {
+  border: 2px solid #ffffff !important;
+}
+
+.high-contrast:focus,
+.high-contrast *:focus {
+  outline: 3px solid #00ff00 !important;
+  outline-offset: 2px !important;
+}
+
+/* Mode Texte Plus Grand */
+.large-text {
+  font-size: 125% !important;
+}
+
+.large-text h1 { font-size: 2.5rem !important; }
+.large-text h2 { font-size: 2rem !important; }
+.large-text h3 { font-size: 1.75rem !important; }
+.large-text h4 { font-size: 1.5rem !important; }
+.large-text p, .large-text span, .large-text div { font-size: 1.125rem !important; }
+.large-text button { font-size: 1rem !important; }
+.large-text input, .large-text select, .large-text textarea { font-size: 1rem !important; }
+
+/* Focus Visible Global */
+*:focus-visible {
+  outline: 2px solid #3B82F6;
+  outline-offset: 2px;
+}
+
+/* Amélioration du contraste pour les textes gris */
+.text-gray-400 {
+  color: #9CA3AF; /* Au lieu de #6B7280 pour meilleur contraste */
+}
+
+.text-slate-400 {
+  color: #94A3B8; /* Au lieu de valeur par défaut */
+}
+
+/* ========================================
+   ANIMATIONS CHAT
+   ======================================== */
+
+/* Curseur clignotant pour le streaming */
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+/* Spinner de chargement */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Hover effect pour les éléments de navigation */
+.nav-item:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* ========================================
+   RESPONSIVE - Mobile First
+   ======================================== */
+
+/* Safe area insets pour iOS/Android */
+.safe-top {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.safe-left {
+  padding-left: env(safe-area-inset-left, 0px);
+}
+
+.safe-right {
+  padding-right: env(safe-area-inset-right, 0px);
+}
+
+.safe-all {
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+}
+
+/* Touch-friendly scrolling */
+.scroll-touch {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+/* Hide scrollbar but keep functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Mobile-specific touch targets (min 44px) */
+@media (max-width: 768px) {
+  button, 
+  a, 
+  [role="button"],
+  input[type="checkbox"],
+  input[type="radio"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Larger text on mobile for readability */
+  body {
+    font-size: 16px;
+    -webkit-text-size-adjust: 100%;
+  }
+  
+  /* Prevent zoom on input focus (iOS) */
+  input, 
+  select, 
+  textarea {
+    font-size: 16px !important;
+  }
+  
+  /* Full width inputs on mobile */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="search"],
+  textarea {
+    width: 100%;
+    max-width: 100%;
+  }
+}
+
+/* Tablet breakpoint */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .container {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+/* Desktop breakpoint */
+@media (min-width: 1024px) {
+  .container {
+    max-width: 1280px;
+    margin: 0 auto;
+  }
+}
+
+/* Bottom navigation spacer for mobile */
+.pb-mobile-nav {
+  padding-bottom: 80px;
+}
+
+@media (min-width: 768px) {
+  .pb-mobile-nav {
+    padding-bottom: 0;
+  }
+}
+
+/* Responsive grid utilities */
+.grid-responsive {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .grid-responsive {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .grid-responsive {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1280px) {
+  .grid-responsive {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* ========================================
+   ANIMATIONS - Mobile Interactions
+   ======================================== */
+
+/* Fade in animation */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Slide up animation */
+@keyframes slideUp {
+  from { 
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Slide in from bottom */
+@keyframes slideInFromBottom {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Scale in animation */
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Pulse glow animation */
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(16, 185, 129, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.6);
+  }
+}
+
+/* Animation classes */
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.4s ease-out forwards;
+}
+
+.animate-slide-in-bottom {
+  animation: slideInFromBottom 0.3s ease-out forwards;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.2s ease-out forwards;
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 2s ease-in-out infinite;
+}
+
+/* Staggered animation delays */
+.stagger-1 { animation-delay: 50ms; }
+.stagger-2 { animation-delay: 100ms; }
+.stagger-3 { animation-delay: 150ms; }
+.stagger-4 { animation-delay: 200ms; }
+.stagger-5 { animation-delay: 250ms; }
+
+/* ========================================
+   GLASS MORPHISM - Modern UI
+   ======================================== */
+
+.glass {
+  background: rgba(15, 23, 42, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.glass-light {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.glass-dark {
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* ========================================
+   MOBILE CARD STYLES
+   ======================================== */
+
+.mobile-card {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%);
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 1rem;
+  transition: all 0.3s ease;
+}
+
+.mobile-card:active {
+  transform: scale(0.98);
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 1) 100%);
+}
+
+/* ========================================
+   TOUCH FEEDBACK
+   ======================================== */
+
+.touch-feedback {
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.touch-feedback:active {
+  transform: scale(0.97);
+  opacity: 0.9;
+}
+
+/* Ripple effect container */
+.ripple-container {
+  position: relative;
+  overflow: hidden;
+}
+
+/* ========================================
+   MOBILE TYPOGRAPHY
+   ======================================== */
+
+@media (max-width: 768px) {
+  .mobile-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+  
+  .mobile-subtitle {
+    font-size: 0.875rem;
+    color: #94a3b8;
+    line-height: 1.4;
+  }
+  
+  .mobile-body {
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+  
+  .mobile-caption {
+    font-size: 0.75rem;
+    color: #64748b;
+  }
+}
+
+/* ========================================
+   MOBILE SPACING UTILITIES
+   ======================================== */
+
+@media (max-width: 768px) {
+  .mobile-p-4 { padding: 1rem; }
+  .mobile-p-3 { padding: 0.75rem; }
+  .mobile-p-2 { padding: 0.5rem; }
+  .mobile-px-4 { padding-left: 1rem; padding-right: 1rem; }
+  .mobile-py-3 { padding-top: 0.75rem; padding-bottom: 0.75rem; }
+  .mobile-gap-3 { gap: 0.75rem; }
+  .mobile-gap-2 { gap: 0.5rem; }
+  .mobile-mb-4 { margin-bottom: 1rem; }
+  .mobile-mt-2 { margin-top: 0.5rem; }
 }

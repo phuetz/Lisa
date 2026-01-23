@@ -3,14 +3,51 @@ import { createRoot } from 'react-dom/client'
 import { RouterProvider } from 'react-router-dom'
 import './index.css'
 import './i18n'
-import { router } from './router/index'
+import { router } from './router'
 import { startupLogger, logStartup } from './utils/startupLogger'
+import { initLisaVivante } from './manifesto/initLisaVivante'
 
-// Démarrer le logging
-startupLogger.startTimer('app-init');
-logStartup('Application initialization started');
-logStartup('React version', { version: '19.1.0' });
-logStartup('Environment', { mode: import.meta.env.MODE, dev: import.meta.env.DEV });
+// Initialiser Lisa Vivante
+const initializeApp = async () => {
+  // Démarrer le logging
+  startupLogger.startTimer('app-init');
+  logStartup('Application initialization started');
+  logStartup('React version', { version: '19.1.0' });
+  logStartup('Environment', { mode: import.meta.env.MODE, dev: import.meta.env.DEV });
+
+  try {
+    // Initialiser Lisa Vivante
+    startupLogger.startTimer('lisa-vivante-init');
+    logStartup('Initializing Lisa Vivante...');
+    
+    const lisaState = await initLisaVivante({
+      enableSensors: true,
+      enableAudit: true,
+      enableMemory: true,
+      debugMode: import.meta.env.DEV,
+      autoValidate: true,
+      validationInterval: 30000 // 30 secondes
+    });
+
+    startupLogger.endTimer('lisa-vivante-init', 'startup');
+    logStartup('Lisa Vivante initialized', {
+      sessionId: lisaState.sessionId,
+      status: lisaState.status,
+      pillars: lisaState.pillars
+    });
+
+    // Vérifier que Lisa est vivante
+    if (lisaState.status === 'alive') {
+      logStartup('✅ Lisa is ALIVE! All pillars active.');
+    } else {
+      logStartup('⚠️ Lisa in degraded mode', { status: lisaState.status });
+    }
+
+  } catch (error) {
+    startupLogger.error('startup', 'Failed to initialize Lisa Vivante', error);
+    console.error('Failed to initialize Lisa Vivante:', error);
+  }
+};
 
 // Register service worker for PWA functionality (production only)
 const registerServiceWorker = async () => {
@@ -47,26 +84,29 @@ const registerServiceWorker = async () => {
   }
 };
 
-logStartup('Creating React root');
-startupLogger.startTimer('react-render');
+// Initialiser l'application
+initializeApp().then(() => {
+  logStartup('Creating React root');
+  startupLogger.startTimer('react-render');
 
-try {
-  const rootElement = document.getElementById('root');
-  if (!rootElement) {
-    throw new Error('Root element not found');
+  try {
+    const rootElement = document.getElementById('root');
+    if (!rootElement) {
+      throw new Error('Root element not found');
+    }
+    
+    createRoot(rootElement).render(
+      <StrictMode>
+        <RouterProvider router={router} />
+      </StrictMode>,
+    );
+    
+    startupLogger.endTimer('react-render', 'startup');
+    logStartup('React app rendered successfully');
+  } catch (error) {
+    startupLogger.error('startup', 'Failed to render React app', error);
   }
-  
-  createRoot(rootElement).render(
-    <StrictMode>
-      <RouterProvider router={router} future={{ v7_startTransition: true }} />
-    </StrictMode>,
-  );
-  
-  startupLogger.endTimer('react-render', 'startup');
-  logStartup('React app rendered successfully');
-} catch (error) {
-  startupLogger.error('startup', 'Failed to render React app', error);
-}
+});
 
 // Register service worker after app has loaded (production only)
 window.addEventListener('load', () => {
