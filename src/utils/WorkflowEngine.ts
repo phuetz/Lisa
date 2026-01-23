@@ -10,8 +10,8 @@
 
 import { v4 as uuidv4 } from 'uuid';
 import { saveToStorage, loadFromStorage } from './storage';
-import { agentRegistry } from '../agents/registry';
-import type { BaseAgent } from '../agents/types';
+import { agentRegistry } from '../features/agents/core/registry';
+import type { BaseAgent } from '../features/agents/core/types';
 
 // Storage keys
 const WORKFLOW_HISTORY_KEY = 'workflow_history';

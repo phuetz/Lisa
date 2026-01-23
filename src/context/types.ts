@@ -3,7 +3,10 @@
  * Types et interfaces pour le système de gestion de contexte avancé
  */
 
-import { AgentType } from '../agents/types';
+import type { AgentDomain } from '../features/agents/core/types';
+
+// Type alias for agent references
+type AgentType = string | AgentDomain;
 
 /**
  * Types de contexte supportés
@@ -55,7 +58,7 @@ export interface ContextItem {
   id: string;                     // ID unique
   type: ContextType;              // Type de contexte
   value: any;                     // Valeur du contexte
-  source: string | AgentType;     // Source du contexte (utilisateur ou agent)
+  source: string | AgentDomain;     // Source du contexte (utilisateur ou agent)
   timestamp: number;              // Horodatage de création
   priority: ContextPriorityLevel; // Priorité
   lifespan: ContextLifespanType;  // Durée de vie
@@ -153,7 +156,7 @@ export interface SessionContextItem extends ContextItem {
     sessionId: string;      // ID de session
     startTime: number;      // Début de la session
     lastActiveTime: number; // Dernière activité
-    activeAgents: AgentType[]; // Agents actifs dans la session
+    activeAgents: AgentDomain[]; // Agents actifs dans la session
     sessionGoals?: string[]; // Objectifs de la session
   };
 }
@@ -210,7 +213,7 @@ export type SpecificContextItem =
  */
 export interface ContextQueryOptions {
   types?: ContextType[];           // Filtrer par types
-  sources?: (string | AgentType)[]; // Filtrer par sources
+  sources?: (string | AgentDomain)[]; // Filtrer par sources
   minPriority?: ContextPriorityLevel; // Priorité minimale
   tags?: string[];                 // Filtrer par tags
   fromTimestamp?: number;         // Filtrer par horodatage min
@@ -251,3 +254,4 @@ export interface ContextStrategy {
   // Nettoyer les contextes expirés ou non pertinents
   pruneContextItems(items: ContextItem[]): ContextItem[];
 }
+

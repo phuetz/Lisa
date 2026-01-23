@@ -5,7 +5,8 @@
  * Provides structured error reporting and suggestions for recovery.
  */
 
-import type { WorkflowStep, WorkflowErrorReport } from '../types/Planner';
+import type { WorkflowStep } from '../types/Planner';
+import { WorkflowErrorReport } from '../types/Planner';
 import { logEvent } from './logger';
 
 /**
@@ -20,12 +21,11 @@ export function handleAgentError(
   error: Error
 ): WorkflowErrorReport {
   // Create base error report
-  const errorReport: WorkflowErrorReport = {
-    failedStep: step,
-    message: error.message,
-    error,
-    isRecoverable: determineIfRecoverable(step, error),
-  };
+  const errorReport = new WorkflowErrorReport(
+    error.message,
+    step,
+    determineIfRecoverable(step, error)
+  );
 
   // Add recovery hints based on error type
   errorReport.recoveryHint = generateRecoveryHint(step, error);
@@ -47,7 +47,7 @@ export function handleAgentError(
  * @param error - The error that occurred
  * @returns boolean indicating if recovery is possible
  */
-function determineIfRecoverable(step: WorkflowStep, error: Error): boolean {
+function determineIfRecoverable(_step: WorkflowStep, error: Error): boolean {
   const errorMessage = error.message.toLowerCase();
   
   // Non-recoverable errors (fundamental issues that revision won't fix)

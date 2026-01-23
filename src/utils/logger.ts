@@ -17,19 +17,40 @@ const eventLog: WorkflowEvent[] = [];
  * Log a workflow-related event
  * 
  * @param type - Category of event (plan_generated, step_completed, etc.)
- * @param payload - Event-specific data (can be any structure)
  * @param message - Human-readable description of the event
+ * @param data - Event-specific data (can be any structure)
  * @returns The created event object
  */
 export function logEvent(
   type: WorkflowEventType,
-  payload: any,
+  message: string,
+  data?: Record<string, unknown>
+): WorkflowEvent;
+export function logEvent(
+  type: WorkflowEventType,
+  data: Record<string, unknown>,
   message: string
+): WorkflowEvent;
+export function logEvent(
+  type: WorkflowEventType,
+  messageOrData: string | Record<string, unknown>,
+  dataOrMessage?: Record<string, unknown> | string
 ): WorkflowEvent {
+  let message: string;
+  let data: Record<string, unknown> | undefined;
+
+  if (typeof messageOrData === 'string') {
+    message = messageOrData;
+    data = typeof dataOrMessage === 'object' ? dataOrMessage : undefined;
+  } else {
+    data = messageOrData;
+    message = typeof dataOrMessage === 'string' ? dataOrMessage : '';
+  }
+
   const event: WorkflowEvent = {
     type,
     timestamp: Date.now(),
-    payload,
+    payload: data,
     message,
   };
 
@@ -76,4 +97,15 @@ export function clearEvents(): void {
 export function formatEvent(event: WorkflowEvent): string {
   const time = new Date(event.timestamp).toLocaleTimeString();
   return `[${time}] ${event.type.toUpperCase()}: ${event.message}`;
+}
+
+// Minimal logger factory used across panels and services
+export function createLogger(name: string) {
+  const prefix = `[${name}]`;
+  return {
+    info: (...args: unknown[]) => console.info(prefix, ...args),
+    warn: (...args: unknown[]) => console.warn(prefix, ...args),
+    error: (...args: unknown[]) => console.error(prefix, ...args),
+    debug: (...args: unknown[]) => console.debug(prefix, ...args),
+  };
 }

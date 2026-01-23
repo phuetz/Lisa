@@ -22,7 +22,7 @@ export const registerUser = async (email: string, password: string, name?: strin
     },
   });
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   const { password: _, ...userWithoutPassword } = user;
   return userWithoutPassword;
 };
@@ -49,7 +49,7 @@ export const loginUser = async (email: string, password_raw: string) => {
     expiresIn: '1h',
   });
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   const { password, ...userWithoutPassword } = user;
 
   return { user: userWithoutPassword, token };

@@ -3,7 +3,7 @@
  */
 import express from 'express';
 import type { ApiResponse } from '../config.js';
-import { agentRegistry } from '../../agents/registry.js';
+import { agentRegistry } from '../../features/agents/core/registry.js';
 
 const router = express.Router();
 

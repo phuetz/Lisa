@@ -6,7 +6,7 @@
  */
 
 import type { WorkflowStep, PlannerResult } from '../types/Planner';
-import { agentRegistry } from '../agents/registry';
+import { agentRegistry } from '../features/agents/core/registry';
 import { logEvent } from './logger';
 import { handleAgentError } from './handleAgentError';
 
@@ -22,7 +22,7 @@ export async function runWorkflowPlan(
   onPlanUpdate?: (plan: WorkflowStep[]) => void
 ): Promise<PlannerResult> {
   const totalStartTime = performance.now();
-  let currentPlan = [...plan]; // Work with a copy to avoid mutating the input
+  const currentPlan = [...plan]; // Work with a copy to avoid mutating the input
   let hasError = false;
   
   try {
@@ -51,7 +51,7 @@ export async function runWorkflowPlan(
       const stepResults = await Promise.all(executionPromises);
       
       // Update the plan with results
-      stepResults.forEach(({ step, success, error }) => {
+      stepResults.forEach(({ step, success }) => {
         const index = currentPlan.findIndex(s => s.id === step.id);
         if (index !== -1) {
           currentPlan[index] = step;
@@ -78,8 +78,6 @@ export async function runWorkflowPlan(
     
     // Generate summary and result
     const successCount = currentPlan.filter(s => s.status === 'completed').length;
-    const failedCount = currentPlan.filter(s => s.status === 'failed').length;
-    const pendingCount = currentPlan.filter(s => s.status === 'pending').length;
     
     const summary = hasError
       ? `Workflow execution failed after ${successCount} completed steps`
@@ -92,12 +90,18 @@ export async function runWorkflowPlan(
       summary
     );
     
-    return {
+    const result: PlannerResult = {
       success: !hasError,
       plan: currentPlan,
-      summary,
+      output: summary,
       totalDuration,
     };
+
+    if (hasError) {
+      result.error = summary;
+    }
+
+    return result;
     
   } catch (error) {
     // Handle unexpected execution errors
@@ -118,7 +122,7 @@ export async function runWorkflowPlan(
             error
           )
         : undefined,
-      summary: `Workflow execution failed: ${errorMessage}`,
+      output: `Workflow execution failed: ${errorMessage}`,
       totalDuration: performance.now() - totalStartTime,
     };
   }
@@ -156,7 +160,7 @@ function findRunnableSteps(plan: WorkflowStep[]): WorkflowStep[] {
  */
 async function executeWorkflowStep(
   step: WorkflowStep,
-  plan: WorkflowStep[]
+  _plan: WorkflowStep[]
 ): Promise<{ step: WorkflowStep, success: boolean, error?: Error }> {
   // Mark step as in progress
   step.status = 'in_progress';
@@ -171,7 +175,7 @@ async function executeWorkflowStep(
   
   try {
     // Find the agent in the registry
-    const agent = agentRegistry.getAgent(step.agent);
+    const agent = await agentRegistry.getAgentAsync(step.agent);
     if (!agent) {
       throw new Error(`Agent "${step.agent}" not found in registry`);
     }

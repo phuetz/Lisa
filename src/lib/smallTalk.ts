@@ -3,7 +3,8 @@
  * This module is framework-agnostic and can be used in any JavaScript/TypeScript environment.
  */
 
-const DEFAULT_LLM_API = 'https://api.openai.com/v1/chat/completions';
+import { secureAI } from '../services/SecureAIService';
+import { resilientExecutor } from '../utils/resilience/ResilientExecutor';
 
 export interface SmallTalkOptions {
   apiKey?: string;
@@ -35,7 +36,7 @@ function getDefaultResponse(_text: string, language: string): string {
       ]
     };
     
-    let responses = isFrench ? defaultResponses.fr : isSpanish ? defaultResponses.es : defaultResponses.en;
+    const responses = isFrench ? defaultResponses.fr : isSpanish ? defaultResponses.es : defaultResponses.en;
     return responses[Math.floor(Math.random() * responses.length)];
 }
 
@@ -47,44 +48,36 @@ function getDefaultResponse(_text: string, language: string): string {
  * @param language The current language for the response.
  * @returns A promise that resolves to the AI's response.
  */
-export async function processSmallTalk(text: string, options: SmallTalkOptions, conversationHistory: any[] = [], language = 'en'): Promise<string> {
-  const { apiKey, apiEndpoint = DEFAULT_LLM_API, model = 'gpt-3.5-turbo', maxTokens = 100, temperature = 0.7 } = options;
-
-  if (!apiKey) {
-    console.warn('No LLM API key provided for small talk');
-    return getDefaultResponse(text, language);
-  }
+export async function processSmallTalk(text: string, options: SmallTalkOptions, conversationHistory: Array<{role: string; content: string}> = [], language = 'en'): Promise<string> {
+  const { model = 'gpt-4o-mini' } = options;
+  // Note: maxTokens sera supporté dans une future version du proxy
 
   try {
-    const payload = {
-      model,
-      messages: [
-        {
-          role: 'system',
-          content: `You are Lisa, a friendly virtual assistant. Keep responses brief (1-2 sentences max) and conversational. Current language: ${language}`
-        },
-        ...conversationHistory.map((msg: {role: string, content: string}) => ({ role: msg.role, content: msg.content })),
-        { role: 'user', content: text }
-      ],
-      max_tokens: maxTokens,
-      temperature: temperature,
-    };
-
-    const response = await fetch(apiEndpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
+    const messages = [
+      {
+        role: 'system' as const,
+        content: `You are Lisa, a friendly virtual assistant. Keep responses brief (1-2 sentences max) and conversational. Current language: ${language}`
       },
-      body: JSON.stringify(payload)
-    });
+      ...conversationHistory.map((msg: {role: string, content: string}) => ({ 
+        role: msg.role as 'system' | 'user' | 'assistant', 
+        content: msg.content 
+      })),
+      { role: 'user' as const, content: text }
+    ];
 
-    if (!response.ok) {
-      throw new Error(`API error: ${response.statusText}`);
-    }
+    // Utiliser le proxy sécurisé avec résilience
+    const response = await resilientExecutor.executeWithRetry(
+      () => secureAI.callOpenAI(messages, model),
+      {
+        maxRetries: 2,
+        circuitBreakerKey: 'SmallTalkAgent',
+        onRetry: (attempt, max) => {
+          console.log(`[SmallTalk] Retry ${attempt}/${max}`);
+        }
+      }
+    );
 
-    const data = await response.json();
-    return data.choices[0].message.content.trim();
+    return response.choices[0].message.content.trim();
   } catch (error) {
     console.error('Error processing small talk:', error);
     return getDefaultResponse(text, language);

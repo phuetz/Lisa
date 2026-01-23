@@ -5,15 +5,15 @@
 
 import { v4 as uuidv4 } from 'uuid';
 import {
-  ContextItem,
-  ContextType,
+  type ContextItem,
+  type ContextType,
   ContextTypes,
   ContextPriority,
   ContextLifespan,
-  ContextQueryOptions,
-  ContextRelevanceMetric,
-  ContextStrategy,
-  SpecificContextItem
+  type ContextQueryOptions,
+  type ContextRelevanceMetric,
+  type ContextStrategy,
+  type SpecificContextItem
 } from './types';
 
 /**

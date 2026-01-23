@@ -8,6 +8,8 @@
 import { logEvent } from './logger';
 import { planTracer } from './planTracer';
 import type { WorkflowStep } from '../types/Planner';
+import { secureAI } from '../services/SecureAIService';
+import { resilientExecutor } from './resilience/ResilientExecutor';
 
 interface RevisePlanOptions {
   /**
@@ -16,9 +18,10 @@ interface RevisePlanOptions {
   traceId?: string;
   
   /**
-   * API Key pour le modèle LLM
+   * API Key pour le modèle LLM (déprécié - non utilisé, conservé pour compatibilité)
+   * @deprecated
    */
-  apiKey: string;
+  apiKey?: string;
   
   /**
    * Modèle à utiliser pour la révision
@@ -37,7 +40,7 @@ interface RevisePlanOptions {
 }
 
 const DEFAULT_OPTIONS: Partial<RevisePlanOptions> = {
-  model: 'gpt-4-turbo-preview',
+  model: 'gpt-4o-mini',
   maxAttempts: 3
 };
 
@@ -81,29 +84,23 @@ Répondez UNIQUEMENT avec le JSON du plan révisé. Conservez la même structure
 }
 
 /**
- * Appelle l'API LLM pour réviser un plan
+ * Appelle l'API LLM pour réviser un plan (via proxy sécurisé)
  */
 async function callLLM(prompt: string, options: RevisePlanOptions): Promise<string> {
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${options.apiKey}`
-    },
-    body: JSON.stringify({
-      model: options.model || DEFAULT_OPTIONS.model,
-      messages: [{ role: 'user', content: prompt }],
-      temperature: 0,
-      response_format: { type: 'json_object' },
-    }),
-  });
+  const result = await resilientExecutor.executeWithRetry(
+    () => secureAI.callOpenAI(
+      [{ role: 'user', content: prompt }],
+      options.model || DEFAULT_OPTIONS.model || 'gpt-4o-mini'
+    ),
+    {
+      maxRetries: 2,
+      circuitBreakerKey: 'revisePlan',
+      onRetry: (attempt, max) => {
+        logEvent('plan_revision_retry', { attempt, max }, `Retrying plan revision (${attempt}/${max})`);
+      }
+    }
+  );
   
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`LLM API request failed: ${response.status} ${errorText}`);
-  }
-  
-  const result = await response.json();
   return result.choices[0].message.content;
 }
 
@@ -114,7 +111,7 @@ async function generateExplanation(
   originalPlan: WorkflowStep[],
   revisedPlan: WorkflowStep[],
   errorMessage: string | undefined,
-  options: RevisePlanOptions
+  _options: RevisePlanOptions
 ): Promise<string> {
   // Créer un prompt pour expliquer les changements
   const prompt = `Expliquez brièvement les changements effectués pour corriger ce plan qui a échoué ${errorMessage ? `avec l'erreur: "${errorMessage}"` : 'sans raison connue'}.
@@ -132,27 +129,14 @@ ${JSON.stringify(revisedPlan.map(s => ({id: s.id, description: s.description})),
 Donnez un résumé des modifications en 1-2 phrases, dans un langage simple pour l'utilisateur:`;
 
   try {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${options.apiKey}`
-      },
-      body: JSON.stringify({
-        model: 'gpt-3.5-turbo', // Modèle plus rapide et moins cher pour de simples explications
-        messages: [{ role: 'user', content: prompt }],
-        temperature: 0.3,
-        max_tokens: 100,
-      }),
-    });
+    const result = await secureAI.callOpenAI(
+      [{ role: 'user', content: prompt }],
+      'gpt-4o-mini'
+    );
     
-    if (!response.ok) {
-      return "Plan révisé avec corrections techniques.";
-    }
-    
-    const result = await response.json();
     return result.choices[0].message.content.trim();
   } catch (error) {
+    console.error('Error generating explanation:', error);
     return "Plan révisé avec corrections techniques.";
   }
 }
@@ -173,13 +157,10 @@ export async function revisePlan(
   // Fusionner les options avec les valeurs par défaut
   const finalOptions: RevisePlanOptions = { 
     ...DEFAULT_OPTIONS, 
-    ...options,
-    apiKey: options.apiKey || ''
+    ...options
   };
   
-  if (!finalOptions.apiKey) {
-    throw new Error('API key is required for plan revision');
-  }
+  // Note: apiKey n'est plus requis car on utilise le proxy sécurisé
 
   const maxAttempts = finalOptions.maxAttempts || DEFAULT_OPTIONS.maxAttempts || 3;
   if (attempt > maxAttempts) {

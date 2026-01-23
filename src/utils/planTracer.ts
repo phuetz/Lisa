@@ -112,18 +112,25 @@ class PlanTracer {
   }
 
   /**
-   * Nettoie les traces anciennes (plus de 24h)
+   * Nettoie les traces
+   * - Si thresholdMs est fourni: supprime les traces plus anciennes que ce seuil
+   * - Sinon: réinitialise toutes les traces
    */
-  cleanup(thresholdMs = 24 * 60 * 60 * 1000): number {
-    const now = Date.now();
+  cleanup(thresholdMs?: number): number {
     let cleanedCount = 0;
-    
-    for (const [traceId, trace] of this.traces.entries()) {
-      if (now - trace.startTime > thresholdMs) {
-        this.traces.delete(traceId);
-        cleanedCount++;
+    if (typeof thresholdMs === 'number') {
+      const now = Date.now();
+      for (const [traceId, trace] of this.traces.entries()) {
+        if (now - trace.startTime > thresholdMs) {
+          this.traces.delete(traceId);
+          cleanedCount++;
+        }
       }
+      return cleanedCount;
     }
+    // Reset all traces when no threshold is provided
+    cleanedCount = this.traces.size;
+    this.traces.clear();
     return cleanedCount;
   }
   
@@ -134,18 +141,7 @@ class PlanTracer {
     return this.traces.delete(traceId);
   }
   
-  /**
-   * Nettoie les traces anciennes (plus de 24h)
-   */
-  cleanup(): void {
-    const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
-    
-    for (const [traceId, trace] of this.traces.entries()) {
-      if (trace.startTime < oneDayAgo) {
-        this.traces.delete(traceId);
-      }
-    }
-  }
+  
 }
 
 // Singleton pour l'accès global

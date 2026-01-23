@@ -3,8 +3,8 @@
  */
 import express, { type Request, type Response } from 'express';
 import type { ApiResponse } from '../config.js';
-import { agentRegistry } from '../../agents/registry.js';
-import type { AgentExecuteResult } from '../../agents/types.js';
+import { agentRegistry } from '../../features/agents/core/registry.js';
+import type { AgentExecuteResult } from '../../features/agents/core/types.js';
 import type { PlannerResult } from '../../types/Planner.js';
 
 const router = express.Router();
