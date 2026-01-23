@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { agentRegistry } from '../agents/registry';
+import { agentRegistry } from '../features/agents/core/registry';
 import { useVisionAudioStore } from '../store/visionAudioStore';
 import type { PlannerAgent } from '../agents/PlannerAgent';
 
@@ -7,17 +7,20 @@ import type { PlannerAgent } from '../agents/PlannerAgent';
  * A hook to synchronize the PlannerAgent's templates and checkpoints with the global store.
  */
 export const useWorkflowManager = () => {
-  const { setTemplates, setCheckpoints } = useVisionAudioStore();
-
   useEffect(() => {
-    const planner = agentRegistry.getAgent('PlannerAgent') as PlannerAgent | undefined;
+    const loadPlanner = async () => {
+      const planner = await agentRegistry.getAgentAsync('PlannerAgent') as PlannerAgent | undefined;
 
-    if (planner) {
-      const templates = planner.getTemplates();
-      const checkpoints = planner.getCheckpoints();
-      
-      setTemplates(templates);
-      setCheckpoints(checkpoints);
-    }
-  }, [setTemplates, setCheckpoints]);
+      if (planner) {
+        const templates = planner.getTemplates();
+        const checkpoints = planner.getCheckpoints();
+        
+        // Accéder directement au store sans dépendances
+        useVisionAudioStore.getState().setTemplates(templates);
+        useVisionAudioStore.getState().setCheckpoints(checkpoints);
+      }
+    };
+    
+    loadPlanner();
+  }, []); // Exécuter une seule fois au montage
 };

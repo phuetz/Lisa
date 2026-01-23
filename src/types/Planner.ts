@@ -4,7 +4,7 @@
  * Type definitions for the PlannerAgent and workflow execution system
  */
 
-import type { AgentExecuteProps, AgentExecuteResult } from '../agents/types.js';
+import type { AgentExecuteProps, AgentExecuteResult } from '../features/agents/core/types.js';
 
 /**
  * Status of a workflow step
@@ -24,13 +24,13 @@ export interface WorkflowStep {
   /** The command/function to call on the agent */
   command: string;
   /** Arguments to pass to the command */
-  args: Record<string, any>;
+  args: Record<string, unknown>;
   /** IDs of steps that must complete before this one can start */
   dependencies: number[];
   /** Current execution status */
   status: WorkflowStepStatus;
   /** Output of the step execution */
-  result?: any;
+  result?: unknown;
   /** Performance timestamp when step started */
   startTime?: number;
   /** Performance timestamp when step completed */
@@ -113,7 +113,16 @@ export type WorkflowEventType =
   | 'checkpoint_created'
   | 'checkpoint_resumed'
   | 'template_saved'
-  | 'template_loaded';
+  | 'template_loaded'
+  | 'plan_status'
+  | 'plan_execution_started'
+  | 'plan_explanation_failed'
+  | 'plan_explanation'
+  | 'plan_revision_failed'
+  | 'plan_template_saved'
+  | 'checkpoint_deleted'
+  | 'plan_succeeded'
+  | 'checkpoint_saved';
 
 /**
  * Structure of a workflow log event
@@ -124,7 +133,7 @@ export interface WorkflowEvent {
   /** Timestamp when the event occurred */
   timestamp: number;
   /** Additional data specific to the event type */
-  payload: any;
+  payload?: Record<string, unknown>;
   /** Human-readable message */
   message: string;
 }

@@ -8,17 +8,26 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import ProactiveSuggestionsPanel from '../ProactiveSuggestionsPanel';
 
+// Variables mockées pour les tests (doivent être déclarées avant les mocks)
+let mockSuggestions: any[] = [];
+let mockIsSilent = false;
+const mockDismissSuggestion = vi.fn();
+const mockExecuteSuggestion = vi.fn().mockResolvedValue({ success: true, intent: 'test_intent', parameters: { test: 'value' } });
+const mockGenerateSuggestions = vi.fn();
+const mockGetSuggestions = vi.fn();
+const mockClearAllSuggestions = vi.fn();
+
 // Mocks
 vi.mock('../../hooks/useProactiveSuggestions', () => ({
   useProactiveSuggestions: vi.fn(() => ({
     suggestions: mockSuggestions,
     isLoading: false,
     error: null,
-    generateSuggestions: vi.fn(),
-    getSuggestions: vi.fn(),
-    dismissSuggestion: vi.fn(),
-    clearAllSuggestions: vi.fn(),
-    executeSuggestion: vi.fn().mockResolvedValue({ success: true, intent: 'test_intent', parameters: { test: 'value' } }),
+    generateSuggestions: mockGenerateSuggestions,
+    getSuggestions: mockGetSuggestions,
+    dismissSuggestion: mockDismissSuggestion,
+    clearAllSuggestions: mockClearAllSuggestions,
+    executeSuggestion: mockExecuteSuggestion,
   }))
 }));
 
@@ -40,10 +49,6 @@ vi.mock('../../store/visionAudioStore', () => ({
     setLastIntent: vi.fn()
   }))
 }));
-
-// Variables mockées pour les tests
-let mockSuggestions = [];
-let mockIsSilent = false;
 
 describe('ProactiveSuggestionsPanel', () => {
   beforeEach(() => {
@@ -110,38 +115,6 @@ describe('ProactiveSuggestionsPanel', () => {
   });
 
   it('devrait exécuter la suggestion lorsqu\'on clique dessus', async () => {
-    const mockExecuteSuggestion = vi.fn().mockResolvedValue({
-      success: true,
-      intent: 'test_intent',
-      parameters: { test: 'value' }
-    });
-    
-    vi.mock('../../hooks/useProactiveSuggestions', () => ({
-      useProactiveSuggestions: () => ({
-        suggestions: [
-          {
-            id: '1',
-            title: 'Suggestion Test',
-            description: 'Description de la suggestion',
-            intent: 'test_intent',
-            parameters: { test: 'value' },
-            contextSource: 'test',
-            confidence: 0.8,
-            timestamp: Date.now(),
-            category: 'info',
-            dismissed: false
-          }
-        ],
-        isLoading: false,
-        error: null,
-        generateSuggestions: vi.fn(),
-        getSuggestions: vi.fn(),
-        dismissSuggestion: vi.fn(),
-        clearAllSuggestions: vi.fn(),
-        executeSuggestion: mockExecuteSuggestion
-      })
-    }));
-    
     mockSuggestions = [
       {
         id: '1',
@@ -161,6 +134,9 @@ describe('ProactiveSuggestionsPanel', () => {
     
     // Trouver et cliquer sur la suggestion
     const suggestionContent = screen.getByText('Suggestion Test').closest('.suggestion-content');
+    if (!suggestionContent) {
+      throw new Error('Suggestion content not found');
+    }
     fireEvent.click(suggestionContent);
     
     // Vérifier que la fonction executeSuggestion a été appelée
@@ -170,34 +146,6 @@ describe('ProactiveSuggestionsPanel', () => {
   });
 
   it('devrait ignorer la suggestion lorsqu\'on clique sur le bouton de fermeture', () => {
-    const mockDismissSuggestion = vi.fn();
-    
-    vi.mock('../../hooks/useProactiveSuggestions', () => ({
-      useProactiveSuggestions: () => ({
-        suggestions: [
-          {
-            id: '1',
-            title: 'Suggestion Test',
-            description: 'Description de la suggestion',
-            intent: 'test_intent',
-            parameters: {},
-            contextSource: 'test',
-            confidence: 0.8,
-            timestamp: Date.now(),
-            category: 'info',
-            dismissed: false
-          }
-        ],
-        isLoading: false,
-        error: null,
-        generateSuggestions: vi.fn(),
-        getSuggestions: vi.fn(),
-        dismissSuggestion: mockDismissSuggestion,
-        clearAllSuggestions: vi.fn(),
-        executeSuggestion: vi.fn()
-      })
-    }));
-    
     mockSuggestions = [
       {
         id: '1',

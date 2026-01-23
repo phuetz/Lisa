@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useVisionAudioStore } from '../store/visionAudioStore';
-import { agentRegistry } from '../agents/registry';
+import { useAppStore } from '../store/appStore';
+import { agentRegistry } from '../features/agents/core/registry';
 import { createLogger } from '../utils/logger';
 import GitHubCacheService from '../services/GitHubCacheService';
 import './GitHubPanel.css';
@@ -75,14 +75,14 @@ const GitHubPanel: React.FC = () => {
     readme: boolean;
   }>({repositories: false, issues: false, pullRequests: false, commits: false, readme: false});
 
-  const { lastIntent } = useVisionAudioStore();
+  const { intent } = useAppStore();
 
   useEffect(() => {
     // Vérifier si l'intent concerne GitHub
-    if (lastIntent && lastIntent.toLowerCase().includes('github')) {
+    if (intent && intent.toLowerCase().includes('github')) {
       setIsVisible(true);
     }
-  }, [lastIntent]);
+  }, [intent]);
 
   useEffect(() => {
     // Charger le token de l'API GitHub depuis localStorage s'il existe
@@ -202,7 +202,7 @@ const GitHubPanel: React.FC = () => {
         useCache
       });
 
-      setRepositories(result);
+      setRepositories(result as unknown as Repository[]);
       setCurrentView('repos');
     } catch (error) {
       logger.error('Erreur lors du chargement des dépôts', error);
@@ -246,7 +246,7 @@ const GitHubPanel: React.FC = () => {
         useCache
       });
 
-      setIssues(result);
+      setIssues(result as unknown as Issue[]);
       setCurrentView('issues');
     } catch (error) {
       logger.error('Erreur lors du chargement des issues', error);
@@ -290,7 +290,7 @@ const GitHubPanel: React.FC = () => {
         useCache
       });
 
-      setPullRequests(result);
+      setPullRequests(result as unknown as PullRequest[]);
       setCurrentView('pulls');
     } catch (error) {
       logger.error('Erreur lors du chargement des pull requests', error);
@@ -333,7 +333,7 @@ const GitHubPanel: React.FC = () => {
         useCache
       });
 
-      setCommits(result);
+      setCommits(result as unknown as Commit[]);
       setCurrentView('commits');
     } catch (error) {
       logger.error('Erreur lors du chargement des commits', error);
@@ -377,8 +377,8 @@ const GitHubPanel: React.FC = () => {
       });
 
       setReadme({
-        content: result.content,
-        url: result.url
+        content: (result as any).content ?? null,
+        url: (result as any).url ?? null,
       });
       setCurrentView('readme');
     } catch (error) {
@@ -421,7 +421,8 @@ const GitHubPanel: React.FC = () => {
         body
       });
 
-      setNotification({ message: `Issue créée: #${result.number}`, type: 'success' });
+      const issueNumber = (result as any)?.number ?? 'N/A';
+      setNotification({ message: `Issue créée: #${issueNumber}`, type: 'success' });
       // Recharger les issues pour afficher la nouvelle
       loadIssues();
     } catch (error) {
@@ -694,7 +695,7 @@ const GitHubPanel: React.FC = () => {
               <span className="toggle-slider"></span>
             </label>
             <span>Utiliser le cache</span>
-            {currentView !== '' && cacheStatus[currentView as keyof typeof cacheStatus] && (
+            {cacheStatus[currentView as keyof typeof cacheStatus] && (
               <span className="cache-indicator">🔄 Données en cache</span>
             )}
           </div>

@@ -8,9 +8,8 @@ import { useIntentHandler } from './useIntentHandler';
  */
 export function useContextualFollowup() {
   const { i18n } = useTranslation();
-  const state = useVisionAudioStore();
+  const context = useVisionAudioStore(s => s.conversationContext);
   const setState = useVisionAudioStore(s => s.setState);
-  const context = state.conversationContext;
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { handleIntent } = useIntentHandler();
 

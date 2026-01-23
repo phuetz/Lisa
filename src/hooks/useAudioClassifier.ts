@@ -1,14 +1,13 @@
 import { useEffect, useRef } from 'react';
 import type { AudioClassifier, AudioClassifierResult } from '@mediapipe/tasks-audio';
 import { useVisionAudioStore } from '../store/visionAudioStore';
-import { loadTask } from '../utils/loadTask';
 
 /**
  * Classify microphone audio and publish to Zustand, handles silence timer.
  */
 export function useAudioClassifier(audioCtx?: AudioContext, micStream?: MediaStream, audioClassifier?: AudioClassifier | null) {
   const setState = useVisionAudioStore((s) => s.setState);
-  const silenceTimeout = useRef<number>();
+  const silenceTimeout = useRef<number>(0);
 
   // Connect to mic
   useEffect(() => {
@@ -23,9 +22,9 @@ export function useAudioClassifier(audioCtx?: AudioContext, micStream?: MediaStr
     processor.onaudioprocess = (e) => {
       if ((frame++ & 1) === 1) return;
       const buffer = e.inputBuffer.getChannelData(0);
-      const res: AudioClassifierResult | undefined = audioClassifier.classify(buffer);
-      if (res && res.classifications.length) {
-        const top = res.classifications[0].categories[0];
+      const results: AudioClassifierResult[] = audioClassifier.classify(buffer);
+      if (results && results.length && results[0].classifications.length) {
+        const top = results[0].classifications[0].categories[0];
         setState({
           audio: { category: top.categoryName, score: top.score, timestamp: Date.now() },
           speechDetected: top.categoryName === 'Speech',
@@ -43,5 +42,5 @@ export function useAudioClassifier(audioCtx?: AudioContext, micStream?: MediaStr
       processor.disconnect();
       source.disconnect();
     };
-  }, [audioCtx, micStream, taskRef.current]);
+  }, [audioCtx, micStream, audioClassifier]);
 }

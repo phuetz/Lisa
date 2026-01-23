@@ -2,26 +2,25 @@
 // src/components/HearingPanel.tsx
 
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, Button, CircularProgress, Paper, Alert, Switch, FormControlLabel } from '@mui/material';
+import { Box, Typography, Paper, Alert, Switch, FormControlLabel } from '@mui/material';
 import HearingIcon from '@mui/icons-material/Hearing';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import { useAppStore } from '../store/appStore';
-import { hearingSense, HearingPerceptPayload } from '../senses/hearing';
+import { hearingSense, type HearingPerceptPayload } from '../features/hearing/api';
 
 interface HearingPanelProps {
   expanded?: boolean;
 }
 
 export const HearingPanel: React.FC<HearingPanelProps> = ({ expanded = false }) => {
-  const { featureFlags, setState } = useAppStore((s) => ({
-    featureFlags: s.featureFlags,
-    setState: s.setState,
-  }));
+  // Global state - use separate selectors to avoid infinite loop
+  const featureFlags = useAppStore((s) => s.featureFlags);
+  const setState = useAppStore((s) => s.setState);
   const [isExpanded, setIsExpanded] = useState(expanded);
   const [isListening, setIsListening] = useState(false);
   const [lastPercept, setLastPercept] = useState<HearingPerceptPayload | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, _setError] = useState<string | null>(null);
 
   const handleAdvancedHearingToggle = (event: React.ChangeEvent<HTMLInputElement>) => {
     setState((state) => ({

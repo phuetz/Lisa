@@ -5,7 +5,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useVisionAudioStore } from '../store/visionAudioStore';
-import { agentRegistry } from '../agents/registry';
+import { agentRegistry } from '../features/agents/core/registry';
 import { ContextAgent } from '../agents/ContextAgent';
 import type {
   ContextItem,
@@ -24,13 +24,13 @@ export function useContextManager() {
   const [error, setError] = useState<string | null>(null);
   const [recentContexts, setRecentContexts] = useState<ContextItem[]>([]);
   
-  const store = useVisionAudioStore();
+  // Note: store supprimé car non utilisé
   
   /**
    * Obtient l'agent de contexte du registre
    */
   const getContextAgent = useCallback((): ContextAgent => {
-    const agent = agentRegistry.getAgent('Context Manager');
+    const agent = agentRegistry.getAgent('context-agent');
     if (!agent) {
       throw new Error("Agent de contexte non disponible");
     }
@@ -489,25 +489,29 @@ export function useContextManager() {
   }, [getContextAgent]);
   
   useEffect(() => {
-    if (store.lastIntent) {
+    // Vérifier si les propriétés existent avant de les utiliser
+    const lastIntent = (store as any).lastIntent;
+    const lastSpokenText = (store as any).lastSpokenText;
+    
+    if (lastIntent) {
       // Ajoute l'intention détectée au contexte de la conversation
       void addIntentContext(
-        store.lastIntent.intent,
-        store.lastIntent.entities || {},
+        lastIntent.intent,
+        lastIntent.entities || {},
         true
       );
       
       // Ajoute au contexte de conversation si lastSpokenText est disponible
-      if (store.lastSpokenText) {
+      if (lastSpokenText) {
         void addConversationContext({
           type: 'conversation',
-          text: store.lastSpokenText,
-          intent: store.lastIntent.intent,
-          parameters: store.lastIntent.entities || {}
+          text: lastSpokenText,
+          intent: lastIntent.intent,
+          parameters: lastIntent.entities || {}
         });
       }
     }
-  }, [store.lastIntent, store.lastSpokenText, addConversationContext, addIntentContext]);
+  }, [(store as any).lastIntent, (store as any).lastSpokenText, addConversationContext, addIntentContext]);
   
   /**
    * Initialisation: rafraîchit la liste des contextes récents

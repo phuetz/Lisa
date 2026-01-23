@@ -6,7 +6,9 @@ import { NotificationPermissionPrompt } from './NotificationPermissionPrompt';
 
 export default function AlarmTimerPanel() {
   const { t } = useTranslation();
-  const { alarms, timers, setState } = useVisionAudioStore();
+  const alarms = useVisionAudioStore(s => s.alarms);
+  const timers = useVisionAudioStore(s => s.timers);
+  const setState = useVisionAudioStore(s => s.setState);
   const { permissionState } = useNotifications();
   const [showPermissionPrompt, setShowPermissionPrompt] = useState(false);
 

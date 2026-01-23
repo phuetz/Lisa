@@ -5,11 +5,10 @@
  * Permet de créer, exécuter et gérer des intégrations avec des systèmes externes
  */
 
-import { useState, useCallback } from 'react';
-import { agentRegistry } from '../agents/registry';
+import { useState, useCallback, useEffect } from 'react';
+import { agentRegistry } from '../features/agents/core/registry';
 import { toast } from 'sonner';
 import type { 
-  SystemIntegrationAgent, 
   SystemIntegrationConfig, 
   SystemIntegrationType 
 } from '../agents/SystemIntegrationAgent';
@@ -18,7 +17,7 @@ import type {
 export interface IntegrationResult {
   success: boolean;
   message?: string;
-  data?: any;
+  data?: unknown;
   error?: string;
 }
 
@@ -31,7 +30,7 @@ export interface SystemIntegrationHook {
   
   // Actions
   registerIntegration: (config: SystemIntegrationConfig) => Promise<IntegrationResult>;
-  executeIntegration: (integrationId: string, params: Record<string, any>) => Promise<IntegrationResult>;
+  executeIntegration: (integrationId: string, params: Record<string, unknown>) => Promise<IntegrationResult>;
   listIntegrations: (type?: SystemIntegrationType) => Promise<SystemIntegrationConfig[]>;
   updateIntegration: (integrationId: string, updates: Partial<SystemIntegrationConfig>) => Promise<IntegrationResult>;
   deleteIntegration: (integrationId: string) => Promise<IntegrationResult>;
@@ -49,12 +48,12 @@ export const useSystemIntegration = (): SystemIntegrationHook => {
   /**
    * Obtenir l'agent d'intégration système
    */
-  const getSystemIntegrationAgent = useCallback((): SystemIntegrationAgent => {
-    const agent = agentRegistry.getAgent('System Integration Agent');
+  const getSystemIntegrationAgent = useCallback(async () => {
+    const agent = await agentRegistry.getAgentAsync('System Integration Agent');
     if (!agent) {
       throw new Error("Agent d'intégration système non disponible");
     }
-    return agent as unknown as SystemIntegrationAgent;
+    return agent;
   }, []);
 
   /**
@@ -67,7 +66,7 @@ export const useSystemIntegration = (): SystemIntegrationHook => {
       setIsLoading(true);
       setError(null);
 
-      const agent = getSystemIntegrationAgent();
+      const agent = await getSystemIntegrationAgent();
 
       const result = await agent.execute({
         intent: 'register_integration',
@@ -100,6 +99,7 @@ export const useSystemIntegration = (): SystemIntegrationHook => {
     } finally {
       setIsLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [getSystemIntegrationAgent]);
 
   /**
@@ -107,13 +107,13 @@ export const useSystemIntegration = (): SystemIntegrationHook => {
    */
   const executeIntegration = useCallback(async (
     integrationId: string,
-    params: Record<string, any>
+    params: Record<string, unknown>
   ): Promise<IntegrationResult> => {
     try {
       setIsLoading(true);
       setError(null);
 
-      const agent = getSystemIntegrationAgent();
+      const agent = await getSystemIntegrationAgent();
 
       const result = await agent.execute({
         intent: 'execute_integration',
@@ -155,7 +155,7 @@ export const useSystemIntegration = (): SystemIntegrationHook => {
       setIsLoading(true);
       setError(null);
 
-      const agent = getSystemIntegrationAgent();
+      const agent = await getSystemIntegrationAgent();
 
       const result = await agent.execute({
         intent: 'list_integrations',
@@ -224,6 +224,7 @@ export const useSystemIntegration = (): SystemIntegrationHook => {
     } finally {
       setIsLoading(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [getSystemIntegrationAgent]);
 
   /**
@@ -269,6 +270,7 @@ export const useSystemIntegration = (): SystemIntegrationHook => {
     } finally {
       setIsLoading(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [getSystemIntegrationAgent]);
 
   /**
@@ -314,9 +316,9 @@ export const useSystemIntegration = (): SystemIntegrationHook => {
   }, [getSystemIntegrationAgent]);
 
   // Initialisation: charger les intégrations existantes
-  useState(() => {
+  useEffect(() => {
     void listIntegrations();
-  });
+  }, [listIntegrations]);
 
   return {
     // État

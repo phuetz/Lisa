@@ -3,7 +3,9 @@ import { useState } from 'react';
 import type { MouseEvent } from 'react';
 import { Button, Avatar, Popover, List, ListItem, ListItemText, ListItemAvatar, Typography } from '@mui/material';
 import { useTranslation } from 'react-i18next';
-import { Event as EventIcon, CalendarToday, ExitToApp } from '@mui/icons-material';
+import EventIcon from '@mui/icons-material/Event';
+import CalendarToday from '@mui/icons-material/CalendarToday';
+import ExitToApp from '@mui/icons-material/ExitToApp';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 

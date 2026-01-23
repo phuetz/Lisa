@@ -4,13 +4,14 @@ import { useMcpClient } from '../hooks';
 
 export default function AppsPanel() {
   const { t } = useTranslation();
-  const { intent, intentPayload } = useVisionAudioStore();
+  const intent = useVisionAudioStore(s => s.intent);
+  const intentPayload = useVisionAudioStore(s => s.intentPayload);
+  const setState = useVisionAudioStore(s=>s.setState);
+  const { readResource } = useMcpClient();
 
   if (intent !== 'mcp_list' || !intentPayload || !('resources' in intentPayload)) return null;
 
   const resources = (intentPayload as any).resources as { uri: string; name?: string; type?: string }[];
-  const setState = useVisionAudioStore(s=>s.setState);
-  const { readResource } = useMcpClient();
 
   return (
     <div role="region" aria-live="polite" aria-label={t('mcp_resources')} style={{ position: 'absolute', right: 10, top: 10, width: 250, maxHeight: 300, overflow: 'auto', background: '#ffffffdd', borderRadius: 8, padding: 8 }}>

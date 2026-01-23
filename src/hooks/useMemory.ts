@@ -6,7 +6,7 @@
  */
 
 import { useCallback, useState } from 'react';
-import { agentRegistry } from '../agents/registry';
+import { agentRegistry } from '../features/agents/core/registry';
 import type { Memory, MemoryQuery } from '../agents/MemoryAgent';
 import { useVisionAudioStore } from '../store/visionAudioStore';
 
@@ -46,7 +46,7 @@ export const useMemory = (options: UseMemoryOptions = {}): UseMemoryResult => {
   const [error, setError] = useState<string | null>(null);
   const { defaultLimit = 5 } = options;
   
-  const { setState } = useVisionAudioStore();
+  const setState = useVisionAudioStore(s => s.setState);
 
   /**
    * Store a new memory
@@ -58,14 +58,14 @@ export const useMemory = (options: UseMemoryOptions = {}): UseMemoryResult => {
       tags?: string[];
       source?: string;
       confidence?: number;
-      metadata?: Record<string, any>;
+      metadata?: Record<string, unknown>;
     } = {}
   ): Promise<Memory | null> => {
     setIsLoading(true);
     setError(null);
     
     try {
-      const memoryAgent = agentRegistry.getAgent('MemoryAgent');
+      const memoryAgent = await agentRegistry.getAgentAsync('MemoryAgent');
       
       if (!memoryAgent) {
         throw new Error('MemoryAgent not found in registry');
@@ -113,7 +113,7 @@ export const useMemory = (options: UseMemoryOptions = {}): UseMemoryResult => {
     setError(null);
     
     try {
-      const memoryAgent = agentRegistry.getAgent('MemoryAgent');
+      const memoryAgent = await agentRegistry.getAgentAsync('MemoryAgent');
       
       if (!memoryAgent) {
         throw new Error('MemoryAgent not found in registry');
@@ -159,7 +159,7 @@ export const useMemory = (options: UseMemoryOptions = {}): UseMemoryResult => {
     setError(null);
     
     try {
-      const memoryAgent = agentRegistry.getAgent('MemoryAgent');
+      const memoryAgent = await agentRegistry.getAgentAsync('MemoryAgent');
       
       if (!memoryAgent) {
         throw new Error('MemoryAgent not found in registry');
@@ -203,7 +203,7 @@ export const useMemory = (options: UseMemoryOptions = {}): UseMemoryResult => {
     setError(null);
     
     try {
-      const memoryAgent = agentRegistry.getAgent('MemoryAgent');
+      const memoryAgent = await agentRegistry.getAgentAsync('MemoryAgent');
       
       if (!memoryAgent) {
         throw new Error('MemoryAgent not found in registry');
@@ -246,7 +246,7 @@ export const useMemory = (options: UseMemoryOptions = {}): UseMemoryResult => {
     setError(null);
     
     try {
-      const memoryAgent = agentRegistry.getAgent('MemoryAgent');
+      const memoryAgent = await agentRegistry.getAgentAsync('MemoryAgent');
       
       if (!memoryAgent) {
         throw new Error('MemoryAgent not found in registry');

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useVisionAudioStore } from '../store/visionAudioStore';
-import { agentRegistry } from '../agents/registry';
+import { useAppStore } from '../store/appStore';
+import { agentRegistry } from '../features/agents/core/registry';
 import { createLogger } from '../utils/logger';
 import './ScreenSharePanel.css';
 
@@ -30,7 +30,7 @@ const ScreenSharePanel: React.FC = () => {
   const [notification, setNotification] = useState<{message: string, type: 'success' | 'error' | 'info'} | null>(null);
 
   const videoRef = useRef<HTMLVideoElement>(null);
-  const { lastIntent } = useVisionAudioStore();
+  const { intent } = useAppStore();
 
   // Charger l'historique des sessions depuis le localStorage
   useEffect(() => {
@@ -54,13 +54,13 @@ const ScreenSharePanel: React.FC = () => {
 
   // Détecter les intents liés au partage d'écran
   useEffect(() => {
-    if (lastIntent && 
-       (lastIntent.toLowerCase().includes('partage d\'écran') || 
-        lastIntent.toLowerCase().includes('partager mon écran') ||
-        lastIntent.toLowerCase().includes('screen share'))) {
+    if (intent && 
+       (intent.toLowerCase().includes('partage d\'écran') || 
+        intent.toLowerCase().includes('partager mon écran') ||
+        intent.toLowerCase().includes('screen share'))) {
       setIsVisible(true);
     }
-  }, [lastIntent]);
+  }, [intent]);
 
   // Configurer la vidéo quand le stream change
   useEffect(() => {
@@ -86,7 +86,7 @@ const ScreenSharePanel: React.FC = () => {
         throw new Error('ScreenShareAgent non trouvé');
       }
 
-      const result = await screenShareAgent.execute({
+      const execResult = await screenShareAgent.execute({
         action: 'startScreenShare',
         options: {
           audio: shareOptions.audio,
@@ -94,8 +94,9 @@ const ScreenSharePanel: React.FC = () => {
         }
       });
 
-      if (result.stream) {
-        setMediaStream(result.stream);
+      const stream = (execResult as any)?.stream as MediaStream | undefined;
+      if (stream) {
+        setMediaStream(stream);
         setIsSharing(true);
         
         const newSession: ShareSession = {
@@ -104,14 +105,14 @@ const ScreenSharePanel: React.FC = () => {
           status: 'active',
           type: shareOptions.shareType,
           hasAudio: shareOptions.audio,
-          resolution: `${result.stream.getVideoTracks()[0].getSettings().width}x${result.stream.getVideoTracks()[0].getSettings().height}`
+          resolution: `${stream.getVideoTracks()[0].getSettings().width}x${stream.getVideoTracks()[0].getSettings().height}`
         };
         
         setCurrentSession(newSession);
         showNotification('Partage d\'écran démarré', 'success');
         
         // Configurer la détection de fin de partage
-        result.stream.getVideoTracks()[0].addEventListener('ended', () => {
+        stream.getVideoTracks()[0].addEventListener('ended', () => {
           handleStreamEnded(newSession.id);
         });
       } else {

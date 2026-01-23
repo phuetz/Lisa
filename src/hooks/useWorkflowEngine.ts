@@ -7,13 +7,12 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import workflowEngine, { 
-  Workflow, 
-  WorkflowStep, 
-  WorkflowTemplate, 
-  WorkflowHistoryItem 
+  type Workflow, 
+  type WorkflowStep, 
+  type WorkflowTemplate, 
+  type WorkflowHistoryItem 
 } from '../utils/WorkflowEngine';
-import { useVisionAudioStore } from '../store/visionAudioStore';
-import { agentRegistry } from '../agents/registry';
+import { agentRegistry } from '../features/agents/core/registry';
 
 export const useWorkflowEngine = () => {
   // State for workflows, templates, history
@@ -29,9 +28,6 @@ export const useWorkflowEngine = () => {
       description: agent.description
     }));
   }, []);
-
-  // Store reference
-  const updateWorkflowState = useVisionAudioStore(state => state.setWorkflowState);
 
   // Load initial data
   useEffect(() => {
@@ -87,15 +83,11 @@ export const useWorkflowEngine = () => {
           setTemplates(workflowEngine.getTemplates());
           setHistory(workflowEngine.getHistory());
         }
-        
-        // Update global store state for other components
-        const updatedWorkflows = workflowEngine.getActiveWorkflows();
-        updateWorkflowState(updatedWorkflows);
       }
     });
     
     return () => unsubscribe();
-  }, [updateWorkflowState]);
+  }, []); // Exécuter une seule fois au montage
 
   /**
    * Create a new workflow
@@ -177,7 +169,7 @@ export const useWorkflowEngine = () => {
     
     try {
       // Find PlannerAgent
-      const plannerAgent = agentRegistry.getAgent('PlannerAgent');
+      const plannerAgent = await agentRegistry.getAgentAsync('PlannerAgent');
       if (!plannerAgent) {
         throw new Error('PlannerAgent not found in registry');
       }

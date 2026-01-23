@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useVisionAudioStore } from '../store/visionAudioStore';
-import { agentRegistry } from '../agents/registry';
+import { agentRegistry } from '../features/agents/core/registry';
 
 export default function WeatherBanner() {
   const { t } = useTranslation();
-  const { intent } = useVisionAudioStore();
+  const intent = useVisionAudioStore(s => s.intent);
   const [weather, setWeather] = useState<string>('');
   useEffect(() => {
     const fetchWeather = async () => {

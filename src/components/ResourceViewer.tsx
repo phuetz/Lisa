@@ -1,9 +1,10 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { X } from 'lucide-react';
 import { useVisionAudioStore } from '../store/visionAudioStore';
 import { useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
-import ReactJson from 'react-json-view';
+import ReactJson from '@microlink/react-json-view';
 
 /**
  * Slide-up panel that renders the content of an MCP resource when the store
@@ -11,7 +12,9 @@ import ReactJson from 'react-json-view';
  */
 export default function ResourceViewer() {
   const { t } = useTranslation();
-  const { intent, intentPayload, setState } = useVisionAudioStore();
+  const intent = useVisionAudioStore(s => s.intent);
+  const intentPayload = useVisionAudioStore(s => s.intentPayload);
+  const setState = useVisionAudioStore(s => s.setState);
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -43,7 +46,7 @@ export default function ResourceViewer() {
 
   return (
     <div role="dialog" aria-label={t('resource_viewer')} style={{ position: 'fixed', bottom: 0, left: 0, right: 0, height: '70%', background: '#fff', borderTopLeftRadius: 12, borderTopRightRadius: 12, boxShadow: '0 -4px 16px rgba(0,0,0,.2)', overflowY: 'auto', padding: 16, zIndex: 1000 }}>
-      <button aria-label={t('close')} onClick={close} style={{ position: 'absolute', top: 8, right: 12, background: 'transparent', border: 'none', fontSize: 18, cursor: 'pointer' }}>✕</button>
+      <button aria-label={t('close')} onClick={close} style={{ position: 'absolute', top: 8, right: 12, background: 'transparent', border: 'none', cursor: 'pointer', padding: 4, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><X size={18} /></button>
       <div style={{ paddingTop: 24 }}>
         {render}
       </div>

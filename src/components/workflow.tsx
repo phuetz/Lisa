@@ -1,8 +1,8 @@
 import React, { useEffect } from 'react';
 import { ReactFlowProvider } from 'reactflow';
 import 'reactflow/dist/style.css';
-import WorkflowEditor from '../workflow';
-import useWorkflowStore from '../workflow/store/useWorkflowStore';
+import WorkflowEditor from '../features/workflow';
+import useWorkflowStore from '../features/workflow/store/useWorkflowStore';
 
 /**
  * Composant wrapper pour le WorkflowEditor modularisé

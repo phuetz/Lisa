@@ -5,9 +5,12 @@
  * Permet de créer, configurer, tester et exécuter des intégrations avec des systèmes externes
  */
 
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import React, { useState, useEffect } from 'react';
 import { useSystemIntegration } from '../hooks/useSystemIntegration';
-import { SYSTEM_INTEGRATION_TYPES, type SystemIntegrationConfig, type SystemIntegrationType } from '../agents/SystemIntegrationAgent';
+import { SYSTEM_INTEGRATION_TYPES, type SystemIntegrationConfig, type SystemIntegrationType } from '../features/agents/implementations/SystemIntegrationAgent';
 import { v4 as uuidv4 } from 'uuid';
 import { useTranslation } from 'react-i18next';
 
@@ -286,7 +289,7 @@ const styles = {
 };
 
 // Fonction pour obtenir le style de badge pour un type d'intégration
-const getIntegrationTypeStyle = (type: SystemIntegrationType): React.CSSProperties => {
+const getIntegrationTypeStyleOuter = (type: SystemIntegrationType): React.CSSProperties => {
   const baseStyle = { ...styles.badge };
   
   switch (type) {
@@ -358,8 +361,7 @@ export const SystemIntegrationPanel: React.FC = () => {
   const { t } = useTranslation();
   const { 
     integrations, 
-    isLoading, 
-    loadIntegrations, 
+    isLoading: _isLoading, 
     executeIntegration, 
     testIntegration,
     deleteIntegration
@@ -367,20 +369,20 @@ export const SystemIntegrationPanel: React.FC = () => {
   
   const [activeTab, setActiveTab] = useState<string>('list');
   const [selectedIntegration, setSelectedIntegration] = useState<string | null>(null);
-  const [executionParams, setExecutionParams] = useState<string>('{}');
-  const [executionResult, setExecutionResult] = useState<string>('');
+  const [executionParams, _setExecutionParams] = useState<string>('{}');
+  const [_executionResult, setExecutionResult] = useState<string>('');
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
-  const [expandedIntegrations, setExpandedIntegrations] = useState<Record<string, boolean>>({});
+  const [_expandedIntegrations, _setExpandedIntegrations] = useState<Record<string, boolean>>({});
   
   // Toast notification function (simplified version)
-  const toast = {
+  const _toast = {
     success: (message: string) => { console.log('SUCCESS:', message); },
     error: (message: string) => { console.error('ERROR:', message); },
     info: (message: string) => { console.info('INFO:', message); }
   };
 
   // États pour la création/édition d'intégration
-  const [newIntegration, setNewIntegration] = useState<{
+  const [_newIntegration, _setNewIntegration] = useState<{
     name: string;
     description: string;
     type: SystemIntegrationType;
@@ -397,7 +399,12 @@ export const SystemIntegrationPanel: React.FC = () => {
     tags: [],
     icon: undefined
   });
-  const [newTag, setNewTag] = useState<string>('');
+  const [_newTag, _setNewTag] = useState<string>('');
+
+  // Helper to get the selected integration
+  const getSelectedIntegration = () => {
+    return integrations.find(i => i.id === selectedIntegration) || null;
+  };
   
   // Charger les intégrations au montage du composant
   useEffect(() => {
@@ -407,17 +414,17 @@ export const SystemIntegrationPanel: React.FC = () => {
   }, [integrations.length]);
 
   // Exécuter une intégration
-  const handleExecuteIntegration = async () => {
+  const _handleExecuteIntegration = async () => {
     if (!selectedIntegration) {
       alert('Veuillez sélectionner une intégration à exécuter.');
       return;
     }
 
     try {
-      let params: Record<string, any> = {};
+      let params: Record<string, unknown> = {};
       try {
         params = JSON.parse(executionParams);
-      } catch (error) {
+      } catch {
         alert('Paramètres JSON invalides. Veuillez vérifier le format.');
         return;
       }
@@ -434,7 +441,7 @@ export const SystemIntegrationPanel: React.FC = () => {
   };
 
   // Tester une intégration
-  const handleTestIntegration = async () => {
+  const _handleTestIntegration = async () => {
     if (!selectedIntegration) {
       alert('Veuillez sélectionner une intégration à tester.');
       return;
@@ -453,7 +460,7 @@ export const SystemIntegrationPanel: React.FC = () => {
   };
 
   // Supprimer une intégration
-  const handleDeleteIntegration = async () => {
+  const _handleDeleteIntegration = async () => {
     if (!selectedIntegration) {
       alert('Veuillez sélectionner une intégration à supprimer.');
       return;
@@ -477,7 +484,7 @@ export const SystemIntegrationPanel: React.FC = () => {
   };
 
   // Obtenir le style de badge pour un type d'intégration
-  const getIntegrationTypeStyle = (type: SystemIntegrationType): React.CSSProperties => {
+  const _getIntegrationTypeStyleInner = (type: SystemIntegrationType): React.CSSProperties => {
     const baseStyle: React.CSSProperties = {
       display: 'inline-block',
       padding: '2px 8px',
@@ -503,7 +510,7 @@ export const SystemIntegrationPanel: React.FC = () => {
   };
   
   // Basculer l'expansion du panneau
-  const toggleExpand = () => {
+  const _toggleExpand = () => {
     setIsExpanded(!isExpanded);
   };
 
@@ -547,9 +554,10 @@ export const SystemIntegrationPanel: React.FC = () => {
             ...(activeTab === 'test' ? styles.activeTab : {})
           }}
           onClick={() => setActiveTab('test')}
-      >
-        Test
-      </button>
+        >
+          Test
+        </button>
+      </div>
     </div>
   );
 };
@@ -580,7 +588,7 @@ const IntegrationCreateForm: React.FC<IntegrationCreateFormProps> = ({ onSuccess
   // Mettre à jour la valeur d'un champ de l'intégration
   const updateIntegrationField = (
     field: keyof SystemIntegrationConfig, 
-    value: any
+    value: SystemIntegrationConfig[keyof SystemIntegrationConfig]
   ) => {
     setNewIntegration(prev => ({
       ...prev,

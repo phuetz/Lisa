@@ -1,37 +1,24 @@
-import { useVisionAudioStore } from '../store/visionAudioStore';
-import { useTranslation } from 'react-i18next';
+import { useAppStore } from '../store/appStore';
+import { MicIndicator as SdkMicIndicator } from '@lisa-sdk/ui';
 import { Fade } from '@mui/material';
-import { Mic, MicOff } from '@mui/icons-material';
 
 /**
  * Displays a microphone icon when Lisa is actively listening after the wake-word.
+ * Wraps the SDK component with store connection.
  */
 export default function MicIndicator() {
-  const listeningActive = useVisionAudioStore((s) => s.listeningActive);
-  const { t } = useTranslation();
+  const listeningActive = useAppStore((s) => s.listeningActive);
+  const speechDetected = useAppStore((s) => s.speechDetected);
 
   return (
     <Fade in={listeningActive} timeout={{ enter: 200, exit: 200 }} unmountOnExit>
-      <div
-        role="status"
-        aria-live="polite"
-        aria-label={t('listening')}
-        style={{
-          position: 'absolute',
-          bottom: 20,
-          left: 20,
-          width: 48,
-          height: 48,
-          borderRadius: '50%',
-          background: '#1976d2',
-          color: 'white',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          boxShadow: '0 0 10px rgba(0,0,0,0.3)',
-        }}
-      >
-        {listeningActive ? <Mic /> : <MicOff />}
+      <div style={{ position: 'absolute', bottom: 20, left: 20, zIndex: 1000 }}>
+        <SdkMicIndicator 
+          isListening={listeningActive}
+          isSpeaking={speechDetected}
+          volume={0.5}
+          size={48}
+        />
       </div>
     </Fade>
   );

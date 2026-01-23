@@ -6,7 +6,8 @@ import { useVisionAudioStore } from '../store/visionAudioStore';
  * Speaks once when smile + speech are detected, then waits cooldownMs.
  */
 export function useSpeechResponder(cooldownMs = 10000) {
-  const { smileDetected, speechDetected } = useVisionAudioStore();
+  const smileDetected = useVisionAudioStore(s => s.smileDetected);
+  const speechDetected = useVisionAudioStore(s => s.speechDetected);
   const lastSpoke = useRef<number>(0);
 
   useEffect(() => {

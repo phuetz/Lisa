@@ -1,8 +1,8 @@
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import type { HandLandmarker, HandLandmarkerResult } from '@mediapipe/tasks-vision';
 import { useVisionAudioStore } from '../store/visionAudioStore';
-import { loadTask } from '../utils/loadTask';
-import { Percept, MediaPipeHandPayload } from '../senses/vision'; // Import new types
+// import { loadTask } from '../utils/loadTask';
+import type { Percept, MediaPipeHandPayload } from '../features/vision/api'; // Import new types
 
 export function useHandLandmarker(video?: HTMLVideoElement, handLandmarker?: HandLandmarker | null) {
   const setState = useVisionAudioStore((s) => s.setState);
@@ -13,6 +13,25 @@ export function useHandLandmarker(video?: HTMLVideoElement, handLandmarker?: Han
     let frame = 0;
     const loop = () => {
       if ((frame++ & 1) === 1) { rafId = requestAnimationFrame(loop); return; }
+      
+      // Guard: ensure video dimensions are valid (fix Android WebView crash)
+      // MediaPipe HandLandmarker requires ROI with width/height > 0.
+      // On Android WebView, video.videoWidth/videoHeight remain 0 until
+      // loadedmetadata event fires and video.play() completes.
+      // Without this guard, MediaPipe throws: "ROI width and height must be > 0"
+      if (video.videoWidth === 0 || video.videoHeight === 0) {
+        rafId = requestAnimationFrame(loop);
+        return;
+      }
+      
+      // Guard: ensure video is ready for processing
+      // readyState < 2 (HAVE_CURRENT_DATA) means no frame data available.
+      // MediaPipe needs at least one frame to compute landmarks.
+      if (video.readyState < 2) { // HAVE_CURRENT_DATA
+        rafId = requestAnimationFrame(loop);
+        return;
+      }
+      
       const res: HandLandmarkerResult | undefined = handLandmarker.detectForVideo(
         video,
         performance.now()
@@ -39,7 +58,6 @@ export function useHandLandmarker(video?: HTMLVideoElement, handLandmarker?: Han
             boxes: [[xMin, yMin, width, height]],
             landmarks: landmarks,
             handedness: handedness,
-            classes: ['hand'],
             scores: [score],
           };
 
@@ -61,6 +79,10 @@ export function useHandLandmarker(video?: HTMLVideoElement, handLandmarker?: Han
       rafId = requestAnimationFrame(loop);
     };
     loop();
-    return () => cancelAnimationFrame(rafId);
-  }, [video, handLandmarker]); // Changed taskRef.current to handLandmarker
+    return () => {
+      cancelAnimationFrame(rafId);
+      // Cleanup: close MediaPipe task to prevent memory leaks
+      handLandmarker?.close?.();
+    };
+  }, [video, handLandmarker, setState]); // Added setState dependency
 }

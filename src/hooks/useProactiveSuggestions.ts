@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { agentRegistry } from '../agents/registry';
+import { agentRegistry } from '../features/agents/core/registry';
 import { useContextManager } from './useContextManager';
 import type { ProactiveSuggestionsAgent, Suggestion } from '../agents/ProactiveSuggestionsAgent';
 import type { ContextItem } from '../context/types';
@@ -23,8 +23,8 @@ export function useProactiveSuggestions() {
   /**
    * Récupère l'agent de suggestions proactives
    */
-  const getSuggestionsAgent = useCallback((): ProactiveSuggestionsAgent => {
-    const agent = agentRegistry.getAgent('Proactive Suggestions');
+  const getSuggestionsAgent = useCallback(async (): Promise<ProactiveSuggestionsAgent> => {
+    const agent = await agentRegistry.getAgentAsync('Proactive Suggestions');
     if (!agent) {
       throw new Error("Agent de suggestions proactives non disponible");
     }

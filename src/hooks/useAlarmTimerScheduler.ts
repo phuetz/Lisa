@@ -3,7 +3,9 @@ import { useVisionAudioStore } from '../store/visionAudioStore';
 import { useNotifications } from './useNotifications';
 
 export default function useAlarmTimerScheduler() {
-  const { alarms, timers, setState } = useVisionAudioStore();
+  const alarms = useVisionAudioStore(s => s.alarms);
+  const timers = useVisionAudioStore(s => s.timers);
+  const setState = useVisionAudioStore(s => s.setState);
   const { sendNotification, permissionState } = useNotifications();
 
   useEffect(() => {

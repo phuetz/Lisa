@@ -6,7 +6,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useProactiveSuggestions } from '../hooks/useProactiveSuggestions';
 import { useSilenceTriggers } from '../hooks/useSilenceTriggers';
-import { useVisionAudioStore } from '../store/visionAudioStore';
+import { useAppStore } from '../store/appStore';
 import type { Suggestion } from '../agents/ProactiveSuggestionsAgent';
 import './ProactiveSuggestions.css';
 
@@ -20,7 +20,7 @@ const CATEGORY_ICONS: Record<string, string> = {
 
 const ProactiveSuggestionsPanel: React.FC = () => {
   const { suggestions, isLoading, dismissSuggestion, executeSuggestion, clearAllSuggestions, generateSuggestions } = useProactiveSuggestions();
-  const store = useVisionAudioStore();
+  const conversationContext = useAppStore((state) => state.conversationContext);
   const [lastSuggestionTime, setLastSuggestionTime] = useState<number>(Date.now());
   const [silenceTriggered, setSilenceTriggered] = useState<boolean>(false);
   
@@ -41,18 +41,18 @@ const ProactiveSuggestionsPanel: React.FC = () => {
   }, [generateSuggestions, lastSuggestionTime]);
   
   // Initialisation du détecteur de silence
-  const { isSilent, silenceDuration } = useSilenceTriggers({
+  const { isSilent } = useSilenceTriggers({
     silenceThreshold: SILENCE_THRESHOLD,
     onSilenceDetected: handleSilenceDetected
   });
   
   // Déclenche une génération de suggestions lorsque le contexte de conversation change
   useEffect(() => {
-    if (store.lastIntent) {
+    if (conversationContext?.lastIntent) {
       void generateSuggestions();
       setLastSuggestionTime(Date.now());
     }
-  }, [store.lastIntent, generateSuggestions]);
+  }, [conversationContext?.lastIntent, generateSuggestions]);
   
   // Fonction pour gérer le clic sur une suggestion
   const handleSuggestionClick = async (suggestion: Suggestion) => {
@@ -60,7 +60,13 @@ const ProactiveSuggestionsPanel: React.FC = () => {
     
     if (result.success && result.intent) {
       // Émet une intention vers le gestionnaire principal
-      store.setLastIntent(result.intent, result.parameters || {});
+      useAppStore.setState({
+        conversationContext: {
+          ...conversationContext,
+          lastIntent: result.intent,
+          timestamp: Date.now(),
+        }
+      });
     }
   };
   

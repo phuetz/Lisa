@@ -22,7 +22,8 @@ interface PlanExplanationPanelProps {
  */
 export default function PlanExplanationPanel({ traceId, style }: PlanExplanationPanelProps) {
   const { t } = useTranslation();
-  const { lastPlanExplanation, setLastPlanExplanation } = useVisionAudioStore();
+  const lastPlanExplanation = useVisionAudioStore(s => s.lastPlanExplanation);
+  const setLastPlanExplanation = useVisionAudioStore(s => s.setLastPlanExplanation);
   const [visible, setVisible] = useState(Boolean(lastPlanExplanation));
   const [fadeOut, setFadeOut] = useState(false);
   

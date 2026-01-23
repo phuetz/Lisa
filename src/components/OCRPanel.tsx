@@ -5,8 +5,8 @@
  * à partir d'images, de captures d'écran ou de la webcam.
  */
 
-import React, { useState } from 'react';
-import { Box, Typography, Button, TextField, Select, MenuItem, FormControl, 
+import React, { useState, useEffect, useCallback } from 'react';
+import { Box, Typography, Button, Select, MenuItem, FormControl, 
   InputLabel, CircularProgress, Paper, IconButton, Alert, Tooltip } from '@mui/material';
 import ImageSearchIcon from '@mui/icons-material/ImageSearch';
 import ScreenshotIcon from '@mui/icons-material/Screenshot';
@@ -14,8 +14,8 @@ import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
-import { agentRegistry } from '../agents/registry';
-import { OCRAgent, OCRSource, OCROptions, OCRResult } from '../agents/OCRAgent';
+import { agentRegistry } from '../features/agents/core/registry';
+import type { OCRAgent, OCRSource, OCROptions, OCRResult } from '../agents/OCRAgent';
 
 interface OCRPanelProps {
   expanded?: boolean;
@@ -30,14 +30,28 @@ export const OCRPanel: React.FC<OCRPanelProps> = ({ expanded = false }) => {
   const [result, setResult] = useState<OCRResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [enhanceImage, setEnhanceImage] = useState(true);
+  const [enhanceImage, _setEnhanceImage] = useState(true);
   const [fileInput, setFileInput] = useState<File | null>(null);
 
-  // Référence à l'agent OCR
-  const ocrAgent = agentRegistry.getAgent('OCRAgent') as OCRAgent;
+  // Référence à l'agent OCR (lazy loading)
+  const [ocrAgent, setOcrAgent] = useState<OCRAgent | null>(null);
+  const [agentAvailable, setAgentAvailable] = useState(false);
 
-  // Vérification de la disponibilité de l'agent
-  const agentAvailable = !!ocrAgent;
+  // Charger l'agent de manière asynchrone
+  const loadOCRAgent = useCallback(async () => {
+    try {
+      const agent = await agentRegistry.getAgentAsync('OCRAgent');
+      setOcrAgent(agent as OCRAgent | null);
+      setAgentAvailable(!!agent);
+    } catch (err) {
+      console.error('Erreur chargement OCRAgent:', err);
+      setAgentAvailable(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadOCRAgent();
+  }, [loadOCRAgent]);
 
   // Fonction pour extraire du texte
   const extractText = async () => {

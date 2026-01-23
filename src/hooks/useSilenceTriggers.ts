@@ -3,7 +3,7 @@
  * Hook pour la détection des périodes de silence et le déclenchement d'actions proactives
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useVisionAudioStore } from '../store/visionAudioStore';
 
 // Configuration par défaut pour les déclencheurs de silence
@@ -31,12 +31,21 @@ export function useSilenceTriggers(options: Partial<SilenceTriggerOptions> = {})
   const [isSilent, setIsSilent] = useState<boolean>(false);
   const [silenceDuration, setSilenceDuration] = useState<number>(0);
   const [isActive, setIsActive] = useState<boolean>(true);
-  
+
+  const intervalRef = useRef<number | null>(null);
+  const previousLastSilenceMsRef = useRef<number | null>(null);
+  const wasActiveRef = useRef<boolean>(true);
+
   // Combine les options par défaut avec les options fournies
-  const config = {
+  const {
+    silenceThreshold,
+    checkInterval,
+    onSilenceDetected,
+    resetAfterTrigger,
+  } = useMemo(() => ({
     ...DEFAULT_OPTIONS,
     ...options,
-  };
+  }), [options]);
   
   // Sélecteurs ciblés du store
   const lastSilenceMs = useVisionAudioStore((s) => s.lastSilenceMs);
@@ -47,39 +56,39 @@ export function useSilenceTriggers(options: Partial<SilenceTriggerOptions> = {})
    * Vérifier le temps écoulé depuis la dernière interaction audio
    */
   const checkSilence = useCallback(() => {
-    if (!isActive) return;
-    
-    const now = Date.now();
-    const lastInteraction = lastSilenceMs;
-    const elapsed = now - lastInteraction;
-    
-    setSilenceDuration(elapsed);
-    
-    // Si le seuil de silence est dépassé et qu'on n'est pas déjà en état de silence
-    if (elapsed >= config.silenceThreshold && !isSilent) {
-      setIsSilent(true);
-      
-      // Exécute le callback si défini
-      if (config.onSilenceDetected) {
-        config.onSilenceDetected();
-      }
-      
-      // Réinitialise le compteur si configuré ainsi
-      if (config.resetAfterTrigger) {
-        setState({ lastSilenceMs: now });
-      }
-    } else if (elapsed < config.silenceThreshold && isSilent) {
-      // L'utilisateur a interagi, on n'est plus en état de silence
-      setIsSilent(false);
+    if (!isActive) {
+      return;
     }
-  }, [config, isSilent, isActive, lastSilenceMs, setState]);
+
+    const now = Date.now();
+    const elapsed = now - lastSilenceMs;
+
+    setSilenceDuration(elapsed);
+
+    if (elapsed >= silenceThreshold) {
+      if (!isSilent) {
+        setIsSilent(true);
+        onSilenceDetected?.();
+      }
+
+      if (resetAfterTrigger) {
+        setState((prev) => {
+          previousLastSilenceMsRef.current = prev.lastSilenceMs;
+          return { ...prev, lastSilenceMs: now };
+        });
+      }
+    }
+  }, [isActive, isSilent, lastSilenceMs, onSilenceDetected, resetAfterTrigger, setState, silenceThreshold]);
   
   /**
    * Démarre la détection de silence
    */
   const startSilenceDetection = useCallback(() => {
+    previousLastSilenceMsRef.current = null;
+    setSilenceDuration(Math.max(0, Date.now() - lastSilenceMs));
+    setIsSilent(false);
     setIsActive(true);
-  }, []);
+  }, [lastSilenceMs]);
   
   /**
    * Arrête la détection de silence
@@ -87,29 +96,44 @@ export function useSilenceTriggers(options: Partial<SilenceTriggerOptions> = {})
   const stopSilenceDetection = useCallback(() => {
     setIsActive(false);
     setIsSilent(false);
-  }, []);
+
+    if (previousLastSilenceMsRef.current !== null) {
+      const restoreValue = previousLastSilenceMsRef.current;
+      previousLastSilenceMsRef.current = null;
+      setState((prev) => ({ ...prev, lastSilenceMs: restoreValue }));
+    }
+  }, [setState]);
   
   /**
    * Réinitialise manuellement le compteur de silence
    */
   const resetSilenceTimer = useCallback(() => {
     const now = Date.now();
-    setState({ lastSilenceMs: now });
+    previousLastSilenceMsRef.current = null;
+    setState((prev) => ({ ...prev, lastSilenceMs: now }));
     setSilenceDuration(0);
     setIsSilent(false);
   }, [setState]);
   
   // Effet pour configurer la vérification périodique du silence
   useEffect(() => {
-    // Vérification initiale
-    checkSilence();
-    
-    // Vérification périodique
-    const interval = setInterval(checkSilence, config.checkInterval);
-    
-    // Nettoyage à la destruction du composant
-    return () => clearInterval(interval);
-  }, [checkSilence, config.checkInterval]);
+    if (!isActive) {
+      if (intervalRef.current !== null) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+      return;
+    }
+
+    intervalRef.current = window.setInterval(checkSilence, checkInterval);
+
+    return () => {
+      if (intervalRef.current !== null) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, [checkInterval, checkSilence, isActive]);
   
   // Effet pour réinitialiser le compteur de silence quand l'utilisateur parle
   useEffect(() => {
@@ -117,6 +141,14 @@ export function useSilenceTriggers(options: Partial<SilenceTriggerOptions> = {})
       resetSilenceTimer();
     }
   }, [speechDetected, resetSilenceTimer]);
+
+  // Vérifie immédiatement lorsque la détection est (ré)activée
+  useEffect(() => {
+    if (!wasActiveRef.current && isActive) {
+      checkSilence();
+    }
+    wasActiveRef.current = isActive;
+  }, [checkSilence, isActive]);
   
   return {
     // État
@@ -125,7 +157,8 @@ export function useSilenceTriggers(options: Partial<SilenceTriggerOptions> = {})
     isActive,
     
     // Propriétés
-    silenceThreshold: config.silenceThreshold,
+    silenceThreshold,
+    checkInterval,
     
     // Actions
     startSilenceDetection,

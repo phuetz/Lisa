@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { processVideoFrame, isVisionModelReady } from '../senses/vision';
+import { processVideoFrame, isVisionModelReady } from '../features/vision/api';
 import { useAppStore } from '../store/appStore';
 
 /**

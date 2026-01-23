@@ -5,9 +5,8 @@
  * Permet de créer, exécuter et gérer des workflows personnalisés.
  */
 
-import { useState, useCallback } from 'react';
-import { agentRegistry } from '../agents/registry';
-import { useVisionAudioStore } from '../store/visionAudioStore';
+import { useState, useCallback, useEffect } from 'react';
+import { agentRegistry } from '../features/agents/core/registry';
 import type { UserWorkflowAgent, WorkflowDefinition } from '../agents/UserWorkflowAgent';
 import { toast } from 'sonner';
 
@@ -48,13 +47,14 @@ export const useUserWorkflows = (): UserWorkflowsHook => {
   const [error, setError] = useState<string | null>(null);
   const [workflows, setWorkflows] = useState<ManagedWorkflow[]>([]);
   
-  const store = useVisionAudioStore();
+  // Note: lastSpokenText n'existe pas dans le store actuel
+  // const lastSpokenText = useVisionAudioStore(s => s.lastSpokenText);
   
   /**
    * Obtenir l'agent de workflows
    */
-  const getUserWorkflowAgent = useCallback((): UserWorkflowAgent => {
-    const agent = agentRegistry.getAgent('User Workflow Agent');
+  const getUserWorkflowAgent = useCallback(async (): Promise<UserWorkflowAgent> => {
+    const agent = await agentRegistry.getAgentAsync('User Workflow Agent');
     if (!agent) {
       throw new Error("Agent de workflows utilisateur non disponible");
     }
@@ -69,7 +69,7 @@ export const useUserWorkflows = (): UserWorkflowsHook => {
       setIsLoading(true);
       setError(null);
       
-      const agent = getUserWorkflowAgent();
+      const agent = await getUserWorkflowAgent();
       
       const result = await agent.execute({
         intent: 'create_workflow',
@@ -104,7 +104,7 @@ export const useUserWorkflows = (): UserWorkflowsHook => {
       setIsLoading(true);
       setError(null);
       
-      const agent = getUserWorkflowAgent();
+      const agent = await getUserWorkflowAgent();
       
       const result = await agent.execute({
         intent: 'delete_workflow',
@@ -134,12 +134,12 @@ export const useUserWorkflows = (): UserWorkflowsHook => {
   /**
    * Exécuter un workflow existant
    */
-  const executeWorkflow = useCallback(async (workflowId: string, args?: Record<string, any>): Promise<boolean> => {
+  const executeWorkflow = useCallback(async (workflowId: string, args?: Record<string, unknown>): Promise<boolean> => {
     try {
       setIsLoading(true);
       setError(null);
       
-      const agent = getUserWorkflowAgent();
+      const agent = await getUserWorkflowAgent();
       
       const result = await agent.execute({
         intent: 'execute_workflow',
@@ -171,7 +171,7 @@ export const useUserWorkflows = (): UserWorkflowsHook => {
       setIsLoading(true);
       setError(null);
       
-      const agent = getUserWorkflowAgent();
+      const agent = await getUserWorkflowAgent();
       
       const result = await agent.execute({
         intent: 'get_workflows'
@@ -202,7 +202,7 @@ export const useUserWorkflows = (): UserWorkflowsHook => {
       setIsLoading(true);
       setError(null);
       
-      const agent = getUserWorkflowAgent();
+      const agent = await getUserWorkflowAgent();
       
       const result = await agent.execute({
         intent: 'parse_natural_language_workflow',
@@ -233,7 +233,7 @@ export const useUserWorkflows = (): UserWorkflowsHook => {
     confidence?: number;
   }> => {
     try {
-      const agent = getUserWorkflowAgent();
+      const agent = await getUserWorkflowAgent();
       
       const result = await agent.execute({
         intent: 'check_trigger_match',
@@ -272,16 +272,17 @@ export const useUserWorkflows = (): UserWorkflowsHook => {
   }, [getUserWorkflowAgent, executeWorkflow]);
   
   // Initialisation: charger les workflows existants
-  useState(() => {
+  useEffect(() => {
     void getAllWorkflows();
-  });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   
   // Détecter les phrases de déclenchement dans le texte parlé
-  useState(() => {
-    if (store.lastSpokenText) {
-      void checkTriggerPhrase(store.lastSpokenText);
-    }
-  });
+  // Note: Désactivé car lastSpokenText n'existe pas dans le store
+  // useEffect(() => {
+  //   if (lastSpokenText) {
+  //     void checkTriggerPhrase(lastSpokenText);
+  //   }
+  // }, [lastSpokenText, checkTriggerPhrase]);
   
   return {
     // État

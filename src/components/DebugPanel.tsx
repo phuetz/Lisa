@@ -7,9 +7,13 @@ import { fr } from 'date-fns/locale';
 
 export default function DebugPanel() {
   const { t } = useTranslation();
-  const snapshot = useVisionAudioStore();
+  const smileDetected = useVisionAudioStore(s => s.smileDetected);
+  const speechDetected = useVisionAudioStore(s => s.speechDetected);
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<'store' | 'plans' | 'trace'>('store');
+  
+  // Get snapshot only when needed for display
+  const getSnapshot = () => useVisionAudioStore.getState();
   const { traces, selectedTrace, selectTrace, getTracesStats } = usePlanTracer({
     refreshInterval: 3000, // Rafraîchir toutes les 3 secondes
     limit: 10 // Limiter à 10 traces
@@ -17,8 +21,8 @@ export default function DebugPanel() {
 
   useEffect(() => {
     // auto-open when smile+speech for demo
-    if (snapshot.smileDetected && snapshot.speechDetected) setOpen(true);
-  }, [snapshot.smileDetected, snapshot.speechDetected]);
+    if (smileDetected && speechDetected) setOpen(true);
+  }, [smileDetected, speechDetected]);
   
   useEffect(() => {
     // Gestionnaire d'événement pour ouvrir le debug panel avec une trace spécifique
@@ -50,10 +54,10 @@ export default function DebugPanel() {
     switch (mode) {
       case 'store':
         return <pre style={{ whiteSpace: 'pre-wrap', maxHeight: '400px', overflow: 'auto' }}>
-          {JSON.stringify(snapshot, null, 2)}
+          {JSON.stringify(getSnapshot(), null, 2)}
         </pre>;
         
-      case 'plans':
+      case 'plans': {
         const stats = getTracesStats();
         return <div style={{ maxHeight: '400px', overflow: 'auto' }}>
           <div style={{ marginBottom: '10px', padding: '5px', backgroundColor: 'rgba(0,0,0,0.3)' }}>
@@ -87,6 +91,7 @@ export default function DebugPanel() {
             ))}
           </div>
         </div>;
+      }
         
       case 'trace':
         if (!selectedTrace) {
@@ -121,7 +126,7 @@ export default function DebugPanel() {
             {selectedTrace.steps.map(step => {
               const timestamp = new Date(step.timestamp).toLocaleTimeString();
               let icon = '🔄';
-              let color = '#dddddd';
+              const color = '#dddddd';
               
               // Icônes en fonction du type d'opération
               switch (step.operation) {

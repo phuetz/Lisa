@@ -6,9 +6,9 @@
  * ce qui est visible via la webcam ou des captures d'écran.
  */
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Box, Typography, Button, Select, MenuItem, FormControl, 
-  InputLabel, CircularProgress, Paper, Chip, Grid, Alert, Switch, FormControlLabel } from '@mui/material';
+  InputLabel, CircularProgress, Paper, Chip, Alert, Switch, FormControlLabel } from '@mui/material';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 import ScreenshotIcon from '@mui/icons-material/Screenshot';
@@ -17,10 +17,9 @@ import FaceIcon from '@mui/icons-material/Face';
 import ColorLensIcon from '@mui/icons-material/ColorLens';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
-import { agentRegistry } from '../agents/registry';
+import { agentRegistry } from '../features/agents/core/registry';
 import { useMediaPermissions } from '../hooks/useMediaPermissions';
-import { VisionAgent } from '../agents/VisionAgent';
-import type { VisionSource, VisionTask, VisionResult } from '../agents/VisionAgent';
+import type { VisionAgent, VisionSource, VisionTask, VisionResult } from '../agents/VisionAgent';
 import { useAppStore } from '../store/appStore';
 
 interface VisionPanelProps {
@@ -29,12 +28,10 @@ interface VisionPanelProps {
 
 export const VisionPanel: React.FC<VisionPanelProps> = ({ expanded = false }) => {
   // Media permissions hook
-  const { permissions, requestCamera } = useMediaPermissions();
-  // Global state
-  const { featureFlags, setState } = useAppStore((s) => ({
-    featureFlags: s.featureFlags,
-    setState: s.setState,
-  }));
+  const { requestCamera } = useMediaPermissions();
+  // Global state - use separate selectors to avoid infinite loop
+  const featureFlags = useAppStore((s) => s.featureFlags);
+  const setState = useAppStore((s) => s.setState);
   // États du composant
   const [isExpanded, setIsExpanded] = useState(expanded);
   const [source, setSource] = useState<VisionSource>('webcam');
@@ -59,11 +56,25 @@ export const VisionPanel: React.FC<VisionPanelProps> = ({ expanded = false }) =>
   // Référence au stream de la webcam
   const streamRef = useRef<MediaStream | null>(null);
 
-  // Référence à l'agent Vision
-  const visionAgent = agentRegistry.getAgent('VisionAgent') as VisionAgent;
+  // Référence à l'agent Vision (lazy loading)
+  const [visionAgent, setVisionAgent] = useState<VisionAgent | null>(null);
+  const [agentAvailable, setAgentAvailable] = useState(false);
 
-  // Vérification de la disponibilité de l'agent
-  const agentAvailable = !!visionAgent;
+  // Charger l'agent de manière asynchrone
+  const loadVisionAgent = useCallback(async () => {
+    try {
+      const agent = await agentRegistry.getAgentAsync('VisionAgent');
+      setVisionAgent(agent as VisionAgent | null);
+      setAgentAvailable(!!agent);
+    } catch (err) {
+      console.error('Erreur chargement VisionAgent:', err);
+      setAgentAvailable(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadVisionAgent();
+  }, [loadVisionAgent]);
 
   // Initialiser ou arrêter la webcam en fonction de l'état du panneau et de la source
   useEffect(() => {

@@ -7,7 +7,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { useVisionAudioStore } from '../store/visionAudioStore';
-import { agentRegistry } from '../agents/registry';
+import { agentRegistry } from '../features/agents/core/registry';
 import type { VoiceSettings, SpeechSynthesisIntent, SpeechFormat } from '../agents/SpeechSynthesisAgent';
 
 export interface SpeechSynthesisOptions {

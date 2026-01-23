@@ -1,12 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import CodeInterpreterPanel from '../CodeInterpreterPanel';
-import { agentRegistry } from '../../agents/registry';
+import { CodeInterpreterPanel } from '../CodeInterpreterPanel';
+import { agentRegistry } from '../../features/agents/core/registry';
+import type { BaseAgent } from '../../features/agents/core/types';
 
 // Mock the agent registry
-vi.mock('../../agents/registry', () => ({
+vi.mock('../../features/agents/core/registry', () => ({
   agentRegistry: {
     getAgent: vi.fn(),
   },
@@ -17,7 +17,7 @@ describe('CodeInterpreterPanel', () => {
   const mockAgent = {
     name: 'CodeInterpreterAgent',
     execute: mockExecute,
-  };
+  } as unknown as BaseAgent;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -27,7 +27,7 @@ describe('CodeInterpreterPanel', () => {
   it('should render in collapsed state initially', () => {
     render(<CodeInterpreterPanel />);
     expect(screen.getByText('Code Interpreter')).toBeInTheDocument();
-    expect(screen.queryByText('Python Code')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Python Code')).not.toBeInTheDocument();
   });
 
   it('should expand and show code editor when clicked', async () => {
@@ -37,8 +37,8 @@ describe('CodeInterpreterPanel', () => {
     fireEvent.click(screen.getByText('Code Interpreter'));
     
     // Expect code editor to be visible
-    expect(screen.getByText('Python Code')).toBeInTheDocument();
-    expect(screen.getByText('Run Code')).toBeInTheDocument();
+    expect(screen.getByLabelText('Python Code')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Run Code' })).toBeInTheDocument();
   });
 
   it('should execute code and display results', async () => {
@@ -55,7 +55,7 @@ describe('CodeInterpreterPanel', () => {
     fireEvent.change(codeInput, { target: { value: 'print(5 + 10)' } });
     
     // Click run button
-    fireEvent.click(screen.getByText('Run Code'));
+    fireEvent.click(screen.getByRole('button', { name: 'Run Code' }));
     
     // Wait for execution to complete
     await waitFor(() => {
@@ -128,10 +128,12 @@ describe('CodeInterpreterPanel', () => {
     });
     
     // Click copy button (using the title attribute of the button)
-    const copyButton = screen.getByTitle('Copy result');
+    const copyButton = screen.getByRole('button', { name: 'Copy result' });
     fireEvent.click(copyButton);
-    
+
     // Verify clipboard API was called
-    expect(clipboardWriteTextMock).toHaveBeenCalledWith('Result to copy');
+    await waitFor(() => {
+      expect(clipboardWriteTextMock).toHaveBeenCalledWith('Result to copy');
+    });
   });
 });

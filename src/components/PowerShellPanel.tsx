@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useVisionAudioStore } from '../store/visionAudioStore';
-import { agentRegistry } from '../agents/registry';
+import { useAppStore } from '../store/appStore';
+import { agentRegistry } from '../features/agents/core/registry';
 import { createLogger } from '../utils/logger';
 import './PowerShellPanel.css';
 
@@ -44,7 +44,7 @@ const PowerShellPanel: React.FC = () => {
 
   const terminalRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const { lastIntent } = useVisionAudioStore();
+  const { intent } = useAppStore();
 
   // Charger l'historique des commandes depuis le localStorage
   useEffect(() => {
@@ -68,10 +68,10 @@ const PowerShellPanel: React.FC = () => {
 
   // Détecter les intents liés à PowerShell
   useEffect(() => {
-    if (lastIntent && lastIntent.toLowerCase().includes('powershell')) {
+    if (intent && intent.toLowerCase().includes('powershell')) {
       setIsVisible(true);
     }
-  }, [lastIntent]);
+  }, [intent]);
 
   // Faire défiler vers le bas après chaque mise à jour
   useEffect(() => {
@@ -173,8 +173,8 @@ const PowerShellPanel: React.FC = () => {
     executeCommand();
   };
 
-  // Utiliser une suggestion
-  const useSuggestion = (suggestion: string) => {
+  // Utiliser une suggestion (helper non-hook)
+  const applySuggestion = (suggestion: string) => {
     setCommand(suggestion);
     setShowSuggestions(false);
     if (inputRef.current) {
@@ -289,7 +289,7 @@ const PowerShellPanel: React.FC = () => {
                 <div 
                   key={index} 
                   className="suggestion-item"
-                  onClick={() => useSuggestion(suggestion.command)}
+                  onClick={() => applySuggestion(suggestion.command)}
                 >
                   <div className="suggestion-command">{suggestion.command}</div>
                   <div className="suggestion-description">{suggestion.description}</div>

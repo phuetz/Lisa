@@ -1,6 +1,6 @@
 import { useVisionAudioStore } from '../store/visionAudioStore';
 import { useTranslation } from 'react-i18next';
-import { agentRegistry } from '../agents/registry';
+import { agentRegistry } from '../features/agents/core/registry';
 
 export default function TodoPanel() {
   const { t } = useTranslation();

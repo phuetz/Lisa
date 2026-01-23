@@ -3,11 +3,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 // Note: We rely on setupTests.ts to import jest-dom, don't import it directly here
 import CodeInterpreterPanel from '../CodeInterpreterPanel';
-import { agentRegistry } from '../../agents/registry';
-import { AgentDomains } from '../../agents/types';
+import { agentRegistry } from '../../features/agents/core/registry';
+import { AgentDomains } from '../../features/agents/core/types';
 
 // Mock the agent registry
-vi.mock('../../agents/registry', () => ({
+vi.mock('../../features/agents/core/registry', () => ({
   agentRegistry: {
     getAgent: vi.fn(),
   },
@@ -32,7 +32,7 @@ describe('CodeInterpreterPanel', () => {
   it('should render in collapsed state initially', () => {
     render(<CodeInterpreterPanel />);
     expect(screen.getByText('Code Interpreter')).toBeInTheDocument();
-    expect(screen.queryByText('Python Code')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Python Code')).not.toBeInTheDocument();
   });
 
   it('should expand and show code editor when clicked', async () => {
@@ -42,7 +42,7 @@ describe('CodeInterpreterPanel', () => {
     fireEvent.click(screen.getByText('Code Interpreter'));
     
     // Expect code editor to be visible
-    expect(screen.getByText('Python Code')).toBeInTheDocument();
+    expect(screen.getByLabelText('Python Code')).toBeInTheDocument();
     expect(screen.getByText('Run Code')).toBeInTheDocument();
   });
 
@@ -132,8 +132,8 @@ describe('CodeInterpreterPanel', () => {
       expect(screen.getByText(/Result to copy/)).toBeInTheDocument();
     });
     
-    // Click copy button (using the title attribute of the button)
-    const copyButton = screen.getByTitle('Copy result');
+    // Click copy button (using the aria-label attribute)
+    const copyButton = screen.getByLabelText('Copy result');
     fireEvent.click(copyButton);
     
     // Verify clipboard API was called

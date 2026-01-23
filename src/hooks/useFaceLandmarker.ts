@@ -1,8 +1,8 @@
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import type { FaceLandmarker, FaceLandmarkerResult } from '@mediapipe/tasks-vision';
 import { useVisionAudioStore } from '../store/visionAudioStore';
-import { loadTask } from '../utils/loadTask';
-import { Percept, MediaPipeFacePayload } from '../senses/vision'; // Import new types
+// import { loadTask } from '../utils/loadTask';
+import type { Percept, MediaPipeFacePayload } from '../features/vision/api'; // Import new types
 
 /**
  * Runs FaceLandmarker on a provided <video> element and stores results in Zustand.
@@ -20,6 +20,25 @@ export function useFaceLandmarker(video?: HTMLVideoElement, faceLandmarker?: Fac
         rafId = requestAnimationFrame(run);
         return;
       }
+      
+      // Guard: ensure video dimensions are valid (fix Android WebView crash)
+      // MediaPipe FaceLandmarker requires ROI with width/height > 0.
+      // On Android WebView, video.videoWidth/videoHeight remain 0 until
+      // loadedmetadata event fires and video.play() completes.
+      // Without this guard, MediaPipe throws: "ROI width and height must be > 0"
+      if (video.videoWidth === 0 || video.videoHeight === 0) {
+        rafId = requestAnimationFrame(run);
+        return;
+      }
+      
+      // Guard: ensure video is ready for processing
+      // readyState < 2 (HAVE_CURRENT_DATA) means no frame data available.
+      // MediaPipe needs at least one frame to compute landmarks.
+      if (video.readyState < 2) { // HAVE_CURRENT_DATA
+        rafId = requestAnimationFrame(run);
+        return;
+      }
+      
       const res: FaceLandmarkerResult | undefined = faceLandmarker.detectForVideo(
         video,
         performance.now()
@@ -28,7 +47,15 @@ export function useFaceLandmarker(video?: HTMLVideoElement, faceLandmarker?: Fac
         const newPercepts: Percept<MediaPipeFacePayload>[] = [];
         for (let i = 0; i < res.faceLandmarks.length; i++) {
           const faceLandmarks = res.faceLandmarks[i];
-          const boundingBox = res.faceBoundingBoxes[i];
+          // Calculate a simple bounding box from landmarks (min/max x,y)
+          const xCoords = faceLandmarks.map((lm) => lm.x);
+          const yCoords = faceLandmarks.map((lm) => lm.y);
+          const xMin = Math.min(...xCoords);
+          const yMin = Math.min(...yCoords);
+          const xMax = Math.max(...xCoords);
+          const yMax = Math.max(...yCoords);
+          const width = xMax - xMin;
+          const height = yMax - yMin;
 
           // Detect smile via blendshapes if available
           const isSmiling = res.faceBlendshapes?.some((bs) =>
@@ -39,10 +66,10 @@ export function useFaceLandmarker(video?: HTMLVideoElement, faceLandmarker?: Fac
 
           const payload: MediaPipeFacePayload = {
             type: 'face',
-            boxes: [[boundingBox.x, boundingBox.y, boundingBox.width, boundingBox.height]], // Convert to [x1, y1, width, height]
+            boxes: [[xMin, yMin, width, height]],
             landmarks: faceLandmarks,
             classes: ['face'],
-            scores: [1.0], // Assuming high confidence for detected faces
+            scores: [1.0],
             isSmiling: !!isSmiling,
           };
 
@@ -66,5 +93,5 @@ export function useFaceLandmarker(video?: HTMLVideoElement, faceLandmarker?: Fac
     };
     run();
     return () => cancelAnimationFrame(rafId);
-  }, [video, faceLandmarker]); // Changed taskRef.current to faceLandmarker
+  }, [video, faceLandmarker, setState]); // Changed taskRef.current to faceLandmarker
 }

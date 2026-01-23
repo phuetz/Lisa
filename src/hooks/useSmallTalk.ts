@@ -1,9 +1,10 @@
 import { useCallback } from 'react';
 import { useVisionAudioStore } from '../store/visionAudioStore';
 import { useTranslation } from 'react-i18next';
-import { processSmallTalk as processSmallTalkLogic, isSmallTalk as isSmallTalkLogic, SmallTalkOptions } from '../lib/smallTalk';
+import { processSmallTalk as processSmallTalkLogic, isSmallTalk as isSmallTalkLogic } from '../lib/smallTalk';
+import type { SmallTalkOptions } from '../lib/smallTalk';
 
-export { SmallTalkOptions };
+export type { SmallTalkOptions };
 
 /**
  * Hook for handling small talk conversations using an LLM API.

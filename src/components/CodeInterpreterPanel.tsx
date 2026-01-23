@@ -22,7 +22,7 @@ import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
-import { agentRegistry } from '../agents/registry';
+import { agentRegistry } from '../features/agents/core/registry';
 
 interface CodeInterpreterPanelProps {
   expanded?: boolean;
@@ -209,7 +209,10 @@ export const CodeInterpreterPanel: React.FC<CodeInterpreterPanelProps> = ({ expa
                     </Typography>
                     <Box sx={{ position: 'absolute', top: 8, right: 8 }}>
                       <Tooltip title="Copy result">
-                        <IconButton onClick={copyResultToClipboard}>
+                        <IconButton
+                          onClick={copyResultToClipboard}
+                          aria-label="Copy result"
+                        >
                           <ContentCopyIcon />
                         </IconButton>
                       </Tooltip>

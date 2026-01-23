@@ -2,9 +2,9 @@ import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useVisionAudioStore } from '../store/visionAudioStore';
 import type { WorkflowStep } from '../store/visionAudioStore';
-import { agentRegistry } from '../agents/registry';
+import { agentRegistry } from '../features/agents/core/registry';
 import { useSpeechResponder } from './useSpeechResponder';
-import type { AgentExecuteProps } from '../agents/types';
+import type { AgentExecuteProps } from '../features/agents/core/types';
 import { useSmallTalk } from './useSmallTalk';
 import { useUserWorkflows } from './useUserWorkflows';
 import { useSpeechSynthesis } from './useSpeechSynthesis';
@@ -12,11 +12,12 @@ import { useMemory } from './useMemory';
 
 export const useIntentHandler = () => {
   const { i18n } = useTranslation();
-  const { setPlan, setState } = useVisionAudioStore(state => ({
-    setPlan: state.setPlan,
-    setState: state.setState,
-  }));
+  const setPlan = useVisionAudioStore(state => state.setPlan);
+  const setState = useVisionAudioStore(state => state.setState);
   
+  // Get AI Model preferences
+  const selectedLLM = useVisionAudioStore(state => state.selectedLLM);
+
   // Obtenir les fonctions de gestion des workflows utilisateur
   const { checkTriggerPhrase, executeWorkflow } = useUserWorkflows();
   
@@ -32,8 +33,9 @@ export const useIntentHandler = () => {
   // This hook sets up the speech synthesis engine
   useSpeechResponder();
 
-  const handleIntent = useCallback(async (intent: string, isInternal = false) => {
+  const handleIntent = useCallback(async (intent: string, isInternal = false, languageOverride?: string) => {
     try {
+      const language = languageOverride ?? i18n.language;
       // Vérifier d'abord si l'intent correspond à un déclencheur de workflow utilisateur
       if (!isInternal) {
         const triggerMatch = await checkTriggerPhrase(intent);
@@ -81,7 +83,7 @@ export const useIntentHandler = () => {
           }]);
           
           // Utiliser MemoryAgent pour traiter la commande de mémoire
-          const memoryAgent = agentRegistry.getAgent('MemoryAgent');
+          const memoryAgent = await agentRegistry.getAgentAsync('MemoryAgent');
           
           if (memoryAgent) {
             // Déterminer l'action de mémoire
@@ -169,12 +171,13 @@ export const useIntentHandler = () => {
           }]);
           
           // Utiliser SmallTalkAgent pour traiter le small talk
-          const smallTalkAgent = agentRegistry.getAgent('SmallTalkAgent');
+          const smallTalkAgent = await agentRegistry.getAgentAsync('SmallTalkAgent');
           
           if (smallTalkAgent) {
             const result = await smallTalkAgent.execute({
               request: intent,
-              language: i18n.language
+              language: i18n.language,
+              model: selectedLLM
             });
             
             if (result.success) {
@@ -203,7 +206,7 @@ export const useIntentHandler = () => {
       }
       
       // Si ce n'est pas un déclencheur de workflow utilisateur ni du small talk, continuer avec le PlannerAgent normal
-      const planner = agentRegistry.getAgent('PlannerAgent');
+      const planner = await agentRegistry.getAgentAsync('PlannerAgent');
       if (!planner) {
         console.error('PlannerAgent not found!');
         speakText('Erreur lors de l\'exécution de l\'action');
@@ -225,7 +228,7 @@ export const useIntentHandler = () => {
 
       const result = await planner.execute({
         ...plannerProps,
-        language: i18n.language,
+        language,
         onPlanUpdate: (updatedPlan: WorkflowStep[]) => {
           setPlan(updatedPlan);
         },
