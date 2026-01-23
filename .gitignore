@@ -7,23 +7,25 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+{{ ... }}
 node_modules
 dist
 dist-ssr
 *.local
 
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
+# Editor directories# local env files
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 .DS_Store
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
-*.sw?
+{{ ... }}
 
 /src/generated/prisma
 
 # Environment variables
-# .env
+.env

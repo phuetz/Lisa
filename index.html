@@ -2,9 +2,40 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + React + TS</title>
+    <link rel="icon" type="image/svg+xml" href="/icon-192x192.svg" />
+    <link rel="apple-touch-icon" href="/icon-192x192.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
+    <meta name="theme-color" content="#1a1a2e" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Lisa AI" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="format-detection" content="telephone=no" />
+    <link rel="manifest" href="/manifest.json" />
+    <title>Lisa – Vision & Hearing Assistant</title>
+    <script>
+      // Unregister ALL service workers in development - runs immediately
+      if (window.location.hostname === 'localhost') {
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.getRegistrations().then(function(registrations) {
+            registrations.forEach(function(registration) {
+              registration.unregister().then(function(success) {
+                if (success) console.log('[Dev] Service worker unregistered:', registration.scope);
+              });
+            });
+          });
+          // Also clear caches
+          if ('caches' in window) {
+            caches.keys().then(function(names) {
+              names.forEach(function(name) {
+                caches.delete(name);
+                console.log('[Dev] Cache deleted:', name);
+              });
+            });
+          }
+        }
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>
