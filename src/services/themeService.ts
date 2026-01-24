@@ -3,7 +3,7 @@
  * Gère le thème clair/sombre avec détection système automatique
  */
 
-export type ThemeMode = 'light' | 'dark' | 'system';
+export type ThemeMode = 'light' | 'dark' | 'system' | 'fluentLight' | 'fluentDark';
 
 interface ThemeColors {
   // Background
@@ -97,6 +97,60 @@ const DARK_COLORS: ThemeColors = {
   assistantBubble: '#2d2d2d',
 };
 
+// Fluent Design Light Theme (Office 365 inspired)
+const FLUENT_LIGHT_COLORS: ThemeColors = {
+  bgPrimary: '#faf9f8',
+  bgSecondary: '#ffffff',
+  bgTertiary: '#f3f2f1',
+  bgOverlay: 'rgba(0, 0, 0, 0.4)',
+
+  textPrimary: '#323130',
+  textSecondary: '#605e5c',
+  textMuted: '#a19f9d',
+
+  accent: '#0078d4',
+  accentHover: '#106ebe',
+  accentMuted: 'rgba(0, 120, 212, 0.1)',
+
+  border: '#edebe9',
+  borderLight: '#f3f2f1',
+
+  success: '#107c10',
+  warning: '#ffb900',
+  error: '#d13438',
+  info: '#0078d4',
+
+  userBubble: '#0078d4',
+  assistantBubble: '#ffffff',
+};
+
+// Fluent Design Dark Theme (Office 365 inspired)
+const FLUENT_DARK_COLORS: ThemeColors = {
+  bgPrimary: '#1b1a19',
+  bgSecondary: '#252423',
+  bgTertiary: '#323130',
+  bgOverlay: 'rgba(0, 0, 0, 0.6)',
+
+  textPrimary: '#ffffff',
+  textSecondary: '#d2d0ce',
+  textMuted: '#8a8886',
+
+  accent: '#2b88d8',
+  accentHover: '#0078d4',
+  accentMuted: 'rgba(43, 136, 216, 0.15)',
+
+  border: '#3b3a39',
+  borderLight: '#484644',
+
+  success: '#107c10',
+  warning: '#ffb900',
+  error: '#d13438',
+  info: '#2b88d8',
+
+  userBubble: '#2b88d8',
+  assistantBubble: '#323130',
+};
+
 const STORAGE_KEY = 'lisa_theme_mode';
 
 class ThemeService {
@@ -111,7 +165,7 @@ class ThemeService {
     this.state = {
       mode: savedMode,
       resolved,
-      colors: resolved === 'dark' ? DARK_COLORS : LIGHT_COLORS,
+      colors: this.getColorsForMode(savedMode),
     };
 
     this.setupSystemThemeListener();
@@ -140,8 +194,8 @@ class ThemeService {
   setMode(mode: ThemeMode): void {
     this.state.mode = mode;
     this.state.resolved = this.resolveTheme(mode);
-    this.state.colors = this.state.resolved === 'dark' ? DARK_COLORS : LIGHT_COLORS;
-    
+    this.state.colors = this.getColorsForMode(mode);
+
     this.saveMode(mode);
     this.applyTheme();
     this.notifyListeners();
@@ -194,7 +248,7 @@ class ThemeService {
   private loadSavedMode(): ThemeMode {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved === 'light' || saved === 'dark' || saved === 'system') {
+      if (saved === 'light' || saved === 'dark' || saved === 'system' || saved === 'fluentLight' || saved === 'fluentDark') {
         return saved;
       }
     } catch {
@@ -215,7 +269,29 @@ class ThemeService {
     if (mode === 'system') {
       return this.getSystemPreference();
     }
+    if (mode === 'fluentLight') {
+      return 'light';
+    }
+    if (mode === 'fluentDark') {
+      return 'dark';
+    }
     return mode;
+  }
+
+  private getColorsForMode(mode: ThemeMode): ThemeColors {
+    switch (mode) {
+      case 'fluentLight':
+        return FLUENT_LIGHT_COLORS;
+      case 'fluentDark':
+        return FLUENT_DARK_COLORS;
+      case 'dark':
+        return DARK_COLORS;
+      case 'light':
+        return LIGHT_COLORS;
+      case 'system':
+      default:
+        return this.getSystemPreference() === 'dark' ? DARK_COLORS : LIGHT_COLORS;
+    }
   }
 
   private getSystemPreference(): 'light' | 'dark' {
@@ -231,7 +307,7 @@ class ThemeService {
     const handler = () => {
       if (this.state.mode === 'system') {
         this.state.resolved = this.getSystemPreference();
-        this.state.colors = this.state.resolved === 'dark' ? DARK_COLORS : LIGHT_COLORS;
+        this.state.colors = this.getColorsForMode(this.state.mode);
         this.applyTheme();
         this.notifyListeners();
       }
@@ -250,18 +326,31 @@ class ThemeService {
     if (typeof document === 'undefined') return;
 
     const root = document.documentElement;
-    
-    // Ajouter/retirer la classe dark
+    const isFluent = this.state.mode === 'fluentLight' || this.state.mode === 'fluentDark';
+
+    // Ajouter/retirer les classes de thème
     root.classList.toggle('dark', this.state.resolved === 'dark');
     root.classList.toggle('light', this.state.resolved === 'light');
+    root.classList.toggle('fluent', isFluent);
+    root.classList.toggle('fluent-light', this.state.mode === 'fluentLight');
+    root.classList.toggle('fluent-dark', this.state.mode === 'fluentDark');
 
     // Définir l'attribut data-theme
     root.setAttribute('data-theme', this.state.resolved);
+    root.setAttribute('data-theme-variant', isFluent ? 'fluent' : 'default');
 
     // Appliquer les CSS variables
     const vars = this.getCSSVariables();
     for (const [key, value] of Object.entries(vars)) {
       root.style.setProperty(key, value);
+    }
+
+    // Appliquer les Fluent CSS variables additionnelles
+    if (isFluent) {
+      root.style.setProperty('--fluent-font-family', "'Segoe UI Variable', 'Segoe UI', -apple-system, sans-serif");
+      root.style.setProperty('--fluent-border-radius', '4px');
+      root.style.setProperty('--fluent-shadow-rest', '0 2px 4px rgba(0,0,0,0.04), 0 0 2px rgba(0,0,0,0.08)');
+      root.style.setProperty('--fluent-shadow-hover', '0 4px 8px rgba(0,0,0,0.08), 0 0 2px rgba(0,0,0,0.08)');
     }
 
     // Meta theme-color pour mobile
@@ -284,5 +373,5 @@ export const themeService = new ThemeService();
 export default themeService;
 
 // Export colors for direct usage
-export { LIGHT_COLORS, DARK_COLORS };
+export { LIGHT_COLORS, DARK_COLORS, FLUENT_LIGHT_COLORS, FLUENT_DARK_COLORS };
 export type { ThemeColors, ThemeState };

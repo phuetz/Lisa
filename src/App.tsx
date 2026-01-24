@@ -3,6 +3,7 @@ import { logComponent, startupLogger } from './utils/startupLogger';
 import { Outlet } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import './App.css';
+import './styles/fluentAnimations.css';
 import {
   useFaceLandmarker,
   useHandLandmarker,

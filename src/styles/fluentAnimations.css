@@ -1,0 +1,410 @@
+/**
+ * Fluent Design Animations
+ * Microsoft Office 365 inspired animations and effects
+ */
+
+/* =====================================================
+   REVEAL EFFECT - Light follows cursor on hover
+   ===================================================== */
+.fluent-reveal {
+  position: relative;
+  overflow: hidden;
+}
+
+.fluent-reveal::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle 200px at var(--mouse-x, 50%) var(--mouse-y, 50%),
+    rgba(255, 255, 255, 0.1) 0%,
+    transparent 50%
+  );
+  opacity: 0;
+  transition: opacity 200ms cubic-bezier(0.33, 0, 0.67, 1);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.fluent-reveal:hover::before {
+  opacity: 1;
+}
+
+/* Dark mode reveal effect */
+.dark .fluent-reveal::before,
+[data-theme="dark"] .fluent-reveal::before {
+  background: radial-gradient(
+    circle 200px at var(--mouse-x, 50%) var(--mouse-y, 50%),
+    rgba(255, 255, 255, 0.06) 0%,
+    transparent 50%
+  );
+}
+
+/* =====================================================
+   TRANSITIONS - Standard Fluent motion curves
+   ===================================================== */
+.fluent-transition {
+  transition: all 200ms cubic-bezier(0.33, 0, 0.67, 1);
+}
+
+.fluent-transition-fast {
+  transition: all 100ms cubic-bezier(0.33, 0, 0.67, 1);
+}
+
+.fluent-transition-slow {
+  transition: all 300ms cubic-bezier(0.33, 0, 0.67, 1);
+}
+
+/* =====================================================
+   PAGE ENTER ANIMATION
+   ===================================================== */
+@keyframes fluent-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fluent-enter-scale {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes fluent-enter-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.fluent-page-enter {
+  animation: fluent-enter 300ms cubic-bezier(0, 0, 0, 1) forwards;
+}
+
+.fluent-scale-enter {
+  animation: fluent-enter-scale 200ms cubic-bezier(0, 0, 0, 1) forwards;
+}
+
+.fluent-fade-enter {
+  animation: fluent-enter-fade 200ms cubic-bezier(0, 0, 0, 1) forwards;
+}
+
+/* =====================================================
+   EXIT ANIMATIONS
+   ===================================================== */
+@keyframes fluent-exit {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes fluent-exit-scale {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+}
+
+.fluent-page-exit {
+  animation: fluent-exit 200ms cubic-bezier(1, 0, 1, 1) forwards;
+}
+
+.fluent-scale-exit {
+  animation: fluent-exit-scale 150ms cubic-bezier(1, 0, 1, 1) forwards;
+}
+
+/* =====================================================
+   STAGGER ANIMATIONS - For lists and grids
+   ===================================================== */
+.fluent-stagger > * {
+  animation: fluent-enter 300ms cubic-bezier(0, 0, 0, 1) forwards;
+  opacity: 0;
+}
+
+.fluent-stagger > *:nth-child(1) { animation-delay: 0ms; }
+.fluent-stagger > *:nth-child(2) { animation-delay: 50ms; }
+.fluent-stagger > *:nth-child(3) { animation-delay: 100ms; }
+.fluent-stagger > *:nth-child(4) { animation-delay: 150ms; }
+.fluent-stagger > *:nth-child(5) { animation-delay: 200ms; }
+.fluent-stagger > *:nth-child(6) { animation-delay: 250ms; }
+.fluent-stagger > *:nth-child(7) { animation-delay: 300ms; }
+.fluent-stagger > *:nth-child(8) { animation-delay: 350ms; }
+.fluent-stagger > *:nth-child(n+9) { animation-delay: 400ms; }
+
+/* =====================================================
+   BUTTON ANIMATIONS
+   ===================================================== */
+.fluent-button-press {
+  transform: scale(0.98);
+  transition: transform 100ms cubic-bezier(0.33, 0, 0.67, 1);
+}
+
+.fluent-button-ripple {
+  position: relative;
+  overflow: hidden;
+}
+
+.fluent-button-ripple::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
+  transform: scale(0);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.fluent-button-ripple:active::after {
+  transform: scale(2);
+  opacity: 1;
+  transition: transform 400ms cubic-bezier(0, 0, 0, 1), opacity 400ms;
+}
+
+/* =====================================================
+   LOADING ANIMATIONS
+   ===================================================== */
+@keyframes fluent-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes fluent-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes fluent-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.fluent-spinner {
+  animation: fluent-spin 1s linear infinite;
+}
+
+.fluent-pulse {
+  animation: fluent-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.fluent-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.2) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  background-size: 200% 100%;
+  animation: fluent-shimmer 1.5s infinite;
+}
+
+/* =====================================================
+   DIALOG/MODAL ANIMATIONS
+   ===================================================== */
+@keyframes fluent-dialog-enter {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes fluent-dialog-exit {
+  from {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
+  }
+}
+
+@keyframes fluent-overlay-enter {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.fluent-dialog-enter {
+  animation: fluent-dialog-enter 250ms cubic-bezier(0, 0, 0, 1) forwards;
+}
+
+.fluent-dialog-exit {
+  animation: fluent-dialog-exit 200ms cubic-bezier(1, 0, 1, 1) forwards;
+}
+
+.fluent-overlay-enter {
+  animation: fluent-overlay-enter 200ms cubic-bezier(0, 0, 0, 1) forwards;
+}
+
+/* =====================================================
+   SIDEBAR/PANEL ANIMATIONS
+   ===================================================== */
+@keyframes fluent-slide-in-left {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes fluent-slide-in-right {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes fluent-slide-out-left {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-100%);
+  }
+}
+
+.fluent-slide-in-left {
+  animation: fluent-slide-in-left 300ms cubic-bezier(0, 0, 0, 1) forwards;
+}
+
+.fluent-slide-in-right {
+  animation: fluent-slide-in-right 300ms cubic-bezier(0, 0, 0, 1) forwards;
+}
+
+.fluent-slide-out-left {
+  animation: fluent-slide-out-left 250ms cubic-bezier(1, 0, 1, 1) forwards;
+}
+
+/* =====================================================
+   TOOLTIP ANIMATIONS
+   ===================================================== */
+@keyframes fluent-tooltip-enter {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.fluent-tooltip-enter {
+  animation: fluent-tooltip-enter 150ms cubic-bezier(0, 0, 0, 1) forwards;
+}
+
+/* =====================================================
+   MESSAGE BUBBLE ANIMATIONS
+   ===================================================== */
+@keyframes fluent-message-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.fluent-message-enter {
+  animation: fluent-message-enter 200ms cubic-bezier(0, 0, 0, 1) forwards;
+}
+
+/* =====================================================
+   TYPING INDICATOR
+   ===================================================== */
+@keyframes fluent-typing-bounce {
+  0%, 60%, 100% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(-4px);
+  }
+}
+
+.fluent-typing-dot {
+  animation: fluent-typing-bounce 1.4s infinite ease-in-out;
+}
+
+.fluent-typing-dot:nth-child(1) { animation-delay: 0ms; }
+.fluent-typing-dot:nth-child(2) { animation-delay: 150ms; }
+.fluent-typing-dot:nth-child(3) { animation-delay: 300ms; }
+
+/* =====================================================
+   FOCUS RING - Accessibility
+   ===================================================== */
+.fluent-focus-visible:focus-visible {
+  outline: 2px solid var(--fluent-accent, #0078d4);
+  outline-offset: 2px;
+}
+
+/* =====================================================
+   REDUCED MOTION - Accessibility
+   ===================================================== */
+@media (prefers-reduced-motion: reduce) {
+  .fluent-transition,
+  .fluent-transition-fast,
+  .fluent-transition-slow,
+  .fluent-page-enter,
+  .fluent-scale-enter,
+  .fluent-fade-enter,
+  .fluent-dialog-enter,
+  .fluent-slide-in-left,
+  .fluent-slide-in-right,
+  .fluent-message-enter,
+  .fluent-stagger > * {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .fluent-reveal::before {
+    display: none;
+  }
+}
