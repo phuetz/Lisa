@@ -77,6 +77,12 @@ class AgentRegistry {
       ['WorkflowCodeAgent', '../implementations/WorkflowCodeAgent'],
       ['WorkflowHTTPAgent', '../implementations/WorkflowHTTPAgent'],
 
+      // Research & Analysis Agents
+      ['ResearchAgent', '../implementations/ResearchAgent'],
+      ['DataAnalystAgent', '../implementations/DataAnalystAgent'],
+      ['CreativeMarketingAgent', '../implementations/CreativeMarketingAgent'],
+      ['CodeReviewAgent', '../implementations/CodeReviewAgent'],
+
       // Workflow Specific Agents
       ['AFlowOptimizerAgent', '../../workflow/agents/AFlowOptimizerAgent'],
       ['WindsurfAgent', '../../workflow/agents/WindsurfAgent'],

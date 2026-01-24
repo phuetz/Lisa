@@ -86,6 +86,12 @@ interface ChatSettingsStore {
   // Memory
   longTermMemoryEnabled: boolean;
   userPreferences: Record<string, string>;
+
+  // RAG Settings
+  ragEnabled: boolean;
+  ragProvider: 'local' | 'openai' | 'transformers';
+  ragSimilarityThreshold: number;
+  ragMaxResults: number;
   
   // Actions
   setSelectedModel: (modelId: string) => void;
@@ -120,6 +126,12 @@ interface ChatSettingsStore {
   toggleLongTermMemory: () => void;
   setUserPreference: (key: string, value: string) => void;
   getUserPreference: (key: string) => string | undefined;
+
+  // RAG Actions
+  toggleRag: () => void;
+  setRagProvider: (provider: 'local' | 'openai' | 'transformers') => void;
+  setRagSimilarityThreshold: (threshold: number) => void;
+  setRagMaxResults: (maxResults: number) => void;
   
   // Export/Import all settings
   exportSettings: () => string;
@@ -170,6 +182,12 @@ export const useChatSettingsStore = create<ChatSettingsStore>()(
       
       longTermMemoryEnabled: true,
       userPreferences: {},
+
+      // RAG Settings (default values)
+      ragEnabled: true,
+      ragProvider: 'local',
+      ragSimilarityThreshold: 0.5,
+      ragMaxResults: 5,
       
       // Actions
       setSelectedModel: (modelId) => set({ selectedModelId: modelId }),
@@ -286,7 +304,20 @@ export const useChatSettingsStore = create<ChatSettingsStore>()(
       })),
       
       getUserPreference: (key) => get().userPreferences[key],
-      
+
+      // RAG Actions
+      toggleRag: () => set((state) => ({ ragEnabled: !state.ragEnabled })),
+
+      setRagProvider: (provider) => set({ ragProvider: provider }),
+
+      setRagSimilarityThreshold: (threshold) => set({
+        ragSimilarityThreshold: Math.max(0, Math.min(1, threshold))
+      }),
+
+      setRagMaxResults: (maxResults) => set({
+        ragMaxResults: Math.max(1, Math.min(20, maxResults))
+      }),
+
       exportSettings: () => {
         const state = get();
         return JSON.stringify({
@@ -301,6 +332,10 @@ export const useChatSettingsStore = create<ChatSettingsStore>()(
           autoSpeakEnabled: state.autoSpeakEnabled,
           longTermMemoryEnabled: state.longTermMemoryEnabled,
           userPreferences: state.userPreferences,
+          ragEnabled: state.ragEnabled,
+          ragProvider: state.ragProvider,
+          ragSimilarityThreshold: state.ragSimilarityThreshold,
+          ragMaxResults: state.ragMaxResults,
         }, null, 2);
       },
       
@@ -328,6 +363,10 @@ export const useChatSettingsStore = create<ChatSettingsStore>()(
         selectedVoiceProvider: 'browser',
         longTermMemoryEnabled: true,
         userPreferences: {},
+        ragEnabled: true,
+        ragProvider: 'local',
+        ragSimilarityThreshold: 0.5,
+        ragMaxResults: 5,
       }),
     }),
     {

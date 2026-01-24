@@ -6,7 +6,11 @@
 import { useState, useCallback, useRef } from 'react';
 import { aiService, type AIMessage, type AIProvider } from '../services/aiService';
 import { useChatHistoryStore } from '../store/chatHistoryStore';
+import { useChatSettingsStore } from '../store/chatSettingsStore';
+import { ragService } from '../services/RAGService';
 import type { Message } from '../types/chat';
+
+export type StreamingStage = 'idle' | 'thinking' | 'searching' | 'generating' | 'complete';
 
 export interface UseAIChatOptions {
   provider?: AIProvider;
@@ -14,14 +18,18 @@ export interface UseAIChatOptions {
   temperature?: number;
   systemPrompt?: string;
   onError?: (error: Error) => void;
+  enableRAG?: boolean;
 }
 
 export const useAIChat = (conversationId: string, options: UseAIChatOptions = {}) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
+  const [streamingStage, setStreamingStage] = useState<StreamingStage>('idle');
+  const [ragContext, setRagContext] = useState<string | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
-  
+
   const { addMessage, updateMessage, getCurrentConversation } = useChatHistoryStore();
+  const { ragEnabled, ragProvider, ragSimilarityThreshold, ragMaxResults } = useChatSettingsStore();
 
   /**
    * Envoyer un message avec streaming
@@ -47,15 +55,53 @@ export const useAIChat = (conversationId: string, options: UseAIChatOptions = {}
         ...(image && { image })
       });
 
+      // Stage: Thinking
+      setStreamingStage('thinking');
+
       // Préparer le contexte pour l'IA
       const conversation = getCurrentConversation();
       const messages: AIMessage[] = [];
 
-      // Ajouter system prompt si fourni
-      if (options.systemPrompt) {
+      // RAG: Augment context if enabled
+      let ragContextString = '';
+      const shouldUseRAG = options.enableRAG !== false && ragEnabled;
+
+      if (shouldUseRAG) {
+        setStreamingStage('searching');
+        try {
+          // Update RAG service config
+          ragService.updateConfig({
+            enabled: true,
+            provider: ragProvider,
+            similarityThreshold: ragSimilarityThreshold,
+            maxResults: ragMaxResults
+          });
+
+          const augmented = await ragService.augmentContext(content);
+          if (augmented.context && augmented.relevantMemories.length > 0) {
+            ragContextString = augmented.context;
+            setRagContext(ragContextString);
+          }
+        } catch (ragError) {
+          console.warn('RAG augmentation failed, continuing without context:', ragError);
+        }
+      }
+
+      // Stage: Generating
+      setStreamingStage('generating');
+
+      // Ajouter system prompt avec contexte RAG si disponible
+      let systemContent = options.systemPrompt || '';
+      if (ragContextString) {
+        systemContent = systemContent
+          ? `${systemContent}\n\n---\n${ragContextString}`
+          : ragContextString;
+      }
+
+      if (systemContent) {
         messages.push({
           role: 'system',
-          content: options.systemPrompt
+          content: systemContent
         });
       }
 
@@ -114,15 +160,16 @@ export const useAIChat = (conversationId: string, options: UseAIChatOptions = {}
 
       // Finaliser le message
       updateMessage(assistantMessageId, fullContent);
+      setStreamingStage('complete');
 
     } catch (error) {
       console.error('Error sending message:', error);
-      
+
       // Ajouter un message d'erreur
       addMessage({
         conversationId,
         role: 'assistant',
-        content: `❌ Erreur: ${(error as Error).message}`
+        content: `Erreur: ${(error as Error).message}`
       });
 
       if (options.onError) {
@@ -131,9 +178,11 @@ export const useAIChat = (conversationId: string, options: UseAIChatOptions = {}
     } finally {
       setIsLoading(false);
       setIsStreaming(false);
+      setStreamingStage('idle');
+      setRagContext(null);
       abortControllerRef.current = null;
     }
-  }, [conversationId, isLoading, isStreaming, options, addMessage, updateMessage, getCurrentConversation]);
+  }, [conversationId, isLoading, isStreaming, options, addMessage, updateMessage, getCurrentConversation, ragEnabled, ragProvider, ragSimilarityThreshold, ragMaxResults]);
 
   /**
    * Annuler la génération en cours
@@ -181,7 +230,9 @@ export const useAIChat = (conversationId: string, options: UseAIChatOptions = {}
     cancelGeneration,
     regenerateLastResponse,
     isLoading,
-    isStreaming
+    isStreaming,
+    streamingStage,
+    ragContext
   };
 };
 

@@ -13,6 +13,23 @@ interface NotificationOptions {
   sound?: string;
   actionTypeId?: string;
   extra?: Record<string, unknown>;
+  // Rich notification options
+  largeBody?: string;
+  summaryText?: string;
+  inboxStyle?: string[];
+  image?: string;
+  group?: string;
+  groupSummary?: boolean;
+  // Quick actions
+  actions?: NotificationAction[];
+}
+
+interface NotificationAction {
+  id: string;
+  title: string;
+  requiresInput?: boolean;
+  inputPlaceholder?: string;
+  destructive?: boolean;
 }
 
 interface NotificationChannel {
@@ -25,10 +42,19 @@ interface NotificationChannel {
   vibration?: boolean;
 }
 
+interface ProactiveNotification {
+  type: 'weather' | 'reminder' | 'suggestion' | 'daily_summary';
+  condition: () => Promise<boolean>;
+  generate: () => Promise<{ title: string; body: string; extra?: Record<string, unknown> }>;
+  schedule?: { hour: number; minute: number };
+}
+
 class PushNotificationService {
   private initialized = false;
   private pushNotifications: typeof import('@capacitor/push-notifications').PushNotifications | null = null;
   private localNotifications: typeof import('@capacitor/local-notifications').LocalNotifications | null = null;
+  private proactiveNotifications: ProactiveNotification[] = [];
+  private notificationGroups: Map<string, number[]> = new Map();
 
   get isNative(): boolean {
     return Capacitor.isNativePlatform();
@@ -265,6 +291,281 @@ class PushNotificationService {
    */
   getPushToken(): string | null {
     return localStorage.getItem('push_token');
+  }
+
+  // ============ RICH NOTIFICATIONS ============
+
+  /**
+   * Show a rich notification with image
+   */
+  async showRichNotification(options: NotificationOptions): Promise<void> {
+    if (!this.localNotifications) {
+      // Fallback to basic notification
+      return this.showLocalNotification(options);
+    }
+
+    try {
+      const notificationId = options.id || Date.now();
+
+      // Track group membership
+      if (options.group) {
+        const groupIds = this.notificationGroups.get(options.group) || [];
+        groupIds.push(notificationId);
+        this.notificationGroups.set(options.group, groupIds);
+      }
+
+      await this.localNotifications.schedule({
+        notifications: [
+          {
+            id: notificationId,
+            title: options.title,
+            body: options.body,
+            largeBody: options.largeBody,
+            summaryText: options.summaryText,
+            schedule: options.schedule,
+            channelId: 'lisa-messages',
+            extra: options.extra,
+            smallIcon: 'ic_notification',
+            largeIcon: 'ic_launcher',
+            // Rich notification features
+            attachments: options.image ? [{ id: 'image', url: options.image }] : undefined,
+            group: options.group,
+            groupSummary: options.groupSummary,
+            // Inbox style for multiple lines
+            inboxList: options.inboxStyle,
+            actionTypeId: options.actions ? 'REPLY_ACTION' : undefined,
+          },
+        ],
+      });
+
+      // Register action types if actions provided
+      if (options.actions && options.actions.length > 0) {
+        await this.registerActionTypes(options.actions);
+      }
+    } catch (error) {
+      console.error('[PushNotificationService] Rich notification error:', error);
+      // Fallback to basic
+      await this.showLocalNotification(options);
+    }
+  }
+
+  /**
+   * Register notification action types
+   */
+  private async registerActionTypes(actions: NotificationAction[]): Promise<void> {
+    if (!this.localNotifications) return;
+
+    try {
+      await this.localNotifications.registerActionTypes({
+        types: [
+          {
+            id: 'REPLY_ACTION',
+            actions: actions.map(action => ({
+              id: action.id,
+              title: action.title,
+              input: action.requiresInput,
+              inputPlaceholder: action.inputPlaceholder,
+              destructive: action.destructive,
+            })),
+          },
+        ],
+      });
+    } catch (error) {
+      console.warn('[PushNotificationService] Action types registration failed:', error);
+    }
+  }
+
+  /**
+   * Show notification with quick reply
+   */
+  async showQuickReplyNotification(
+    title: string,
+    body: string,
+    conversationId: string,
+    extra?: Record<string, unknown>
+  ): Promise<void> {
+    await this.showRichNotification({
+      title,
+      body,
+      group: conversationId,
+      extra: { ...extra, conversationId },
+      actions: [
+        {
+          id: 'reply',
+          title: 'Reply',
+          requiresInput: true,
+          inputPlaceholder: 'Type your reply...',
+        },
+        {
+          id: 'mark_read',
+          title: 'Mark as Read',
+        },
+      ],
+    });
+  }
+
+  /**
+   * Show grouped notifications (inbox style)
+   */
+  async showGroupedNotifications(
+    groupId: string,
+    groupTitle: string,
+    messages: Array<{ sender: string; message: string }>
+  ): Promise<void> {
+    if (messages.length === 0) return;
+
+    const inboxStyle = messages.map(m => `${m.sender}: ${m.message}`);
+
+    await this.showRichNotification({
+      title: groupTitle,
+      body: `${messages.length} new messages`,
+      group: groupId,
+      groupSummary: true,
+      inboxStyle,
+      summaryText: `${messages.length} messages`,
+    });
+  }
+
+  // ============ PROACTIVE NOTIFICATIONS ============
+
+  /**
+   * Register a proactive notification
+   */
+  registerProactiveNotification(notification: ProactiveNotification): void {
+    this.proactiveNotifications.push(notification);
+    console.log(`[PushNotificationService] Registered proactive: ${notification.type}`);
+  }
+
+  /**
+   * Check and trigger proactive notifications
+   */
+  async checkProactiveNotifications(): Promise<void> {
+    for (const notification of this.proactiveNotifications) {
+      try {
+        // Check if condition is met
+        const shouldTrigger = await notification.condition();
+        if (!shouldTrigger) continue;
+
+        // Check schedule if defined
+        if (notification.schedule) {
+          const now = new Date();
+          if (now.getHours() !== notification.schedule.hour ||
+              Math.abs(now.getMinutes() - notification.schedule.minute) > 5) {
+            continue;
+          }
+        }
+
+        // Generate and show notification
+        const content = await notification.generate();
+        await this.showLocalNotification({
+          title: content.title,
+          body: content.body,
+          extra: { ...content.extra, type: notification.type, proactive: true },
+        });
+
+        console.log(`[PushNotificationService] Proactive triggered: ${notification.type}`);
+      } catch (error) {
+        console.error(`[PushNotificationService] Proactive ${notification.type} error:`, error);
+      }
+    }
+  }
+
+  /**
+   * Setup default proactive notifications
+   */
+  setupDefaultProactives(): void {
+    // Morning greeting with weather (8:00 AM)
+    this.registerProactiveNotification({
+      type: 'weather',
+      schedule: { hour: 8, minute: 0 },
+      condition: async () => {
+        const lastShown = localStorage.getItem('proactive_weather_last');
+        if (lastShown) {
+          const last = new Date(lastShown);
+          const now = new Date();
+          // Only show once per day
+          if (last.toDateString() === now.toDateString()) return false;
+        }
+        return true;
+      },
+      generate: async () => {
+        localStorage.setItem('proactive_weather_last', new Date().toISOString());
+        // In real implementation, fetch weather data
+        return {
+          title: 'Good morning!',
+          body: 'Start your day with Lisa. Tap to ask anything.',
+          extra: { action: 'open_chat' },
+        };
+      },
+    });
+
+    // Daily summary (8:00 PM)
+    this.registerProactiveNotification({
+      type: 'daily_summary',
+      schedule: { hour: 20, minute: 0 },
+      condition: async () => {
+        const lastShown = localStorage.getItem('proactive_summary_last');
+        if (lastShown) {
+          const last = new Date(lastShown);
+          const now = new Date();
+          if (last.toDateString() === now.toDateString()) return false;
+        }
+        return true;
+      },
+      generate: async () => {
+        localStorage.setItem('proactive_summary_last', new Date().toISOString());
+        return {
+          title: 'Daily Summary',
+          body: 'See what you accomplished today with Lisa.',
+          extra: { action: 'show_summary' },
+        };
+      },
+    });
+
+    // Start proactive check interval (every 15 minutes)
+    setInterval(() => this.checkProactiveNotifications(), 15 * 60 * 1000);
+  }
+
+  /**
+   * Clear notification group
+   */
+  async clearNotificationGroup(groupId: string): Promise<void> {
+    if (!this.localNotifications) return;
+
+    const ids = this.notificationGroups.get(groupId) || [];
+    if (ids.length > 0) {
+      await this.localNotifications.cancel({
+        notifications: ids.map(id => ({ id })),
+      });
+      this.notificationGroups.delete(groupId);
+    }
+  }
+
+  /**
+   * Get notification badge count
+   */
+  async getBadgeCount(): Promise<number> {
+    if (!this.localNotifications) return 0;
+
+    try {
+      const pending = await this.localNotifications.getPending();
+      return pending.notifications.length;
+    } catch {
+      return 0;
+    }
+  }
+
+  /**
+   * Set app badge count
+   */
+  async setBadgeCount(count: number): Promise<void> {
+    // This requires the Badge plugin on native
+    try {
+      const { Badge } = await import('@capawesome/capacitor-badge');
+      await Badge.set({ count });
+    } catch {
+      // Badge plugin not available
+    }
   }
 }
 

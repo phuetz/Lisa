@@ -6,11 +6,13 @@
 import type { Memory } from './MemoryService';
 import { memoryService } from './MemoryService';
 import { auditActions } from './AuditService';
+import { embeddingService, type EmbeddingProvider } from './EmbeddingService';
 
 export interface Embedding {
   text: string;
   vector: number[];
   timestamp: string;
+  model?: string;
 }
 
 export interface AugmentedContext {
@@ -21,12 +23,57 @@ export interface AugmentedContext {
   timestamp: string;
 }
 
+export interface RAGConfig {
+  enabled: boolean;
+  provider: EmbeddingProvider;
+  similarityThreshold: number;
+  maxResults: number;
+  includeConversationHistory: boolean;
+}
+
+const DEFAULT_RAG_CONFIG: RAGConfig = {
+  enabled: true,
+  provider: 'local',
+  similarityThreshold: 0.5,
+  maxResults: 5,
+  includeConversationHistory: true
+};
+
 class RAGServiceImpl {
   private embeddings: Map<string, Embedding> = new Map();
-  private embeddingDimension = 384; // Dimension standard pour les embeddings
+  private config: RAGConfig = DEFAULT_RAG_CONFIG;
 
   constructor() {
     this.loadEmbeddingsFromStorage();
+    this.loadConfigFromStorage();
+  }
+
+  /**
+   * Update RAG configuration
+   */
+  updateConfig(config: Partial<RAGConfig>): void {
+    this.config = { ...this.config, ...config };
+
+    // Update embedding service provider
+    if (config.provider) {
+      embeddingService.updateConfig({ provider: config.provider });
+    }
+
+    this.saveConfigToStorage();
+  }
+
+  /**
+   * Get current configuration
+   */
+  getConfig(): RAGConfig {
+    return { ...this.config };
+  }
+
+  /**
+   * Check if RAG is enabled
+   */
+  isEnabled(): boolean {
+    return this.config.enabled;
   }
 
   /**
@@ -34,19 +81,18 @@ class RAGServiceImpl {
    */
   async generateEmbedding(text: string): Promise<number[]> {
     try {
-      // Utiliser une approche simple basée sur le hash pour la démo
-      // En production, utiliser une vraie API d'embeddings (OpenAI, Hugging Face, etc.)
-      const embedding = this.simpleEmbedding(text);
-      
+      const result = await embeddingService.generateEmbedding(text);
+
       // Sauvegarder l'embedding
       this.embeddings.set(text, {
         text,
-        vector: embedding,
-        timestamp: new Date().toISOString()
+        vector: result.vector,
+        timestamp: new Date().toISOString(),
+        model: result.model
       });
 
       this.saveEmbeddingsToStorage();
-      return embedding;
+      return result.vector;
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
       auditActions.errorOccurred(`RAG embedding generation failed: ${errorMsg}`, { text });
@@ -55,66 +101,15 @@ class RAGServiceImpl {
   }
 
   /**
-   * Embedding simple basé sur le hash (pour la démo)
-   * En production, utiliser une vraie API d'embeddings
-   */
-  private simpleEmbedding(text: string): number[] {
-    const embedding: number[] = [];
-    
-    // Créer un vecteur basé sur les caractéristiques du texte
-    const hash = this.hashCode(text);
-    
-    for (let i = 0; i < this.embeddingDimension; i++) {
-      // Générer des valeurs pseudo-aléatoires basées sur le hash
-      const seed = (hash + i * 73856093) ^ (i * 19349663);
-      const value = Math.sin(seed) * 0.5 + 0.5; // Normaliser entre 0 et 1
-      embedding.push(value);
-    }
-
-    return embedding;
-  }
-
-  /**
-   * Fonction de hash simple
-   */
-  private hashCode(str: string): number {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-      const char = str.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
-      hash = hash & hash; // Convertir en 32-bit integer
-    }
-    return Math.abs(hash);
-  }
-
-  /**
-   * Calculer la similarité cosinus entre deux vecteurs
-   */
-  private cosineSimilarity(a: number[], b: number[]): number {
-    if (a.length !== b.length) return 0;
-
-    let dotProduct = 0;
-    let magnitudeA = 0;
-    let magnitudeB = 0;
-
-    for (let i = 0; i < a.length; i++) {
-      dotProduct += a[i] * b[i];
-      magnitudeA += a[i] * a[i];
-      magnitudeB += b[i] * b[i];
-    }
-
-    magnitudeA = Math.sqrt(magnitudeA);
-    magnitudeB = Math.sqrt(magnitudeB);
-
-    if (magnitudeA === 0 || magnitudeB === 0) return 0;
-
-    return dotProduct / (magnitudeA * magnitudeB);
-  }
-
-  /**
    * Rechercher des souvenirs similaires
    */
-  async searchSimilar(query: string, limit: number = 5): Promise<Memory[]> {
+  async searchSimilar(query: string, limit?: number): Promise<Array<Memory & { similarity: number }>> {
+    if (!this.config.enabled) {
+      return [];
+    }
+
+    const maxResults = limit || this.config.maxResults;
+
     try {
       // Générer l'embedding de la requête
       const queryEmbedding = await this.generateEmbedding(query);
@@ -127,16 +122,16 @@ class RAGServiceImpl {
       const scored = await Promise.all(
         allMemories.map(async (memory) => {
           const memoryEmbedding = await this.generateEmbedding(memory.content);
-          const similarity = this.cosineSimilarity(queryEmbedding, memoryEmbedding);
-          return { memory, similarity };
+          const similarity = embeddingService.cosineSimilarity(queryEmbedding, memoryEmbedding);
+          return { ...memory, similarity };
         })
       );
 
-      // Trier par similarité et retourner les top N
+      // Filtrer par seuil de similarité et trier
       return scored
+        .filter(item => item.similarity >= this.config.similarityThreshold)
         .sort((a, b) => b.similarity - a.similarity)
-        .slice(0, limit)
-        .map(item => item.memory);
+        .slice(0, maxResults);
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
       auditActions.errorOccurred(`RAG search failed: ${errorMsg}`, { query });
@@ -147,22 +142,39 @@ class RAGServiceImpl {
   /**
    * Augmenter le contexte avec des souvenirs pertinents
    */
-  async augmentContext(query: string, limit: number = 5): Promise<AugmentedContext> {
+  async augmentContext(query: string, limit?: number): Promise<AugmentedContext> {
+    if (!this.config.enabled) {
+      return {
+        query,
+        relevantMemories: [],
+        context: '',
+        confidence: 0,
+        timestamp: new Date().toISOString()
+      };
+    }
+
     try {
       // Rechercher les souvenirs similaires
-      const relevantMemories = await this.searchSimilar(query, limit);
+      const scoredMemories = await this.searchSimilar(query, limit);
 
-      // Construire le contexte augmenté
-      const contextParts = relevantMemories.map(memory => {
-        const relevanceIndicator = '█'.repeat(Math.ceil(memory.relevance / 10));
-        return `[${memory.type}] ${memory.content} (${relevanceIndicator})`;
+      // Convert to Memory[] (strip similarity for compatibility)
+      const relevantMemories: Memory[] = scoredMemories.map(({ similarity: _similarity, ...memory }) => memory);
+
+      // Construire le contexte augmenté avec scores de similarité
+      const contextParts = scoredMemories.map((memory, index) => {
+        const similarityPercent = Math.round(memory.similarity * 100);
+        return `[${index + 1}] (${similarityPercent}% match) [${memory.type}] ${memory.content}`;
       });
 
-      const context = contextParts.join('\n');
-      const confidence = relevantMemories.length > 0
+      const context = contextParts.length > 0
+        ? `Relevant context from memory:\n${contextParts.join('\n')}`
+        : '';
+
+      // Calculate confidence based on similarity scores
+      const confidence = scoredMemories.length > 0
         ? Math.round(
-            relevantMemories.reduce((sum, m) => sum + m.relevance, 0) / 
-            (relevantMemories.length * 100) * 100
+            scoredMemories.reduce((sum, m) => sum + m.similarity, 0) /
+            scoredMemories.length * 100
           )
         : 0;
 
@@ -177,7 +189,8 @@ class RAGServiceImpl {
       auditActions.toolExecuted('RAG_augmentContext', {
         query,
         memoriesFound: relevantMemories.length,
-        confidence
+        confidence,
+        provider: this.config.provider
       });
 
       return result;
@@ -286,6 +299,42 @@ class RAGServiceImpl {
       this.embeddings.set(emb.text, emb);
     });
     this.saveEmbeddingsToStorage();
+  }
+
+  /**
+   * Sauvegarder la configuration dans localStorage
+   */
+  private saveConfigToStorage(): void {
+    try {
+      localStorage.setItem('lisa:rag:config', JSON.stringify(this.config));
+    } catch (e) {
+      console.error('Erreur sauvegarde config RAG:', e);
+    }
+  }
+
+  /**
+   * Charger la configuration depuis localStorage
+   */
+  private loadConfigFromStorage(): void {
+    try {
+      const stored = localStorage.getItem('lisa:rag:config');
+      if (stored) {
+        const config = JSON.parse(stored);
+        this.config = { ...DEFAULT_RAG_CONFIG, ...config };
+
+        // Sync embedding service config
+        embeddingService.updateConfig({ provider: this.config.provider });
+      }
+    } catch (e) {
+      console.error('Erreur chargement config RAG:', e);
+    }
+  }
+
+  /**
+   * Set embedding provider API key
+   */
+  setApiKey(apiKey: string): void {
+    embeddingService.updateConfig({ apiKey });
   }
 }
 
