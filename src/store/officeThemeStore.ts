@@ -6,9 +6,9 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import {
-  OfficeTheme,
-  ThemeColorScheme,
-  ThemeMode,
+  type OfficeTheme,
+  type ThemeColorScheme,
+  type ThemeMode,
   officeThemes,
   getThemeById,
   getDefaultTheme,
