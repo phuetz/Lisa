@@ -19,6 +19,30 @@ interface OfflineState {
   lastSyncTime: number;
 }
 
+// Conflict Resolution Types
+export type ConflictResolutionStrategy = 'local' | 'server' | 'merge' | 'manual';
+
+export interface ConflictItem<T = unknown> {
+  id: string;
+  type: 'conversation' | 'message' | 'settings' | 'memory';
+  localData: T;
+  serverData: T;
+  localTimestamp: number;
+  serverTimestamp: number;
+  resolved: boolean;
+  resolution?: ConflictResolutionStrategy;
+  mergedData?: T;
+}
+
+export interface ConflictResolutionResult<T = unknown> {
+  success: boolean;
+  resolvedData: T;
+  strategy: ConflictResolutionStrategy;
+  error?: string;
+}
+
+type ConflictListener = (conflicts: ConflictItem[]) => void;
+
 type ConnectionListener = (isOnline: boolean) => void;
 
 class OfflineService {
@@ -27,14 +51,20 @@ class OfflineService {
     pendingMessages: [],
     lastSyncTime: 0,
   };
-  
+
   private listeners: ConnectionListener[] = [];
+  private conflictListeners: ConflictListener[] = [];
+  private pendingConflicts: ConflictItem[] = [];
   private syncInProgress = false;
   private readonly STORAGE_KEY = 'lisa_offline_queue';
+  private readonly CONFLICTS_KEY = 'lisa_conflicts';
+  private readonly RESOLUTION_PREFS_KEY = 'lisa_conflict_prefs';
   private readonly MAX_RETRIES = 3;
+  private defaultResolutionStrategy: ConflictResolutionStrategy = 'merge';
 
   constructor() {
     this.loadPendingMessages();
+    this.loadConflicts();
     this.setupNetworkListeners();
   }
 
@@ -237,6 +267,370 @@ class OfflineService {
   getTimeSinceLastSync(): number {
     if (this.state.lastSyncTime === 0) return -1;
     return Date.now() - this.state.lastSyncTime;
+  }
+
+  // ============================================
+  // CONFLICT RESOLUTION SYSTEM
+  // ============================================
+
+  /**
+   * Set default conflict resolution strategy
+   */
+  setDefaultResolutionStrategy(strategy: ConflictResolutionStrategy): void {
+    this.defaultResolutionStrategy = strategy;
+    try {
+      localStorage.setItem(this.RESOLUTION_PREFS_KEY, JSON.stringify({ default: strategy }));
+    } catch (error) {
+      console.warn('[OfflineService] Failed to save resolution prefs:', error);
+    }
+  }
+
+  /**
+   * Get default conflict resolution strategy
+   */
+  getDefaultResolutionStrategy(): ConflictResolutionStrategy {
+    return this.defaultResolutionStrategy;
+  }
+
+  /**
+   * Detect conflict between local and server data
+   */
+  detectConflict<T>(
+    id: string,
+    type: ConflictItem['type'],
+    localData: T,
+    serverData: T,
+    localTimestamp: number,
+    serverTimestamp: number
+  ): ConflictItem<T> | null {
+    // No conflict if data is identical
+    if (JSON.stringify(localData) === JSON.stringify(serverData)) {
+      return null;
+    }
+
+    // No conflict if timestamps indicate clear winner
+    // (server is newer and local wasn't modified after last sync)
+    if (serverTimestamp > localTimestamp && localTimestamp <= this.state.lastSyncTime) {
+      return null;
+    }
+
+    // Conflict detected
+    const conflict: ConflictItem<T> = {
+      id,
+      type,
+      localData,
+      serverData,
+      localTimestamp,
+      serverTimestamp,
+      resolved: false,
+    };
+
+    this.addConflict(conflict);
+    return conflict;
+  }
+
+  /**
+   * Add a conflict to pending list
+   */
+  private addConflict<T>(conflict: ConflictItem<T>): void {
+    // Remove existing conflict with same id if exists
+    this.pendingConflicts = this.pendingConflicts.filter(c => c.id !== conflict.id);
+    this.pendingConflicts.push(conflict as ConflictItem);
+    this.saveConflicts();
+    this.notifyConflictListeners();
+  }
+
+  /**
+   * Resolve a specific conflict
+   */
+  resolveConflict<T>(
+    conflictId: string,
+    strategy: ConflictResolutionStrategy,
+    customMergedData?: T
+  ): ConflictResolutionResult<T> {
+    const conflict = this.pendingConflicts.find(c => c.id === conflictId) as ConflictItem<T> | undefined;
+
+    if (!conflict) {
+      return {
+        success: false,
+        resolvedData: null as unknown as T,
+        strategy,
+        error: 'Conflict not found',
+      };
+    }
+
+    let resolvedData: T;
+
+    switch (strategy) {
+      case 'local':
+        resolvedData = conflict.localData;
+        break;
+
+      case 'server':
+        resolvedData = conflict.serverData;
+        break;
+
+      case 'merge':
+        if (customMergedData) {
+          resolvedData = customMergedData;
+        } else {
+          resolvedData = this.autoMerge(conflict.localData, conflict.serverData);
+        }
+        break;
+
+      case 'manual':
+        if (!customMergedData) {
+          return {
+            success: false,
+            resolvedData: null as unknown as T,
+            strategy,
+            error: 'Manual resolution requires merged data',
+          };
+        }
+        resolvedData = customMergedData;
+        break;
+
+      default:
+        return {
+          success: false,
+          resolvedData: null as unknown as T,
+          strategy,
+          error: 'Invalid resolution strategy',
+        };
+    }
+
+    // Mark conflict as resolved
+    conflict.resolved = true;
+    conflict.resolution = strategy;
+    conflict.mergedData = resolvedData;
+
+    // Remove from pending
+    this.pendingConflicts = this.pendingConflicts.filter(c => c.id !== conflictId);
+    this.saveConflicts();
+    this.notifyConflictListeners();
+
+    console.log(`[OfflineService] Conflict ${conflictId} resolved using ${strategy} strategy`);
+
+    return {
+      success: true,
+      resolvedData,
+      strategy,
+    };
+  }
+
+  /**
+   * Auto-merge two data objects
+   * Uses "last write wins" for primitive fields
+   * Merges arrays by combining unique items
+   */
+  private autoMerge<T>(localData: T, serverData: T): T {
+    if (typeof localData !== 'object' || localData === null) {
+      // For primitives, prefer server data (most recent from sync)
+      return serverData;
+    }
+
+    if (Array.isArray(localData) && Array.isArray(serverData)) {
+      // Merge arrays by combining unique items (by id or value)
+      const merged = [...serverData];
+      for (const localItem of localData) {
+        const existsInServer = merged.some(serverItem => {
+          if (typeof localItem === 'object' && localItem !== null && 'id' in localItem) {
+            return (serverItem as { id?: string }).id === (localItem as { id?: string }).id;
+          }
+          return JSON.stringify(serverItem) === JSON.stringify(localItem);
+        });
+        if (!existsInServer) {
+          merged.push(localItem);
+        }
+      }
+      return merged as unknown as T;
+    }
+
+    // Merge objects recursively
+    const merged = { ...serverData } as Record<string, unknown>;
+    const local = localData as Record<string, unknown>;
+    const server = serverData as Record<string, unknown>;
+
+    for (const key of Object.keys(local)) {
+      if (!(key in server)) {
+        // Key only exists in local, keep it
+        merged[key] = local[key];
+      } else if (typeof local[key] === 'object' && typeof server[key] === 'object') {
+        // Recursively merge nested objects
+        merged[key] = this.autoMerge(local[key], server[key]);
+      }
+      // For same keys with different primitive values, server wins (already in merged)
+    }
+
+    return merged as T;
+  }
+
+  /**
+   * Resolve all pending conflicts with default strategy
+   */
+  resolveAllConflicts(): { resolved: number; failed: number } {
+    const results = { resolved: 0, failed: 0 };
+
+    const conflictsToResolve = [...this.pendingConflicts];
+    for (const conflict of conflictsToResolve) {
+      const result = this.resolveConflict(conflict.id, this.defaultResolutionStrategy);
+      if (result.success) {
+        results.resolved++;
+      } else {
+        results.failed++;
+      }
+    }
+
+    console.log(`[OfflineService] Bulk resolve: ${results.resolved} resolved, ${results.failed} failed`);
+    return results;
+  }
+
+  /**
+   * Get all pending conflicts
+   */
+  getPendingConflicts(): ConflictItem[] {
+    return [...this.pendingConflicts];
+  }
+
+  /**
+   * Get conflicts count
+   */
+  get conflictsCount(): number {
+    return this.pendingConflicts.length;
+  }
+
+  /**
+   * Subscribe to conflict changes
+   */
+  onConflictsChange(listener: ConflictListener): () => void {
+    this.conflictListeners.push(listener);
+    // Immediately notify with current conflicts
+    listener(this.pendingConflicts);
+
+    return () => {
+      this.conflictListeners = this.conflictListeners.filter(l => l !== listener);
+    };
+  }
+
+  /**
+   * Notify conflict listeners
+   */
+  private notifyConflictListeners(): void {
+    this.conflictListeners.forEach(listener => {
+      try {
+        listener(this.pendingConflicts);
+      } catch (error) {
+        console.error('[OfflineService] Conflict listener error:', error);
+      }
+    });
+  }
+
+  /**
+   * Save conflicts to local storage
+   */
+  private saveConflicts(): void {
+    try {
+      localStorage.setItem(this.CONFLICTS_KEY, JSON.stringify(this.pendingConflicts));
+    } catch (error) {
+      console.error('[OfflineService] Failed to save conflicts:', error);
+    }
+  }
+
+  /**
+   * Load conflicts from local storage
+   */
+  private loadConflicts(): void {
+    try {
+      const stored = localStorage.getItem(this.CONFLICTS_KEY);
+      if (stored) {
+        this.pendingConflicts = JSON.parse(stored);
+        console.log(`[OfflineService] Loaded ${this.pendingConflicts.length} pending conflicts`);
+      }
+
+      // Load resolution preferences
+      const prefs = localStorage.getItem(this.RESOLUTION_PREFS_KEY);
+      if (prefs) {
+        const parsed = JSON.parse(prefs);
+        if (parsed.default) {
+          this.defaultResolutionStrategy = parsed.default;
+        }
+      }
+    } catch (error) {
+      console.error('[OfflineService] Failed to load conflicts:', error);
+      this.pendingConflicts = [];
+    }
+  }
+
+  /**
+   * Clear all pending conflicts
+   */
+  clearConflicts(): void {
+    this.pendingConflicts = [];
+    this.saveConflicts();
+    this.notifyConflictListeners();
+    console.log('[OfflineService] All conflicts cleared');
+  }
+
+  /**
+   * Sync with conflict detection
+   */
+  async syncWithConflictDetection<T>(
+    type: ConflictItem['type'],
+    localItems: Array<T & { id: string; updatedAt: number }>,
+    fetchServerItems: () => Promise<Array<T & { id: string; updatedAt: number }>>
+  ): Promise<{ synced: T[]; conflicts: ConflictItem<T>[] }> {
+    if (!this.state.isOnline) {
+      return { synced: [], conflicts: [] };
+    }
+
+    try {
+      const serverItems = await fetchServerItems();
+      const synced: T[] = [];
+      const conflicts: ConflictItem<T>[] = [];
+
+      // Create maps for quick lookup
+      const localMap = new Map(localItems.map(item => [item.id, item]));
+      const serverMap = new Map(serverItems.map(item => [item.id, item]));
+
+      // Check for conflicts
+      for (const [id, localItem] of localMap) {
+        const serverItem = serverMap.get(id);
+
+        if (serverItem) {
+          const conflict = this.detectConflict(
+            id,
+            type,
+            localItem,
+            serverItem,
+            localItem.updatedAt,
+            serverItem.updatedAt
+          );
+
+          if (conflict) {
+            conflicts.push(conflict as ConflictItem<T>);
+          } else {
+            // No conflict, use newer version
+            synced.push(serverItem.updatedAt > localItem.updatedAt ? serverItem : localItem);
+          }
+        } else {
+          // Only exists locally, keep it
+          synced.push(localItem);
+        }
+      }
+
+      // Add server-only items
+      for (const [id, serverItem] of serverMap) {
+        if (!localMap.has(id)) {
+          synced.push(serverItem);
+        }
+      }
+
+      console.log(`[OfflineService] Sync complete: ${synced.length} synced, ${conflicts.length} conflicts`);
+      return { synced, conflicts };
+    } catch (error) {
+      console.error('[OfflineService] Sync with conflict detection failed:', error);
+      return { synced: [], conflicts: [] };
+    }
   }
 }
 

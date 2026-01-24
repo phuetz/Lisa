@@ -1,15 +1,38 @@
 /**
  * 📄 Document Analysis Service - Analyse de Documents
  * OCR + Extraction d'entités + Résumé automatique
+ * Supports: PDF, DOCX, Images (OCR), Text files
  */
 
 import { agentRegistry } from '../features/agents/core/registry';
 import { memoryService } from './MemoryService';
 
+// Dynamic imports for PDF and DOCX parsing
+let pdfjsLib: typeof import('pdfjs-dist') | null = null;
+let mammoth: typeof import('mammoth') | null = null;
+
+// Initialize PDF.js worker
+async function initPdfJs() {
+  if (!pdfjsLib) {
+    pdfjsLib = await import('pdfjs-dist');
+    // Set worker source
+    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+  }
+  return pdfjsLib;
+}
+
+// Initialize Mammoth
+async function initMammoth() {
+  if (!mammoth) {
+    mammoth = await import('mammoth');
+  }
+  return mammoth;
+}
+
 export interface DocumentAnalysis {
   id: string;
   filename: string;
-  type: 'pdf' | 'image' | 'text';
+  type: 'pdf' | 'image' | 'text' | 'docx';
   timestamp: Date;
   status: 'pending' | 'processing' | 'completed' | 'error';
   content?: {
@@ -64,6 +87,7 @@ class DocumentAnalysisServiceImpl {
       analysis.content = {
         text,
         wordCount: text.split(/\s+/).length,
+        pages: analysis.type === 'pdf' ? (this as { _lastPdfPages?: number })._lastPdfPages : undefined,
       };
 
       // Étape 2: Extraction des entités
@@ -105,6 +129,7 @@ class DocumentAnalysisServiceImpl {
   private detectFileType(filename: string): DocumentAnalysis['type'] {
     const ext = filename.toLowerCase().split('.').pop();
     if (ext === 'pdf') return 'pdf';
+    if (ext === 'docx' || ext === 'doc') return 'docx';
     if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(ext || '')) return 'image';
     return 'text';
   }
@@ -118,22 +143,111 @@ class DocumentAnalysisServiceImpl {
     }
 
     if (type === 'image') {
-      // Utiliser l'OCRAgent
-      const ocrAgent = await agentRegistry.getAgentAsync('OCRAgent');
-      if (ocrAgent) {
-        const result = await ocrAgent.execute({
-          intent: 'extract_text',
-          image: file,
-        });
-        if (result.success && result.output?.text) {
-          return result.output.text;
-        }
-      }
-      throw new Error('OCR non disponible');
+      return await this.extractTextFromImage(file);
     }
 
-    // Pour PDF, on utiliserait une bibliothèque dédiée
+    if (type === 'pdf') {
+      return await this.extractTextFromPDF(file);
+    }
+
+    if (type === 'docx') {
+      return await this.extractTextFromDOCX(file);
+    }
+
     throw new Error('Type de document non supporté');
+  }
+
+  /**
+   * Extract text from image using OCR
+   */
+  private async extractTextFromImage(file: File | Blob): Promise<string> {
+    // Utiliser l'OCRAgent
+    const ocrAgent = await agentRegistry.getAgentAsync('OCRAgent');
+    if (ocrAgent) {
+      const result = await ocrAgent.execute({
+        intent: 'extract_text',
+        image: file,
+      });
+      if (result.success && result.output?.text) {
+        return result.output.text;
+      }
+    }
+    throw new Error('OCR non disponible');
+  }
+
+  /**
+   * Extract text from PDF using pdf.js
+   */
+  private async extractTextFromPDF(file: File | Blob): Promise<string> {
+    try {
+      const pdfjs = await initPdfJs();
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
+
+      const textParts: string[] = [];
+      const numPages = pdf.numPages;
+
+      for (let pageNum = 1; pageNum <= numPages; pageNum++) {
+        const page = await pdf.getPage(pageNum);
+        const textContent = await page.getTextContent();
+        const pageText = textContent.items
+          .map((item: { str?: string }) => item.str || '')
+          .join(' ');
+        textParts.push(pageText);
+      }
+
+      // Store page count in a way we can access later
+      (this as { _lastPdfPages?: number })._lastPdfPages = numPages;
+
+      return textParts.join('\n\n');
+    } catch (error) {
+      console.error('[DocumentAnalysis] PDF extraction failed:', error);
+      throw new Error(`Impossible de lire le PDF: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
+    }
+  }
+
+  /**
+   * Extract text from DOCX using mammoth
+   */
+  private async extractTextFromDOCX(file: File | Blob): Promise<string> {
+    try {
+      const mammothLib = await initMammoth();
+      const arrayBuffer = await file.arrayBuffer();
+
+      const result = await mammothLib.extractRawText({ arrayBuffer });
+
+      if (result.messages.length > 0) {
+        console.warn('[DocumentAnalysis] DOCX warnings:', result.messages);
+      }
+
+      return result.value;
+    } catch (error) {
+      console.error('[DocumentAnalysis] DOCX extraction failed:', error);
+      throw new Error(`Impossible de lire le DOCX: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
+    }
+  }
+
+  /**
+   * Extract text from DOCX with formatting (HTML)
+   */
+  async extractFormattedTextFromDOCX(file: File | Blob): Promise<{ html: string; text: string }> {
+    try {
+      const mammothLib = await initMammoth();
+      const arrayBuffer = await file.arrayBuffer();
+
+      const [htmlResult, textResult] = await Promise.all([
+        mammothLib.convertToHtml({ arrayBuffer }),
+        mammothLib.extractRawText({ arrayBuffer }),
+      ]);
+
+      return {
+        html: htmlResult.value,
+        text: textResult.value,
+      };
+    } catch (error) {
+      console.error('[DocumentAnalysis] DOCX formatted extraction failed:', error);
+      throw new Error(`Impossible de lire le DOCX: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
+    }
   }
 
   /**
