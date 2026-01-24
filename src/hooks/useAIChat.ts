@@ -6,7 +6,7 @@
 import { useState, useCallback, useRef } from 'react';
 import { aiService, type AIMessage, type AIProvider } from '../services/aiService';
 import { useChatHistoryStore } from '../store/chatHistoryStore';
-import { useChatSettingsStore } from '../store/chatSettingsStore';
+import { useChatSettingsStore, DEFAULT_MODELS } from '../store/chatSettingsStore';
 import { ragService } from '../services/RAGService';
 import type { Message } from '../types/chat';
 
@@ -21,15 +21,21 @@ export interface UseAIChatOptions {
   enableRAG?: boolean;
 }
 
-export const useAIChat = (conversationId: string, options: UseAIChatOptions = {}) => {
+export const useAIChat = (conversationId?: string, options: UseAIChatOptions = {}) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
   const [streamingStage, setStreamingStage] = useState<StreamingStage>('idle');
   const [ragContext, setRagContext] = useState<string | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  const { addMessage, updateMessage, getCurrentConversation } = useChatHistoryStore();
-  const { ragEnabled, ragProvider, ragSimilarityThreshold, ragMaxResults } = useChatSettingsStore();
+  const { addMessage, updateMessage, getCurrentConversation, currentConversationId } = useChatHistoryStore();
+  const { ragEnabled, ragProvider, ragSimilarityThreshold, ragMaxResults, selectedModelId, temperature, maxTokens } = useChatSettingsStore();
+
+  // Resolve conversation ID - use provided or current
+  const resolvedConversationId = conversationId || currentConversationId || '';
+
+  // Get current model config from settings
+  const currentModel = DEFAULT_MODELS.find(m => m.id === selectedModelId) || DEFAULT_MODELS[0];
 
   /**
    * Envoyer un message avec streaming
@@ -49,7 +55,7 @@ export const useAIChat = (conversationId: string, options: UseAIChatOptions = {}
     try {
       // Ajouter le message utilisateur
       addMessage({
-        conversationId,
+        conversationId: resolvedConversationId,
         role: 'user',
         content,
         ...(image && { image })
@@ -115,18 +121,18 @@ export const useAIChat = (conversationId: string, options: UseAIChatOptions = {}
         });
       }
 
-      // Configurer le service IA
-      if (options.provider) {
-        aiService.updateConfig({
-          provider: options.provider,
-          model: options.model,
-          temperature: options.temperature
-        });
-      }
+      // Configurer le service IA avec le modèle sélectionné
+      aiService.updateConfig({
+        provider: options.provider || currentModel.provider as AIProvider,
+        model: options.model || currentModel.id,
+        temperature: options.temperature || temperature,
+        maxTokens: maxTokens,
+        baseURL: currentModel.provider === 'lmstudio' ? '/lmstudio/v1' : undefined
+      });
 
       // Créer un message assistant vide pour le streaming
       addMessage({
-        conversationId,
+        conversationId: resolvedConversationId,
         role: 'assistant',
         content: ''
       });
@@ -167,7 +173,7 @@ export const useAIChat = (conversationId: string, options: UseAIChatOptions = {}
 
       // Ajouter un message d'erreur
       addMessage({
-        conversationId,
+        conversationId: resolvedConversationId,
         role: 'assistant',
         content: `Erreur: ${(error as Error).message}`
       });
@@ -182,7 +188,7 @@ export const useAIChat = (conversationId: string, options: UseAIChatOptions = {}
       setRagContext(null);
       abortControllerRef.current = null;
     }
-  }, [conversationId, isLoading, isStreaming, options, addMessage, updateMessage, getCurrentConversation, ragEnabled, ragProvider, ragSimilarityThreshold, ragMaxResults]);
+  }, [resolvedConversationId, isLoading, isStreaming, options, addMessage, updateMessage, getCurrentConversation, ragEnabled, ragProvider, ragSimilarityThreshold, ragMaxResults, currentModel, temperature, maxTokens]);
 
   /**
    * Annuler la génération en cours
