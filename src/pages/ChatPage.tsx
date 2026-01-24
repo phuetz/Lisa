@@ -1,10 +1,10 @@
 /**
  * Chat Page
- * Page principale du chat fullscreen - Style Fluent Design
+ * Page principale du chat fullscreen - Style Office 365
  */
 
 import { useEffect } from 'react';
-import { ChatLayoutFluent } from '../components/chat/ChatLayoutFluent';
+import { ChatLayoutOffice } from '../components/chat/ChatLayoutOffice';
 import { useChatHistoryStore } from '../store/chatHistoryStore';
 import { useIsMobile } from '../hooks/useIsMobile';
 import ChatPageMobile from './ChatPageMobile';
@@ -27,7 +27,7 @@ export const ChatPage = () => {
     return <ChatPageMobile />;
   }
 
-  return <ChatLayoutFluent />;
+  return <ChatLayoutOffice />;
 };
 
 export default ChatPage;

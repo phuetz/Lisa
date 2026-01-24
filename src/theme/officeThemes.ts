@@ -1,0 +1,618 @@
+/**
+ * Office-style Theme System
+ * Inspired by Microsoft Office 365 design
+ */
+
+// ============================================================================
+// TYPES
+// ============================================================================
+
+export interface ThemeColorScheme {
+  // App bar / Ribbon
+  ribbon: string;
+  ribbonText: string;
+  ribbonHover: string;
+  ribbonActive: string;
+
+  // Sidebar
+  sidebar: string;
+  sidebarText: string;
+  sidebarHover: string;
+  sidebarActive: string;
+
+  // Editor / Main content
+  editor: string;
+  editorText: string;
+  editorSecondary: string;
+
+  // Dialog / Cards
+  dialog: string;
+  dialogText: string;
+
+  // Accents
+  accent: string;
+  accentHover: string;
+  accentText: string;
+
+  // Borders & Dividers
+  border: string;
+  divider: string;
+
+  // Status
+  success: string;
+  warning: string;
+  error: string;
+  info: string;
+
+  // Input
+  inputBg: string;
+  inputBorder: string;
+  inputFocus: string;
+}
+
+export interface OfficeTheme {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  light: ThemeColorScheme;
+  dark: ThemeColorScheme;
+  isCustom?: boolean;
+}
+
+export type ThemeMode = 'light' | 'dark' | 'system';
+
+// ============================================================================
+// PREDEFINED THEMES
+// ============================================================================
+
+export const officeThemes: OfficeTheme[] = [
+  {
+    id: 'office-blue',
+    name: 'Office Blue',
+    description: 'Classic Microsoft Office blue theme',
+    icon: '🔵',
+    light: {
+      ribbon: '#0078d4',
+      ribbonText: '#ffffff',
+      ribbonHover: 'rgba(255,255,255,0.1)',
+      ribbonActive: 'rgba(255,255,255,0.2)',
+      sidebar: '#f5f5f5',
+      sidebarText: '#323130',
+      sidebarHover: '#e8e8e8',
+      sidebarActive: '#deecf9',
+      editor: '#ffffff',
+      editorText: '#323130',
+      editorSecondary: '#605e5c',
+      dialog: '#ffffff',
+      dialogText: '#323130',
+      accent: '#0078d4',
+      accentHover: '#106ebe',
+      accentText: '#ffffff',
+      border: '#e1dfdd',
+      divider: '#edebe9',
+      success: '#107c10',
+      warning: '#ffb900',
+      error: '#d13438',
+      info: '#0078d4',
+      inputBg: '#ffffff',
+      inputBorder: '#8a8886',
+      inputFocus: '#0078d4',
+    },
+    dark: {
+      ribbon: '#1e3a5f',
+      ribbonText: '#ffffff',
+      ribbonHover: 'rgba(255,255,255,0.1)',
+      ribbonActive: 'rgba(255,255,255,0.2)',
+      sidebar: '#252423',
+      sidebarText: '#e0e0e0',
+      sidebarHover: '#3b3a39',
+      sidebarActive: '#1e3a5f',
+      editor: '#1b1a19',
+      editorText: '#ffffff',
+      editorSecondary: '#a19f9d',
+      dialog: '#2d2d2d',
+      dialogText: '#ffffff',
+      accent: '#2b88d8',
+      accentHover: '#3c96e0',
+      accentText: '#ffffff',
+      border: '#3b3a39',
+      divider: '#484644',
+      success: '#359b35',
+      warning: '#ffc83d',
+      error: '#f1707b',
+      info: '#2b88d8',
+      inputBg: '#2d2d2d',
+      inputBorder: '#605e5c',
+      inputFocus: '#2b88d8',
+    },
+  },
+  {
+    id: 'word-blue',
+    name: 'Word',
+    description: 'Microsoft Word blue theme',
+    icon: '📝',
+    light: {
+      ribbon: '#2b579a',
+      ribbonText: '#ffffff',
+      ribbonHover: 'rgba(255,255,255,0.1)',
+      ribbonActive: 'rgba(255,255,255,0.2)',
+      sidebar: '#f3f3f3',
+      sidebarText: '#323130',
+      sidebarHover: '#e8e8e8',
+      sidebarActive: '#d1e4f6',
+      editor: '#ffffff',
+      editorText: '#323130',
+      editorSecondary: '#605e5c',
+      dialog: '#ffffff',
+      dialogText: '#323130',
+      accent: '#2b579a',
+      accentHover: '#1e3f6f',
+      accentText: '#ffffff',
+      border: '#d1d1d1',
+      divider: '#edebe9',
+      success: '#107c41',
+      warning: '#ffb900',
+      error: '#d13438',
+      info: '#2b579a',
+      inputBg: '#ffffff',
+      inputBorder: '#8a8886',
+      inputFocus: '#2b579a',
+    },
+    dark: {
+      ribbon: '#1a3560',
+      ribbonText: '#ffffff',
+      ribbonHover: 'rgba(255,255,255,0.1)',
+      ribbonActive: 'rgba(255,255,255,0.2)',
+      sidebar: '#1e1e1e',
+      sidebarText: '#e0e0e0',
+      sidebarHover: '#333333',
+      sidebarActive: '#1a3560',
+      editor: '#1b1a19',
+      editorText: '#ffffff',
+      editorSecondary: '#a19f9d',
+      dialog: '#2d2d2d',
+      dialogText: '#ffffff',
+      accent: '#4a7fc4',
+      accentHover: '#5a8fd4',
+      accentText: '#ffffff',
+      border: '#444444',
+      divider: '#555555',
+      success: '#359b35',
+      warning: '#ffc83d',
+      error: '#f1707b',
+      info: '#4a7fc4',
+      inputBg: '#2d2d2d',
+      inputBorder: '#555555',
+      inputFocus: '#4a7fc4',
+    },
+  },
+  {
+    id: 'excel-green',
+    name: 'Excel',
+    description: 'Microsoft Excel green theme',
+    icon: '📊',
+    light: {
+      ribbon: '#107c41',
+      ribbonText: '#ffffff',
+      ribbonHover: 'rgba(255,255,255,0.1)',
+      ribbonActive: 'rgba(255,255,255,0.2)',
+      sidebar: '#f3f3f3',
+      sidebarText: '#323130',
+      sidebarHover: '#e8e8e8',
+      sidebarActive: '#d4edda',
+      editor: '#ffffff',
+      editorText: '#323130',
+      editorSecondary: '#605e5c',
+      dialog: '#ffffff',
+      dialogText: '#323130',
+      accent: '#107c41',
+      accentHover: '#0b5a2e',
+      accentText: '#ffffff',
+      border: '#d1d1d1',
+      divider: '#edebe9',
+      success: '#107c41',
+      warning: '#ffb900',
+      error: '#d13438',
+      info: '#0078d4',
+      inputBg: '#ffffff',
+      inputBorder: '#8a8886',
+      inputFocus: '#107c41',
+    },
+    dark: {
+      ribbon: '#0d5c30',
+      ribbonText: '#ffffff',
+      ribbonHover: 'rgba(255,255,255,0.1)',
+      ribbonActive: 'rgba(255,255,255,0.2)',
+      sidebar: '#1e1e1e',
+      sidebarText: '#e0e0e0',
+      sidebarHover: '#333333',
+      sidebarActive: '#0d5c30',
+      editor: '#1b1a19',
+      editorText: '#ffffff',
+      editorSecondary: '#a19f9d',
+      dialog: '#2d2d2d',
+      dialogText: '#ffffff',
+      accent: '#28a745',
+      accentHover: '#34b855',
+      accentText: '#ffffff',
+      border: '#444444',
+      divider: '#555555',
+      success: '#28a745',
+      warning: '#ffc83d',
+      error: '#f1707b',
+      info: '#2b88d8',
+      inputBg: '#2d2d2d',
+      inputBorder: '#555555',
+      inputFocus: '#28a745',
+    },
+  },
+  {
+    id: 'powerpoint-orange',
+    name: 'PowerPoint',
+    description: 'Microsoft PowerPoint orange theme',
+    icon: '📽️',
+    light: {
+      ribbon: '#d24726',
+      ribbonText: '#ffffff',
+      ribbonHover: 'rgba(255,255,255,0.1)',
+      ribbonActive: 'rgba(255,255,255,0.2)',
+      sidebar: '#f3f3f3',
+      sidebarText: '#323130',
+      sidebarHover: '#e8e8e8',
+      sidebarActive: '#fde8e4',
+      editor: '#ffffff',
+      editorText: '#323130',
+      editorSecondary: '#605e5c',
+      dialog: '#ffffff',
+      dialogText: '#323130',
+      accent: '#d24726',
+      accentHover: '#b33d20',
+      accentText: '#ffffff',
+      border: '#d1d1d1',
+      divider: '#edebe9',
+      success: '#107c41',
+      warning: '#ffb900',
+      error: '#d24726',
+      info: '#0078d4',
+      inputBg: '#ffffff',
+      inputBorder: '#8a8886',
+      inputFocus: '#d24726',
+    },
+    dark: {
+      ribbon: '#a33a1d',
+      ribbonText: '#ffffff',
+      ribbonHover: 'rgba(255,255,255,0.1)',
+      ribbonActive: 'rgba(255,255,255,0.2)',
+      sidebar: '#1e1e1e',
+      sidebarText: '#e0e0e0',
+      sidebarHover: '#333333',
+      sidebarActive: '#a33a1d',
+      editor: '#1b1a19',
+      editorText: '#ffffff',
+      editorSecondary: '#a19f9d',
+      dialog: '#2d2d2d',
+      dialogText: '#ffffff',
+      accent: '#e85d3d',
+      accentHover: '#f06d4d',
+      accentText: '#ffffff',
+      border: '#444444',
+      divider: '#555555',
+      success: '#28a745',
+      warning: '#ffc83d',
+      error: '#e85d3d',
+      info: '#2b88d8',
+      inputBg: '#2d2d2d',
+      inputBorder: '#555555',
+      inputFocus: '#e85d3d',
+    },
+  },
+  {
+    id: 'teams-purple',
+    name: 'Teams',
+    description: 'Microsoft Teams purple theme',
+    icon: '👥',
+    light: {
+      ribbon: '#6264a7',
+      ribbonText: '#ffffff',
+      ribbonHover: 'rgba(255,255,255,0.1)',
+      ribbonActive: 'rgba(255,255,255,0.2)',
+      sidebar: '#f5f5f5',
+      sidebarText: '#323130',
+      sidebarHover: '#e8e8e8',
+      sidebarActive: '#e8e8f5',
+      editor: '#ffffff',
+      editorText: '#323130',
+      editorSecondary: '#605e5c',
+      dialog: '#ffffff',
+      dialogText: '#323130',
+      accent: '#6264a7',
+      accentHover: '#4f5192',
+      accentText: '#ffffff',
+      border: '#e1dfdd',
+      divider: '#edebe9',
+      success: '#107c41',
+      warning: '#ffb900',
+      error: '#d13438',
+      info: '#6264a7',
+      inputBg: '#ffffff',
+      inputBorder: '#8a8886',
+      inputFocus: '#6264a7',
+    },
+    dark: {
+      ribbon: '#464775',
+      ribbonText: '#ffffff',
+      ribbonHover: 'rgba(255,255,255,0.1)',
+      ribbonActive: 'rgba(255,255,255,0.2)',
+      sidebar: '#1f1f2e',
+      sidebarText: '#e0e0e0',
+      sidebarHover: '#33334d',
+      sidebarActive: '#464775',
+      editor: '#1b1a19',
+      editorText: '#ffffff',
+      editorSecondary: '#a19f9d',
+      dialog: '#2d2d3d',
+      dialogText: '#ffffff',
+      accent: '#7b7dc4',
+      accentHover: '#8b8dd4',
+      accentText: '#ffffff',
+      border: '#3b3a4a',
+      divider: '#4a4a5a',
+      success: '#359b35',
+      warning: '#ffc83d',
+      error: '#f1707b',
+      info: '#7b7dc4',
+      inputBg: '#2d2d3d',
+      inputBorder: '#555566',
+      inputFocus: '#7b7dc4',
+    },
+  },
+  {
+    id: 'onenote-purple',
+    name: 'OneNote',
+    description: 'Microsoft OneNote purple theme',
+    icon: '📓',
+    light: {
+      ribbon: '#7719aa',
+      ribbonText: '#ffffff',
+      ribbonHover: 'rgba(255,255,255,0.1)',
+      ribbonActive: 'rgba(255,255,255,0.2)',
+      sidebar: '#f5f5f5',
+      sidebarText: '#323130',
+      sidebarHover: '#e8e8e8',
+      sidebarActive: '#f0e6f5',
+      editor: '#fffdf5',
+      editorText: '#323130',
+      editorSecondary: '#605e5c',
+      dialog: '#ffffff',
+      dialogText: '#323130',
+      accent: '#7719aa',
+      accentHover: '#5c1382',
+      accentText: '#ffffff',
+      border: '#e1dfdd',
+      divider: '#edebe9',
+      success: '#107c41',
+      warning: '#ffb900',
+      error: '#d13438',
+      info: '#7719aa',
+      inputBg: '#ffffff',
+      inputBorder: '#8a8886',
+      inputFocus: '#7719aa',
+    },
+    dark: {
+      ribbon: '#5a1280',
+      ribbonText: '#ffffff',
+      ribbonHover: 'rgba(255,255,255,0.1)',
+      ribbonActive: 'rgba(255,255,255,0.2)',
+      sidebar: '#1e1e2a',
+      sidebarText: '#e0e0e0',
+      sidebarHover: '#333340',
+      sidebarActive: '#5a1280',
+      editor: '#1b1a19',
+      editorText: '#ffffff',
+      editorSecondary: '#a19f9d',
+      dialog: '#2d2d3a',
+      dialogText: '#ffffff',
+      accent: '#9933cc',
+      accentHover: '#aa44dd',
+      accentText: '#ffffff',
+      border: '#3b3a4a',
+      divider: '#4a4a5a',
+      success: '#359b35',
+      warning: '#ffc83d',
+      error: '#f1707b',
+      info: '#9933cc',
+      inputBg: '#2d2d3a',
+      inputBorder: '#555566',
+      inputFocus: '#9933cc',
+    },
+  },
+  {
+    id: 'outlook-blue',
+    name: 'Outlook',
+    description: 'Microsoft Outlook blue theme',
+    icon: '📧',
+    light: {
+      ribbon: '#0078d4',
+      ribbonText: '#ffffff',
+      ribbonHover: 'rgba(255,255,255,0.1)',
+      ribbonActive: 'rgba(255,255,255,0.2)',
+      sidebar: '#f3f2f1',
+      sidebarText: '#323130',
+      sidebarHover: '#edebe9',
+      sidebarActive: '#deecf9',
+      editor: '#ffffff',
+      editorText: '#323130',
+      editorSecondary: '#605e5c',
+      dialog: '#ffffff',
+      dialogText: '#323130',
+      accent: '#0078d4',
+      accentHover: '#106ebe',
+      accentText: '#ffffff',
+      border: '#e1dfdd',
+      divider: '#edebe9',
+      success: '#107c41',
+      warning: '#ffb900',
+      error: '#d13438',
+      info: '#0078d4',
+      inputBg: '#ffffff',
+      inputBorder: '#8a8886',
+      inputFocus: '#0078d4',
+    },
+    dark: {
+      ribbon: '#005a9e',
+      ribbonText: '#ffffff',
+      ribbonHover: 'rgba(255,255,255,0.1)',
+      ribbonActive: 'rgba(255,255,255,0.2)',
+      sidebar: '#201f1e',
+      sidebarText: '#e0e0e0',
+      sidebarHover: '#323130',
+      sidebarActive: '#005a9e',
+      editor: '#1b1a19',
+      editorText: '#ffffff',
+      editorSecondary: '#a19f9d',
+      dialog: '#292827',
+      dialogText: '#ffffff',
+      accent: '#2899f5',
+      accentHover: '#3aa5f7',
+      accentText: '#ffffff',
+      border: '#3b3a39',
+      divider: '#484644',
+      success: '#359b35',
+      warning: '#ffc83d',
+      error: '#f1707b',
+      info: '#2899f5',
+      inputBg: '#292827',
+      inputBorder: '#605e5c',
+      inputFocus: '#2899f5',
+    },
+  },
+  {
+    id: 'modern-dark',
+    name: 'Modern Dark',
+    description: 'Modern dark theme with purple accents',
+    icon: '🌙',
+    light: {
+      ribbon: '#6366f1',
+      ribbonText: '#ffffff',
+      ribbonHover: 'rgba(255,255,255,0.1)',
+      ribbonActive: 'rgba(255,255,255,0.2)',
+      sidebar: '#f8fafc',
+      sidebarText: '#1e293b',
+      sidebarHover: '#e2e8f0',
+      sidebarActive: '#e0e7ff',
+      editor: '#ffffff',
+      editorText: '#1e293b',
+      editorSecondary: '#64748b',
+      dialog: '#ffffff',
+      dialogText: '#1e293b',
+      accent: '#6366f1',
+      accentHover: '#4f46e5',
+      accentText: '#ffffff',
+      border: '#e2e8f0',
+      divider: '#f1f5f9',
+      success: '#10b981',
+      warning: '#f59e0b',
+      error: '#ef4444',
+      info: '#6366f1',
+      inputBg: '#ffffff',
+      inputBorder: '#cbd5e1',
+      inputFocus: '#6366f1',
+    },
+    dark: {
+      ribbon: '#4f46e5',
+      ribbonText: '#ffffff',
+      ribbonHover: 'rgba(255,255,255,0.1)',
+      ribbonActive: 'rgba(255,255,255,0.2)',
+      sidebar: '#0f172a',
+      sidebarText: '#e2e8f0',
+      sidebarHover: '#1e293b',
+      sidebarActive: '#312e81',
+      editor: '#020617',
+      editorText: '#f8fafc',
+      editorSecondary: '#94a3b8',
+      dialog: '#1e293b',
+      dialogText: '#f8fafc',
+      accent: '#818cf8',
+      accentHover: '#a5b4fc',
+      accentText: '#ffffff',
+      border: '#334155',
+      divider: '#1e293b',
+      success: '#34d399',
+      warning: '#fbbf24',
+      error: '#f87171',
+      info: '#818cf8',
+      inputBg: '#1e293b',
+      inputBorder: '#475569',
+      inputFocus: '#818cf8',
+    },
+  },
+];
+
+// ============================================================================
+// HELPER FUNCTIONS
+// ============================================================================
+
+export const getThemeById = (id: string): OfficeTheme | undefined => {
+  return officeThemes.find(t => t.id === id);
+};
+
+export const getDefaultTheme = (): OfficeTheme => {
+  return officeThemes[0];
+};
+
+export const getSystemColorScheme = (): 'light' | 'dark' => {
+  if (typeof window !== 'undefined' && window.matchMedia) {
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  }
+  return 'light';
+};
+
+export const resolveMode = (mode: ThemeMode): 'light' | 'dark' => {
+  if (mode === 'system') {
+    return getSystemColorScheme();
+  }
+  return mode;
+};
+
+// ============================================================================
+// CSS VARIABLES GENERATION
+// ============================================================================
+
+export const generateCssVariables = (colors: ThemeColorScheme): Record<string, string> => {
+  return {
+    '--office-ribbon': colors.ribbon,
+    '--office-ribbon-text': colors.ribbonText,
+    '--office-ribbon-hover': colors.ribbonHover,
+    '--office-ribbon-active': colors.ribbonActive,
+    '--office-sidebar': colors.sidebar,
+    '--office-sidebar-text': colors.sidebarText,
+    '--office-sidebar-hover': colors.sidebarHover,
+    '--office-sidebar-active': colors.sidebarActive,
+    '--office-editor': colors.editor,
+    '--office-editor-text': colors.editorText,
+    '--office-editor-secondary': colors.editorSecondary,
+    '--office-dialog': colors.dialog,
+    '--office-dialog-text': colors.dialogText,
+    '--office-accent': colors.accent,
+    '--office-accent-hover': colors.accentHover,
+    '--office-accent-text': colors.accentText,
+    '--office-border': colors.border,
+    '--office-divider': colors.divider,
+    '--office-success': colors.success,
+    '--office-warning': colors.warning,
+    '--office-error': colors.error,
+    '--office-info': colors.info,
+    '--office-input-bg': colors.inputBg,
+    '--office-input-border': colors.inputBorder,
+    '--office-input-focus': colors.inputFocus,
+  };
+};
+
+export const applyCssVariables = (colors: ThemeColorScheme): void => {
+  const variables = generateCssVariables(colors);
+  const root = document.documentElement;
+  Object.entries(variables).forEach(([key, value]) => {
+    root.style.setProperty(key, value);
+  });
+};
