@@ -57,6 +57,7 @@ const SmartHomePage = lazy(() => import('./pages/SmartHomePage'));
 const ToolsPage = lazy(() => import('./pages/ToolsPage'));
 const CodeAssistantPage = lazy(() => import('./pages/CodeAssistantPage'));
 const CodePlayground = lazy(() => import('./pages/CodePlayground'));
+const FluentDemoPage = lazy(() => import('./pages/FluentDemoPage'));
 
 // Loading component
 const PageLoader = () => (
@@ -175,6 +176,11 @@ export const routes: RouteObject[] = [
       {
         path: 'system',
         element: <Suspense fallback={<PageLoader />}><SystemPage /></Suspense>,
+      },
+      // Route Fluent Design Demo
+      {
+        path: 'fluent-demo',
+        element: <Suspense fallback={<PageLoader />}><FluentDemoPage /></Suspense>,
       },
       {
         path: 'documents',
