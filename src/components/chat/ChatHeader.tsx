@@ -10,6 +10,7 @@ import { cn } from '../../utils/cn';
 import { pdfExportService } from '../../services/PDFExportService';
 import { markdownExportService } from '../../services/MarkdownExportService';
 import { shareService } from '../../services/ShareService';
+import { OfflineIndicator } from '../OfflineIndicator';
 
 interface ChatHeaderProps {
   sidebarOpen: boolean;
@@ -223,7 +224,12 @@ export const ChatHeader = ({ sidebarOpen, onToggleSidebar, onToggleInfo }: ChatH
         )}
         
         <div className="w-px h-6 bg-[#404040]" />
-        
+
+        {/* Offline Indicator */}
+        <div className="relative">
+          <OfflineIndicator showDetails />
+        </div>
+
         <button
           onClick={onToggleInfo}
           className="p-2 hover:bg-[#2a2a2a] rounded-lg transition-colors text-gray-400 hover:text-white"

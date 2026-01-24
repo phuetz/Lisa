@@ -5,7 +5,7 @@
 
 import { useRef, useEffect, useMemo, useState } from 'react';
 import { useChatHistoryStore } from '../../store/chatHistoryStore';
-import { Bot, User, Sparkles, Code, FileText, Lightbulb, Zap, Copy, Check, Clock, Hash, Edit2, RefreshCw, Trash2, Package, Play } from 'lucide-react';
+import { Bot, User, Sparkles, Code, FileText, Lightbulb, Zap, Copy, Check, Clock, Hash, Edit2, RefreshCw, Trash2, Package, Play, Brain, Search } from 'lucide-react';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import { parseArtifacts } from '../../utils/artifactParser';
 import { useArtifactPanelStore } from '../../store/artifactPanelStore';
@@ -788,7 +788,7 @@ export const ChatMessages = () => {
         </div>
       )}
 
-      {/* Typing indicator */}
+      {/* Enhanced Typing/Thinking indicator */}
       {isTyping && !streamingMessage && (
         <div style={{ padding: '24px 0', backgroundColor: '#2d2d2d' }}>
           <div style={{
@@ -802,43 +802,84 @@ export const ChatMessages = () => {
               width: '32px',
               height: '32px',
               borderRadius: '4px',
-              backgroundColor: '#10a37f',
+              backgroundColor: '#8b5cf6',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              flexShrink: 0
+              flexShrink: 0,
+              animation: 'pulse 2s infinite'
             }}>
-              <Bot size={18} color="#fff" />
+              <Brain size={18} color="#fff" />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontWeight: 600, fontSize: '14px', marginBottom: '8px', color: '#fff' }}>
+              <div style={{ fontWeight: 600, fontSize: '14px', marginBottom: '8px', color: '#fff', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 Lisa
+                <span style={{ fontSize: '12px', color: '#8b5cf6', fontWeight: 400 }}>
+                  is thinking...
+                </span>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '8px 0' }}>
-                <div style={{
-                  width: '8px',
-                  height: '8px',
-                  borderRadius: '50%',
-                  backgroundColor: '#10a37f',
-                  animation: 'bounce 1.4s infinite ease-in-out',
-                  animationDelay: '0s'
-                }} />
-                <div style={{
-                  width: '8px',
-                  height: '8px',
-                  borderRadius: '50%',
-                  backgroundColor: '#10a37f',
-                  animation: 'bounce 1.4s infinite ease-in-out',
-                  animationDelay: '0.2s'
-                }} />
-                <div style={{
-                  width: '8px',
-                  height: '8px',
-                  borderRadius: '50%',
-                  backgroundColor: '#10a37f',
-                  animation: 'bounce 1.4s infinite ease-in-out',
-                  animationDelay: '0.4s'
-                }} />
+
+              {/* Progress stages */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '16px',
+                padding: '12px 16px',
+                backgroundColor: '#1a1a1a',
+                borderRadius: '8px',
+                border: '1px solid #333'
+              }}>
+                {/* Stage 1: Thinking */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <div style={{
+                    width: '8px',
+                    height: '8px',
+                    borderRadius: '50%',
+                    backgroundColor: '#8b5cf6',
+                    animation: 'pulse 1s infinite'
+                  }} />
+                  <span style={{ fontSize: '12px', color: '#8b5cf6' }}>Thinking</span>
+                </div>
+
+                {/* Stage 2: Searching */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', opacity: 0.5 }}>
+                  <Search size={12} color="#3b82f6" />
+                  <span style={{ fontSize: '12px', color: '#888' }}>Memory</span>
+                </div>
+
+                {/* Stage 3: Generating */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', opacity: 0.5 }}>
+                  <Sparkles size={12} color="#10b981" />
+                  <span style={{ fontSize: '12px', color: '#888' }}>Generating</span>
+                </div>
+
+                {/* Animated dots */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginLeft: 'auto' }}>
+                  <div style={{
+                    width: '6px',
+                    height: '6px',
+                    borderRadius: '50%',
+                    backgroundColor: '#8b5cf6',
+                    animation: 'bounce 1.4s infinite ease-in-out',
+                    animationDelay: '0s'
+                  }} />
+                  <div style={{
+                    width: '6px',
+                    height: '6px',
+                    borderRadius: '50%',
+                    backgroundColor: '#8b5cf6',
+                    animation: 'bounce 1.4s infinite ease-in-out',
+                    animationDelay: '0.2s'
+                  }} />
+                  <div style={{
+                    width: '6px',
+                    height: '6px',
+                    borderRadius: '50%',
+                    backgroundColor: '#8b5cf6',
+                    animation: 'bounce 1.4s infinite ease-in-out',
+                    animationDelay: '0.4s'
+                  }} />
+                </div>
               </div>
             </div>
           </div>

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ModernLayout } from '../components/layout/ModernLayout';
-import { Brain, Eye, Mic, Code, Settings, Play, Pause, Plus, X } from 'lucide-react';
+import { Brain, Eye, Mic, Code, Settings, Play, Pause, Plus, X, Search, BarChart3, Palette, FileCode } from 'lucide-react';
 
 interface Agent {
   id: string;
@@ -68,7 +68,10 @@ const AgentCard = ({
   const categoryColors: Record<string, string> = {
     perception: '#3b82f6',
     cognitive: '#8b5cf6',
-    tools: '#f59e0b'
+    tools: '#f59e0b',
+    research: '#10b981',
+    analysis: '#ec4899',
+    creative: '#f97316',
   };
   const color = categoryColors[agent.category] || '#10a37f';
 
@@ -186,7 +189,10 @@ const Modal = ({
   const categoryColors: Record<string, string> = {
     perception: '#3b82f6',
     cognitive: '#8b5cf6',
-    tools: '#f59e0b'
+    tools: '#f59e0b',
+    research: '#10b981',
+    analysis: '#ec4899',
+    creative: '#f97316',
   };
   const color = categoryColors[agent.category] || '#10a37f';
 
@@ -365,6 +371,42 @@ export default function AgentsPage() {
       icon: Code,
       tasks: 0,
     },
+    {
+      id: '5',
+      name: 'Research Agent',
+      category: 'research',
+      description: 'Recherche web, synthèse d\'actualités et veille en temps réel',
+      status: 'active',
+      icon: Search,
+      tasks: 12,
+    },
+    {
+      id: '6',
+      name: 'Data Analyst',
+      category: 'analysis',
+      description: 'Analyse CSV/Excel, statistiques, corrélations et graphiques',
+      status: 'active',
+      icon: BarChart3,
+      tasks: 8,
+    },
+    {
+      id: '7',
+      name: 'Creative Marketing',
+      category: 'creative',
+      description: 'Copywriting, posts réseaux sociaux, campagnes email',
+      status: 'active',
+      icon: Palette,
+      tasks: 15,
+    },
+    {
+      id: '8',
+      name: 'Code Review',
+      category: 'analysis',
+      description: 'Revue de code, génération, refactoring et tests',
+      status: 'active',
+      icon: FileCode,
+      tasks: 22,
+    },
   ];
 
   const filteredAgents = activeTab === 'all' 
@@ -409,6 +451,9 @@ export default function AgentsPage() {
         <TabButton label="Perception" active={activeTab === 'perception'} count={agents.filter(a => a.category === 'perception').length} onClick={() => setActiveTab('perception')} />
         <TabButton label="Cognitifs" active={activeTab === 'cognitive'} count={agents.filter(a => a.category === 'cognitive').length} onClick={() => setActiveTab('cognitive')} />
         <TabButton label="Outils" active={activeTab === 'tools'} count={agents.filter(a => a.category === 'tools').length} onClick={() => setActiveTab('tools')} />
+        <TabButton label="Recherche" active={activeTab === 'research'} count={agents.filter(a => a.category === 'research').length} onClick={() => setActiveTab('research')} />
+        <TabButton label="Analyse" active={activeTab === 'analysis'} count={agents.filter(a => a.category === 'analysis').length} onClick={() => setActiveTab('analysis')} />
+        <TabButton label="Créatif" active={activeTab === 'creative'} count={agents.filter(a => a.category === 'creative').length} onClick={() => setActiveTab('creative')} />
       </div>
 
       {/* Agents Grid */}
