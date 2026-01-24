@@ -178,9 +178,11 @@ export const ApiKeysSettings = () => {
     geminiApiKey,
     openaiApiKey,
     anthropicApiKey,
+    xaiApiKey,
     setGeminiApiKey,
     setOpenaiApiKey,
     setAnthropicApiKey,
+    setXaiApiKey,
   } = useChatSettingsStore();
 
   return (
@@ -222,6 +224,14 @@ export const ApiKeysSettings = () => {
         onChange={setAnthropicApiKey}
         placeholder="sk-ant-..."
         provider="Anthropic"
+      />
+
+      <ApiKeyInput
+        label="xAI API Key"
+        value={xaiApiKey}
+        onChange={setXaiApiKey}
+        placeholder="xai-..."
+        provider="xAI (Grok)"
       />
 
       <div style={{
