@@ -2,7 +2,7 @@
  * WebSearchAgent: An agent that uses the WebSearchTool to search the web.
  */
 import { agentRegistry } from '../core/registry';
-import { WebSearchTool } from '../tools/WebSearchTool';
+import { WebSearchTool } from '../../../tools/WebSearchTool';
 import type { BaseAgent, AgentExecuteProps, AgentExecuteResult } from '../core/types';
 
 export class WebSearchAgent implements BaseAgent {

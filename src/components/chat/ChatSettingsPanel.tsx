@@ -74,6 +74,14 @@ export const ChatSettingsPanel = ({ isOpen, onClose }: ChatSettingsPanelProps) =
     toggleAutoSpeak,
     longTermMemoryEnabled,
     toggleLongTermMemory,
+    ragEnabled,
+    toggleRag,
+    ragProvider,
+    setRagProvider,
+    ragSimilarityThreshold,
+    setRagSimilarityThreshold,
+    ragMaxResults,
+    setRagMaxResults,
     exportSettings,
     importSettings,
     resetSettings,
@@ -753,6 +761,13 @@ export const ChatSettingsPanel = ({ isOpen, onClose }: ChatSettingsPanelProps) =
                   enabled: longTermMemoryEnabled,
                   toggle: toggleLongTermMemory,
                 },
+                {
+                  label: 'RAG (Contexte enrichi)',
+                  description: 'Utilise la mémoire pour enrichir les réponses',
+                  icon: <Sliders size={18} />,
+                  enabled: ragEnabled,
+                  toggle: toggleRag,
+                },
               ].map((feature) => (
                 <div
                   key={feature.label}
@@ -800,6 +815,79 @@ export const ChatSettingsPanel = ({ isOpen, onClose }: ChatSettingsPanelProps) =
                   </button>
                 </div>
               ))}
+
+              {/* RAG Advanced Settings */}
+              {ragEnabled && (
+                <div style={{
+                  marginTop: '8px',
+                  padding: '16px',
+                  backgroundColor: '#252525',
+                  borderRadius: '8px',
+                  border: '1px solid #333',
+                }}>
+                  <div style={{ color: '#888', fontSize: '12px', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    Paramètres RAG avancés
+                  </div>
+
+                  {/* Provider */}
+                  <div style={{ marginBottom: '12px' }}>
+                    <label style={{ display: 'block', color: '#aaa', fontSize: '13px', marginBottom: '6px' }}>
+                      Provider d'embeddings
+                    </label>
+                    <select
+                      value={ragProvider}
+                      onChange={(e) => setRagProvider(e.target.value as 'local' | 'openai' | 'transformers')}
+                      style={{
+                        width: '100%',
+                        padding: '8px 12px',
+                        backgroundColor: '#1a1a1a',
+                        border: '1px solid #404040',
+                        borderRadius: '6px',
+                        color: '#fff',
+                        fontSize: '14px',
+                      }}
+                    >
+                      <option value="local">Local (TF-IDF)</option>
+                      <option value="openai">OpenAI Embeddings</option>
+                      <option value="transformers">Transformers.js</option>
+                    </select>
+                  </div>
+
+                  {/* Similarity Threshold */}
+                  <div style={{ marginBottom: '12px' }}>
+                    <label style={{ display: 'flex', justifyContent: 'space-between', color: '#aaa', fontSize: '13px', marginBottom: '6px' }}>
+                      <span>Seuil de similarité</span>
+                      <span style={{ color: '#10a37f' }}>{ragSimilarityThreshold.toFixed(2)}</span>
+                    </label>
+                    <input
+                      type="range"
+                      min="0"
+                      max="1"
+                      step="0.05"
+                      value={ragSimilarityThreshold}
+                      onChange={(e) => setRagSimilarityThreshold(parseFloat(e.target.value))}
+                      style={{ width: '100%', accentColor: '#10a37f' }}
+                    />
+                  </div>
+
+                  {/* Max Results */}
+                  <div>
+                    <label style={{ display: 'flex', justifyContent: 'space-between', color: '#aaa', fontSize: '13px', marginBottom: '6px' }}>
+                      <span>Résultats max</span>
+                      <span style={{ color: '#10a37f' }}>{ragMaxResults}</span>
+                    </label>
+                    <input
+                      type="range"
+                      min="1"
+                      max="20"
+                      step="1"
+                      value={ragMaxResults}
+                      onChange={(e) => setRagMaxResults(parseInt(e.target.value))}
+                      style={{ width: '100%', accentColor: '#10a37f' }}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
