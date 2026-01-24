@@ -3,10 +3,10 @@
  * Zone de saisie avec intégration LM Studio (Devstral) et reconnaissance vocale
  */
 
-import { useState, useRef, useEffect, useCallback, type KeyboardEvent } from 'react';
+import { useState, useRef, useEffect, useCallback, type KeyboardEvent, type DragEvent, type ClipboardEvent } from 'react';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
-import { Send, Mic, MicOff, Volume2, VolumeX, Settings2, Paperclip, Image, X, StopCircle, Camera, Wand2 } from 'lucide-react';
+import { Send, Mic, MicOff, Volume2, VolumeX, Settings2, Paperclip, Image, X, StopCircle, Camera, Wand2, Edit3 } from 'lucide-react';
 import { useChatHistoryStore } from '../../store/chatHistoryStore';
 import { useChatSettingsStore } from '../../store/chatSettingsStore';
 import { aiService, type AIMessage, type AIProvider } from '../../services/aiService';
@@ -18,6 +18,8 @@ import { longTermMemoryService } from '../../services/LongTermMemoryService';
 import { screenCaptureService } from '../../services/ScreenCaptureService';
 import { ArtifactCreator } from './ArtifactCreator';
 import type { ArtifactData } from './Artifact';
+import { AudioRecordButton } from './AudioRecordButton';
+import { ImageEditor } from './ImageEditor';
 
 export const ChatInput = () => {
   // ... (previous state and hooks)
@@ -31,8 +33,11 @@ export const ChatInput = () => {
   const [lastResponse] = useState<string | null>(null);
   const [attachments, setAttachments] = useState<{ type: 'image' | 'file'; data: string; name: string }[]>([]);
   const [abortController, setAbortController] = useState<AbortController | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [editingImageIndex, setEditingImageIndex] = useState<number | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const dropZoneRef = useRef<HTMLDivElement>(null);
   
   // Settings store
   const { streamingEnabled, autoSpeakEnabled, toggleAutoSpeak, incognitoMode, longTermMemoryEnabled, selectedModelId, temperature, maxTokens } = useChatSettingsStore();
@@ -129,6 +134,112 @@ export const ChatInput = () => {
       console.error('[ChatInput] Screen capture failed:', error);
     }
   };
+
+  // Handle paste for images
+  const handlePaste = useCallback((e: ClipboardEvent<HTMLTextAreaElement>) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+
+    for (const item of items) {
+      if (item.type.startsWith('image/')) {
+        e.preventDefault();
+        const file = item.getAsFile();
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = () => {
+            setAttachments((prev) => [
+              ...prev,
+              {
+                type: 'image',
+                data: reader.result as string,
+                name: `pasted-image-${Date.now()}.png`,
+              },
+            ]);
+          };
+          reader.readAsDataURL(file);
+        }
+        break;
+      }
+    }
+  }, []);
+
+  // Handle drag events
+  const handleDragEnter = useCallback((e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Only set to false if leaving the drop zone entirely
+    if (dropZoneRef.current && !dropZoneRef.current.contains(e.relatedTarget as Node)) {
+      setIsDragging(false);
+    }
+  }, []);
+
+  const handleDragOver = useCallback((e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+  }, []);
+
+  const handleDrop = useCallback((e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const files = e.dataTransfer?.files;
+    if (!files || files.length === 0) return;
+
+    Array.from(files).forEach((file) => {
+      if (file.type.startsWith('image/') || file.type === 'application/pdf' || file.type.startsWith('text/')) {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const isImage = file.type.startsWith('image/');
+          setAttachments((prev) => [
+            ...prev,
+            {
+              type: isImage ? 'image' : 'file',
+              data: reader.result as string,
+              name: file.name,
+            },
+          ]);
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+  }, []);
+
+  // Handle audio recording
+  const handleAudioReady = useCallback((audioBlob: Blob, base64: string) => {
+    setAttachments((prev) => [
+      ...prev,
+      {
+        type: 'file',
+        data: base64,
+        name: `audio-${Date.now()}.webm`,
+      },
+    ]);
+    // Optionally, add a placeholder message about the audio
+    setMessage((prev) => prev + (prev ? ' ' : '') + '[Message vocal joint]');
+  }, []);
+
+  // Handle image editing
+  const handleEditImage = useCallback((index: number) => {
+    setEditingImageIndex(index);
+  }, []);
+
+  const handleSaveEditedImage = useCallback((editedImageBase64: string) => {
+    if (editingImageIndex !== null) {
+      setAttachments((prev) => prev.map((att, idx) =>
+        idx === editingImageIndex
+          ? { ...att, data: editedImageBase64, name: `edited-${att.name}` }
+          : att
+      ));
+    }
+    setEditingImageIndex(null);
+  }, [editingImageIndex]);
 
   const handleSend = async () => {
     if (!message.trim() || isLoading) return;
@@ -365,7 +476,42 @@ export const ChatInput = () => {
   const displayText = message + (interimTranscript ? (message ? ' ' : '') + interimTranscript : '');
 
   return (
-    <div style={{ position: 'relative' }}>
+    <div
+      ref={dropZoneRef}
+      style={{ position: 'relative' }}
+      onDragEnter={handleDragEnter}
+      onDragLeave={handleDragLeave}
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
+    >
+      {/* Drag overlay */}
+      {isDragging && (
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          backgroundColor: 'rgba(16, 163, 127, 0.1)',
+          border: '2px dashed #10a37f',
+          borderRadius: '24px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 20,
+          pointerEvents: 'none',
+        }}>
+          <span style={{ color: '#10a37f', fontSize: '14px', fontWeight: 500 }}>
+            Déposez vos fichiers ici
+          </span>
+        </div>
+      )}
+
+      {/* Image Editor Modal */}
+      {editingImageIndex !== null && attachments[editingImageIndex]?.type === 'image' && (
+        <ImageEditor
+          imageUrl={attachments[editingImageIndex].data}
+          onSave={handleSaveEditedImage}
+          onCancel={() => setEditingImageIndex(null)}
+        />
+      )}
       {showVoiceSettings && (
         <div style={{
           position: 'absolute',
@@ -613,6 +759,12 @@ export const ChatInput = () => {
                 {isListening ? <MicOff size={18} /> : <Mic size={18} />}
               </button>
             )}
+
+            {/* Audio Recording Button */}
+            <AudioRecordButton
+              onAudioReady={handleAudioReady}
+              disabled={isLoading}
+            />
           </>
         )}
 
@@ -638,6 +790,23 @@ export const ChatInput = () => {
                   <span style={{ maxWidth: '100px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {att.name}
                   </span>
+                  {att.type === 'image' && (
+                    <button
+                      onClick={() => handleEditImage(idx)}
+                      style={{
+                        padding: '2px',
+                        backgroundColor: 'transparent',
+                        border: 'none',
+                        color: '#3b82f6',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center'
+                      }}
+                      title="Annoter l'image"
+                    >
+                      <Edit3 size={12} />
+                    </button>
+                  )}
                   <button
                     onClick={() => removeAttachment(idx)}
                     style={{
@@ -661,6 +830,7 @@ export const ChatInput = () => {
             value={displayText}
             onChange={handleInput}
             onKeyDown={handleKeyDown}
+            onPaste={handlePaste}
             placeholder={isListening ? 'Parlez...' : (isMobile ? 'Message' : (incognitoMode ? '🕶️ Mode incognito - Envoyer un message...' : 'Envoyer un message à Lisa...'))}
             disabled={isLoading}
             rows={1}

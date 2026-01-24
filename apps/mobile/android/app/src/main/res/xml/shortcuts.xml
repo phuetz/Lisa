@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Quick Chat Shortcut -->
+    <shortcut
+        android:shortcutId="quick_chat"
+        android:enabled="true"
+        android:icon="@drawable/ic_chat"
+        android:shortcutShortLabel="@string/shortcut_quick_chat_short"
+        android:shortcutLongLabel="@string/shortcut_quick_chat_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.lisa.ai"
+            android:targetClass="com.lisa.ai.MainActivity">
+            <extra android:name="action" android:value="quick_chat" />
+        </intent>
+        <categories android:name="android.shortcut.conversation" />
+        <capability-binding android:key="actions.intent.START_EXERCISE" />
+    </shortcut>
+
+    <!-- Voice Mode Shortcut -->
+    <shortcut
+        android:shortcutId="voice_mode"
+        android:enabled="true"
+        android:icon="@drawable/ic_mic"
+        android:shortcutShortLabel="@string/shortcut_voice_mode_short"
+        android:shortcutLongLabel="@string/shortcut_voice_mode_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.lisa.ai"
+            android:targetClass="com.lisa.ai.MainActivity">
+            <extra android:name="action" android:value="voice_mode" />
+        </intent>
+        <categories android:name="android.shortcut.conversation" />
+    </shortcut>
+
+    <!-- New Conversation Shortcut -->
+    <shortcut
+        android:shortcutId="new_conversation"
+        android:enabled="true"
+        android:icon="@drawable/ic_add"
+        android:shortcutShortLabel="@string/shortcut_new_chat_short"
+        android:shortcutLongLabel="@string/shortcut_new_chat_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.lisa.ai"
+            android:targetClass="com.lisa.ai.MainActivity">
+            <extra android:name="action" android:value="new_conversation" />
+        </intent>
+        <categories android:name="android.shortcut.conversation" />
+    </shortcut>
+
+    <!-- Quick Note Shortcut -->
+    <shortcut
+        android:shortcutId="quick_note"
+        android:enabled="true"
+        android:icon="@drawable/ic_note"
+        android:shortcutShortLabel="@string/shortcut_quick_note_short"
+        android:shortcutLongLabel="@string/shortcut_quick_note_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.lisa.ai"
+            android:targetClass="com.lisa.ai.MainActivity">
+            <extra android:name="action" android:value="quick_note" />
+        </intent>
+    </shortcut>
+
+</shortcuts>
