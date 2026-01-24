@@ -1,10 +1,10 @@
 /**
  * Chat Page
- * Page principale du chat fullscreen
+ * Page principale du chat fullscreen - Style Fluent Design
  */
 
 import { useEffect } from 'react';
-import { ChatLayoutSimple } from '../components/chat/ChatLayoutSimple';
+import { ChatLayoutFluent } from '../components/chat/ChatLayoutFluent';
 import { useChatHistoryStore } from '../store/chatHistoryStore';
 import { useIsMobile } from '../hooks/useIsMobile';
 import ChatPageMobile from './ChatPageMobile';
@@ -27,7 +27,7 @@ export const ChatPage = () => {
     return <ChatPageMobile />;
   }
 
-  return <ChatLayoutSimple />;
+  return <ChatLayoutFluent />;
 };
 
 export default ChatPage;
