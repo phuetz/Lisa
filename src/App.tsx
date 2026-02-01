@@ -39,7 +39,7 @@ import { RegisterForm } from './components/RegisterForm';
 import { useAuth } from './hooks/useAuth';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { useFallDetector } from './hooks/useFallDetector';
-import { FallAlert, FallDetectorBadge } from './components/FallAlert';
+import { FallAlert, FallDetectorBadge } from './components/health/FallAlert';
 import { SkipLink } from './components/ui/SkipLink';
 import { ErrorToastContainer } from './components/ui/ErrorToast';
 import { proactiveSuggestionsService } from './services/ProactiveSuggestionsService';
