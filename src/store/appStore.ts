@@ -100,6 +100,9 @@ interface UiSlice {
   fallDetected: boolean;
   fallEventTimestamp: number | null;
   setLastPlanExplanation: (explanation: string | null, traceId?: string) => void;
+  addTodo: (todo: Todo | { id: string; text: string; completed?: boolean; priority?: string; createdAt?: string }) => void;
+  removeTodo: (id: string) => void;
+  toggleTodo: (id: string) => void;
 }
 
 interface CommonSlice {
@@ -139,7 +142,7 @@ const createWorkflowSlice = (set: any): WorkflowSlice => ({
   setCheckpoints: (checkpoints) => set({ checkpoints }),
 });
 
-const createUiSlice = (set: any): UiSlice => ({
+const createUiSlice = (set: any, get: any): UiSlice => ({
   todos: [],
   alarms: [],
   timers: [],
@@ -163,6 +166,16 @@ const createUiSlice = (set: any): UiSlice => ({
   fallEventTimestamp: null,
   setLastPlanExplanation: (explanation, traceId) =>
     set({ lastPlanExplanation: explanation, lastPlanTraceId: traceId }),
+  addTodo: (todo) =>
+    set((state: AppState) => ({ todos: [...state.todos, todo as Todo] })),
+  removeTodo: (id) =>
+    set((state: AppState) => ({ todos: state.todos.filter((t: Todo) => t.id !== id) })),
+  toggleTodo: (id) =>
+    set((state: AppState) => ({
+      todos: state.todos.map((t: Todo) =>
+        t.id === id ? { ...t, completed: !t.completed } : t
+      )
+    })),
 });
 
 const createCommonSlice = (set: any, get: any): CommonSlice => ({
@@ -179,7 +192,7 @@ export const useAppStore = create<AppState>()(
         ...createVisionSlice(),
         ...createAudioSlice(set),
         ...createWorkflowSlice(set),
-        ...createUiSlice(set),
+        ...createUiSlice(set, get),
         ...createCommonSlice(set, get),
       })),
       { name: 'lisa-store' }
