@@ -1,11 +1,11 @@
 import { useEffect } from 'react';
 import type { ObjectDetector, ObjectDetectorResult } from '@mediapipe/tasks-vision';
-import { useVisionAudioStore } from '../store/visionAudioStore';
+import { useAppStore } from '../store/appStore';
 import type { Percept } from '../types';
 import type { MediaPipeObjectPayload } from '../features/vision/api';
 
 export function useObjectDetector(video?: HTMLVideoElement, objectDetector?: ObjectDetector | null) {
-  const setState = useVisionAudioStore((s) => s.setState);
+  const setState = useAppStore((s) => s.setState);
 
   useEffect(() => {
     if (!video || !objectDetector) return;

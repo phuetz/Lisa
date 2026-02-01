@@ -1,6 +1,6 @@
 import { useCallback, useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useVisionAudioStore } from '../store/visionAudioStore';
+import { useAppStore } from '../store/appStore';
 
 export interface SummarizerOptions {
   apiKey?: string;
@@ -18,7 +18,7 @@ export function useClipboardSummarizer(options: SummarizerOptions = {}) {
   const { i18n } = useTranslation();
   const [lastClipboardText, setLastClipboardText] = useState<string>('');
   const [isSummarizing, setIsSummarizing] = useState(false);
-  const setState = useVisionAudioStore(state => state.setState);
+  const setState = useAppStore(state => state.setState);
   
   const apiEndpoint = options.apiEndpoint || 'https://api.openai.com/v1/chat/completions';
   const apiKey = options.apiKey || process.env.VITE_LLM_API_KEY;
@@ -143,7 +143,7 @@ export function useClipboardSummarizer(options: SummarizerOptions = {}) {
     };
     
     // Start/stop monitoring based on summarizer state
-    const clipboardMonitoringEnabled = useVisionAudioStore.getState().clipboardMonitoringEnabled;
+    const clipboardMonitoringEnabled = useAppStore.getState().clipboardMonitoringEnabled;
     
     if (clipboardMonitoringEnabled) {
       startMonitoring();
@@ -200,7 +200,7 @@ export function useClipboardSummarizer(options: SummarizerOptions = {}) {
     isSummarizing,
     toggleClipboardMonitoring,
     summarizeClipboard,
-    isClipboardMonitoringEnabled: useVisionAudioStore(state => state.clipboardMonitoringEnabled)
+    isClipboardMonitoringEnabled: useAppStore(state => state.clipboardMonitoringEnabled)
   };
 }
 

@@ -36,9 +36,12 @@ export class ResearchAgent implements BaseAgent {
   private searchTool: WebSearchTool;
   private contentTool: WebContentReaderTool;
 
-  constructor() {
-    this.searchTool = new WebSearchTool();
-    this.contentTool = new WebContentReaderTool();
+  constructor(
+    searchTool?: WebSearchTool,
+    contentTool?: WebContentReaderTool
+  ) {
+    this.searchTool = searchTool || new WebSearchTool();
+    this.contentTool = contentTool || new WebContentReaderTool();
   }
 
   async execute(props: AgentExecuteProps): Promise<AgentExecuteResult> {
@@ -94,7 +97,7 @@ export class ResearchAgent implements BaseAgent {
     }
 
     // 2. Extraire les résultats
-    const results: SearchResult[] = searchResult.output?.results || [];
+    const results: SearchResult[] = (searchResult.output as { results?: Array<{ title: string; link: string; snippet: string }> })?.results?.map(r => ({ ...r, url: r.link })) || [];
     const topResults = results.slice(0, maxSources);
 
     // 3. Récupérer le contenu de chaque source
@@ -107,7 +110,7 @@ export class ResearchAgent implements BaseAgent {
           sources.push({
             title: result.title,
             url: result.url,
-            summary: contentResult.output.summary || contentResult.output.content?.slice(0, 500) || result.snippet
+            summary: (contentResult.output as { summary?: string; content?: string }).summary || (contentResult.output as { content?: string }).content?.slice(0, 500) || result.snippet
           });
         } else {
           // Utiliser le snippet si le contenu n'est pas accessible
@@ -161,9 +164,10 @@ export class ResearchAgent implements BaseAgent {
         const contentResult = await this.contentTool.execute({ url });
         if (contentResult.success && contentResult.output) {
           sources.push({
-            title: contentResult.output.title || url,
+            title: url, // Reader doesn't return title
             url,
-            summary: contentResult.output.summary || contentResult.output.content?.slice(0, 1000) || ''
+            // Reader only returns summary
+            summary: contentResult.output.summary || ''
           });
         }
       } catch (error) {
@@ -203,7 +207,12 @@ export class ResearchAgent implements BaseAgent {
       return { success: false, output: null, error: searchResult.error || 'Échec de la surveillance' };
     }
 
-    const results: SearchResult[] = searchResult.output?.results || [];
+    const outputResults = searchResult.output?.results || [];
+    const results: SearchResult[] = outputResults.map(r => ({
+      title: r.title,
+      url: r.link,
+      snippet: r.snippet
+    }));
 
     const news = results.slice(0, 10).map(r => ({
       title: r.title,
@@ -212,14 +221,12 @@ export class ResearchAgent implements BaseAgent {
     }));
 
     // Générer un résumé des actualités
-    const prompt = `Voici les dernières actualités sur "${topic}":\n\n${
-      news.map((n, i) => `${i + 1}. ${n.title}\n${n.snippet}`).join('\n\n')
-    }\n\nRésume les points clés et tendances principales en 3-4 paragraphes.`;
+    const prompt = `Voici les dernières actualités sur "${topic}":\n\n${news.map((n, i) => `${i + 1}. ${n.title}\n${n.snippet}`).join('\n\n')
+      }\n\nRésume les points clés et tendances principales en 3-4 paragraphes.`;
 
     let summary = '';
     try {
-      const aiResult = await aiService.generateResponse(prompt, {});
-      summary = aiResult.text || '';
+      summary = await aiService.sendMessage([{ role: 'user', content: prompt }]);
     } catch {
       summary = 'Résumé non disponible';
     }
@@ -252,7 +259,7 @@ export class ResearchAgent implements BaseAgent {
       if (!contentResult.success) {
         return { success: false, output: null, error: contentResult.error || 'Impossible de lire l\'URL' };
       }
-      contentToSummarize = contentResult.output?.content || contentResult.output?.summary || '';
+      contentToSummarize = contentResult.output?.summary || '';
       sourceUrl = urlOrText;
     } else {
       // C'est du texte direct
@@ -267,18 +274,18 @@ export class ResearchAgent implements BaseAgent {
     const prompt = `Résume le texte suivant de manière concise et structurée:\n\n${contentToSummarize.slice(0, 10000)}`;
 
     try {
-      const aiResult = await aiService.generateResponse(prompt, {});
+      const summary = await aiService.sendMessage([{ role: 'user', content: prompt }]);
 
       return {
         success: true,
         output: {
           source: sourceUrl || 'text',
           originalLength: contentToSummarize.length,
-          summary: aiResult.text,
+          summary,
           timestamp: new Date().toISOString()
         }
       };
-    } catch (error) {
+    } catch {
       return {
         success: false,
         output: null,
@@ -315,8 +322,7 @@ Génère une synthèse complète et bien structurée qui:
 Synthèse:`;
 
     try {
-      const aiResult = await aiService.generateResponse(prompt, {});
-      return aiResult.text || 'Synthèse non disponible';
+      return await aiService.sendMessage([{ role: 'user', content: prompt }]);
     } catch {
       // Fallback: concaténer les résumés
       return sources.map(s => s.summary).join('\n\n');

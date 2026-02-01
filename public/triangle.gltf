@@ -1,7 +1,7 @@
 {
   "asset": {
     "version": "2.0",
-    "generator": "Lisa GLTF Generator"
+    "generator": "Gemini GLTF Generator"
   },
   "scene": 0,
   "scenes": [
@@ -29,27 +29,27 @@
   ],
   "buffers": [
     {
-      "byteLength": 42,
-      "uri": "data:application/octet-stream;base64,AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAPwAAAAAAAAAAAAAAAAAAgD8AAAAAAAABAAIAAAA="
+      "byteLength": 36,
+      "uri": "data:application/octet-stream;base64,AAABAAIAAAAAAAAAAAAAAAAAAAAAAIA/AAAAAAAAAAAAAAAAAACAPwAAAAA="
     }
   ],
   "bufferViews": [
     {
       "buffer": 0,
       "byteOffset": 0,
-      "byteLength": 36,
-      "target": 34962
+      "byteLength": 12,
+      "target": 34963
     },
     {
       "buffer": 0,
-      "byteOffset": 36,
-      "byteLength": 6,
-      "target": 34963
+      "byteOffset": 12,
+      "byteLength": 24,
+      "target": 34962
     }
   ],
   "accessors": [
     {
-      "bufferView": 0,
+      "bufferView": 1,
       "byteOffset": 0,
       "componentType": 5126,
       "count": 3,
@@ -58,7 +58,7 @@
       "min": [0.0, 0.0, 0.0]
     },
     {
-      "bufferView": 1,
+      "bufferView": 0,
       "byteOffset": 0,
       "componentType": 5123,
       "count": 3,

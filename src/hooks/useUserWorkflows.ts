@@ -48,7 +48,7 @@ export const useUserWorkflows = (): UserWorkflowsHook => {
   const [workflows, setWorkflows] = useState<ManagedWorkflow[]>([]);
   
   // Note: lastSpokenText n'existe pas dans le store actuel
-  // const lastSpokenText = useVisionAudioStore(s => s.lastSpokenText);
+  // const lastSpokenText = useAppStore(s => s.lastSpokenText);
   
   /**
    * Obtenir l'agent de workflows

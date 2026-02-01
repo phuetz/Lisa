@@ -89,7 +89,6 @@ class PushNotificationService {
       }
 
       this.initialized = true;
-      console.log('[PushNotificationService] Initialized successfully');
       return true;
     } catch (error) {
       console.error('[PushNotificationService] Initialization failed:', error);
@@ -131,7 +130,6 @@ class PushNotificationService {
       for (const channel of channels) {
         await this.localNotifications.createChannel(channel);
       }
-      console.log('[PushNotificationService] Notification channels created');
     } catch (error) {
       console.warn('[PushNotificationService] Channel creation error:', error);
     }
@@ -155,7 +153,6 @@ class PushNotificationService {
     try {
       // Listeners pour les notifications push
       await this.pushNotifications.addListener('registration', (token) => {
-        console.log('[PushNotificationService] Push registration token:', token.value);
         // Sauvegarder le token pour le backend
         localStorage.setItem('push_token', token.value);
       });
@@ -165,7 +162,6 @@ class PushNotificationService {
       });
 
       await this.pushNotifications.addListener('pushNotificationReceived', (notification) => {
-        console.log('[PushNotificationService] Push received:', notification);
         // Afficher une notification locale
         this.showLocalNotification({
           title: notification.title || 'Lisa AI',
@@ -175,7 +171,6 @@ class PushNotificationService {
       });
 
       await this.pushNotifications.addListener('pushNotificationActionPerformed', (action) => {
-        console.log('[PushNotificationService] Push action:', action);
         // Gérer l'action (ouvrir conversation, etc.)
         this.handleNotificationAction(action.notification.data);
       });
@@ -191,7 +186,6 @@ class PushNotificationService {
    */
   async showLocalNotification(options: NotificationOptions): Promise<void> {
     if (!this.localNotifications) {
-      console.log('[PushNotificationService] Local notification (web):', options.title);
       // Fallback web
       if ('Notification' in window && Notification.permission === 'granted') {
         new Notification(options.title, { body: options.body });
@@ -238,7 +232,6 @@ class PushNotificationService {
       extra: { ...extra, type: 'reminder' },
     });
 
-    console.log(`[PushNotificationService] Reminder scheduled for ${scheduleAt.toISOString()}`);
     return id;
   }
 
@@ -278,10 +271,8 @@ class PushNotificationService {
     if (!data) return;
 
     if (data.type === 'reminder') {
-      console.log('[PushNotificationService] Reminder action:', data);
       // Naviguer vers la conversation ou action spécifique
     } else if (data.conversationId) {
-      console.log('[PushNotificationService] Open conversation:', data.conversationId);
       // Ouvrir la conversation spécifique
     }
   }
@@ -433,7 +424,6 @@ class PushNotificationService {
    */
   registerProactiveNotification(notification: ProactiveNotification): void {
     this.proactiveNotifications.push(notification);
-    console.log(`[PushNotificationService] Registered proactive: ${notification.type}`);
   }
 
   /**
@@ -462,8 +452,6 @@ class PushNotificationService {
           body: content.body,
           extra: { ...content.extra, type: notification.type, proactive: true },
         });
-
-        console.log(`[PushNotificationService] Proactive triggered: ${notification.type}`);
       } catch (error) {
         console.error(`[PushNotificationService] Proactive ${notification.type} error:`, error);
       }

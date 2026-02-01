@@ -1,48 +1,15 @@
-import type { BaseAgent, AgentExecuteProps, AgentExecuteResult, AgentDomain } from '../core/types';
-import { AgentDomains } from '../core/types';
+import { BaseAgent } from './types';
 
 /**
  * @class GeminiCliAgent
  * @description Agent to interact with the Gemini CLI.
  */
-export class GeminiCliAgent implements BaseAgent {
-  name = 'GeminiCliAgent';
-  description = 'An agent to interact with the Gemini CLI';
-  version = '1.0.0';
-  domain: AgentDomain = AgentDomains.INTEGRATION;
-  capabilities = ['cli_execution', 'gemini_integration'];
-
-  /**
-   * Main execute method required by BaseAgent
-   */
-  async execute(props: AgentExecuteProps): Promise<AgentExecuteResult> {
-    const { intent, parameters } = props;
-
-    try {
-      if (intent === 'execute_command' && parameters?.command) {
-        const result = await this.executeCommand({ command: parameters.command });
-        return {
-          success: true,
-          output: result,
-          metadata: {
-            source: 'GeminiCliAgent',
-            timestamp: Date.now()
-          }
-        };
-      }
-
-      return {
-        success: false,
-        output: null,
-        error: `Unknown intent: ${intent}`
-      };
-    } catch (error) {
-      return {
-        success: false,
-        output: null,
-        error: error instanceof Error ? error.message : String(error)
-      };
-    }
+export class GeminiCliAgent extends BaseAgent {
+  name = 'gemini-cli';
+  description = 'An agent to interact with the Gemini CLI.';
+  
+  constructor() {
+    super();
   }
 
   /**

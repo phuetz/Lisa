@@ -1,13 +1,13 @@
 import { useEffect, useRef } from 'react';
-import { useVisionAudioStore } from '../store/visionAudioStore';
+import { useAppStore } from '../store/appStore';
 
 /**
  * Simple speech synthesis responder.
  * Speaks once when smile + speech are detected, then waits cooldownMs.
  */
 export function useSpeechResponder(cooldownMs = 10000) {
-  const smileDetected = useVisionAudioStore(s => s.smileDetected);
-  const speechDetected = useVisionAudioStore(s => s.speechDetected);
+  const smileDetected = useAppStore(s => s.smileDetected);
+  const speechDetected = useAppStore(s => s.speechDetected);
   const lastSpoke = useRef<number>(0);
 
   useEffect(() => {

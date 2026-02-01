@@ -17,18 +17,15 @@ export interface ModelConfig {
 
 export const DEFAULT_MODELS: ModelConfig[] = [
   // Local models (LM Studio) - IDs doivent correspondre aux modèles chargés
+  { id: 'mistralai/devstral-small-2-2512', name: '⭐ Devstral Small 2 (Local)', provider: 'lmstudio' },
   { id: 'mistralai/magistral-small-2509', name: 'Magistral Small (Local)', provider: 'lmstudio' },
   { id: 'openai-gpt-oss-20b-abliterated-uncensored-neo-imatrix', name: 'GPT-OSS 20B (Local)', provider: 'lmstudio' },
   { id: 'devstral-small', name: 'Devstral Small (Local)', provider: 'lmstudio' },
   { id: 'mistral-7b', name: 'Mistral 7B (Local)', provider: 'lmstudio' },
-  // Google Gemini (latest models - Jan 2026)
-  { id: 'gemini-3-pro-preview', name: '⭐ Gemini 3 Pro (Latest)', provider: 'gemini' },
-  { id: 'gemini-3-flash-preview', name: '⭐ Gemini 3 Flash (Latest)', provider: 'gemini' },
-  { id: 'gemini-2.5-pro-preview-06-05', name: 'Gemini 2.5 Pro', provider: 'gemini' },
-  { id: 'gemini-2.5-flash-preview-05-20', name: 'Gemini 2.5 Flash', provider: 'gemini' },
+  // Google Gemini (verified available models - Jan 2026)
+  { id: 'gemini-2.5-flash', name: '⭐ Gemini 2.5 Flash (Recommandé)', provider: 'gemini' },
+  { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro (Avancé)', provider: 'gemini' },
   { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash', provider: 'gemini' },
-  { id: 'gemini-1.5-pro-latest', name: 'Gemini 1.5 Pro', provider: 'gemini' },
-  { id: 'gemini-1.5-flash-latest', name: 'Gemini 1.5 Flash', provider: 'gemini' },
   // OpenAI
   { id: 'gpt-4', name: 'GPT-4 (OpenAI)', provider: 'openai' },
   { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo (OpenAI)', provider: 'openai' },
@@ -50,7 +47,8 @@ export const DEFAULT_SYSTEM_PROMPTS = SYSTEM_PROMPTS.map(p => ({
   prompt: p.prompt,
 }));
 
-export type ThemeMode = 'dark' | 'light' | 'system';
+// ThemeMode is now managed by officeThemeStore
+// Import and use: import { useOfficeThemeStore } from './officeThemeStore';
 
 interface ChatSettingsStore {
   // Model settings
@@ -58,15 +56,12 @@ interface ChatSettingsStore {
   customModels: ModelConfig[];
   temperature: number;
   maxTokens: number;
-  
+
   // System prompt
   selectedSystemPromptId: string;
   customSystemPrompts: { id: string; name: string; prompt: string }[];
   conversationSystemPrompts: Record<string, string>; // Per-conversation overrides
-  
-  // Theme
-  theme: ThemeMode;
-  
+
   // Features
   streamingEnabled: boolean;
   incognitoMode: boolean;
@@ -106,8 +101,10 @@ interface ChatSettingsStore {
   updateCustomSystemPrompt: (promptId: string, updates: { name?: string; prompt?: string }) => void;
   setConversationSystemPrompt: (conversationId: string, prompt: string) => void;
   getEffectiveSystemPrompt: (conversationId?: string) => string;
-  
-  setTheme: (theme: ThemeMode) => void;
+
+  // Note: Theme is now managed by officeThemeStore
+  // Use: useOfficeThemeStore().setMode() instead
+
   toggleStreaming: () => void;
   toggleIncognito: () => void;
   toggleAutoSpeak: () => void;
@@ -139,19 +136,6 @@ interface ChatSettingsStore {
   resetSettings: () => void;
 }
 
-const getInitialTheme = (): ThemeMode => {
-  if (typeof window !== 'undefined') {
-    const stored = localStorage.getItem('chat-settings-storage');
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        if (parsed.state?.theme) return parsed.state.theme;
-      } catch { /* ignore parse errors */ }
-    }
-  }
-  return 'dark';
-};
-
 export const useChatSettingsStore = create<ChatSettingsStore>()(
   persist(
     (set, get) => ({
@@ -164,9 +148,7 @@ export const useChatSettingsStore = create<ChatSettingsStore>()(
       selectedSystemPromptId: 'default',
       customSystemPrompts: [],
       conversationSystemPrompts: {},
-      
-      theme: getInitialTheme(),
-      
+
       streamingEnabled: true,
       incognitoMode: false,
       autoSpeakEnabled: false,
@@ -254,21 +236,7 @@ export const useChatSettingsStore = create<ChatSettingsStore>()(
         // Fallback
         return DEFAULT_SYSTEM_PROMPTS[0].prompt;
       },
-      
-      setTheme: (theme) => {
-        set({ theme });
-        // Apply theme to document
-        if (typeof document !== 'undefined') {
-          const root = document.documentElement;
-          if (theme === 'system') {
-            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            root.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
-          } else {
-            root.setAttribute('data-theme', theme);
-          }
-        }
-      },
-      
+
       toggleStreaming: () => set((state) => ({ streamingEnabled: !state.streamingEnabled })),
       
       toggleIncognito: () => set((state) => ({ incognitoMode: !state.incognitoMode })),
@@ -327,7 +295,6 @@ export const useChatSettingsStore = create<ChatSettingsStore>()(
           maxTokens: state.maxTokens,
           selectedSystemPromptId: state.selectedSystemPromptId,
           customSystemPrompts: state.customSystemPrompts,
-          theme: state.theme,
           streamingEnabled: state.streamingEnabled,
           autoSpeakEnabled: state.autoSpeakEnabled,
           longTermMemoryEnabled: state.longTermMemoryEnabled,
@@ -356,7 +323,6 @@ export const useChatSettingsStore = create<ChatSettingsStore>()(
         selectedSystemPromptId: 'default',
         customSystemPrompts: [],
         conversationSystemPrompts: {},
-        theme: 'dark',
         streamingEnabled: true,
         incognitoMode: false,
         autoSpeakEnabled: false,

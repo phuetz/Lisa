@@ -1,13 +1,13 @@
-import * as mqtt from 'mqtt';
+import mqtt, { type MqttClient } from 'mqtt';
 import { useAppStore } from '../store/appStore';
-import type { Percept, TouchPayload, EnvironmentPayload } from '../types';
+import type { Percept } from '../types';
 
 /**
  * MqttAdapter
  * Bridges physical IoT sensors to Lisa's sensory system (Touch & Environment).
  */
 class MqttAdapter {
-  private client: mqtt.MqttClient | null = null;
+  private client: MqttClient | null = null;
   private isInitialized = false;
 
   /**

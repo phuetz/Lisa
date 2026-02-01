@@ -3,6 +3,8 @@
  * Valide la sécurité, évalue les risques, vérifie la réversibilité
  */
 
+import type { AgentExecuteProps, AgentExecuteResult } from '../core/types';
+import { BaseAgent } from '../core/BaseAgent';
 import { auditActions } from '../../../services/AuditService';
 
 export interface ActionProposal {
@@ -38,9 +40,110 @@ export interface ValidationResult {
   timestamp: string;
 }
 
-class CriticAgentV2 {
+export class CriticAgentV2 extends BaseAgent {
   private validationHistory: ValidationResult[] = [];
   private maxHistory = 500;
+
+  constructor() {
+    super(
+      'CriticAgentV2',
+      'Validation intelligente des actions avec évaluation des risques et vérification de réversibilité',
+      '2.0.0',
+      'analysis'
+    );
+    this.capabilities = [
+      'validate_action',
+      'assess_risks',
+      'check_permissions',
+      'check_reversibility',
+      'get_validation_history',
+      'get_stats'
+    ];
+  }
+
+  /**
+   * Execute method required by BaseAgent interface
+   */
+  async execute(props: AgentExecuteProps): Promise<AgentExecuteResult> {
+    const { intent, parameters = {} } = props;
+
+    try {
+      switch (intent) {
+        case 'validate_action': {
+          const proposal = parameters.proposal as ActionProposal;
+          if (!proposal) {
+            return {
+              success: false,
+              output: null,
+              error: 'Missing proposal parameter'
+            };
+          }
+          const result = await this.validateAction(proposal);
+          return {
+            success: true,
+            output: result,
+            metadata: { timestamp: Date.now() }
+          };
+        }
+
+        case 'assess_risks': {
+          const proposal = parameters.proposal as ActionProposal;
+          if (!proposal) {
+            return {
+              success: false,
+              output: null,
+              error: 'Missing proposal parameter'
+            };
+          }
+          const assessment = await this.assessRisks(proposal);
+          return {
+            success: true,
+            output: assessment,
+            metadata: { timestamp: Date.now() }
+          };
+        }
+
+        case 'get_history': {
+          const limit = (parameters.limit as number) || 50;
+          return {
+            success: true,
+            output: this.getValidationHistory(limit),
+            metadata: { timestamp: Date.now() }
+          };
+        }
+
+        case 'get_stats': {
+          return {
+            success: true,
+            output: this.getStats(),
+            metadata: { timestamp: Date.now() }
+          };
+        }
+
+        default:
+          // Default: validate action if proposal provided
+          if (parameters.proposal) {
+            const result = await this.validateAction(parameters.proposal as ActionProposal);
+            return {
+              success: true,
+              output: result,
+              metadata: { timestamp: Date.now() }
+            };
+          }
+          return {
+            success: false,
+            output: null,
+            error: `Unknown intent: ${intent}`
+          };
+      }
+    } catch (error) {
+      return {
+        success: false,
+        output: null,
+        error: error instanceof Error ? error.message : String(error)
+      };
+    }
+  }
 
   /**
    * Valider une action proposée
@@ -402,5 +505,8 @@ class CriticAgentV2 {
   }
 }
 
-// Exporter une instance singleton
+// Exporter une instance singleton pour usage direct
 export const criticAgentV2 = new CriticAgentV2();
+
+// Export default pour le registry
+export default CriticAgentV2;

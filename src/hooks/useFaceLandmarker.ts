@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import type { FaceLandmarker, FaceLandmarkerResult } from '@mediapipe/tasks-vision';
-import { useVisionAudioStore } from '../store/visionAudioStore';
+import { useAppStore } from '../store/appStore';
 // import { loadTask } from '../utils/loadTask';
 import type { Percept, MediaPipeFacePayload } from '../features/vision/api'; // Import new types
 
@@ -8,7 +8,7 @@ import type { Percept, MediaPipeFacePayload } from '../features/vision/api'; // 
  * Runs FaceLandmarker on a provided <video> element and stores results in Zustand.
  */
 export function useFaceLandmarker(video?: HTMLVideoElement, faceLandmarker?: FaceLandmarker | null) {
-  const setState = useVisionAudioStore((s) => s.setState);
+  const setState = useAppStore((s) => s.setState);
 
   // Inference loop
   useEffect(() => {

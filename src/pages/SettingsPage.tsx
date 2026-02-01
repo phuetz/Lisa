@@ -1,28 +1,47 @@
 import { useState } from 'react';
-import { ModernLayout } from '../components/layout/ModernLayout';
+import { OfficePageLayout } from '../components/layout/OfficePageLayout';
+import { useOfficeThemeStore } from '../store/officeThemeStore';
 import { User, Bell, Palette, Globe, Save, Check, ChevronRight, Cpu } from 'lucide-react';
 import { useAppStore } from '../store/appStore';
 import { AVAILABLE_LLMS, AVAILABLE_VISION_MODELS } from '../config';
 import { visionSense } from '../features/vision/api';
 
+interface ThemeColors {
+  sidebar: string;
+  sidebarHover: string;
+  sidebarActive: string;
+  editor: string;
+  editorText: string;
+  editorSecondary: string;
+  dialog: string;
+  border: string;
+  accent: string;
+  success: string;
+  inputBg: string;
+  inputBorder: string;
+}
+
 // Settings Section Component
-const SettingsSection = ({ 
-  title, 
-  children 
-}: { 
-  title: string; 
+const SettingsSection = ({
+  title,
+  children,
+  colors
+}: {
+  title: string;
   children: React.ReactNode;
+  colors: ThemeColors;
 }) => (
   <div style={{
-    backgroundColor: '#2d2d2d',
+    backgroundColor: colors.dialog,
     borderRadius: '12px',
     padding: '20px',
-    marginBottom: '16px'
+    marginBottom: '16px',
+    border: `1px solid ${colors.border}`
   }}>
-    <h3 style={{ 
-      fontSize: '16px', 
-      fontWeight: 600, 
-      color: '#fff', 
+    <h3 style={{
+      fontSize: '16px',
+      fontWeight: 600,
+      color: colors.editorText,
       marginBottom: '16px',
       margin: '0 0 16px 0'
     }}>
@@ -33,23 +52,25 @@ const SettingsSection = ({
 );
 
 // Input Component
-const SettingsInput = ({ 
-  label, 
-  value, 
-  onChange, 
-  type = 'text' 
-}: { 
-  label: string; 
-  value: string; 
-  onChange: (value: string) => void; 
+const SettingsInput = ({
+  label,
+  value,
+  onChange,
+  type = 'text',
+  colors
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
   type?: string;
+  colors: ThemeColors;
 }) => (
   <div style={{ marginBottom: '16px' }}>
-    <label style={{ 
-      display: 'block', 
-      fontSize: '13px', 
-      color: '#888', 
-      marginBottom: '8px' 
+    <label style={{
+      display: 'block',
+      fontSize: '13px',
+      color: colors.editorSecondary,
+      marginBottom: '8px'
     }}>
       {label}
     </label>
@@ -60,10 +81,10 @@ const SettingsInput = ({
       style={{
         width: '100%',
         padding: '12px 14px',
-        backgroundColor: '#1a1a1a',
-        border: '1px solid #404040',
+        backgroundColor: colors.inputBg,
+        border: `1px solid ${colors.inputBorder}`,
         borderRadius: '8px',
-        color: '#fff',
+        color: colors.editorText,
         fontSize: '14px',
         outline: 'none'
       }}
@@ -72,23 +93,25 @@ const SettingsInput = ({
 );
 
 // Select Component
-const SettingsSelect = ({ 
-  label, 
-  value, 
-  onChange, 
-  options 
-}: { 
-  label: string; 
-  value: string; 
-  onChange: (value: string) => void; 
+const SettingsSelect = ({
+  label,
+  value,
+  onChange,
+  options,
+  colors
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
   options: { value: string; label: string }[];
+  colors: ThemeColors;
 }) => (
   <div style={{ marginBottom: '16px' }}>
-    <label style={{ 
-      display: 'block', 
-      fontSize: '13px', 
-      color: '#888', 
-      marginBottom: '8px' 
+    <label style={{
+      display: 'block',
+      fontSize: '13px',
+      color: colors.editorSecondary,
+      marginBottom: '8px'
     }}>
       {label}
     </label>
@@ -98,10 +121,10 @@ const SettingsSelect = ({
       style={{
         width: '100%',
         padding: '12px 14px',
-        backgroundColor: '#1a1a1a',
-        border: '1px solid #404040',
+        backgroundColor: colors.inputBg,
+        border: `1px solid ${colors.inputBorder}`,
         borderRadius: '8px',
-        color: '#fff',
+        color: colors.editorText,
         fontSize: '14px',
         outline: 'none',
         cursor: 'pointer'
@@ -115,27 +138,29 @@ const SettingsSelect = ({
 );
 
 // Toggle Component
-const SettingsToggle = ({ 
-  label, 
-  description, 
-  checked, 
-  onChange 
-}: { 
-  label: string; 
-  description?: string; 
-  checked: boolean; 
+const SettingsToggle = ({
+  label,
+  description,
+  checked,
+  onChange,
+  colors
+}: {
+  label: string;
+  description?: string;
+  checked: boolean;
   onChange: (checked: boolean) => void;
+  colors: ThemeColors;
 }) => (
   <div style={{
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: '12px 0',
-    borderBottom: '1px solid #404040'
+    borderBottom: `1px solid ${colors.border}`
   }}>
     <div>
-      <p style={{ fontSize: '14px', color: '#fff', marginBottom: description ? '4px' : 0 }}>{label}</p>
-      {description && <p style={{ fontSize: '12px', color: '#666' }}>{description}</p>}
+      <p style={{ fontSize: '14px', color: colors.editorText, marginBottom: description ? '4px' : 0 }}>{label}</p>
+      {description && <p style={{ fontSize: '12px', color: colors.editorSecondary }}>{description}</p>}
     </div>
     <button
       onClick={() => onChange(!checked)}
@@ -143,7 +168,7 @@ const SettingsToggle = ({
         width: '44px',
         height: '24px',
         borderRadius: '12px',
-        backgroundColor: checked ? '#10a37f' : '#404040',
+        backgroundColor: checked ? colors.accent : colors.sidebarHover,
         border: 'none',
         cursor: 'pointer',
         position: 'relative',
@@ -165,27 +190,28 @@ const SettingsToggle = ({
 );
 
 // Tab Item Component
-const TabItem = ({ 
-  icon: Icon, 
-  label, 
-  active, 
-  onClick 
-}: { 
-  icon: React.ElementType; 
-  label: string; 
-  active: boolean; 
+const TabItem = ({
+  icon: Icon,
+  label,
+  active,
+  onClick,
+  colors
+}: {
+  icon: React.ElementType;
+  label: string;
+  active: boolean;
   onClick: () => void;
+  colors: ThemeColors;
 }) => (
   <button
     onClick={onClick}
-    className="nav-item"
     style={{
       width: '100%',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
       padding: '14px 16px',
-      backgroundColor: active ? '#2d2d2d' : 'transparent',
+      backgroundColor: active ? colors.sidebarActive : 'transparent',
       border: 'none',
       borderRadius: '10px',
       cursor: 'pointer',
@@ -194,22 +220,26 @@ const TabItem = ({
     }}
   >
     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-      <Icon size={20} color={active ? '#10a37f' : '#888'} />
-      <span style={{ fontSize: '14px', color: active ? '#fff' : '#888' }}>{label}</span>
+      <Icon size={20} color={active ? colors.accent : colors.editorSecondary} />
+      <span style={{ fontSize: '14px', color: active ? colors.editorText : colors.editorSecondary }}>{label}</span>
     </div>
-    <ChevronRight size={16} color={active ? '#10a37f' : '#666'} />
+    <ChevronRight size={16} color={active ? colors.accent : colors.editorSecondary} />
   </button>
 );
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState('profile');
-  
+
+  // Get theme colors
+  const { getCurrentColors } = useOfficeThemeStore();
+  const colors = getCurrentColors();
+
   // App Store for AI settings
   const selectedLLM = useAppStore(s => s.selectedLLM);
   const selectedVisionModel = useAppStore(s => s.selectedVisionModel);
   const setState = useAppStore(s => s.setState);
 
-  // Local settings state (for mock/other settings not yet in store)
+  // Local settings state
   const [settings, setSettings] = useState({
     username: 'User',
     email: 'user@example.com',
@@ -227,21 +257,22 @@ export default function SettingsPage() {
 
   const tabs = [
     { id: 'profile', label: 'Profil', icon: User },
-    { id: 'ai', label: 'IA & Modèles', icon: Cpu },
+    { id: 'ai', label: 'IA & Modeles', icon: Cpu },
     { id: 'notifications', label: 'Notifications', icon: Bell },
     { id: 'appearance', label: 'Apparence', icon: Palette },
     { id: 'language', label: 'Langue', icon: Globe },
   ];
 
   return (
-    <ModernLayout
-      title="Paramètres"
+    <OfficePageLayout
+      title="Parametres"
+      subtitle="Configuration de l'application"
       action={
         <button
           onClick={handleSave}
           style={{
             padding: '10px 16px',
-            backgroundColor: '#10a37f',
+            backgroundColor: colors.accent,
             border: 'none',
             borderRadius: '8px',
             color: '#fff',
@@ -265,10 +296,11 @@ export default function SettingsPage() {
       }}>
         {/* Sidebar Tabs */}
         <div style={{
-          backgroundColor: '#1a1a1a',
+          backgroundColor: colors.sidebar,
           borderRadius: '12px',
           padding: '12px',
-          height: 'fit-content'
+          height: 'fit-content',
+          border: `1px solid ${colors.border}`
         }}>
           {tabs.map(tab => (
             <TabItem
@@ -277,6 +309,7 @@ export default function SettingsPage() {
               label={tab.label}
               active={activeTab === tab.id}
               onClick={() => setActiveTab(tab.id)}
+              colors={colors}
             />
           ))}
         </div>
@@ -284,21 +317,23 @@ export default function SettingsPage() {
         {/* Content */}
         <div>
           {activeTab === 'profile' && (
-            <SettingsSection title="Informations du profil">
+            <SettingsSection title="Informations du profil" colors={colors}>
               <SettingsInput
                 label="Nom d'utilisateur"
                 value={settings.username}
                 onChange={(value) => setSettings({ ...settings, username: value })}
+                colors={colors}
               />
               <SettingsInput
                 label="Email"
                 type="email"
                 value={settings.email}
                 onChange={(value) => setSettings({ ...settings, email: value })}
+                colors={colors}
               />
               <div style={{
                 padding: '16px',
-                backgroundColor: '#1a1a1a',
+                backgroundColor: colors.sidebar,
                 borderRadius: '10px',
                 marginTop: '16px'
               }}>
@@ -307,7 +342,7 @@ export default function SettingsPage() {
                     width: '48px',
                     height: '48px',
                     borderRadius: '50%',
-                    background: 'linear-gradient(135deg, #10a37f, #1a7f64)',
+                    backgroundColor: colors.accent,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center'
@@ -315,8 +350,8 @@ export default function SettingsPage() {
                     <User size={24} color="#fff" />
                   </div>
                   <div>
-                    <p style={{ fontSize: '14px', color: '#fff', fontWeight: 500 }}>{settings.username}</p>
-                    <p style={{ fontSize: '12px', color: '#888' }}>{settings.email}</p>
+                    <p style={{ fontSize: '14px', color: colors.editorText, fontWeight: 500 }}>{settings.username}</p>
+                    <p style={{ fontSize: '12px', color: colors.editorSecondary }}>{settings.email}</p>
                   </div>
                 </div>
               </div>
@@ -324,24 +359,25 @@ export default function SettingsPage() {
           )}
 
           {activeTab === 'ai' && (
-            <SettingsSection title="Intelligence Artificielle">
+            <SettingsSection title="Intelligence Artificielle" colors={colors}>
               <SettingsSelect
-                label="Modèle de Langage (LLM)"
+                label="Modele de Langage (LLM)"
                 value={selectedLLM}
                 onChange={(value) => setState({ selectedLLM: value })}
                 options={AVAILABLE_LLMS.map(llm => ({
                   value: llm.id,
                   label: `${llm.name} (${llm.provider})`
                 }))}
+                colors={colors}
               />
-              <div style={{ padding: '12px', backgroundColor: '#1a1a1a', borderRadius: '8px', marginBottom: '24px' }}>
-                <p style={{ fontSize: '12px', color: '#888', lineHeight: '1.5' }}>
-                  Le modèle LLM est le "cerveau" conversationnel de Lisa. Les modèles plus gros (ex: GPT-4) sont plus intelligents mais peuvent être plus lents ou coûteux. Les modèles locaux garantissent une confidentialité totale.
+              <div style={{ padding: '12px', backgroundColor: colors.sidebar, borderRadius: '8px', marginBottom: '24px' }}>
+                <p style={{ fontSize: '12px', color: colors.editorSecondary, lineHeight: '1.5' }}>
+                  Le modele LLM est le "cerveau" conversationnel de Lisa. Les modeles plus gros (ex: GPT-4) sont plus intelligents mais peuvent etre plus lents ou couteux.
                 </p>
               </div>
 
               <SettingsSelect
-                label="Modèle de Vision"
+                label="Modele de Vision"
                 value={selectedVisionModel}
                 onChange={(value) => {
                   setState({ selectedVisionModel: value });
@@ -351,42 +387,46 @@ export default function SettingsPage() {
                   value: model.id,
                   label: model.name
                 }))}
+                colors={colors}
               />
-              <div style={{ padding: '12px', backgroundColor: '#1a1a1a', borderRadius: '8px' }}>
-                <p style={{ fontSize: '12px', color: '#888', lineHeight: '1.5' }}>
-                  YOLOv8 est recommandé pour une détection rapide et précise via WebGL. MediaPipe est une alternative légère fonctionnant sur CPU.
+              <div style={{ padding: '12px', backgroundColor: colors.sidebar, borderRadius: '8px' }}>
+                <p style={{ fontSize: '12px', color: colors.editorSecondary, lineHeight: '1.5' }}>
+                  YOLOv8 est recommande pour une detection rapide et precise via WebGL. MediaPipe est une alternative legere fonctionnant sur CPU.
                 </p>
               </div>
             </SettingsSection>
           )}
 
           {activeTab === 'notifications' && (
-            <SettingsSection title="Préférences de notification">
+            <SettingsSection title="Preferences de notification" colors={colors}>
               <SettingsToggle
                 label="Activer les notifications"
-                description="Recevoir des alertes pour les événements importants"
+                description="Recevoir des alertes pour les evenements importants"
                 checked={settings.notifications}
                 onChange={(checked) => setSettings({ ...settings, notifications: checked })}
+                colors={colors}
               />
               <SettingsToggle
                 label="Sauvegarde automatique"
                 description="Sauvegarder automatiquement vos conversations"
                 checked={settings.autoSave}
                 onChange={(checked) => setSettings({ ...settings, autoSave: checked })}
+                colors={colors}
               />
               <SettingsToggle
                 label="Effets sonores"
                 description="Jouer des sons pour les notifications"
                 checked={settings.soundEffects}
                 onChange={(checked) => setSettings({ ...settings, soundEffects: checked })}
+                colors={colors}
               />
             </SettingsSection>
           )}
 
           {activeTab === 'appearance' && (
-            <SettingsSection title="Personnalisation">
+            <SettingsSection title="Personnalisation" colors={colors}>
               <SettingsSelect
-                label="Thème"
+                label="Theme"
                 value={settings.theme}
                 onChange={(value) => setSettings({ ...settings, theme: value })}
                 options={[
@@ -394,12 +434,14 @@ export default function SettingsPage() {
                   { value: 'light', label: 'Clair' },
                   { value: 'auto', label: 'Automatique' },
                 ]}
+                colors={colors}
               />
               <SettingsToggle
                 label="Mode sombre"
-                description="Utiliser le thème sombre pour l'interface"
+                description="Utiliser le theme sombre pour l'interface"
                 checked={settings.darkMode}
                 onChange={(checked) => setSettings({ ...settings, darkMode: checked })}
+                colors={colors}
               />
               <div style={{
                 display: 'grid',
@@ -407,13 +449,13 @@ export default function SettingsPage() {
                 gap: '12px',
                 marginTop: '16px'
               }}>
-                {['#10a37f', '#3b82f6', '#8b5cf6'].map(color => (
+                {[colors.accent, '#3b82f6', '#8b5cf6'].map((color, idx) => (
                   <button
                     key={color}
                     style={{
                       padding: '16px',
-                      backgroundColor: '#1a1a1a',
-                      border: color === '#10a37f' ? `2px solid ${color}` : '2px solid transparent',
+                      backgroundColor: colors.sidebar,
+                      border: idx === 0 ? `2px solid ${color}` : `2px solid transparent`,
                       borderRadius: '10px',
                       cursor: 'pointer',
                       display: 'flex',
@@ -430,7 +472,7 @@ export default function SettingsPage() {
                       alignItems: 'center',
                       justifyContent: 'center'
                     }}>
-                      {color === '#10a37f' && <Check size={16} color="#fff" />}
+                      {idx === 0 && <Check size={16} color="#fff" />}
                     </div>
                   </button>
                 ))}
@@ -439,33 +481,34 @@ export default function SettingsPage() {
           )}
 
           {activeTab === 'language' && (
-            <SettingsSection title="Langue et région">
+            <SettingsSection title="Langue et region" colors={colors}>
               <SettingsSelect
                 label="Langue de l'interface"
                 value={settings.language}
                 onChange={(value) => setSettings({ ...settings, language: value })}
                 options={[
-                  { value: 'fr', label: 'Français' },
+                  { value: 'fr', label: 'Francais' },
                   { value: 'en', label: 'English' },
-                  { value: 'es', label: 'Español' },
+                  { value: 'es', label: 'Espanol' },
                   { value: 'de', label: 'Deutsch' },
                 ]}
+                colors={colors}
               />
               <div style={{
                 padding: '16px',
-                backgroundColor: '#1a1a1a',
+                backgroundColor: colors.sidebar,
                 borderRadius: '10px',
                 marginTop: '16px'
               }}>
-                <p style={{ fontSize: '13px', color: '#888', marginBottom: '8px' }}>
+                <p style={{ fontSize: '13px', color: colors.editorSecondary, marginBottom: '8px' }}>
                   Langue actuelle
                 </p>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <Globe size={20} color="#10a37f" />
-                  <span style={{ fontSize: '14px', color: '#fff' }}>
-                    {settings.language === 'fr' ? 'Français' : 
-                     settings.language === 'en' ? 'English' : 
-                     settings.language === 'es' ? 'Español' : 'Deutsch'}
+                  <Globe size={20} color={colors.accent} />
+                  <span style={{ fontSize: '14px', color: colors.editorText }}>
+                    {settings.language === 'fr' ? 'Francais' :
+                     settings.language === 'en' ? 'English' :
+                     settings.language === 'es' ? 'Espanol' : 'Deutsch'}
                   </span>
                 </div>
               </div>
@@ -473,6 +516,6 @@ export default function SettingsPage() {
           )}
         </div>
       </div>
-    </ModernLayout>
+    </OfficePageLayout>
   );
 }

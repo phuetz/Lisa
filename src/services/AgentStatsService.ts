@@ -4,6 +4,7 @@
  */
 
 import { agentRegistry } from '../features/agents/core/registry';
+import { getAgentCategory } from '../features/agents/core/registryEnhanced';
 
 export interface AgentActivity {
   id: string;
@@ -17,7 +18,7 @@ export interface AgentActivity {
 
 export interface AgentStatus {
   name: string;
-  type: 'perception' | 'cognitive' | 'integration' | 'workflow' | 'tools';
+  type: string;
   status: 'active' | 'inactive' | 'error';
   tasksCompleted: number;
   lastActivity?: Date;
@@ -32,37 +33,6 @@ export interface DashboardStats {
   recentActivities: AgentActivity[];
   agentsStatus: AgentStatus[];
 }
-
-// Agent type mapping
-const AGENT_TYPES: Record<string, AgentStatus['type']> = {
-  VisionAgent: 'perception',
-  HearingAgent: 'perception',
-  OCRAgent: 'perception',
-  AudioAnalysisAgent: 'perception',
-  ImageAnalysisAgent: 'perception',
-  MemoryAgent: 'cognitive',
-  PlannerAgent: 'cognitive',
-  NLUAgent: 'cognitive',
-  KnowledgeGraphAgent: 'cognitive',
-  ContextAgent: 'cognitive',
-  PersonalizationAgent: 'cognitive',
-  GitHubAgent: 'integration',
-  EmailAgent: 'integration',
-  CalendarAgent: 'integration',
-  SmartHomeAgent: 'integration',
-  MQTTAgent: 'integration',
-  WeatherAgent: 'integration',
-  WorkflowHTTPAgent: 'workflow',
-  WorkflowCodeAgent: 'workflow',
-  SchedulerAgent: 'workflow',
-  UserWorkflowAgent: 'workflow',
-  CoordinatorAgent: 'workflow',
-  CodeInterpreterAgent: 'tools',
-  TranslationAgent: 'tools',
-  WebSearchAgent: 'tools',
-  WebContentReaderAgent: 'tools',
-  PowerShellAgent: 'tools',
-};
 
 class AgentStatsServiceImpl {
   private activities: AgentActivity[] = [];
@@ -140,7 +110,7 @@ class AgentStatsServiceImpl {
 
       return {
         name,
-        type: AGENT_TYPES[name] || 'tools',
+        type: getAgentCategory(name) || 'tools',
         status: isActive ? 'active' : (isLoaded ? 'inactive' : 'inactive'),
         tasksCompleted: metrics?.tasks || 0,
         lastActivity: metrics?.lastActivity,

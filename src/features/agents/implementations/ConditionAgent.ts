@@ -1,4 +1,4 @@
-import { AgentDomains, type BaseAgent, type AgentExecuteProps, type AgentExecuteResult } from "./types";
+import { BaseAgent, AgentExecuteProps, AgentExecuteResult, AgentDomains } from "./types";
 
 export class ConditionAgent implements BaseAgent {
   name = "ConditionAgent";

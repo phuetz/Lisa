@@ -1,91 +1,47 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { RouterProvider } from 'react-router-dom'
 import './index.css'
 import './i18n'
-import { router } from './router/index'
-import { startupLogger, logStartup } from './utils/startupLogger'
+import App from './App.tsx'
 
-// Démarrer le logging
-startupLogger.startTimer('app-init');
-logStartup('Application initialization started');
-logStartup('React version', { version: '19.1.0' });
-logStartup('Environment', { mode: import.meta.env.MODE, dev: import.meta.env.DEV });
-
-// Register service worker for PWA functionality (production only)
+// Register service worker for PWA functionality
 const registerServiceWorker = async () => {
-  if (import.meta.env.PROD && 'serviceWorker' in navigator) {
-    startupLogger.startTimer('service-worker-registration');
-    logStartup('Registering Service Worker');
+  if ('serviceWorker' in navigator) {
     try {
       const registration = await navigator.serviceWorker.register('/service-worker.js');
-      startupLogger.endTimer('service-worker-registration', 'startup');
-      logStartup('Service Worker registered', { scope: registration.scope });
+      console.log('Service Worker registered with scope:', registration.scope);
       // If there's a waiting service worker, activate it immediately
       if (registration.waiting) {
-        logStartup('Activating waiting Service Worker');
         registration.waiting.postMessage({ type: 'SKIP_WAITING' });
       }
       // Listen for updates
       registration.addEventListener('updatefound', () => {
         const newWorker = registration.installing;
         if (newWorker) {
-          logStartup('Service Worker update found');
           newWorker.addEventListener('statechange', () => {
             if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-              logStartup('New Service Worker installed, refreshing...');
+              console.log('New content available, refreshing...');
               newWorker.postMessage({ type: 'SKIP_WAITING' });
             }
           });
         }
       });
     } catch (error) {
-      startupLogger.error('startup', 'Service Worker registration failed', error);
+      console.error('Service Worker registration failed:', error);
     }
-  } else {
-    logStartup('Service Worker not registered (dev mode or unsupported)', { prod: import.meta.env.PROD });
   }
 };
 
-logStartup('Creating React root');
-startupLogger.startTimer('react-render');
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
+    <App />
+  </StrictMode>,
+);
 
-try {
-  const rootElement = document.getElementById('root');
-  if (!rootElement) {
-    throw new Error('Root element not found');
-  }
-  
-  createRoot(rootElement).render(
-    <StrictMode>
-      <RouterProvider router={router} future={{ v7_startTransition: true }} />
-    </StrictMode>,
-  );
-  
-  startupLogger.endTimer('react-render', 'startup');
-  logStartup('React app rendered successfully');
-} catch (error) {
-  startupLogger.error('startup', 'Failed to render React app', error);
-}
+// Register service worker after app has loaded
+window.addEventListener('load', registerServiceWorker);
 
-// Register service worker after app has loaded (production only)
-window.addEventListener('load', () => {
-  logStartup('Window loaded event fired');
-  if (import.meta.env.PROD) {
-    registerServiceWorker();
-  }
-  
-  // Afficher le résumé après 3 secondes
-  setTimeout(() => {
-    startupLogger.endTimer('app-init', 'startup');
-    startupLogger.printSummary();
-  }, 3000);
+// Reload the page when the new service worker activates
+navigator.serviceWorker?.addEventListener('controllerchange', () => {
+  window.location.reload();
 });
-
-// In development, avoid auto-reload via Service Worker controller changes
-if (import.meta.env.PROD) {
-  navigator.serviceWorker?.addEventListener('controllerchange', () => {
-    logStartup('Service Worker controller changed, reloading...');
-    window.location.reload();
-  });
-}

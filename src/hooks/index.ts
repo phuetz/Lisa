@@ -11,3 +11,10 @@ export * from './useSpeechResponder';
 export * from './useVoiceIntent';
 export * from './useMcpClient';
 export * from './useMediaPipeModels';
+
+// OpenClaw-inspired session management
+export * from './useSessionCompaction';
+export * from './useChannelSession';
+export * from './useAIChat';
+export * from './useAIChatWithTools';
+export * from './useVectorSearch';

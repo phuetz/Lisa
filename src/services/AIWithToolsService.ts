@@ -144,7 +144,13 @@ class AIWithToolsService {
       const response = await this.callWithTools(currentMessages, provider);
 
       // Check for tool calls
-      const toolCalls = toolCallingService.parseToolCalls(response, provider);
+      const rawToolCalls = toolCallingService.parseToolCalls(response, provider);
+
+      // Deduplicate tool calls - only keep unique calls (same name + same args)
+      const toolCalls = rawToolCalls.filter((call, index, arr) => {
+        const key = `${call.name}:${JSON.stringify(call.arguments)}`;
+        return arr.findIndex(c => `${c.name}:${JSON.stringify(c.arguments)}` === key) === index;
+      });
 
       if (toolCalls.length === 0) {
         // No tool calls, extract final response
@@ -153,7 +159,7 @@ class AIWithToolsService {
       }
 
       // Execute tool calls
-      console.log(`[AIWithTools] Executing ${toolCalls.length} tool calls`);
+      console.log(`[AIWithTools] Executing ${toolCalls.length} tool calls (${rawToolCalls.length} before dedup)`);
 
       for (const call of toolCalls) {
         const startTime = Date.now();
@@ -204,8 +210,15 @@ class AIWithToolsService {
       const response = await this.callWithTools(currentMessages, provider);
       console.log('[AIWithTools] Response received:', JSON.stringify(response).slice(0, 500));
 
-      const toolCalls = toolCallingService.parseToolCalls(response, provider);
-      console.log('[AIWithTools] Parsed tool calls:', toolCalls.length, toolCalls.map(tc => tc.name));
+      const rawToolCalls = toolCallingService.parseToolCalls(response, provider);
+
+      // Deduplicate tool calls - only keep unique calls (same name + same args)
+      const toolCalls = rawToolCalls.filter((call, index, arr) => {
+        const key = `${call.name}:${JSON.stringify(call.arguments)}`;
+        return arr.findIndex(c => `${c.name}:${JSON.stringify(c.arguments)}` === key) === index;
+      });
+
+      console.log('[AIWithTools] Parsed tool calls:', rawToolCalls.length, '→ deduplicated:', toolCalls.length, toolCalls.map(tc => tc.name));
 
       if (toolCalls.length === 0) {
         // No tool calls - stream the response
@@ -278,7 +291,16 @@ class AIWithToolsService {
     provider: AIProvider
   ): Promise<unknown> {
     const config = aiService.getConfig();
-    const tools = this.config.tools || getWebTools();
+
+    // Get tools based on request type
+    let tools: ToolDefinition[];
+    if (this.config.tools) {
+      tools = this.config.tools;
+    } else {
+      // Detect which tools are relevant for this request
+      const requestType = this.detectRequestType(messages);
+      tools = this.getToolsForRequestType(requestType);
+    }
 
     console.log('[AIWithTools] callWithTools - provider:', provider, 'tools:', tools.map(t => t.name));
 
@@ -348,16 +370,14 @@ class AIWithToolsService {
         }
 
         if (parsed._gemini_function_response) {
-          // This is a function response - Gemini expects role: 'function'
+          // This is a function response
+          // Gemini API: functionResponse goes in a "user" role message
           contents.push({
-            role: 'function',  // ✅ Correct: Gemini expects 'function', not 'user'
+            role: 'user',
             parts: [{
               functionResponse: {
                 name: parsed._gemini_function_response.name,
-                response: {
-                  name: parsed._gemini_function_response.name,
-                  content: parsed._gemini_function_response.response  // ✅ Correct structure
-                }
+                response: parsed._gemini_function_response.response
               }
             }]
           });
@@ -391,30 +411,42 @@ class AIWithToolsService {
       toolsCount: functionDeclarations.length,
       mode: toolMode,
       forceTools,
+      hasExistingFunctionResponse,
       systemPromptLength: systemMessage?.content.length || 0
     });
+
+    // Log full contents for debugging
+    console.log('[AIWithTools] Gemini contents:', JSON.stringify(contents, null, 2));
+
+    // Build request body - DON'T send tools if we already have a function response
+    // This forces Gemini to respond with text instead of trying to call more tools
+    const requestBody: Record<string, unknown> = {
+      contents,
+      systemInstruction: systemMessage ? {
+        parts: [{ text: systemMessage.content }]
+      } : undefined,
+      generationConfig: {
+        temperature: config.temperature || 0.7,
+        maxOutputTokens: config.maxTokens || 4096
+      }
+    };
+
+    // Only include tools on the first call (before function response exists)
+    if (!hasExistingFunctionResponse) {
+      requestBody.tools = [{ functionDeclarations }];
+      requestBody.toolConfig = {
+        functionCallingConfig: {
+          mode: toolMode
+        }
+      };
+    }
 
     const response = await fetch(
       `${GEMINI_API_BASE}/models/${model}:generateContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents,
-          systemInstruction: systemMessage ? {
-            parts: [{ text: systemMessage.content }]
-          } : undefined,
-          tools: [{ functionDeclarations }],
-          toolConfig: {
-            functionCallingConfig: {
-              mode: toolMode  // ANY forces tool use, AUTO lets model decide
-            }
-          },
-          generationConfig: {
-            temperature: config.temperature || 0.7,
-            maxOutputTokens: config.maxTokens || 4096
-          }
-        })
+        body: JSON.stringify(requestBody)
       }
     );
 
@@ -553,46 +585,103 @@ class AIWithToolsService {
   }
 
   /**
-   * Detect if the user's query requires tool usage (news, weather, TV, etc.)
-   * Returns true to force ANY mode, false for AUTO mode
+   * Detect what type of request this is (todo, web_search, general)
    */
-  private shouldForceToolUse(messages: AIMessage[]): boolean {
-    // Get the last user message
-    const lastUserMessage = [...messages].reverse().find(m => m.role === 'user');
-    if (!lastUserMessage) return false;
+  private detectRequestType(messages: AIMessage[]): 'todo' | 'web' | 'general' {
+    // Find the ORIGINAL user message (not function responses which are encoded as user role)
+    // Skip messages that look like JSON (function call/response markers)
+    const userMessages = messages.filter(m => {
+      if (m.role !== 'user') return false;
+      // Skip function responses (they start with { and contain special markers)
+      if (m.content.startsWith('{') && m.content.includes('_gemini_function')) return false;
+      return true;
+    });
+
+    // Get the LAST actual user message (not function response)
+    const lastUserMessage = userMessages[userMessages.length - 1];
+    if (!lastUserMessage) return 'general';
 
     const content = lastUserMessage.content.toLowerCase();
 
-    // Keywords that strongly indicate need for real-time information
-    const toolTriggers = [
-      // News / Actualités
+    // Todo triggers - check FIRST (before web triggers)
+    const todoTriggers = [
+      'ajoute une tâche', 'ajouter une tâche', 'nouvelle tâche', 'créer une tâche',
+      'ajoute un todo', 'ajoute un rappel', 'rappelle-moi', 'rappelle moi',
+      'liste mes tâches', 'mes tâches', 'quelles tâches', 'voir les tâches',
+      'liste des tâches', 'todo list', 'todolist', 'to-do', 'ma todo',
+      'tâche terminée', 'j\'ai fini', 'j\'ai terminé', 'marque comme fait',
+      'supprime la tâche', 'supprimer la tâche', 'enlève la tâche',
+      'add task', 'add todo', 'add a task', 'create task', 'new task',
+      'ajoute', 'ajouter'  // Generic "add" in French - if combined with task-like words
+    ];
+
+    // Check if it's a todo request
+    if (todoTriggers.some(trigger => content.includes(trigger))) {
+      console.log('[AIWithTools] Detected TODO request');
+      return 'todo';
+    }
+
+    // Also check for patterns like "ajoute X à ma liste" or "ajoute acheter du pain"
+    if (content.match(/ajoute[rz]?\s+(?!la recherche|le son|une image)/)) {
+      console.log('[AIWithTools] Detected TODO request via pattern match');
+      return 'todo';
+    }
+
+    // Web search triggers
+    const webTriggers = [
       'actualités', 'actualité', 'actu', 'news', 'nouvelles',
-      'quoi de neuf', "qu'est-ce qui se passe",
-      // TV / Programs
       'programme tv', 'programme télé', 'télé ce soir', 'tv ce soir',
-      'france 2', 'france 3', 'tf1', 'm6', 'arte', 'canal+',
-      "qu'y a-t-il", "qu'est-ce qu'il y a", 'ce soir à la télé',
-      // Weather / Météo
-      'météo', 'meteo', 'temps qu\'il fait', 'température', 'temperature',
-      'va-t-il pleuvoir', 'fait-il beau',
-      // Time-sensitive
-      'aujourd\'hui', 'ce soir', 'demain', 'cette semaine',
-      'en ce moment', 'actuellement',
-      // Prices / Commerce
-      'prix de', 'coût de', 'combien coûte', 'tarif',
-      // Events
-      'événements', 'evenements', 'concerts', 'spectacles',
-      // Sports
+      'météo', 'meteo', 'temps qu\'il fait',
+      'prix de', 'combien coûte', 'recherche', 'cherche sur le web',
       'score', 'résultat du match', 'classement'
     ];
 
-    const shouldForce = toolTriggers.some(trigger => content.includes(trigger));
-
-    if (shouldForce) {
-      console.log('[AIWithTools] Detected tool-requiring query, forcing ANY mode');
+    if (webTriggers.some(trigger => content.includes(trigger))) {
+      console.log('[AIWithTools] Detected WEB request');
+      return 'web';
     }
 
-    return shouldForce;
+    return 'general';
+  }
+
+  /**
+   * Get the appropriate tools for a given request type
+   */
+  private getToolsForRequestType(requestType: 'todo' | 'web' | 'general'): ToolDefinition[] {
+    const todoTools = getTodoTools();
+    const webTools = getWebTools();
+
+    switch (requestType) {
+      case 'todo':
+        // ONLY return todo tools to force Gemini to use them
+        console.log('[AIWithTools] Providing TODO tools only:', todoTools.map(t => t.name));
+        return todoTools;
+      case 'web':
+        // Return web tools for web-related queries
+        console.log('[AIWithTools] Providing WEB tools:', webTools.map(t => t.name));
+        return webTools;
+      case 'general':
+      default:
+        // Return all tools for general queries
+        const allTools = [...todoTools, ...webTools];
+        console.log('[AIWithTools] Providing ALL tools:', allTools.map(t => t.name));
+        return allTools;
+    }
+  }
+
+  /**
+   * Detect if the user's query requires tool usage
+   * Returns true to force ANY mode for both todo and web requests
+   */
+  private shouldForceToolUse(messages: AIMessage[]): boolean {
+    const requestType = this.detectRequestType(messages);
+
+    if (requestType !== 'general') {
+      console.log(`[AIWithTools] Detected ${requestType} request, forcing ANY mode`);
+      return true;
+    }
+
+    return false;
   }
 
   /**

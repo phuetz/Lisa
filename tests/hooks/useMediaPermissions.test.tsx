@@ -19,7 +19,7 @@ describe('useMediaPermissions', () => {
 
   it('falls back to "prompt" when Permissions API is not available', async () => {
     // Ensure permissions API is undefined
-    // @ts-expect-error navigator.permissions is intentionally removed for fallback test
+    // @ts-expect-error
     delete navigator.permissions;
 
     const { container } = render(<TestComponent />);

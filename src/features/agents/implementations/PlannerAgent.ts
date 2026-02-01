@@ -4,24 +4,22 @@
  * A lightweight, modular orchestrator that coordinates complex workflows using
  * separate utilities for planning, execution, error handling and logging.
  */
-import { agentRegistry } from '../core/registry';
+import { agentRegistry } from './registry';
 import { v4 as uuidv4 } from 'uuid';
-import { saveToStorage, loadFromStorage } from '../../../utils/storage';
-import { secureAI } from '../../../services/SecureAIService';
-import { resilientExecutor } from '../../../utils/resilience/ResilientExecutor';
+import { saveToStorage, loadFromStorage } from '../utils/storage';
 
 // Import refactored utilities
-import { buildPlannerPrompt, buildPlanExplanationPrompt } from '../../../utils/buildPlannerPrompt';
-import { runWorkflowPlan } from '../../../utils/runWorkflowPlan';
-import { logEvent } from '../../../utils/logger';
-import { revisePlan } from '../../../utils/revisePlan';
-import { planTracer } from '../../../utils/planTracer';
+import { buildPlannerPrompt, buildPlanExplanationPrompt, PromptOptions } from '../utils/buildPlannerPrompt';
+import { runWorkflowPlan } from '../utils/runWorkflowPlan';
+import { logEvent } from '../utils/logger';
+import { revisePlan } from '../utils/revisePlan';
+import { planTracer } from '../utils/planTracer';
 // Import types
-import type { BaseAgent } from '../core/types';
-import { AgentDomains } from '../core/types';
-import type { WorkflowStep, PlannerAgentExecuteProps, PlannerResult } from '../../../types/Planner';
+import type { BaseAgent, AgentExecuteResult } from './types';
+import type { WorkflowStep, PlannerAgentExecuteProps, PlannerResult } from '../types/Planner';
 
 // Constants
+const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
 const MAX_REVISIONS = 3;
 const PLANNER_TEMPLATES_KEY = 'planner_templates';
 const PLANNER_CHECKPOINTS_KEY = 'planner_checkpoints';
@@ -34,7 +32,7 @@ export class PlannerAgent implements BaseAgent {
   description = 'Generates and executes complex, resilient, and efficient multi-step workflows.';
   capabilities = ['planning', 'orchestration', 'workflow'];
   version = '2.0.0';
-  domain = AgentDomains.PLANNING;
+  domain = 'workflow';
 
   private workflowTemplates: Map<string, WorkflowStep[]>;
   private workflowCheckpoints: Map<string, WorkflowStep[]>;
@@ -48,25 +46,21 @@ export class PlannerAgent implements BaseAgent {
     this.workflowCheckpoints = savedCheckpoints ? new Map(savedCheckpoints) : new Map();
   }
 
-  protected logPlanStatus(status: string, details?: Record<string, unknown>, message?: string): void {
-    logEvent('plan_status', {
-      status,
-      ...(details ?? {})
-    }, message ?? `Planner status update: ${status}`);
-  }
-
   /**
    * Main execution method - generates and runs a plan to fulfill a request
    */
-  async execute(props: PlannerAgentExecuteProps): Promise<PlannerResult> {
+  async execute(props: PlannerAgentExecuteProps): Promise<AgentExecuteResult> {
+    if (!OPENAI_API_KEY) {
+      return { success: false, error: 'OpenAI API key is not configured.', output: null };
+    }
+
     // Initialiser le traçage pour cette exécution
     const traceId = planTracer.startTrace(props.request);
-    this.logPlanStatus('initializing', { request: props.request });
     logEvent('plan_execution_started', { requestId: props.request.substring(0, 50) }, 'PlannerAgent execution started');
     
     let plan: WorkflowStep[] = [];
     let revisionCount = 0;
-    const checkpointId: string | null = null;
+    let checkpointId: string | null = null;
     let explanation: string | null = null;
 
     try {
@@ -79,10 +73,6 @@ export class PlannerAgent implements BaseAgent {
       });
       
       plan = await this.getPlan(props);
-      this.logPlanStatus('plan_ready', {
-        steps: plan.length,
-        source: props.loadFromTemplate ? 'template' : props.resumeFromCheckpointId ? 'checkpoint' : 'generated'
-      });
       
       // Générer une explication du plan pour l'utilisateur
       try {
@@ -109,7 +99,6 @@ export class PlannerAgent implements BaseAgent {
       planTracer.addStep(traceId, 'plan_execution', {
         metadata: { planSize: plan.length }
       });
-      this.logPlanStatus('execution_started', { stepCount: plan.length });
       
       let result = await this.executePlan(plan, props);
       
@@ -120,38 +109,34 @@ export class PlannerAgent implements BaseAgent {
         planTracer.addStep(traceId, 'plan_revision', {
           metadata: { 
             attempt: revisionCount,
-            error: typeof result.error === 'string' ? result.error : result.error?.message 
+            error: result.error?.message 
           }
         });
-        this.logPlanStatus('plan_revision', {
-          attempt: revisionCount,
-          reason: typeof result.error === 'string' ? result.error : result.error?.message
-        });
-
+        
         plan = await this.revisePlan(
           props.request, 
           plan, 
-          typeof result.error === 'string' ? result.error : result.error?.message, 
+          result.error?.message, 
           revisionCount,
           traceId
         );
-
+        
         result = await this.executePlan(plan, props);
-
+        
         if (result.success) {
           planTracer.addStep(traceId, 'plan_execution', {
             metadata: { success: true, revisionCount },
-            result: result.output
+            result: result.summary
           });
           break;
         }
       }
       
       // Phase 4: Finalize (save template, cleanup)
-      const finalResult = this.finalizePlan(result, plan, props, checkpointId, explanation, traceId);
+      const finalResult = this.finalizePlan(result, plan, props, checkpointId);
       
       // Terminer la trace avec le résultat final
-      planTracer.endTrace(traceId, finalResult.output || (typeof finalResult.error === 'string' ? finalResult.error : finalResult.error?.message));
+      planTracer.endTrace(traceId, finalResult.output as string || finalResult.error);
       
       // Ajouter l'explication au résultat si disponible
       if (explanation && finalResult.success) {
@@ -176,15 +161,8 @@ export class PlannerAgent implements BaseAgent {
       });
       planTracer.endTrace(traceId, `Execution failed: ${message}`);
       
-      this.logPlanStatus('execution_failed', { error: message });
       logEvent('plan_failed', { error: message }, `PlannerAgent execution failed: ${message}`);
-      return {
-        success: false,
-        error: message,
-        output: `PlannerAgent execution failed: ${message}`,
-        plan,
-        traceId,
-      };
+      return { success: false, error: message, output: null, traceId };
     }
   }
 
@@ -243,7 +221,6 @@ export class PlannerAgent implements BaseAgent {
     plan: WorkflowStep[],
     props: PlannerAgentExecuteProps
   ): Promise<PlannerResult> {
-    this.logPlanStatus('execution_started', { stepCount: plan.length });
     // Create checkpoint before execution
     const checkpointId = this.createCheckpoint(plan);
     logEvent('checkpoint_created', { checkpointId }, `Created execution checkpoint ${checkpointId}`);
@@ -270,6 +247,7 @@ export class PlannerAgent implements BaseAgent {
       
       // Préparer les options pour la révision
       const revisionOptions: Parameters<typeof revisePlan>[4] = {
+        apiKey: OPENAI_API_KEY,
         traceId,
         onExplanation: (explanation) => {
           // Journal pour l'explication (sera utilisé pour l'interface utilisateur)
@@ -290,7 +268,6 @@ export class PlannerAgent implements BaseAgent {
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       logEvent('plan_revision_failed', { error: message }, `Plan revision failed: ${message}`);
-      return failedPlan;
     }
   }
 
@@ -298,13 +275,19 @@ export class PlannerAgent implements BaseAgent {
    * Finalize plan execution, save templates, and clean up checkpoints.
    */
   private finalizePlan(
-    result: PlannerResult,
+    result: { success: boolean; error?: string; summary?: string },
     plan: WorkflowStep[],
     props: PlannerAgentExecuteProps,
     checkpointId?: string | null,
     explanation?: string | null,
     traceId?: string
   ): PlannerResult {
+    // Mettre à jour le store avec l'explication du plan et l'ID de trace
+    const store = agentRegistry.getStore();
+    if (store && explanation) {
+      store.setLastPlanExplanation(explanation, traceId);
+    }
+    
     // Get API request ID if one was used
     if (result.success) {
       // Save as template if specified
@@ -317,27 +300,20 @@ export class PlannerAgent implements BaseAgent {
       if (checkpointId) {
         this.workflowCheckpoints.delete(checkpointId);
         saveToStorage(PLANNER_CHECKPOINTS_KEY, Array.from(this.workflowCheckpoints.entries()));
-        this.logPlanStatus('checkpoint_deleted', { id: checkpointId });
         logEvent('checkpoint_deleted', { id: checkpointId }, `Deleted checkpoint ${checkpointId} after successful execution`);
       }
       
-      this.logPlanStatus('plan_succeeded', {
-        request: props.request,
-        templateSaved: Boolean(props.saveAsTemplate)
-      });
       logEvent('plan_succeeded', { request: props.request }, `Plan executed successfully`);
       return { 
         success: true, 
-        output: result.output || 'Plan executed successfully', 
+        output: result.summary || 'Plan executed successfully', 
         plan,
         explanation,
         traceId
       };
     } else {
       // Add checkpoint for failed plan
-      const errorMessage = typeof result.error === 'string'
-        ? result.error
-        : result.error?.message || 'Unknown error';
+      const errorMessage = result.error || 'Unknown error';
       
       if (!props.preventCheckpoint) {
         const id = checkpointId || uuidv4();
@@ -346,35 +322,37 @@ export class PlannerAgent implements BaseAgent {
         logEvent('checkpoint_saved', { id }, `Saved checkpoint for failed plan: ${id}`);
       }
       
-      this.logPlanStatus('plan_failed', { error: errorMessage });
       logEvent('plan_failed', { error: errorMessage }, `Plan failed: ${errorMessage}`);
       return { 
         success: false, 
         error: errorMessage, 
         plan,
         explanation,
-        traceId,
-        output: result.output || `Plan failed: ${errorMessage}`
+        traceId
       };
     }
   }
 
   private async callLLM(prompt: string): Promise<string> {
-    // Utiliser le proxy sécurisé avec résilience
-    const result = await resilientExecutor.executeWithRetry(
-      () => secureAI.callOpenAI(
-        [{ role: 'user', content: prompt }],
-        'gpt-4o-mini' // Modèle économique et puissant
-      ),
-      {
-        maxRetries: 3,
-        circuitBreakerKey: 'PlannerAgent',
-        onRetry: (attempt, max) => {
-          this.logPlanStatus('llm_retry', { attempt, max });
-        }
-      }
-    );
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${OPENAI_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: 'gpt-4-turbo', // ou un autre modèle puissant
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.2,
+        response_format: { type: 'json_object' }
+      }),
+    });
     
+    if (!response.ok) {
+      throw new Error(`LLM API request failed: ${response.status} ${await response.text()}`);
+    }
+    
+    const result = await response.json();
     return result.choices[0].message.content;
   }
 

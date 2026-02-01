@@ -11,7 +11,9 @@ export const TranslationPanel = () => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [text, setText] = useState('');
   const [targetLang, setTargetLang] = useState('en');
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [result, setResult] = useState<any>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [languages, setLanguages] = useState<any[]>([]);
 
   useEffect(() => {

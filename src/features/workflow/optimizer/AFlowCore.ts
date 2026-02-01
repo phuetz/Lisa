@@ -3,7 +3,7 @@
  * for workflow optimization, inspired by the AFlow paper.
  */
 
-import { WorkflowJSON, OptimizationObjective, WorkflowStep } from '../../agents/AFlowOptimizerAgent';
+import type { WorkflowJSON, OptimizationObjective, WorkflowStep } from '../../agents/implementations/AFlowOptimizerAgent';
 
 /**
  * Represents a node in the MCTS search tree.
@@ -128,7 +128,7 @@ export class AFlowCore {
     // This is a placeholder. A real implementation would apply the step to the JSON.
     const newState = JSON.parse(JSON.stringify(state));
     if (action.operator === 'add' && action.node) {
-        newState.nodes.push(action.node);
+      newState.nodes.push(action.node);
     }
     return newState;
   }
@@ -137,20 +137,20 @@ export class AFlowCore {
     const path: WorkflowStep[] = [];
     let currentNode = root;
     while (currentNode.children.length > 0) {
-        let bestChild: MCTSNode | null = null;
-        let maxVisits = -1;
-        for(const child of currentNode.children) {
-            if(child.visits > maxVisits) {
-                maxVisits = child.visits;
-                bestChild = child;
-            }
+      let bestChild: MCTSNode | null = null;
+      let maxVisits = -1;
+      for (const child of currentNode.children) {
+        if (child.visits > maxVisits) {
+          maxVisits = child.visits;
+          bestChild = child;
         }
-        if (bestChild && bestChild.action) {
-            path.push(bestChild.action);
-            currentNode = bestChild;
-        } else {
-            break;
-        }
+      }
+      if (bestChild && bestChild.action) {
+        path.push(bestChild.action);
+        currentNode = bestChild;
+      } else {
+        break;
+      }
     }
     return path;
   }

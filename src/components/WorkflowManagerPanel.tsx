@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useVisionAudioStore } from '../store/visionAudioStore';
+import { useAppStore } from '../store/appStore';
 import { useWorkflowEngine } from '../hooks/useWorkflowEngine';
 
 interface WorkflowManagerPanelProps {
@@ -79,8 +79,8 @@ export const WorkflowManagerPanel: React.FC<WorkflowManagerPanelProps> = ({ hand
   
   // Get legacy data from store (for backward compatibility)
   // Use separate selectors to avoid infinite re-renders
-  const legacyTemplates = useVisionAudioStore(state => state.templates) || [];
-  const checkpoints = useVisionAudioStore(state => state.checkpoints) || [];
+  const legacyTemplates = useAppStore(state => state.templates) || [];
+  const checkpoints = useAppStore(state => state.checkpoints) || [];
   
   const handleLoadTemplate = (templateName: string) => {
     handleIntent(`load template ${templateName}`, true);

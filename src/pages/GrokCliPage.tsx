@@ -1,26 +1,32 @@
 /**
  * GrokCliPage
- * Page dédiée à l'interface grok-cli dans Lisa
+ * Page dediee a l'interface grok-cli dans Lisa
  */
 
 import React from 'react';
-import { Box, Container } from '@mui/material';
+import { OfficePageLayout } from '../components/layout/OfficePageLayout';
+import { useOfficeThemeStore } from '../store/officeThemeStore';
 import { GrokCliPanel } from '../components/GrokCliPanel';
 
 export const GrokCliPage: React.FC = () => {
+  const { getCurrentColors } = useOfficeThemeStore();
+  const colors = getCurrentColors();
+
   return (
-    <Container maxWidth="xl" sx={{ height: 'calc(100vh - 64px)', py: 2 }}>
-      <Box
-        sx={{
-          height: '100%',
-          bgcolor: 'background.paper',
-          borderRadius: 2,
-          overflow: 'hidden',
-        }}
-      >
+    <OfficePageLayout
+      title="Grok CLI"
+      subtitle="Interface ligne de commande Grok"
+    >
+      <div style={{
+        backgroundColor: colors.dialog,
+        borderRadius: '12px',
+        border: `1px solid ${colors.border}`,
+        height: 'calc(100vh - 200px)',
+        overflow: 'hidden'
+      }}>
         <GrokCliPanel />
-      </Box>
-    </Container>
+      </div>
+    </OfficePageLayout>
   );
 };
 

@@ -7,7 +7,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useVisionAudioStore } from '../store/visionAudioStore';
+import { useAppStore } from '../store/appStore';
 
 interface PlanExplanationPanelProps {
   /** ID facultatif d'une trace de plan spécifique à afficher */
@@ -22,8 +22,8 @@ interface PlanExplanationPanelProps {
  */
 export default function PlanExplanationPanel({ traceId, style }: PlanExplanationPanelProps) {
   const { t } = useTranslation();
-  const lastPlanExplanation = useVisionAudioStore(s => s.lastPlanExplanation);
-  const setLastPlanExplanation = useVisionAudioStore(s => s.setLastPlanExplanation);
+  const lastPlanExplanation = useAppStore(s => s.lastPlanExplanation);
+  const setLastPlanExplanation = useAppStore(s => s.setLastPlanExplanation);
   const [visible, setVisible] = useState(Boolean(lastPlanExplanation));
   const [fadeOut, setFadeOut] = useState(false);
   

@@ -10,6 +10,7 @@ export const LOG_LEVEL = {
   ERROR: 3,
   FATAL: 4,
 } as const;
+import * as Sentry from '@sentry/browser';
 export type LogLevel = typeof LOG_LEVEL[keyof typeof LOG_LEVEL];
 const levelNames: Record<number, string> = {
   0: 'DEBUG',
@@ -53,6 +54,14 @@ class StructuredLogger {
       this.minLevel = LOG_LEVEL.WARN; // En production, seulement WARN et plus
     } else {
       this.minLevel = LOG_LEVEL.DEBUG; // En dev, tout logger
+    }
+
+    if (import.meta.env.VITE_SENTRY_DSN) {
+      Sentry.init({
+        dsn: import.meta.env.VITE_SENTRY_DSN,
+        environment: import.meta.env.MODE,
+        tracesSampleRate: 1.0,
+      });
     }
   }
 
@@ -131,16 +140,25 @@ class StructuredLogger {
     }
   }
 
-  private sendToMonitoring(_entry: LogEntry): void {
-    // TODO: Intégrer avec Sentry, DataDog, etc.
-    // Pour l'instant, juste stocker
+  private sendToMonitoring(entry: LogEntry): void {
+    if (!import.meta.env.VITE_SENTRY_DSN) return;
+
     try {
-      // Exemple: envoyer à une API de monitoring
-      // fetch('/api/logs', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(entry),
-      // });
+      Sentry.withScope((scope: Sentry.Scope) => {
+        if (entry.context) {
+          scope.setExtras(entry.context);
+        }
+        if (entry.data) {
+          scope.setExtra('data', entry.data);
+        }
+        scope.setLevel(entry.level >= LOG_LEVEL.ERROR ? 'error' : 'warning');
+
+        if (entry.error) {
+          Sentry.captureException(entry.error);
+        } else {
+          Sentry.captureMessage(entry.message);
+        }
+      });
     } catch (error) {
       // Ne pas crasher si le monitoring échoue
       console.error('Failed to send log to monitoring:', error);
@@ -184,7 +202,7 @@ class StructuredLogger {
     byLevel: Record<string, number>;
   } {
     const byLevel: Record<string, number> = {};
-    
+
     this.logs.forEach(log => {
       const levelName = levelNames[log.level] ?? String(log.level);
       byLevel[levelName] = (byLevel[levelName] || 0) + 1;
@@ -202,38 +220,38 @@ export const logger = StructuredLogger.getInstance();
 
 // Export convenience functions
 export const log = {
-  debug: (message: string, context?: LogContext, data?: unknown) => 
+  debug: (message: string, context?: LogContext, data?: unknown) =>
     logger.debug(message, context, data),
-  
-  info: (message: string, context?: LogContext, data?: unknown) => 
+
+  info: (message: string, context?: LogContext, data?: unknown) =>
     logger.info(message, context, data),
-  
-  warn: (message: string, context?: LogContext, data?: unknown) => 
+
+  warn: (message: string, context?: LogContext, data?: unknown) =>
     logger.warn(message, context, data),
-  
-  error: (message: string, error?: Error, context?: LogContext, data?: unknown) => 
+
+  error: (message: string, error?: Error, context?: LogContext, data?: unknown) =>
     logger.error(message, error, context, data),
-  
-  fatal: (message: string, error?: Error, context?: LogContext, data?: unknown) => 
+
+  fatal: (message: string, error?: Error, context?: LogContext, data?: unknown) =>
     logger.fatal(message, error, context, data),
 };
 
 // Helper pour créer un logger avec contexte pré-rempli
 export function createLogger(defaultContext: LogContext) {
   return {
-    debug: (message: string, data?: unknown) => 
+    debug: (message: string, data?: unknown) =>
       logger.debug(message, defaultContext, data),
-    
-    info: (message: string, data?: unknown) => 
+
+    info: (message: string, data?: unknown) =>
       logger.info(message, defaultContext, data),
-    
-    warn: (message: string, data?: unknown) => 
+
+    warn: (message: string, data?: unknown) =>
       logger.warn(message, defaultContext, data),
-    
-    error: (message: string, error?: Error, data?: unknown) => 
+
+    error: (message: string, error?: Error, data?: unknown) =>
       logger.error(message, error, defaultContext, data),
-    
-    fatal: (message: string, error?: Error, data?: unknown) => 
+
+    fatal: (message: string, error?: Error, data?: unknown) =>
       logger.fatal(message, error, defaultContext, data),
   };
 }

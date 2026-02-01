@@ -9,8 +9,10 @@ export interface RosMessage {
   op: 'publish' | 'subscribe' | 'unsubscribe' | 'call_service' | 'advertise' | 'unadvertise';
   topic?: string;
   type?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   msg?: any;
   service?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   args?: any;
   id?: string;
 }
@@ -35,6 +37,7 @@ class RosBridgeService {
   private reconnectDelay = 1000;
   private isConnecting = false;
   private messageQueue: RosMessage[] = [];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private subscribers = new Map<string, (data: any) => void>();
 
   constructor() {
@@ -125,6 +128,7 @@ class RosBridgeService {
     this.subscribe('/battery_state', 'sensor_msgs/BatteryState');
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private handleIncomingMessage(message: any): void {
     if (message.topic && this.subscribers.has(message.topic)) {
       const callback = this.subscribers.get(message.topic);
@@ -146,6 +150,7 @@ class RosBridgeService {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public subscribe(topic: string, messageType: string, callback?: (data: any) => void): void {
     const message: RosMessage = {
       op: 'subscribe',

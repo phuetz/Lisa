@@ -1,0 +1,32 @@
+
+> lisa-monorepo@1.0.0 build C:\Users\patri\CascadeProjects\Lisa
+> vite build
+
+[36mvite v6.4.1 [32mbuilding for production...[36m[39m
+transforming...
+[32mÔ£ô[39m 113 modules transformed.
+Ô£ù Build failed in 849ms
+error during build:
+[vite:esbuild] Transform failed with 1 error:
+C:/Users/patri/CascadeProjects/Lisa/src/features/vision/api.ts:18:29: ERROR: "await" can only be used inside an "async" function
+file: C:/Users/patri/CascadeProjects/Lisa/src/features/vision/api.ts:18:29
+
+"await" can only be used inside an "async" function
+16 |    // 1. Update Legacy Store (Zustand)
+17 |    // 1. Update Legacy Store (Zustand)
+18 |    const { useVisionStore } = await import('../../store/visionStore');
+   |                               ^
+19 |    useVisionStore.getState().addPercept(percept);
+20 |  
+
+    at failureErrorWithLog (C:\Users\patri\CascadeProjects\Lisa\node_modules\.pnpm\esbuild@0.25.12\node_modules\esbuild\lib\main.js:1467:15)
+    at C:\Users\patri\CascadeProjects\Lisa\node_modules\.pnpm\esbuild@0.25.12\node_modules\esbuild\lib\main.js:736:50
+    at responseCallbacks.<computed> (C:\Users\patri\CascadeProjects\Lisa\node_modules\.pnpm\esbuild@0.25.12\node_modules\esbuild\lib\main.js:603:9)
+    at handleIncomingPacket (C:\Users\patri\CascadeProjects\Lisa\node_modules\.pnpm\esbuild@0.25.12\node_modules\esbuild\lib\main.js:658:12)
+    at Socket.readFromStdout (C:\Users\patri\CascadeProjects\Lisa\node_modules\.pnpm\esbuild@0.25.12\node_modules\esbuild\lib\main.js:581:7)
+    at Socket.emit (node:events:518:28)
+    at addChunk (node:internal/streams/readable:561:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+    at Readable.push (node:internal/streams/readable:392:5)
+    at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)
+ÔÇëELIFECYCLEÔÇë Command failed with exit code 1.

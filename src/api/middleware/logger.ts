@@ -15,7 +15,7 @@ export interface LogEntry {
   userId?: string;
   ip?: string;
   userAgent?: string;
-  error?: any;
+  error?: unknown;
 }
 
 class Logger {
@@ -55,12 +55,13 @@ class Logger {
     console.warn(this.formatLog(entry));
   }
 
-  error(message: string, error?: any, meta?: Partial<LogEntry>): void {
+  error(message: string, error?: unknown, meta?: Partial<LogEntry>): void {
+    const errorValue = error instanceof Error ? error.stack : error;
     const entry: LogEntry = {
       timestamp: new Date().toISOString(),
       level: 'error',
       message,
-      error: error?.stack || error,
+      error: errorValue,
       ...meta
     };
     console.error(this.formatLog(entry));
@@ -93,12 +94,13 @@ export const requestLogger = (req: Request, res: Response, next: NextFunction) =
     url: req.url,
     ip: req.ip,
     userAgent: req.get('User-Agent'),
-    userId: (req as any).user?.userId
+    userId: (req as { user?: { userId?: string } }).user?.userId
   });
 
   // Override de res.end pour capturer la réponse
-  const originalEnd = res.end;
-  res.end = function(chunk?: any, encoding?: any) {
+  const originalEnd = res.end.bind(res);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (res as any).end = function(chunk?: unknown, encoding?: BufferEncoding) {
     const responseTime = Date.now() - startTime;
     
     // Log de la réponse
@@ -108,11 +110,11 @@ export const requestLogger = (req: Request, res: Response, next: NextFunction) =
       statusCode: res.statusCode,
       responseTime,
       ip: req.ip,
-      userId: (req as any).user?.userId
+      userId: (req as { user?: { userId?: string } }).user?.userId
     });
 
     // Appeler la méthode originale
-    originalEnd.call(this, chunk, encoding);
+    return originalEnd(chunk, encoding as BufferEncoding);
   };
 
   next();
@@ -121,12 +123,12 @@ export const requestLogger = (req: Request, res: Response, next: NextFunction) =
 /**
  * Middleware de gestion des erreurs avec logging
  */
-export const errorLogger = (err: Error, req: Request, res: Response, next: NextFunction) => {
+export const errorLogger = (err: Error, req: Request, _res: Response, next: NextFunction) => {
   logger.error('Request error', err, {
     method: req.method,
     url: req.url,
     ip: req.ip,
-    userId: (req as any).user?.userId
+    userId: (req as { user?: { userId?: string } }).user?.userId
   });
 
   next(err);

@@ -64,9 +64,8 @@ export class ImageAnalysisAgent implements BaseAgent {
     }
 
     // Get latest vision percepts from store (YOLOv8 detections)
-    const appStoreModule = await import('../store/appStore');
-    const useAppStore = appStoreModule.useAppStore;
-    const percepts = useAppStore.getState().percepts
+    const { useVisionStore } = await import('../../../store/visionStore');
+    const percepts = useVisionStore.getState().percepts
       .filter(p => p.modality === 'vision')
       .sort((a, b) => b.ts - a.ts);
 
@@ -185,8 +184,8 @@ export class ImageAnalysisAgent implements BaseAgent {
     }
 
     // Get MediaPipe face detections from vision percepts
-    const { useAppStore } = await import('../store/appStore');
-    const percepts = useAppStore.getState().percepts
+    const { useVisionStore } = await import('../../../store/visionStore');
+    const percepts = useVisionStore.getState().percepts
       .filter(p => p.modality === 'vision')
       .sort((a, b) => b.ts - a.ts);
 

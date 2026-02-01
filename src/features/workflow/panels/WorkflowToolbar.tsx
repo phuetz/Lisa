@@ -1,6 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import useWorkflowStore from '../store/useWorkflowStore';
 import { WorkflowExecutor } from '../executor/WorkflowExecutor';
+import { useWorkflowHistory } from '../hooks/useWorkflowHistory';
 
 interface WorkflowToolbarProps {
   sidebarOpen: boolean;
@@ -12,7 +13,7 @@ const WorkflowToolbar: React.FC<WorkflowToolbarProps> = ({ sidebarOpen, toggleSi
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [workflowName, setWorkflowName] = useState('');
   const [workflowDescription, setWorkflowDescription] = useState('');
-  
+
   // Accès au store
   const nodes = useWorkflowStore(state => state.nodes);
   const edges = useWorkflowStore(state => state.edges);
@@ -26,22 +27,22 @@ const WorkflowToolbar: React.FC<WorkflowToolbarProps> = ({ sidebarOpen, toggleSi
   const workflows = useWorkflowStore(state => state.workflows);
   const loadWorkflow = useWorkflowStore(state => state.loadWorkflow);
   const toggleDarkMode = useWorkflowStore(state => state.toggleDarkMode);
-  const undo = useWorkflowStore(state => state.undo);
-  const redo = useWorkflowStore(state => state.redo);
-  const canUndo = useWorkflowStore(state => state.canUndo);
-  const canRedo = useWorkflowStore(state => state.canRedo);
+
+  // Undo/Redo via hook (includes keyboard shortcuts)
+  const { undo, redo, canUndo, canRedo } = useWorkflowHistory();
+
   const copy = useWorkflowStore(state => state.copy);
   const cut = useWorkflowStore(state => state.cut);
   const paste = useWorkflowStore(state => state.paste);
-  
+
   // Exécution du workflow
   const executeWorkflow = useCallback(async () => {
     if (nodes.length === 0) return;
-    
+
     setExecuting(true);
     setExecutionResults({});
     setExecutionErrors({});
-    
+
     // Configuration de l'exécuteur
     const executor = new WorkflowExecutor({
       nodes: nodes.map(node => ({
@@ -58,7 +59,7 @@ const WorkflowToolbar: React.FC<WorkflowToolbarProps> = ({ sidebarOpen, toggleSi
       stepByStep: false,
       debugMode: true
     });
-    
+
     try {
       // Pour simuler une exécution pas à pas
       for (const node of nodes) {
@@ -66,10 +67,10 @@ const WorkflowToolbar: React.FC<WorkflowToolbarProps> = ({ sidebarOpen, toggleSi
         // Pause pour simuler le traitement
         await new Promise(resolve => setTimeout(resolve, 500));
       }
-      
+
       // Exécution réelle
       const result = await executor.execute();
-      
+
       // Mise à jour des résultats
       setExecutionResults(result.nodeResults);
       if (!result.success) {
@@ -84,11 +85,11 @@ const WorkflowToolbar: React.FC<WorkflowToolbarProps> = ({ sidebarOpen, toggleSi
       setCurrentExecutingNode(null);
     }
   }, [nodes, edges, setExecuting, setExecutionResults, setExecutionErrors, setCurrentExecutingNode]);
-  
+
   // Sauvegarde du workflow
   const handleSaveWorkflow = useCallback(() => {
     if (!workflowName) return;
-    
+
     const workflowId = `workflow_${Date.now()}`;
     addWorkflow({
       id: workflowId,
@@ -110,12 +111,12 @@ const WorkflowToolbar: React.FC<WorkflowToolbarProps> = ({ sidebarOpen, toggleSi
       created: new Date().toISOString(),
       updated: new Date().toISOString()
     });
-    
+
     setSaveDialogOpen(false);
     setWorkflowName('');
     setWorkflowDescription('');
   }, [workflowName, workflowDescription, nodes, edges, addWorkflow, setSaveDialogOpen, setWorkflowName, setWorkflowDescription]);
-  
+
   // Création d'un nouveau workflow vide
   const handleNewWorkflow = useCallback(() => {
     if (nodes.length > 0) {
@@ -123,7 +124,7 @@ const WorkflowToolbar: React.FC<WorkflowToolbarProps> = ({ sidebarOpen, toggleSi
         return;
       }
     }
-    
+
     useWorkflowStore.setState({
       nodes: [],
       edges: [],
@@ -134,58 +135,55 @@ const WorkflowToolbar: React.FC<WorkflowToolbarProps> = ({ sidebarOpen, toggleSi
       currentWorkflowId: null
     });
   }, [nodes.length]);
-  
+
   // Thème
   const theme = darkMode
     ? 'bg-gray-800 text-white'
     : 'bg-white text-gray-800';
-  
+
   // Rendu du dialogue de sauvegarde
   const renderSaveDialog = () => {
     if (!saveDialogOpen) return null;
-    
+
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
         <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} p-6 rounded-lg shadow-xl max-w-md w-full`}>
           <h2 className={`text-xl font-bold mb-4 ${darkMode ? 'text-white' : 'text-gray-800'}`}>
             Sauvegarder le workflow
           </h2>
-          
+
           <div className="mb-4">
             <label className={`block mb-2 ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>
               Nom du workflow
             </label>
             <input
               type="text"
-              className={`w-full px-3 py-2 border rounded-md ${
-                darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'
-              }`}
+              className={`w-full px-3 py-2 border rounded-md ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'
+                }`}
               value={workflowName}
               onChange={(e) => setWorkflowName(e.target.value)}
               placeholder="Mon workflow"
             />
           </div>
-          
+
           <div className="mb-6">
             <label className={`block mb-2 ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>
               Description
             </label>
             <textarea
-              className={`w-full px-3 py-2 border rounded-md ${
-                darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'
-              }`}
+              className={`w-full px-3 py-2 border rounded-md ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'
+                }`}
               value={workflowDescription}
               onChange={(e) => setWorkflowDescription(e.target.value)}
               placeholder="Description du workflow..."
               rows={3}
             />
           </div>
-          
+
           <div className="flex justify-end gap-2">
             <button
-              className={`px-4 py-2 rounded-md ${
-                darkMode ? 'bg-gray-600 hover:bg-gray-700' : 'bg-gray-200 hover:bg-gray-300'
-              }`}
+              className={`px-4 py-2 rounded-md ${darkMode ? 'bg-gray-600 hover:bg-gray-700' : 'bg-gray-200 hover:bg-gray-300'
+                }`}
               onClick={() => setSaveDialogOpen(false)}
             >
               Annuler
@@ -202,7 +200,7 @@ const WorkflowToolbar: React.FC<WorkflowToolbarProps> = ({ sidebarOpen, toggleSi
       </div>
     );
   };
-  
+
   return (
     <>
       <div className={`p-2 rounded-md shadow-lg ${theme} flex items-center gap-2`}>
@@ -214,7 +212,7 @@ const WorkflowToolbar: React.FC<WorkflowToolbarProps> = ({ sidebarOpen, toggleSi
         >
           {sidebarOpen ? '◀' : '▶'}
         </button>
-        
+
         {/* Bouton nouveau workflow */}
         <button
           className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
@@ -222,7 +220,7 @@ const WorkflowToolbar: React.FC<WorkflowToolbarProps> = ({ sidebarOpen, toggleSi
         >
           Nouveau
         </button>
-        
+
         {/* Bouton sauvegarder */}
         <button
           className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600"
@@ -231,7 +229,7 @@ const WorkflowToolbar: React.FC<WorkflowToolbarProps> = ({ sidebarOpen, toggleSi
         >
           Sauvegarder
         </button>
-        
+
         {/* Menu déroulant des workflows */}
         <div className="relative group">
           <button
@@ -239,7 +237,7 @@ const WorkflowToolbar: React.FC<WorkflowToolbarProps> = ({ sidebarOpen, toggleSi
           >
             Charger
           </button>
-          
+
           <div className="absolute left-0 mt-1 w-64 bg-white dark:bg-gray-800 shadow-lg rounded-md overflow-hidden hidden group-hover:block z-10">
             {Object.values(workflows).length === 0 ? (
               <div className="p-3 text-gray-500 dark:text-gray-400 text-sm">
@@ -263,26 +261,25 @@ const WorkflowToolbar: React.FC<WorkflowToolbarProps> = ({ sidebarOpen, toggleSi
             )}
           </div>
         </div>
-        
+
         {/* Séparateur */}
         <div className="h-6 border-l border-gray-300 dark:border-gray-700 mx-1"></div>
-        
+
         {/* Bouton exécuter */}
         <button
-          className={`px-3 py-1 rounded ${
-            isExecuting
-              ? 'bg-red-500 hover:bg-red-600'
-              : 'bg-yellow-500 hover:bg-yellow-600'
-          } text-white`}
+          className={`px-3 py-1 rounded ${isExecuting
+            ? 'bg-red-500 hover:bg-red-600'
+            : 'bg-yellow-500 hover:bg-yellow-600'
+            } text-white`}
           onClick={executeWorkflow}
           disabled={isExecuting || nodes.length === 0}
         >
           {isExecuting ? 'Exécution en cours...' : 'Exécuter'}
         </button>
-        
+
         {/* Séparateur */}
         <div className="h-6 border-l border-gray-300 dark:border-gray-700 mx-1"></div>
-        
+
         {/* Bouton mode sombre */}
         <button
           className="p-2 rounded hover:bg-gray-200 hover:bg-opacity-20"
@@ -333,7 +330,7 @@ const WorkflowToolbar: React.FC<WorkflowToolbarProps> = ({ sidebarOpen, toggleSi
           貼り付け
         </button>
       </div>
-      
+
       {/* Dialogue de sauvegarde */}
       {renderSaveDialog()}
     </>

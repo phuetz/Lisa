@@ -1,23 +1,40 @@
 /**
- * 📄 Documents Page - Analyse de Documents
+ * Documents Page - Analyse de Documents
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { ModernLayout } from '../components/layout/ModernLayout';
-import { 
+import { OfficePageLayout } from '../components/layout/OfficePageLayout';
+import { useOfficeThemeStore } from '../store/officeThemeStore';
+import {
   FileText, Upload, Search, Trash2,
   Eye, AlertCircle, Loader2
 } from 'lucide-react';
-import { 
-  documentAnalysisService, 
-  type DocumentAnalysis 
+import {
+  documentAnalysisService,
+  type DocumentAnalysis
 } from '../services/DocumentAnalysisService';
+
+interface ThemeColors {
+  sidebar: string;
+  sidebarHover: string;
+  sidebarActive: string;
+  editor: string;
+  editorText: string;
+  editorSecondary: string;
+  dialog: string;
+  border: string;
+  accent: string;
+  success: string;
+  error: string;
+  inputBg: string;
+  inputBorder: string;
+}
 
 const StatusBadge = ({ status }: { status: DocumentAnalysis['status'] }) => {
   const config = {
     pending: { color: '#666', bg: '#66666620', label: 'En attente' },
     processing: { color: '#f59e0b', bg: '#f59e0b20', label: 'Analyse...' },
-    completed: { color: '#10a37f', bg: '#10a37f20', label: 'Terminé' },
+    completed: { color: '#10a37f', bg: '#10a37f20', label: 'Termine' },
     error: { color: '#ef4444', bg: '#ef444420', label: 'Erreur' },
   };
 
@@ -39,21 +56,23 @@ const StatusBadge = ({ status }: { status: DocumentAnalysis['status'] }) => {
   );
 };
 
-const DocumentCard = ({ 
-  doc, 
-  onView, 
-  onDelete 
-}: { 
-  doc: DocumentAnalysis; 
+const DocumentCard = ({
+  doc,
+  onView,
+  onDelete,
+  colors
+}: {
+  doc: DocumentAnalysis;
   onView: (id: string) => void;
   onDelete: (id: string) => void;
+  colors: ThemeColors;
 }) => (
   <div
     style={{
       padding: '16px',
-      backgroundColor: '#1a1a1a',
+      backgroundColor: colors.sidebar,
       borderRadius: '12px',
-      border: '1px solid #2d2d2d',
+      border: `1px solid ${colors.border}`,
       marginBottom: '12px',
     }}
   >
@@ -64,19 +83,19 @@ const DocumentCard = ({
             width: '40px',
             height: '40px',
             borderRadius: '8px',
-            backgroundColor: '#2d2d2d',
+            backgroundColor: colors.dialog,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
           }}
         >
-          <FileText size={20} color="#888" />
+          <FileText size={20} color={colors.editorSecondary} />
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ 
-            fontSize: '14px', 
-            fontWeight: 500, 
-            color: '#fff', 
+          <p style={{
+            fontSize: '14px',
+            fontWeight: 500,
+            color: colors.editorText,
             margin: 0,
             overflow: 'hidden',
             textOverflow: 'ellipsis',
@@ -86,7 +105,7 @@ const DocumentCard = ({
           </p>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '6px' }}>
             <StatusBadge status={doc.status} />
-            <span style={{ fontSize: '12px', color: '#666' }}>
+            <span style={{ fontSize: '12px', color: colors.editorSecondary }}>
               {doc.content?.wordCount || 0} mots
             </span>
           </div>
@@ -95,13 +114,13 @@ const DocumentCard = ({
       <div style={{ display: 'flex', gap: '4px' }}>
         <button
           onClick={() => onView(doc.id)}
-          aria-label="Voir les détails"
+          aria-label="Voir les details"
           style={{
             padding: '8px',
             backgroundColor: 'transparent',
             border: 'none',
             cursor: 'pointer',
-            color: '#888',
+            color: colors.editorSecondary,
             borderRadius: '6px',
           }}
         >
@@ -115,7 +134,7 @@ const DocumentCard = ({
             backgroundColor: 'transparent',
             border: 'none',
             cursor: 'pointer',
-            color: '#888',
+            color: colors.editorSecondary,
             borderRadius: '6px',
           }}
         >
@@ -127,9 +146,9 @@ const DocumentCard = ({
     {doc.status === 'completed' && (
       <>
         {doc.summary && (
-          <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid #2d2d2d' }}>
-            <p style={{ fontSize: '12px', color: '#888', marginBottom: '4px' }}>Résumé</p>
-            <p style={{ fontSize: '13px', color: '#ccc', margin: 0, lineHeight: 1.5 }}>
+          <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: `1px solid ${colors.border}` }}>
+            <p style={{ fontSize: '12px', color: colors.editorSecondary, marginBottom: '4px' }}>Resume</p>
+            <p style={{ fontSize: '13px', color: colors.editorText, margin: 0, lineHeight: 1.5, opacity: 0.85 }}>
               {doc.summary.substring(0, 200)}...
             </p>
           </div>
@@ -142,8 +161,8 @@ const DocumentCard = ({
                 key={i}
                 style={{
                   padding: '4px 8px',
-                  backgroundColor: '#2d2d2d',
-                  color: '#888',
+                  backgroundColor: colors.dialog,
+                  color: colors.editorSecondary,
                   borderRadius: '4px',
                   fontSize: '11px',
                 }}
@@ -156,8 +175,8 @@ const DocumentCard = ({
 
         {doc.entities && doc.entities.length > 0 && (
           <div style={{ marginTop: '12px' }}>
-            <p style={{ fontSize: '12px', color: '#888', marginBottom: '6px' }}>
-              {doc.entities.length} entités détectées
+            <p style={{ fontSize: '12px', color: colors.editorSecondary, marginBottom: '6px' }}>
+              {doc.entities.length} entites detectees
             </p>
           </div>
         )}
@@ -165,10 +184,10 @@ const DocumentCard = ({
     )}
 
     {doc.status === 'error' && doc.error && (
-      <div style={{ 
-        marginTop: '12px', 
-        padding: '10px', 
-        backgroundColor: '#ef444420', 
+      <div style={{
+        marginTop: '12px',
+        padding: '10px',
+        backgroundColor: '#ef444420',
         borderRadius: '6px',
         display: 'flex',
         alignItems: 'center',
@@ -181,12 +200,14 @@ const DocumentCard = ({
   </div>
 );
 
-const DocumentDetail = ({ 
-  doc, 
-  onClose 
-}: { 
-  doc: DocumentAnalysis; 
+const DocumentDetail = ({
+  doc,
+  onClose,
+  colors
+}: {
+  doc: DocumentAnalysis;
   onClose: () => void;
+  colors: ThemeColors;
 }) => (
   <div
     style={{
@@ -206,31 +227,32 @@ const DocumentDetail = ({
   >
     <div
       style={{
-        backgroundColor: '#1a1a1a',
+        backgroundColor: colors.dialog,
         borderRadius: '16px',
         maxWidth: '800px',
         width: '100%',
         maxHeight: '90vh',
         overflow: 'auto',
         padding: '24px',
+        border: `1px solid ${colors.border}`,
       }}
       onClick={e => e.stopPropagation()}
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
         <div>
-          <h2 style={{ fontSize: '20px', fontWeight: 600, color: '#fff', margin: 0 }}>
+          <h2 style={{ fontSize: '20px', fontWeight: 600, color: colors.editorText, margin: 0 }}>
             {doc.filename}
           </h2>
-          <p style={{ fontSize: '13px', color: '#666', marginTop: '4px' }}>
-            Analysé le {new Date(doc.timestamp).toLocaleDateString('fr-FR')}
+          <p style={{ fontSize: '13px', color: colors.editorSecondary, marginTop: '4px' }}>
+            Analyse le {new Date(doc.timestamp).toLocaleDateString('fr-FR')}
           </p>
         </div>
         <button
           onClick={onClose}
           style={{
             padding: '8px 16px',
-            backgroundColor: '#2d2d2d',
-            color: '#fff',
+            backgroundColor: colors.sidebar,
+            color: colors.editorText,
             border: 'none',
             borderRadius: '6px',
             cursor: 'pointer',
@@ -242,8 +264,8 @@ const DocumentDetail = ({
 
       {doc.summary && (
         <div style={{ marginBottom: '20px' }}>
-          <h3 style={{ fontSize: '14px', color: '#888', marginBottom: '8px' }}>Résumé</h3>
-          <p style={{ fontSize: '14px', color: '#ccc', lineHeight: 1.6, margin: 0 }}>
+          <h3 style={{ fontSize: '14px', color: colors.editorSecondary, marginBottom: '8px' }}>Resume</h3>
+          <p style={{ fontSize: '14px', color: colors.editorText, lineHeight: 1.6, margin: 0, opacity: 0.9 }}>
             {doc.summary}
           </p>
         </div>
@@ -251,8 +273,8 @@ const DocumentDetail = ({
 
       {doc.entities && doc.entities.length > 0 && (
         <div style={{ marginBottom: '20px' }}>
-          <h3 style={{ fontSize: '14px', color: '#888', marginBottom: '8px' }}>
-            Entités Extraites ({doc.entities.length})
+          <h3 style={{ fontSize: '14px', color: colors.editorSecondary, marginBottom: '8px' }}>
+            Entites Extraites ({doc.entities.length})
           </h3>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
             {doc.entities.map((entity, i) => (
@@ -260,14 +282,14 @@ const DocumentDetail = ({
                 key={i}
                 style={{
                   padding: '8px 12px',
-                  backgroundColor: '#2d2d2d',
+                  backgroundColor: colors.sidebar,
                   borderRadius: '6px',
                 }}
               >
-                <span style={{ fontSize: '11px', color: '#888', textTransform: 'uppercase' }}>
+                <span style={{ fontSize: '11px', color: colors.editorSecondary, textTransform: 'uppercase' }}>
                   {entity.type}
                 </span>
-                <p style={{ fontSize: '13px', color: '#fff', margin: '4px 0 0 0' }}>
+                <p style={{ fontSize: '13px', color: colors.editorText, margin: '4px 0 0 0' }}>
                   {entity.value}
                 </p>
               </div>
@@ -278,15 +300,15 @@ const DocumentDetail = ({
 
       {doc.keywords && doc.keywords.length > 0 && (
         <div style={{ marginBottom: '20px' }}>
-          <h3 style={{ fontSize: '14px', color: '#888', marginBottom: '8px' }}>Mots-clés</h3>
+          <h3 style={{ fontSize: '14px', color: colors.editorSecondary, marginBottom: '8px' }}>Mots-cles</h3>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
             {doc.keywords.map((keyword, i) => (
               <span
                 key={i}
                 style={{
                   padding: '6px 10px',
-                  backgroundColor: '#10a37f20',
-                  color: '#10a37f',
+                  backgroundColor: `${colors.accent}20`,
+                  color: colors.accent,
                   borderRadius: '4px',
                   fontSize: '12px',
                 }}
@@ -300,24 +322,25 @@ const DocumentDetail = ({
 
       {doc.content?.text && (
         <div>
-          <h3 style={{ fontSize: '14px', color: '#888', marginBottom: '8px' }}>
+          <h3 style={{ fontSize: '14px', color: colors.editorSecondary, marginBottom: '8px' }}>
             Contenu ({doc.content.wordCount} mots)
           </h3>
           <div
             style={{
               padding: '16px',
-              backgroundColor: '#0d0d0d',
+              backgroundColor: colors.sidebar,
               borderRadius: '8px',
               maxHeight: '300px',
               overflow: 'auto',
             }}
           >
-            <pre style={{ 
-              fontSize: '12px', 
-              color: '#aaa', 
-              margin: 0, 
+            <pre style={{
+              fontSize: '12px',
+              color: colors.editorText,
+              margin: 0,
               whiteSpace: 'pre-wrap',
               fontFamily: 'monospace',
+              opacity: 0.85,
             }}>
               {doc.content.text}
             </pre>
@@ -334,6 +357,9 @@ export default function DocumentsPage() {
   const [isUploading, setIsUploading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const { getCurrentColors } = useOfficeThemeStore();
+  const colors = getCurrentColors();
 
   useEffect(() => {
     setDocuments(documentAnalysisService.getAllAnalyses());
@@ -372,26 +398,11 @@ export default function DocumentsPage() {
   );
 
   return (
-    <ModernLayout title="Documents">
-      {/* Header */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: '24px',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <FileText size={24} color="#3b82f6" />
-          <div>
-            <h2 style={{ fontSize: '20px', fontWeight: 600, color: '#fff', margin: 0 }}>
-              Analyse de Documents
-            </h2>
-            <p style={{ fontSize: '13px', color: '#666', margin: '4px 0 0 0' }}>
-              {documents.length} documents analysés
-            </p>
-          </div>
-        </div>
-        <div>
+    <OfficePageLayout
+      title="Documents"
+      subtitle={`${documents.length} documents analyses`}
+      action={
+        <>
           <input
             ref={fileInputRef}
             type="file"
@@ -408,7 +419,7 @@ export default function DocumentsPage() {
               alignItems: 'center',
               gap: '8px',
               padding: '10px 16px',
-              backgroundColor: '#3b82f6',
+              backgroundColor: colors.accent,
               color: '#fff',
               border: 'none',
               borderRadius: '8px',
@@ -423,31 +434,31 @@ export default function DocumentsPage() {
             )}
             {isUploading ? 'Analyse...' : 'Importer'}
           </button>
-        </div>
-      </div>
-
+        </>
+      }
+    >
       {/* Search */}
       <div style={{
         position: 'relative',
         marginBottom: '24px',
       }}>
-        <Search 
-          size={18} 
-          color="#666" 
-          style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }} 
+        <Search
+          size={18}
+          color={colors.editorSecondary}
+          style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }}
         />
         <input
           type="text"
-          placeholder="Rechercher par nom ou mot-clé..."
+          placeholder="Rechercher par nom ou mot-cle..."
           value={searchQuery}
           onChange={e => setSearchQuery(e.target.value)}
           style={{
             width: '100%',
             padding: '12px 12px 12px 44px',
-            backgroundColor: '#1a1a1a',
-            border: '1px solid #2d2d2d',
+            backgroundColor: colors.inputBg,
+            border: `1px solid ${colors.inputBorder}`,
             borderRadius: '10px',
-            color: '#fff',
+            color: colors.editorText,
             fontSize: '14px',
           }}
         />
@@ -462,6 +473,7 @@ export default function DocumentsPage() {
               doc={doc}
               onView={handleView}
               onDelete={handleDelete}
+              colors={colors}
             />
           ))}
         </div>
@@ -469,11 +481,11 @@ export default function DocumentsPage() {
         <div style={{
           textAlign: 'center',
           padding: '60px 20px',
-          color: '#666',
+          color: colors.editorSecondary,
         }}>
           <FileText size={48} style={{ marginBottom: '16px', opacity: 0.5 }} />
           <p style={{ fontSize: '16px', marginBottom: '8px' }}>
-            {searchQuery ? 'Aucun document trouvé' : 'Aucun document analysé'}
+            {searchQuery ? 'Aucun document trouve' : 'Aucun document analyse'}
           </p>
           <p style={{ fontSize: '13px' }}>
             {searchQuery ? 'Essayez une autre recherche' : 'Importez un document pour commencer'}
@@ -486,6 +498,7 @@ export default function DocumentsPage() {
         <DocumentDetail
           doc={selectedDoc}
           onClose={() => setSelectedDoc(null)}
+          colors={colors}
         />
       )}
 
@@ -497,6 +510,6 @@ export default function DocumentsPage() {
           }
         `}
       </style>
-    </ModernLayout>
+    </OfficePageLayout>
   );
 }

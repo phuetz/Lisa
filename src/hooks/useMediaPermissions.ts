@@ -29,7 +29,7 @@ async function queryPermission(name: PermissionName): Promise<PermissionState> {
     if ('permissions' in navigator && (navigator as any).permissions.query) {
       // Some browsers (e.g. Safari) do not yet support 'camera' / 'microphone' names.
       // Wrap in try/catch to avoid unhandled rejections.
-       
+      // eslint-disable-next-line @typescript-eslint/await-thenable
       const status = await (navigator as any).permissions.query({ name });
       return status.state as PermissionState;
     }

@@ -1,4 +1,4 @@
-import { AgentDomains, type BaseAgent, type AgentExecuteProps, type AgentExecuteResult } from "./types";
+import { BaseAgent, AgentExecuteProps, AgentExecuteResult, AgentDomains } from "../agents/types";
 import { RosService } from "../services/RosService";
 
 export class RosPublisherAgent implements BaseAgent {

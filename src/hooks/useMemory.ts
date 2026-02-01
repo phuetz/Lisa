@@ -8,7 +8,7 @@
 import { useCallback, useState } from 'react';
 import { agentRegistry } from '../features/agents/core/registry';
 import type { Memory, MemoryQuery } from '../agents/MemoryAgent';
-import { useVisionAudioStore } from '../store/visionAudioStore';
+import { useAppStore } from '../store/appStore';
 
 interface UseMemoryOptions {
   defaultLimit?: number;
@@ -46,7 +46,7 @@ export const useMemory = (options: UseMemoryOptions = {}): UseMemoryResult => {
   const [error, setError] = useState<string | null>(null);
   const { defaultLimit = 5 } = options;
   
-  const setState = useVisionAudioStore(s => s.setState);
+  const setState = useAppStore(s => s.setState);
 
   /**
    * Store a new memory

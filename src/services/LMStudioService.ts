@@ -88,8 +88,6 @@ class LMStudioService {
     const url = `${this.config.baseUrl}${endpoint}`;
     const isNative = Capacitor.isNativePlatform();
 
-    console.log(`[LMStudioService] Requesting ${url} (${isNative ? 'CapacitorHttp' : 'fetch'})`);
-
     try {
       if (isNative) {
         // Use CapacitorHttp for mobile to bypass CORS
@@ -102,8 +100,6 @@ class LMStudioService {
           },
           data: options.body ? JSON.parse(options.body as string) : undefined,
         });
-
-        console.log(`[LMStudioService] CapacitorHttp response status: ${response.status}`);
 
         if (response.status < 200 || response.status >= 300) {
           throw new Error(`LM Studio error: ${response.status}`);
@@ -176,8 +172,6 @@ class LMStudioService {
       { role: 'system', content: SYSTEM_PROMPT },
       ...sanitized,
     ];
-    
-    console.log('[LMStudioService] Sending', messagesWithSystem.length, 'messages');
 
     try {
       const data = await this.makeRequest('/chat/completions', {
@@ -211,7 +205,6 @@ class LMStudioService {
     ];
 
     const isNative = Capacitor.isNativePlatform();
-    console.log('[LMStudioService] chatStream starting', isNative ? '(mobile fallback)' : '(web streaming)');
 
     // Mobile: Fallback to non-streaming request
     if (isNative) {
@@ -299,8 +292,6 @@ class LMStudioService {
 
     for (const url of currentUrls) {
       try {
-        console.log(`[LMStudioService] Testing availability of ${url}... (${isNative ? 'CapacitorHttp' : 'fetch'})`);
-
         if (isNative) {
           // Use CapacitorHttp on mobile
           const response = await CapacitorHttp.request({
@@ -311,7 +302,6 @@ class LMStudioService {
           });
 
           if (response.status >= 200 && response.status < 300) {
-            console.log(`[LMStudioService] ✅ Connected to ${url}`);
             this.config.baseUrl = url;
             return true;
           }
@@ -323,13 +313,12 @@ class LMStudioService {
           });
 
           if (response.ok) {
-            console.log(`[LMStudioService] ✅ Connected to ${url}`);
             this.config.baseUrl = url;
             return true;
           }
         }
-      } catch (error) {
-        console.log(`[LMStudioService] ❌ ${url}:`, error instanceof Error ? error.message : error);
+      } catch {
+        // Connection failed for this URL, try next
       }
     }
     console.error('[LMStudioService] Could not connect to any LM Studio URL.');

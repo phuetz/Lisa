@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
-import { ModernLayout } from '../components/layout/ModernLayout';
-import { 
+import { OfficePageLayout } from '../components/layout/OfficePageLayout';
+import { useOfficeThemeStore } from '../store/officeThemeStore';
+import {
   Mic, MicOff, Volume2, VolumeX, Play, Square,
   MessageSquare, Trash2, Copy, Check, ChevronDown,
   AlertCircle, Settings, Waves, Radio, Headphones
@@ -160,6 +161,9 @@ const WaveVisualizer = ({ isActive }: { isActive: boolean }) => {
 };
 
 export default function AudioPage() {
+  const { getCurrentColors } = useOfficeThemeStore();
+  const colors = getCurrentColors();
+
   // Voice Chat Hook
   const {
     isListening,
@@ -250,7 +254,7 @@ export default function AudioPage() {
 
   if (!isSupported) {
     return (
-      <ModernLayout title="Audio">
+      <OfficePageLayout title="Audio" subtitle="Reconnaissance vocale et synthèse vocale">
         <div style={{
           display: 'flex',
           alignItems: 'center',
@@ -275,12 +279,12 @@ export default function AudioPage() {
             </p>
           </div>
         </div>
-      </ModernLayout>
+      </OfficePageLayout>
     );
   }
 
   return (
-    <ModernLayout title="Audio">
+    <OfficePageLayout title="Audio" subtitle="Reconnaissance vocale et synthèse vocale">
       {/* Header with tabs */}
       <div style={{
         display: 'flex',
@@ -871,6 +875,6 @@ export default function AudioPage() {
           to { transform: rotate(360deg); }
         }
       `}</style>
-    </ModernLayout>
+    </OfficePageLayout>
   );
 }

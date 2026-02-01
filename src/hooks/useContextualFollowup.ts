@@ -1,4 +1,4 @@
-import { useVisionAudioStore } from '../store/visionAudioStore';
+import { useAppStore } from '../store/appStore';
 import { useTranslation } from 'react-i18next';
 import { useEffect, useRef, useCallback } from 'react';
 import { useIntentHandler } from './useIntentHandler';
@@ -8,8 +8,8 @@ import { useIntentHandler } from './useIntentHandler';
  */
 export function useContextualFollowup() {
   const { i18n } = useTranslation();
-  const context = useVisionAudioStore(s => s.conversationContext);
-  const setState = useVisionAudioStore(s => s.setState);
+  const context = useAppStore(s => s.conversationContext);
+  const setState = useAppStore(s => s.setState);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { handleIntent } = useIntentHandler();
 

@@ -18,8 +18,6 @@ export function AppWithLisaVivante() {
   useEffect(() => {
     const initializeLisa = async () => {
       try {
-        console.log('🚀 Initializing Lisa Vivante...');
-        
         // Initialiser Lisa
         const state = await initLisaVivante({
           enableSensors: true,
@@ -31,7 +29,7 @@ export function AppWithLisaVivante() {
         });
 
         setIsLisaInitialized(true);
-        console.log('✅ Lisa Vivante initialized:', state);
+        void state; // Used for initialization
 
         // Valider le statut
         const validation = await validateLisaIsAlive();
@@ -43,9 +41,8 @@ export function AppWithLisaVivante() {
           toast.warning('Lisa est en mode dégradé. Certains piliers sont inactifs.');
         }
 
-        // Afficher les statistiques
-        const stats = getLisaStats();
-        console.log('📊 Lisa Stats:', stats);
+        // Get stats for potential use
+        void getLisaStats();
 
       } catch (error) {
         console.error('❌ Failed to initialize Lisa Vivante:', error);

@@ -80,7 +80,6 @@ export function AudioTranscription() {
     recognition.onstart = () => {
       setIsListening(true);
       setError(null);
-      console.log('[AudioTranscription] Started listening');
     };
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
@@ -133,7 +132,6 @@ export function AudioTranscription() {
     };
 
     recognition.onend = () => {
-      console.log('[AudioTranscription] Ended');
       // Auto-restart if still supposed to be listening
       if (isListening && recognitionRef.current) {
         try {

@@ -4,6 +4,7 @@ import { pipeline, env } from '@xenova/transformers';
 env.allowLocalModels = false;
 
 // Define minimal pipeline types since Xenova types are complex/dynamic
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Pipeline = (input: any) => Promise<any>;
 
 let sttPipeline: Pipeline | null = null;

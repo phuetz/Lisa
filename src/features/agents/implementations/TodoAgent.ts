@@ -15,7 +15,7 @@ import type {
   AgentParameter,
   BaseAgent
 } from '../core/types';
-import { useVisionAudioStore } from '../../../store/visionAudioStore';
+import { useAppStore } from '../../../store/appStore';
 
 /**
  * Supported todo intents
@@ -59,7 +59,7 @@ export type TodoIntent =
 /**
  * Base Todo interface from the store
  */
-import type { Todo as StoreTodo } from '../../../store/visionAudioStore';
+import type { Todo as StoreTodo } from '../../../store/appStore';
 
 /**
  * Extended Todo item interface with additional fields
@@ -440,7 +440,7 @@ export class TodoAgent implements BaseAgent {
   private addItem(text: string, priority?: string, dueDate?: string): any {
     if (!text) throw new Error('Todo text is required');
     
-    const { getState, setState } = useVisionAudioStore;
+    const { getState, setState } = useAppStore;
     
     // Create basic Todo object compatible with the store
     const baseTodo = {
@@ -570,7 +570,7 @@ export class TodoAgent implements BaseAgent {
   private removeItem(id: string): any {
     if (!id) throw new Error('Todo ID is required');
     
-    const { getState, setState } = useVisionAudioStore;
+    const { getState, setState } = useAppStore;
     const currentTodos = getState().todos;
     const todoToRemove = currentTodos.find(t => t.id === id);
     
@@ -594,7 +594,7 @@ export class TodoAgent implements BaseAgent {
   private updateItem(id: string, text?: string, priority?: string, dueDate?: string): any {
     if (!id) throw new Error('Todo ID is required');
     
-    const { getState, setState } = useVisionAudioStore;
+    const { getState, setState } = useAppStore;
     const currentTodos = getState().todos;
     const todoIndex = currentTodos.findIndex(t => t.id === id);
     
@@ -635,7 +635,7 @@ export class TodoAgent implements BaseAgent {
   private markItemStatus(id: string, completed: boolean): any {
     if (!id) throw new Error('Todo ID is required');
     
-    const { getState, setState } = useVisionAudioStore;
+    const { getState, setState } = useAppStore;
     const currentTodos = getState().todos;
     const todoIndex = currentTodos.findIndex(t => t.id === id);
     
@@ -673,7 +673,7 @@ export class TodoAgent implements BaseAgent {
    * Clears all completed todos
    */
   private clearCompleted(): any {
-    const { getState, setState } = useVisionAudioStore;
+    const { getState, setState } = useAppStore;
     const currentTodos = getState().todos;
     
     // Convert all todos to TodoItems to check completion status
@@ -697,7 +697,7 @@ export class TodoAgent implements BaseAgent {
    * Returns the todo list, optionally filtered
    */
   private listItems(filter: string = 'all'): any {
-    const todos = useVisionAudioStore.getState().todos;
+    const todos = useAppStore.getState().todos;
     const todoItems = todos.map(todo => this.convertToTodoItem(todo));
     
     let filteredTodos;

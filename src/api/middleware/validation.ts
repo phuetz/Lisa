@@ -16,7 +16,7 @@ export const validateBody = (schema: ZodSchema) => {
       if (error instanceof ZodError) {
         const response: ApiResponse = {
           success: false,
-          error: `Validation error: ${error.issues.map((e: any) => `${e.path.join('.')}: ${e.message}`).join(', ')}`
+          error: `Validation error: ${error.issues.map((e) => `${e.path.join('.')}: ${e.message}`).join(', ')}`
         };
         return res.status(400).json(response);
       }
@@ -34,13 +34,13 @@ export const validateQuery = (schema: ZodSchema) => {
   return (req: Request, res: Response, next: NextFunction) => {
     try {
       const validatedData = schema.parse(req.query);
-      req.query = validatedData as any;
+      req.query = validatedData as typeof req.query;
       next();
     } catch (error) {
       if (error instanceof ZodError) {
         const response: ApiResponse = {
           success: false,
-          error: `Query validation error: ${error.issues.map((e: any) => `${e.path.join('.')}: ${e.message}`).join(', ')}`
+          error: `Query validation error: ${error.issues.map((e) => `${e.path.join('.')}: ${e.message}`).join(', ')}`
         };
         return res.status(400).json(response);
       }

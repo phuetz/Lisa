@@ -57,7 +57,11 @@ export const ChatLayoutFluent = () => {
   } = useChatHistoryStore();
 
   const currentConversation = conversations.find(c => c.id === currentConversationId);
-  const { sendMessage, isStreaming } = useAIChat();
+  // Enable native tool calling for web search capabilities
+  const { sendMessage, isStreaming, toolsUsed, streamingStage } = useAIChat(undefined, {
+    enableNativeTools: true,
+    showToolUsage: true
+  });
   const { model } = useChatSettingsStore();
 
   // Apply Fluent theme on mount

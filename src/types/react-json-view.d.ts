@@ -1,4 +1,4 @@
-declare module '@microlink/react-json-view' {
+declare module 'react-json-view' {
   import { ComponentType } from 'react';
   interface ReactJsonViewProps {
     src: any;
@@ -7,11 +7,6 @@ declare module '@microlink/react-json-view' {
     iconStyle?: 'circle' | 'triangle';
     displayDataTypes?: boolean;
     style?: React.CSSProperties;
-    collapsed?: number | boolean;
-    collapseStringsAfterLength?: number;
-    enableClipboard?: boolean;
-    displayObjectSize?: boolean;
-    indentWidth?: number;
   }
   const ReactJsonView: ComponentType<ReactJsonViewProps>;
   export default ReactJsonView;

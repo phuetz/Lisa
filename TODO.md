@@ -4,7 +4,7 @@
 
 Evolve Lisa from a voice-command assistant into a proactive, agentic partner that rivals and surpasses platforms like Genspark and OpenManus. The goal is to create a highly intelligent, multi-modal, and extensible system built on a robust agentic architecture, while retaining its best-in-class voice-first user experience.
 
-This roadmap is structured in four phases, moving from foundational architectural changes to advanced, differentiating features.
+This roadmap is structured in three phases, moving from foundational architectural changes to advanced, differentiating features.
 
 ---
 
@@ -47,10 +47,14 @@ This roadmap is structured in four phases, moving from foundational architectura
     - An agent that uses the `WebSearchTool` to answer questions that require up-to-date information.
     - **Example:** "What are the reviews for the new movie playing downtown?"
 
-- [x] **2.3: Implement Multi-modal Agents**
+- [ ] **2.3: Implement Multi-modal Agents**
     - Leverage the existing vision capabilities to create vision-based agents.
-    - **`OCRAgent`**: Reads text from the screen or a selected area.
-    - **`VisionAgent`**: Can describe what it sees from the webcam.
+    - **`OCRAgent`**: Reads text from the screen or a selected area. (Currently mocked)
+    - **`VisionAgent`**: Can describe what it sees from the webcam (e.g., "What object am I holding up?"). (Currently mocked)
+
+- [ ] **NEW: Implement real OCR and Vision capabilities**
+    - Integrate a client-side OCR library like Tesseract.js into `OCRAgent`.
+    - Integrate a vision model (e.g., from MediaPipe, which is already a dependency) into `VisionAgent`.
 
 - [x] **2.4: Develop a Simple Workflow Engine**
     - Enhance the `PlannerAgent` to execute multi-step plans (workflows).
@@ -79,54 +83,3 @@ This roadmap is structured in four phases, moving from foundational architectura
 
 ---
 
-## Phase 4: Multi-modal Sensory Integration (The Five Senses)
-
-**Objective:** Expand Lisa's perception beyond sight and hearing to include touch, smell, and taste (indirectly), and fuse these inputs for a richer understanding of the environment.
-
-- [x] **4.1: Enhance Vision (Deeper Scene Understanding)**
-    - **4.1.1: Choix & test modèle:** Implement a notebook/TS to compare EfficientDet-Lite vs YOLOv8-n tfjs on 50 COCO images (val 2017). Generate `docs/vision/benchmark_v1.md` report. (Placeholder created, requires manual execution and data filling).
-    - **4.1.2: Module front `src/senses/vision.ts`:** Implement Web Worker + WebGL/WebGPU; fallback CPU (MediaPipe). Asynchronous pipeline → `postMessage` events. (Implemented: YOLOv8-n in worker, MediaPipe on CPU for objects, poses, faces, and hands).
-    - **4.1.3: Événement bus:** New `Percept<V>` type. Encapsulate existing MediaPipe BBox into this format. (Implemented).
-    - **4.1.4: UI:** Extend overlay (SVG/Canvas) to display multiple sources + color per model. Toggle `"advancedVision"` in `config.json`. (Implemented: Objects=Cyan, Poses=Magenta, Faces=Pink, Hands=Yellow).
-    - **4.1.5: Perf & tests:** Mini benchmarks (COCO val 2017) ⇒ FPS, latency, RAM, heating. (Requires manual execution).
-
-- [x] **4.2: Enhance Audition (Advanced NLU & Emotional Tone)**
-    - **4.2.1: STT:** `Whisper-tiny` (wasm/onnx) or `Vosk-WebAssembly`. (Placeholder in `src/workers/hearingWorker.ts`).
-    - **4.2.2: NLU:** `@xenova/transformers` → DistilBERT Sentiment + Intent. (Placeholder in `src/workers/hearingWorker.ts`).
-    - **4.2.3: SER:** Speech-Emotion-Recognizer (tfjs). (Placeholder in `src/workers/hearingWorker.ts`).
-    - **4.2.4: Module front `src/senses/hearing.ts`:** Web Worker audio pipeline. Fallback on Web Speech API if device is weak. (Implemented).
-    - **4.2.5: Bus:** `Percept<{text:string}|{emotion:string}>` with `modality:"hearing"`. (Implemented).
-    - **4.2.6: UI console:** In Lisa dev bar. (Implemented as `HearingPanel.tsx`).
-
-- [ ] **4.3: Implement Touch (Tactile/Proprioception - Indirect)**
-    - Integrate with IoT platforms (e.g., via MQTT.js) to receive data from environmental sensors (temperature, pressure, haptic feedback).
-    - Explore Web Bluetooth / Web USB APIs for direct connection to local sensors.
-
-- [ ] **4.4: Implement Smell (Olfaction - Indirect)**
-    - Integrate with electronic nose (e-nose) sensors via IoT platforms (MQTT.js).
-    - Develop data analysis pipelines to interpret e-nose data and identify "smells."
-
-- [ ] **4.5: Implement Taste (Gustation - Highly Indirect/Conceptual)**
-    - Research and integrate with highly specialized chemical sensors (conceptual for now).
-
-- [ ] **4.6: General Cognitive Integration & Fusion**
-    - Develop Knowledge Graphs (e.g., using RDF.js, json-ld.js) to build a structured understanding from diverse sensory inputs.
-    - Further leverage multi-modal AI models (e.g., Gemini API) to process and reason over combined sensory inputs for holistic understanding.
-
----
-
-## TÂCHES TRANSVERSES
-
-- [x] **1. Feature flags:** `advancedVision`, `advancedHearing`. (Implemented).
-- [x] **2. Docs:** Add sections “Vision avancée” & “Audition avancée” in `README.md`. `TODO.md` → backlog détaillé par lot. (Updated `README.md` and this `TODO.md`).
-- [ ] **3. Tests e2e:** Cypress ou Playwright pour vérifier non-régression. (Requires manual execution).
-- [ ] **4. CI:** Execute light benchmarks (Node + Puppeteer headless). (Requires manual setup and execution).
-- [ ] **5. Commits:** One lot = one PR; clear description, screenshots, perf measurements. (Requires manual action).
-
----
-
-## ✅ CRITÈRES DE RÉUSSITE
-- L’appli tourne toujours sur un laptop basique **sans** WebGPU (fallback OK).
-- Gain de précision object ≥ +10 mAP, SER ≥ 75 % accuracy (RAVDESS mini-set).
-- Aucun gel UI > 100 ms ; CPU < 60 % moyenne sur laptop i5.
-- Documentation & flags en place ; overlay multi-source fonctionnel.

@@ -16,15 +16,8 @@ import { LisaVivanteComplete } from './components/LisaVivanteComplete';
 import { AccessibilitySettings } from './components/AccessibilitySettings';
 import { MonitoringPage } from './pages/MonitoringPage';
 
-// Import lazy des nouvelles pages Beautiful
-const DashboardBeautiful = lazy(() => import('./pages/DashboardBeautiful'));
-const AgentsBeautiful = lazy(() => import('./pages/AgentsBeautiful'));
-const VisionBeautiful = lazy(() => import('./pages/VisionBeautiful'));
-const AudioBeautiful = lazy(() => import('./pages/AudioBeautiful'));
-const WorkflowsBeautiful = lazy(() => import('./pages/WorkflowsBeautiful'));
-const SettingsBeautiful = lazy(() => import('./pages/SettingsBeautiful'));
-const SystemBeautiful = lazy(() => import('./pages/SystemBeautiful'));
-const HomeBeautiful = lazy(() => import('./pages/HomeBeautiful'));
+// IT-002: Beautiful pages removed - using unified Office theme system
+// See OfficePageLayout for the new unified styling approach
 
 // Import lazy des pages 5 Sens
 const SensesDashboard = lazy(() => import('./components/SensesDashboard'));
@@ -34,6 +27,11 @@ const PersonaPage = lazy(() => import('./pages/PersonaPage'));
 
 // Import lazy de la page Grok CLI
 const GrokCliPage = lazy(() => import('./pages/GrokCliPage'));
+
+// Import lazy des pages Gateway (OpenClaw-inspired)
+const GatewayPage = lazy(() => import('./pages/GatewayPage'));
+const SkillsPage = lazy(() => import('./pages/SkillsPage'));
+const AutomationPage = lazy(() => import('./pages/AutomationPage'));
 
 // Import lazy de la page Chat
 const ChatPage = lazy(() => import('./pages/ChatPage'));
@@ -148,6 +146,19 @@ export const routes: RouteObject[] = [
         path: 'grok-cli',
         element: <Suspense fallback={<PageLoader />}><GrokCliPage /></Suspense>,
       },
+      // Routes Gateway (OpenClaw-inspired)
+      {
+        path: 'gateway',
+        element: <Suspense fallback={<PageLoader />}><GatewayPage /></Suspense>,
+      },
+      {
+        path: 'skills',
+        element: <Suspense fallback={<PageLoader />}><SkillsPage /></Suspense>,
+      },
+      {
+        path: 'automation',
+        element: <Suspense fallback={<PageLoader />}><AutomationPage /></Suspense>,
+      },
       // Routes principales
       {
         path: 'dashboard',
@@ -211,39 +222,8 @@ export const routes: RouteObject[] = [
         element: <Suspense fallback={<PageLoader />}><CodePlayground /></Suspense>,
       },
       
-      // Routes Beautiful UI
-      {
-        path: 'dashboard-beautiful',
-        element: <Suspense fallback={<PageLoader />}><DashboardBeautiful /></Suspense>,
-      },
-      {
-        path: 'agents-beautiful',
-        element: <Suspense fallback={<PageLoader />}><AgentsBeautiful /></Suspense>,
-      },
-      {
-        path: 'vision-beautiful',
-        element: <Suspense fallback={<PageLoader />}><VisionBeautiful /></Suspense>,
-      },
-      {
-        path: 'audio-beautiful',
-        element: <Suspense fallback={<PageLoader />}><AudioBeautiful /></Suspense>,
-      },
-      {
-        path: 'workflows-beautiful',
-        element: <Suspense fallback={<PageLoader />}><WorkflowsBeautiful /></Suspense>,
-      },
-      {
-        path: 'settings-beautiful',
-        element: <Suspense fallback={<PageLoader />}><SettingsBeautiful /></Suspense>,
-      },
-      {
-        path: 'system-beautiful',
-        element: <Suspense fallback={<PageLoader />}><SystemBeautiful /></Suspense>,
-      },
-      {
-        path: 'home-beautiful',
-        element: <Suspense fallback={<PageLoader />}><HomeBeautiful /></Suspense>,
-      },
+      // IT-002: Beautiful routes removed - using unified Office theme
+      // Old *-beautiful routes now redirect to main pages with Office styling
     ],
   },
 ];

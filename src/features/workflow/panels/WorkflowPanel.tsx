@@ -16,19 +16,6 @@ import ReactFlow, {
 import 'reactflow/dist/style.css';
 import useWorkflowStore from '../store/useWorkflowStore';
 import CustomNode from '../nodes/CustomNode';
-import RosPublisherNode from '../nodes/RosPublisherNode';
-import RosSubscriberNode from '../nodes/RosSubscriberNode';
-import RosServiceNode from '../nodes/RosServiceNode';
-import ContentGeneratorNode from '../nodes/ContentGeneratorNode';
-import MemoryNode from '../nodes/MemoryNode';
-import PersonalizationNode from '../nodes/PersonalizationNode';
-import GitHubNode from '../nodes/GitHubNode';
-import PowerShellNode from '../nodes/PowerShellNode';
-import DelayNode from '../nodes/DelayNode';
-import LogNode from '../nodes/LogNode';
-import NLUNode from '../nodes/NLUNode';
-import MQTTNode from '../nodes/MQTTNode';
-import SubWorkflowNode from '../nodes/SubWorkflowNode';
 import RosNode from '../nodes/RosNode';
 import { nodeTypes, nodeCategories, nodeStyles, nodeShapes } from '../nodes/nodeTypes';
 import NodeConfigPanel from './NodeConfigPanel';
@@ -40,19 +27,6 @@ import WorkflowToolbar from './WorkflowToolbar';
 const nodeTypesMap: NodeTypes = {
   customNode: CustomNode,
   rosTopic: RosNode,
-  rosPublisher: RosPublisherNode,
-  rosSubscriber: RosSubscriberNode,
-  rosService: RosServiceNode,
-  contentGenerator: ContentGeneratorNode,
-  memory: MemoryNode,
-  personalization: PersonalizationNode,
-  github: GitHubNode,
-  powershell: PowerShellNode,
-  delay: DelayNode,
-  log: LogNode,
-  nlu: NLUNode,
-  mqtt: MQTTNode,
-  subWorkflow: SubWorkflowNode,
 };
 
 // Composant principal du panneau de workflow
@@ -232,7 +206,6 @@ const WorkflowPanel: React.FC = () => {
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
-            onNodeClick={(_, node) => setSelectedNode(node)}
             nodeTypes={nodeTypesMap}
             fitView
             deleteKeyCode="Delete"

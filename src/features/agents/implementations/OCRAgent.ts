@@ -6,15 +6,15 @@
  */
 
 // L'import de agentRegistry est supprimé car il n'est pas utilisé directement dans ce fichier
-import { createWorker, OEM as _OEM } from 'tesseract.js';
+import { createWorker, OEM } from 'tesseract.js';
 import type { 
   AgentCapability, 
   AgentDomain,
   AgentExecuteProps, 
   AgentExecuteResult, 
   BaseAgent
-} from '../core/types';
-import { AgentDomains } from '../core/types';
+} from './types';
+import { AgentDomains } from './types';
 
 // Types spécifiques à l'OCR
 export type OCRSource = 'screenshot' | 'webcam' | 'file' | 'clipboard' | 'selection';
@@ -159,61 +159,6 @@ export class OCRAgent implements BaseAgent {
     }
   }
 
-  // Capture an image from the webcam
-  private async captureWebcamImage(): Promise<string> {
-    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-    return new Promise((resolve, reject) => {
-      const video = document.createElement('video');
-      video.srcObject = stream;
-      video.onloadedmetadata = () => {
-        video.play();
-        const canvas = document.createElement('canvas');
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        const context = canvas.getContext('2d');
-        if (!context) {
-          stream.getTracks().forEach(track => track.stop());
-          return reject(new Error('Could not get canvas context'));
-        }
-        context.drawImage(video, 0, 0, canvas.width, canvas.height);
-        stream.getTracks().forEach(track => track.stop());
-        resolve(canvas.toDataURL('image/png'));
-      };
-      video.onerror = (err) => {
-        stream.getTracks().forEach(track => track.stop());
-        reject(new Error(`Video error: ${err}`));
-      };
-    });
-  }
-
-  // Read image data from clipboard
-  private async readClipboardImage(): Promise<Blob> {
-    try {
-      const clipboardItems = await navigator.clipboard.read();
-      for (const clipboardItem of clipboardItems) {
-        for (const type of clipboardItem.types) {
-          if (type.startsWith('image/')) {
-            return await clipboardItem.getType(type);
-          }
-        }
-      }
-      throw new Error('No image found in clipboard.');
-    } catch (error) {
-      console.error('Error reading clipboard image:', error);
-      throw new Error('Failed to read image from clipboard.');
-    }
-  }
-
-  // Read image data from a File object
-  private async readFileImage(file: File): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
-  }
-
   // Exécution de l'agent
   async execute(props: AgentExecuteProps): Promise<AgentExecuteResult> {
     const startTime = Date.now();
@@ -241,12 +186,26 @@ export class OCRAgent implements BaseAgent {
           if (source === 'screenshot') {
             imageData = await this.captureScreenshot(options.region);
           } else if (source === 'webcam') {
-            imageData = await this.captureWebcamImage();
+            // Implémentation future: capture webcam
+            return {
+              success: false,
+              error: "Webcam capture not implemented yet",
+              output: null
+            };
           } else if (source === 'clipboard') {
-            imageData = await this.readClipboardImage();
+            // Implémentation future: récupération du presse-papiers
+            return {
+              success: false,
+              error: "Clipboard capture not implemented yet",
+              output: null
+            };
           } else if (source === 'file') {
-            if (!parameters.file) throw new Error('File object is required for file source.');
-            imageData = await this.readFileImage(parameters.file as File);
+            // Implémentation future: chargement de fichier
+            return {
+              success: false,
+              error: "File loading not implemented yet",
+              output: null
+            };
           } else {
             return {
               success: false,

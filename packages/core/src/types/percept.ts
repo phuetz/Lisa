@@ -2,7 +2,7 @@
  * Base Percept Interface
  * All sensory inputs must conform to this structure.
  */
-export interface Percept<T = any> {
+export interface Percept<T = unknown> {
   /** The modality of the sense (vision, hearing, touch, etc.) */
   modality: 'vision' | 'hearing' | 'touch' | 'proprioception' | 'environment' | string;
   
@@ -19,7 +19,7 @@ export interface Percept<T = any> {
   source?: string;
   
   /** Optional metadata */
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 /**
@@ -38,6 +38,6 @@ export interface AudioPayload {
 }
 
 export interface VisualPayload {
-  objects?: Array<{ label: string; confidence: number; box: any }>;
-  faces?: Array<{ id: string; landmarks: any }>;
+  objects?: Array<{ label: string; confidence: number; box: { x: number; y: number; width: number; height: number } }>;
+  faces?: Array<{ id: string; landmarks: Record<string, { x: number; y: number }> }>;
 }

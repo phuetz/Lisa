@@ -1,19 +1,34 @@
 /**
- * 🏠 Smart Home Page - Automatisation Maison Intelligente
+ * Smart Home Page - Automatisation Maison Intelligente
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { ModernLayout } from '../components/layout/ModernLayout';
-import { 
+import { OfficePageLayout } from '../components/layout/OfficePageLayout';
+import { useOfficeThemeStore } from '../store/officeThemeStore';
+import {
   Home, Lightbulb, Thermometer, Lock, Camera, Speaker,
   Power, Plus, Settings, Play, Trash2, RefreshCw
 } from 'lucide-react';
-import { 
-  smartHomeService, 
-  type SmartDevice, 
-  type AutomationRule, 
-  type Scene 
+import {
+  smartHomeService,
+  type SmartDevice,
+  type AutomationRule,
+  type Scene
 } from '../services/SmartHomeService';
+
+interface ThemeColors {
+  sidebar: string;
+  sidebarHover: string;
+  sidebarActive: string;
+  editor: string;
+  editorText: string;
+  editorSecondary: string;
+  dialog: string;
+  border: string;
+  accent: string;
+  success: string;
+  error: string;
+}
 
 const DEVICE_ICONS: Record<string, typeof Lightbulb> = {
   light: Lightbulb,
@@ -25,12 +40,14 @@ const DEVICE_ICONS: Record<string, typeof Lightbulb> = {
   sensor: Settings,
 };
 
-const DeviceCard = ({ 
-  device, 
-  onToggle 
-}: { 
-  device: SmartDevice; 
+const DeviceCard = ({
+  device,
+  onToggle,
+  colors
+}: {
+  device: SmartDevice;
   onToggle: (id: string, state: boolean) => void;
+  colors: ThemeColors;
 }) => {
   const Icon = DEVICE_ICONS[device.type] || Power;
   const isOn = device.state?.on === true || device.state?.power === true;
@@ -39,9 +56,9 @@ const DeviceCard = ({
     <div
       style={{
         padding: '16px',
-        backgroundColor: isOn ? 'rgba(16, 163, 127, 0.1)' : '#1a1a1a',
+        backgroundColor: isOn ? `${colors.success}15` : colors.sidebar,
         borderRadius: '12px',
-        border: `1px solid ${isOn ? 'rgba(16, 163, 127, 0.3)' : '#2d2d2d'}`,
+        border: `1px solid ${isOn ? `${colors.success}40` : colors.border}`,
         transition: 'all 0.2s ease',
       }}
     >
@@ -52,31 +69,31 @@ const DeviceCard = ({
               width: '40px',
               height: '40px',
               borderRadius: '10px',
-              backgroundColor: isOn ? 'rgba(16, 163, 127, 0.2)' : '#2d2d2d',
+              backgroundColor: isOn ? `${colors.success}20` : colors.dialog,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
             }}
           >
-            <Icon size={20} color={isOn ? '#10a37f' : '#666'} />
+            <Icon size={20} color={isOn ? colors.success : colors.editorSecondary} />
           </div>
           <div>
-            <p style={{ fontSize: '14px', fontWeight: 500, color: '#fff', margin: 0 }}>
+            <p style={{ fontSize: '14px', fontWeight: 500, color: colors.editorText, margin: 0 }}>
               {device.name}
             </p>
-            <p style={{ fontSize: '12px', color: '#666', margin: '4px 0 0 0' }}>
+            <p style={{ fontSize: '12px', color: colors.editorSecondary, margin: '4px 0 0 0' }}>
               {device.room}
             </p>
           </div>
         </div>
         <button
           onClick={() => onToggle(device.id, !isOn)}
-          aria-label={isOn ? 'Éteindre' : 'Allumer'}
+          aria-label={isOn ? 'Eteindre' : 'Allumer'}
           style={{
             width: '48px',
             height: '28px',
             borderRadius: '14px',
-            backgroundColor: isOn ? '#10a37f' : '#3d3d3d',
+            backgroundColor: isOn ? colors.success : colors.sidebarHover,
             border: 'none',
             cursor: 'pointer',
             position: 'relative',
@@ -97,21 +114,21 @@ const DeviceCard = ({
           />
         </button>
       </div>
-      <div style={{ 
-        marginTop: '12px', 
-        display: 'flex', 
-        alignItems: 'center', 
-        gap: '8px' 
+      <div style={{
+        marginTop: '12px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px'
       }}>
         <div
           style={{
             width: '8px',
             height: '8px',
             borderRadius: '50%',
-            backgroundColor: device.status === 'online' ? '#10a37f' : '#666',
+            backgroundColor: device.status === 'online' ? colors.success : colors.editorSecondary,
           }}
         />
-        <span style={{ fontSize: '11px', color: '#666' }}>
+        <span style={{ fontSize: '11px', color: colors.editorSecondary }}>
           {device.status === 'online' ? 'En ligne' : 'Hors ligne'}
         </span>
       </div>
@@ -119,20 +136,22 @@ const DeviceCard = ({
   );
 };
 
-const SceneCard = ({ 
-  scene, 
-  onActivate 
-}: { 
-  scene: Scene; 
+const SceneCard = ({
+  scene,
+  onActivate,
+  colors
+}: {
+  scene: Scene;
   onActivate: (id: string) => void;
+  colors: ThemeColors;
 }) => (
   <button
     onClick={() => onActivate(scene.id)}
     style={{
       padding: '16px',
-      backgroundColor: '#1a1a1a',
+      backgroundColor: colors.sidebar,
       borderRadius: '12px',
-      border: '1px solid #2d2d2d',
+      border: `1px solid ${colors.border}`,
       cursor: 'pointer',
       textAlign: 'center',
       transition: 'all 0.2s ease',
@@ -142,26 +161,28 @@ const SceneCard = ({
     <span style={{ fontSize: '32px', display: 'block', marginBottom: '8px' }}>
       {scene.icon}
     </span>
-    <p style={{ fontSize: '14px', color: '#fff', margin: 0 }}>{scene.name}</p>
-    <p style={{ fontSize: '11px', color: '#666', margin: '4px 0 0 0' }}>
+    <p style={{ fontSize: '14px', color: colors.editorText, margin: 0 }}>{scene.name}</p>
+    <p style={{ fontSize: '11px', color: colors.editorSecondary, margin: '4px 0 0 0' }}>
       {scene.devices.length} appareils
     </p>
   </button>
 );
 
-const RuleCard = ({ 
-  rule, 
-  onToggle, 
-  onDelete 
-}: { 
-  rule: AutomationRule; 
+const RuleCard = ({
+  rule,
+  onToggle,
+  onDelete,
+  colors
+}: {
+  rule: AutomationRule;
   onToggle: (id: string, enabled: boolean) => void;
   onDelete: (id: string) => void;
+  colors: ThemeColors;
 }) => (
   <div
     style={{
       padding: '14px 16px',
-      backgroundColor: '#1a1a1a',
+      backgroundColor: colors.sidebar,
       borderRadius: '10px',
       display: 'flex',
       alignItems: 'center',
@@ -170,11 +191,11 @@ const RuleCard = ({
     }}
   >
     <div style={{ flex: 1 }}>
-      <p style={{ fontSize: '14px', fontWeight: 500, color: '#fff', margin: 0 }}>
+      <p style={{ fontSize: '14px', fontWeight: 500, color: colors.editorText, margin: 0 }}>
         {rule.name}
       </p>
-      <p style={{ fontSize: '12px', color: '#666', margin: '4px 0 0 0' }}>
-        {rule.triggerCount} exécutions
+      <p style={{ fontSize: '12px', color: colors.editorSecondary, margin: '4px 0 0 0' }}>
+        {rule.triggerCount} executions
       </p>
     </div>
     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -182,8 +203,8 @@ const RuleCard = ({
         onClick={() => onToggle(rule.id, !rule.enabled)}
         style={{
           padding: '6px 12px',
-          backgroundColor: rule.enabled ? 'rgba(16, 163, 127, 0.2)' : '#2d2d2d',
-          color: rule.enabled ? '#10a37f' : '#666',
+          backgroundColor: rule.enabled ? `${colors.success}20` : colors.dialog,
+          color: rule.enabled ? colors.success : colors.editorSecondary,
           border: 'none',
           borderRadius: '6px',
           fontSize: '12px',
@@ -194,13 +215,13 @@ const RuleCard = ({
       </button>
       <button
         onClick={() => onDelete(rule.id)}
-        aria-label="Supprimer la règle"
+        aria-label="Supprimer la regle"
         style={{
           padding: '6px',
           backgroundColor: 'transparent',
           border: 'none',
           cursor: 'pointer',
-          color: '#666',
+          color: colors.editorSecondary,
         }}
       >
         <Trash2 size={16} />
@@ -215,6 +236,9 @@ export default function SmartHomePage() {
   const [rules, setRules] = useState<AutomationRule[]>([]);
   const [isDiscovering, setIsDiscovering] = useState(false);
   const [activeTab, setActiveTab] = useState<'devices' | 'scenes' | 'rules'>('devices');
+
+  const { getCurrentColors } = useOfficeThemeStore();
+  const colors = getCurrentColors();
 
   useEffect(() => {
     setDevices(smartHomeService.getAllDevices());
@@ -258,25 +282,10 @@ export default function SmartHomePage() {
   }, {} as Record<string, SmartDevice[]>);
 
   return (
-    <ModernLayout title="Maison Intelligente">
-      {/* Header */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: '24px',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <Home size={24} color="#10a37f" />
-          <div>
-            <h2 style={{ fontSize: '20px', fontWeight: 600, color: '#fff', margin: 0 }}>
-              Maison Intelligente
-            </h2>
-            <p style={{ fontSize: '13px', color: '#666', margin: '4px 0 0 0' }}>
-              {devices.length} appareils • {devices.filter(d => d.status === 'online').length} en ligne
-            </p>
-          </div>
-        </div>
+    <OfficePageLayout
+      title="Maison Intelligente"
+      subtitle={`${devices.length} appareils - ${devices.filter(d => d.status === 'online').length} en ligne`}
+      action={
         <button
           onClick={handleDiscover}
           disabled={isDiscovering}
@@ -285,7 +294,7 @@ export default function SmartHomePage() {
             alignItems: 'center',
             gap: '8px',
             padding: '10px 16px',
-            backgroundColor: '#10a37f',
+            backgroundColor: colors.accent,
             color: '#fff',
             border: 'none',
             borderRadius: '8px',
@@ -294,16 +303,16 @@ export default function SmartHomePage() {
           }}
         >
           <RefreshCw size={16} style={{ animation: isDiscovering ? 'spin 1s linear infinite' : 'none' }} />
-          {isDiscovering ? 'Recherche...' : 'Découvrir'}
+          {isDiscovering ? 'Recherche...' : 'Decouvrir'}
         </button>
-      </div>
-
+      }
+    >
       {/* Tabs */}
       <div style={{
         display: 'flex',
         gap: '8px',
         marginBottom: '24px',
-        borderBottom: '1px solid #2d2d2d',
+        borderBottom: `1px solid ${colors.border}`,
         paddingBottom: '12px',
       }}>
         {(['devices', 'scenes', 'rules'] as const).map(tab => (
@@ -312,8 +321,8 @@ export default function SmartHomePage() {
             onClick={() => setActiveTab(tab)}
             style={{
               padding: '8px 16px',
-              backgroundColor: activeTab === tab ? '#10a37f' : 'transparent',
-              color: activeTab === tab ? '#fff' : '#888',
+              backgroundColor: activeTab === tab ? colors.accent : 'transparent',
+              color: activeTab === tab ? '#fff' : colors.editorSecondary,
               border: 'none',
               borderRadius: '6px',
               cursor: 'pointer',
@@ -321,7 +330,7 @@ export default function SmartHomePage() {
               fontWeight: 500,
             }}
           >
-            {tab === 'devices' ? 'Appareils' : tab === 'scenes' ? 'Scènes' : 'Automatisations'}
+            {tab === 'devices' ? 'Appareils' : tab === 'scenes' ? 'Scenes' : 'Automatisations'}
           </button>
         ))}
       </div>
@@ -332,7 +341,7 @@ export default function SmartHomePage() {
           {Object.entries(devicesByRoom).length > 0 ? (
             Object.entries(devicesByRoom).map(([room, roomDevices]) => (
               <div key={room} style={{ marginBottom: '24px' }}>
-                <h3 style={{ fontSize: '14px', color: '#888', marginBottom: '12px', textTransform: 'uppercase' }}>
+                <h3 style={{ fontSize: '14px', color: colors.editorSecondary, marginBottom: '12px', textTransform: 'uppercase' }}>
                   {room}
                 </h3>
                 <div style={{
@@ -345,6 +354,7 @@ export default function SmartHomePage() {
                       key={device.id}
                       device={device}
                       onToggle={handleToggleDevice}
+                      colors={colors}
                     />
                   ))}
                 </div>
@@ -354,11 +364,11 @@ export default function SmartHomePage() {
             <div style={{
               textAlign: 'center',
               padding: '60px 20px',
-              color: '#666',
+              color: colors.editorSecondary,
             }}>
               <Home size={48} style={{ marginBottom: '16px', opacity: 0.5 }} />
-              <p style={{ fontSize: '16px', marginBottom: '8px' }}>Aucun appareil détecté</p>
-              <p style={{ fontSize: '13px' }}>Cliquez sur "Découvrir" pour rechercher des appareils</p>
+              <p style={{ fontSize: '16px', marginBottom: '8px' }}>Aucun appareil detecte</p>
+              <p style={{ fontSize: '13px' }}>Cliquez sur "Decouvrir" pour rechercher des appareils</p>
             </div>
           )}
         </div>
@@ -375,20 +385,21 @@ export default function SmartHomePage() {
               key={scene.id}
               scene={scene}
               onActivate={handleActivateScene}
+              colors={colors}
             />
           ))}
           <button
             style={{
               padding: '16px',
-              backgroundColor: '#1a1a1a',
+              backgroundColor: colors.sidebar,
               borderRadius: '12px',
-              border: '2px dashed #2d2d2d',
+              border: `2px dashed ${colors.border}`,
               cursor: 'pointer',
               textAlign: 'center',
             }}
           >
-            <Plus size={24} color="#666" style={{ marginBottom: '8px' }} />
-            <p style={{ fontSize: '14px', color: '#666', margin: 0 }}>Nouvelle scène</p>
+            <Plus size={24} color={colors.editorSecondary} style={{ marginBottom: '8px' }} />
+            <p style={{ fontSize: '14px', color: colors.editorSecondary, margin: 0 }}>Nouvelle scene</p>
           </button>
         </div>
       )}
@@ -402,17 +413,18 @@ export default function SmartHomePage() {
                 rule={rule}
                 onToggle={handleToggleRule}
                 onDelete={handleDeleteRule}
+                colors={colors}
               />
             ))
           ) : (
             <div style={{
               textAlign: 'center',
               padding: '60px 20px',
-              color: '#666',
+              color: colors.editorSecondary,
             }}>
               <Play size={48} style={{ marginBottom: '16px', opacity: 0.5 }} />
               <p style={{ fontSize: '16px', marginBottom: '8px' }}>Aucune automatisation</p>
-              <p style={{ fontSize: '13px' }}>Créez des règles pour automatiser votre maison</p>
+              <p style={{ fontSize: '13px' }}>Creez des regles pour automatiser votre maison</p>
             </div>
           )}
           <button
@@ -424,11 +436,11 @@ export default function SmartHomePage() {
               width: '100%',
               padding: '14px',
               marginTop: '16px',
-              backgroundColor: '#1a1a1a',
-              border: '2px dashed #2d2d2d',
+              backgroundColor: colors.sidebar,
+              border: `2px dashed ${colors.border}`,
               borderRadius: '10px',
               cursor: 'pointer',
-              color: '#666',
+              color: colors.editorSecondary,
               fontSize: '14px',
             }}
           >
@@ -446,6 +458,6 @@ export default function SmartHomePage() {
           }
         `}
       </style>
-    </ModernLayout>
+    </OfficePageLayout>
   );
 }

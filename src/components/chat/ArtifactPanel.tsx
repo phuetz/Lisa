@@ -1,18 +1,19 @@
 /**
- * Artifact Panel Component
- * Panneau latéral style Claude.ai pour afficher les artefacts
+ * Artifact Panel Component - Consolidated Version
+ * Combines best features from V1 (multi-file) and V2 (split view, console, auto-run)
+ * Modal playground style with code editor and live preview
  */
 
 import { useState, useCallback, useRef, useEffect } from 'react';
 import Editor from '@monaco-editor/react';
 import {
   Code,
+  Play,
   Eye,
   Copy,
   Download,
   Maximize2,
   Minimize2,
-  RefreshCw,
   X,
   FileCode,
   Palette,
@@ -20,93 +21,130 @@ import {
   Atom,
   Check,
   ExternalLink,
-  ChevronLeft,
-  Plus,
+  ChevronDown,
+  ToggleLeft,
+  ToggleRight,
+  Columns,
+  Layout,
   File,
+  Plus,
 } from 'lucide-react';
-import { useArtifactPanelStore } from '../../store/artifactPanelStore';
+import { useArtifactPanelStore } from '../../store/chatHistoryStore';
 import { pyodideService } from '../../services/PyodideService';
 import type { ArtifactType } from './Artifact';
 
-const TYPE_CONFIG: Record<ArtifactType, { icon: React.ReactNode; color: string; label: string }> = {
-  html: { icon: <FileCode size={16} />, color: '#e34c26', label: 'HTML' },
-  react: { icon: <Atom size={16} />, color: '#61dafb', label: 'React' },
-  javascript: { icon: <Terminal size={16} />, color: '#f7df1e', label: 'JavaScript' },
-  typescript: { icon: <FileCode size={16} />, color: '#3178c6', label: 'TypeScript' },
-  css: { icon: <Palette size={16} />, color: '#264de4', label: 'CSS' },
-  python: { icon: <Terminal size={16} />, color: '#3776ab', label: 'Python' },
-  svg: { icon: <FileCode size={16} />, color: '#ffb13b', label: 'SVG' },
-  mermaid: { icon: <FileCode size={16} />, color: '#ff3670', label: 'Mermaid' },
+// Type configuration with Lucide icons
+const TYPE_CONFIG: Record<ArtifactType, { icon: React.ReactNode; color: string; label: string; monacoLang: string }> = {
+  html: { icon: <FileCode size={16} />, color: '#e34c26', label: 'HTML', monacoLang: 'html' },
+  react: { icon: <Atom size={16} />, color: '#61dafb', label: 'React', monacoLang: 'javascript' },
+  javascript: { icon: <Terminal size={16} />, color: '#f7df1e', label: 'JavaScript', monacoLang: 'javascript' },
+  typescript: { icon: <FileCode size={16} />, color: '#3178c6', label: 'TypeScript', monacoLang: 'typescript' },
+  css: { icon: <Palette size={16} />, color: '#264de4', label: 'CSS', monacoLang: 'css' },
+  python: { icon: <Terminal size={16} />, color: '#3776ab', label: 'Python', monacoLang: 'python' },
+  svg: { icon: <FileCode size={16} />, color: '#ffb13b', label: 'SVG', monacoLang: 'xml' },
+  mermaid: { icon: <FileCode size={16} />, color: '#ff3670', label: 'Mermaid', monacoLang: 'markdown' },
 };
+
+type ViewMode = 'split' | 'code' | 'preview';
 
 export const ArtifactPanel = () => {
   const { isOpen, artifact, view, closePanel, setView, updateCode } = useArtifactPanelStore();
+  const [viewMode, setViewMode] = useState<ViewMode>('preview');
+  const [autoRun, setAutoRun] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  
-  // Debug logging
-  useEffect(() => {
-    if (isOpen && artifact) {
-      console.log('[ArtifactPanel Debug] Received artifact:', {
-        id: artifact.id,
-        type: artifact.type,
-        title: artifact.title,
-        codeLength: artifact.code?.length || 0,
-        codePreview: artifact.code?.substring(0, 100) || 'NO CODE',
-        view,
-      });
-    }
-  }, [isOpen, artifact, view]);
   const [copied, setCopied] = useState(false);
   const [previewKey, setPreviewKey] = useState(0);
+  const [consoleOutput, setConsoleOutput] = useState<string[]>([]);
+  const [showConsole, setShowConsole] = useState(true);
   const [selectedFileIndex, setSelectedFileIndex] = useState(0);
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  const panelRef = useRef<HTMLDivElement>(null);
-  
+  const autoRunTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // Get files array (support both single file and multi-file artifacts)
-  const files = artifact?.files || (artifact ? [{ 
-    name: artifact.title, 
-    code: artifact.code, 
-    language: artifact.language 
+  const files = artifact?.files || (artifact ? [{
+    name: artifact.title,
+    code: artifact.code,
+    language: artifact.language
   }] : []);
-  
+
   const currentFile = files[selectedFileIndex] || files[0];
+  const config = artifact ? TYPE_CONFIG[artifact.type] : TYPE_CONFIG.html;
 
   // Close on Escape key
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        if (isFullscreen) {
-          setIsFullscreen(false);
-        } else {
-          closePanel();
-        }
+        if (isFullscreen) setIsFullscreen(false);
+        else closePanel();
       }
     };
-    
     if (isOpen) {
       window.addEventListener('keydown', handleKeyDown);
       return () => window.removeEventListener('keydown', handleKeyDown);
     }
   }, [isOpen, isFullscreen, closePanel]);
 
+  // Listen for console messages from iframe
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'console') {
+        const { method, message } = event.data;
+        const prefix = method === 'error' ? '❌ ' : method === 'warn' ? '⚠️ ' : '> ';
+        setConsoleOutput(prev => [...prev.slice(-50), prefix + message]);
+      }
+    };
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
+
+  // Auto-run on code change
+  useEffect(() => {
+    if (!artifact || !autoRun) return;
+    if (autoRunTimeoutRef.current) clearTimeout(autoRunTimeoutRef.current);
+    autoRunTimeoutRef.current = setTimeout(() => {
+      setConsoleOutput([]);
+      setPreviewKey(k => k + 1);
+    }, 800);
+    return () => {
+      if (autoRunTimeoutRef.current) clearTimeout(autoRunTimeoutRef.current);
+    };
+  }, [artifact, autoRun]);
+
   // Generate preview HTML based on artifact type
   const generatePreview = useCallback(() => {
     if (!artifact) return '';
     const code = artifact.code;
-    
+
+    // Inject console capture for all types
+    const consoleCapture = `
+      <script>
+        const _originalConsole = { log: console.log, error: console.error, warn: console.warn };
+        ['log', 'error', 'warn'].forEach(method => {
+          console[method] = (...args) => {
+            _originalConsole[method](...args);
+            const msg = args.map(a => typeof a === 'object' ? JSON.stringify(a, null, 2) : String(a)).join(' ');
+            window.parent.postMessage({ type: 'console', method, message: msg }, '*');
+          };
+        });
+        window.onerror = (msg, url, line) => {
+          window.parent.postMessage({ type: 'console', method: 'error', message: msg + ' (line ' + line + ')' }, '*');
+        };
+      </script>
+    `;
+
     switch (artifact.type) {
       case 'html':
-        return code;
+        return code.includes('<script>') ? code.replace('<script>', consoleCapture + '<script>') : code + consoleCapture;
 
       case 'svg':
-        return `<!DOCTYPE html><html><head><style>body{margin:0;display:flex;justify-content:center;align-items:center;min-height:100vh;background:#1a1a2e;}</style></head><body>${code}</body></html>`;
+        return `<!DOCTYPE html><html><head><style>body{margin:0;display:flex;justify-content:center;align-items:center;min-height:100vh;background:#1a1a2e;}</style>${consoleCapture}</head><body>${code}</body></html>`;
 
       case 'css':
         return `<!DOCTYPE html>
-<html><head><meta charset="UTF-8"><style>${code}</style></head>
+<html><head><meta charset="UTF-8"><style>${code}</style>${consoleCapture}</head>
 <body>
   <div class="demo-container">
-    <h1>🎨 CSS Preview</h1>
+    <h1>CSS Preview</h1>
     <p class="subtitle">Vos styles sont appliqués</p>
     <div class="card"><h2>Card</h2><p>Exemple de carte.</p><button class="btn">Bouton</button></div>
     <div class="grid"><div class="grid-item">1</div><div class="grid-item">2</div><div class="grid-item">3</div></div>
@@ -120,15 +158,12 @@ export const ArtifactPanel = () => {
   *{margin:0;padding:0;box-sizing:border-box;}
   body{font-family:'Fira Code',monospace;background:#1a1a2e;color:#10a37f;padding:20px;min-height:100vh;}
   #output{white-space:pre-wrap;line-height:1.6;}
-  .log{color:#10a37f;}.error{color:#ef4444;}
-</style></head>
+</style>
+${consoleCapture}
+</head>
 <body>
   <div id="output"></div>
   <script>
-    const output = document.getElementById('output');
-    const _log = console.log, _error = console.error;
-    console.log = (...args) => { _log(...args); output.innerHTML += '<div class="log">> ' + args.map(a => typeof a === 'object' ? JSON.stringify(a,null,2) : String(a)).join(' ') + '</div>'; };
-    console.error = (...args) => { _error(...args); output.innerHTML += '<div class="error">❌ ' + args.join(' ') + '</div>'; };
     try { ${code} } catch(e) { console.error(e.message); }
   </script>
 </body></html>`;
@@ -140,16 +175,11 @@ export const ArtifactPanel = () => {
 <style>
   *{margin:0;padding:0;box-sizing:border-box;}
   body{font-family:'Fira Code',monospace;background:#1a1a2e;color:#3178c6;padding:20px;min-height:100vh;}
-  #output{white-space:pre-wrap;line-height:1.6;}
-  .log{color:#10a37f;}.error{color:#ef4444;}
-</style></head>
+</style>
+${consoleCapture}
+</head>
 <body>
-  <div id="output"></div>
   <script>
-    const output = document.getElementById('output');
-    const _log = console.log, _error = console.error;
-    console.log = (...args) => { _log(...args); output.innerHTML += '<div class="log">> ' + args.map(a => typeof a === 'object' ? JSON.stringify(a,null,2) : String(a)).join(' ') + '</div>'; };
-    console.error = (...args) => { _error(...args); output.innerHTML += '<div class="error">❌ ' + args.join(' ') + '</div>'; };
     try {
       const jsCode = ts.transpile(${JSON.stringify(code)}, { target: ts.ScriptTarget.ES2020 });
       eval(jsCode);
@@ -166,11 +196,13 @@ export const ArtifactPanel = () => {
 <style>
   *{margin:0;padding:0;box-sizing:border-box;}
   body{font-family:'Segoe UI',system-ui,sans-serif;background:#1a1a2e;color:#fff;min-height:100vh;padding:20px;}
-</style></head>
+</style>
+${consoleCapture}
+</head>
 <body>
   <div id="root"></div>
   <script type="text/babel">
-    try { ${code} } catch(e) { document.getElementById('root').innerHTML = '<div style="color:red;padding:20px;">Erreur: '+e.message+'</div>'; }
+    try { ${code} } catch(e) { console.error(e.message); document.getElementById('root').innerHTML = '<div style="color:red;padding:20px;">Erreur: '+e.message+'</div>'; }
   </script>
 </body></html>`;
 
@@ -193,6 +225,11 @@ export const ArtifactPanel = () => {
     }
   }, [artifact]);
 
+  const handleRun = () => {
+    setConsoleOutput([]);
+    setPreviewKey(k => k + 1);
+  };
+
   const handleCopy = async () => {
     if (!artifact) return;
     await navigator.clipboard.writeText(artifact.code);
@@ -212,15 +249,6 @@ export const ArtifactPanel = () => {
     URL.revokeObjectURL(url);
   };
 
-  const handleRefresh = () => {
-    setPreviewKey(k => k + 1);
-  };
-
-  const handleCodeChange = (value: string | undefined) => {
-    updateCode(value || '');
-  };
-
-  // Open in new window
   const handleOpenExternal = () => {
     const html = generatePreview();
     const newWindow = window.open('', '_blank');
@@ -230,98 +258,81 @@ export const ArtifactPanel = () => {
     }
   };
 
-  // Auto-refresh on code change
-  useEffect(() => {
-    if (!artifact) return;
-    const timer = setTimeout(() => setPreviewKey(k => k + 1), 500);
-    return () => clearTimeout(timer);
-  }, [artifact]);
+  const handleCodeChange = (value: string | undefined) => {
+    updateCode(value || '');
+  };
 
   if (!isOpen || !artifact) return null;
-
-  const config = TYPE_CONFIG[artifact.type];
 
   // Fullscreen mode
   if (isFullscreen) {
     return (
       <div style={{
         position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
+        inset: 0,
         zIndex: 9999,
         backgroundColor: '#0d0d0d',
         display: 'flex',
         flexDirection: 'column',
       }}>
-        {/* Header */}
+        {/* Fullscreen Header */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '12px 20px',
+          padding: '8px 16px',
           backgroundColor: '#1a1a1a',
           borderBottom: '1px solid #333',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '6px 12px',
-              backgroundColor: `${config.color}20`,
+            <div style={{ color: config.color }}>{config.icon}</div>
+            <span style={{ color: '#fff', fontWeight: 600 }}>{artifact.title}</span>
+            <span style={{
+              padding: '2px 8px',
+              backgroundColor: `${config.color}30`,
               color: config.color,
-              borderRadius: '8px',
-              fontSize: '13px',
+              borderRadius: '4px',
+              fontSize: '12px',
               fontWeight: 500,
             }}>
-              {config.icon}
               {config.label}
-            </div>
-            <span style={{ color: '#fff', fontSize: '15px', fontWeight: 600 }}>
-              {artifact.title}
             </span>
           </div>
-          
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <button onClick={() => setIsFullscreen(false)} style={actionButtonStyle}>
-              <Minimize2 size={16} />
-            </button>
-          </div>
+          <button onClick={() => setIsFullscreen(false)} style={iconButtonStyle}>
+            <Minimize2 size={18} />
+          </button>
         </div>
-        
-        {/* Content */}
-        <div style={{ flex: 1, display: 'flex' }}>
-          {view === 'code' ? (
+
+        {/* Fullscreen Content - Split View */}
+        <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+          <div style={{ flex: 1, borderRight: '1px solid #333' }}>
             <Editor
               height="100%"
-              language={artifact.language}
+              language={config.monacoLang}
               value={artifact.code}
               theme="vs-dark"
               onChange={handleCodeChange}
               options={{
                 minimap: { enabled: true },
                 fontSize: 14,
-                fontFamily: "'Fira Code', 'JetBrains Mono', monospace",
+                fontFamily: "'Fira Code', monospace",
                 lineNumbers: 'on',
-                scrollBeyondLastLine: false,
                 automaticLayout: true,
                 tabSize: 2,
                 wordWrap: 'on',
-                padding: { top: 16 },
               }}
             />
-          ) : (
+          </div>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
             <iframe
               ref={iframeRef}
               key={previewKey}
               srcDoc={generatePreview()}
-              style={{ width: '100%', height: '100%', border: 'none', backgroundColor: '#fff' }}
+              style={{ flex: 1, border: 'none', backgroundColor: '#fff' }}
               sandbox="allow-scripts allow-modals allow-same-origin"
               title={artifact.title}
             />
-          )}
+          </div>
         </div>
       </div>
     );
@@ -334,178 +345,155 @@ export const ArtifactPanel = () => {
         onClick={closePanel}
         style={{
           position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          inset: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.6)',
           zIndex: 998,
-          animation: 'fadeIn 0.2s ease-out',
         }}
       />
-      
-      {/* Panel */}
-      <div
-        ref={panelRef}
-        style={{
-          position: 'fixed',
-          top: 0,
-          right: 0,
-          bottom: 0,
-          width: '50%',
-          minWidth: '500px',
-          maxWidth: '800px',
-          backgroundColor: '#0d0d0d',
-          zIndex: 999,
-          display: 'flex',
-          flexDirection: 'column',
-          boxShadow: '-4px 0 24px rgba(0, 0, 0, 0.5)',
-          animation: 'slideIn 0.3s ease-out',
-        }}
-      >
+
+      {/* Panel - Playground Style */}
+      <div style={{
+        position: 'fixed',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        width: '95vw',
+        maxWidth: '1400px',
+        height: '90vh',
+        backgroundColor: '#0d0d0d',
+        borderRadius: '16px',
+        border: '1px solid #333',
+        zIndex: 999,
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.8)',
+      }}>
         {/* Header */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '16px 20px',
+          padding: '12px 16px',
           backgroundColor: '#1a1a1a',
           borderBottom: '1px solid #333',
         }}>
-          {/* Left - Close & Title */}
+          {/* Left - Title & Type */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <button
-              onClick={closePanel}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: '32px',
-                height: '32px',
-                backgroundColor: 'transparent',
-                border: '1px solid #404040',
-                borderRadius: '8px',
-                color: '#888',
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = '#10a37f';
-                e.currentTarget.style.color = '#10a37f';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = '#404040';
-                e.currentTarget.style.color = '#888';
-              }}
-            >
-              <ChevronLeft size={18} />
-            </button>
-            
             <div style={{
+              width: '36px',
+              height: '36px',
+              borderRadius: '10px',
+              background: `linear-gradient(135deg, ${config.color}, ${config.color}80)`,
               display: 'flex',
               alignItems: 'center',
-              gap: '8px',
-              padding: '6px 12px',
-              backgroundColor: `${config.color}15`,
-              color: config.color,
-              borderRadius: '8px',
-              fontSize: '12px',
-              fontWeight: 600,
-              textTransform: 'uppercase',
-              letterSpacing: '0.5px',
+              justifyContent: 'center',
+              color: '#fff',
             }}>
               {config.icon}
-              {config.label}
             </div>
-            
-            <span style={{ 
-              color: '#fff', 
-              fontSize: '15px', 
-              fontWeight: 600,
-              maxWidth: '200px',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-            }}>
-              {artifact.title}
-            </span>
+            <div>
+              <div style={{ color: '#fff', fontWeight: 600, fontSize: '15px' }}>
+                {artifact.title}
+              </div>
+              <div style={{ color: '#888', fontSize: '12px' }}>
+                {config.label} - Live Editor
+              </div>
+            </div>
           </div>
 
           {/* Right - Actions */}
-          <div style={{ display: 'flex', gap: '6px' }}>
-            <button onClick={handleRefresh} style={actionButtonStyle} title="Rafraîchir">
-              <RefreshCw size={16} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {/* Auto Toggle */}
+            <button
+              onClick={() => setAutoRun(!autoRun)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '6px 12px',
+                backgroundColor: autoRun ? '#10a37f20' : '#252525',
+                border: `1px solid ${autoRun ? '#10a37f' : '#404040'}`,
+                borderRadius: '8px',
+                color: autoRun ? '#10a37f' : '#888',
+                fontSize: '12px',
+                fontWeight: 500,
+                cursor: 'pointer',
+              }}
+            >
+              {autoRun ? <ToggleRight size={16} /> : <ToggleLeft size={16} />}
+              Auto
             </button>
-            <button onClick={handleCopy} style={actionButtonStyle} title="Copier le code">
+
+            {/* Run Button */}
+            <button
+              onClick={handleRun}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '8px 16px',
+                backgroundColor: '#10a37f',
+                border: 'none',
+                borderRadius: '8px',
+                color: '#fff',
+                fontSize: '13px',
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              <Play size={16} fill="#fff" />
+              Run
+            </button>
+
+            {/* View Mode Toggle */}
+            <div style={{
+              display: 'flex',
+              backgroundColor: '#252525',
+              borderRadius: '8px',
+              overflow: 'hidden',
+            }}>
+              {[
+                { mode: 'preview' as ViewMode, icon: <Eye size={16} />, title: 'Preview' },
+                { mode: 'split' as ViewMode, icon: <Columns size={16} />, title: 'Split' },
+                { mode: 'code' as ViewMode, icon: <Code size={16} />, title: 'Code' },
+              ].map(({ mode, icon, title }) => (
+                <button
+                  key={mode}
+                  onClick={() => setViewMode(mode)}
+                  title={title}
+                  style={{
+                    padding: '8px 10px',
+                    backgroundColor: viewMode === mode ? '#10a37f' : 'transparent',
+                    border: 'none',
+                    color: viewMode === mode ? '#fff' : '#888',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                  }}
+                >
+                  {icon}
+                </button>
+              ))}
+            </div>
+
+            {/* Action Buttons */}
+            <button onClick={handleCopy} style={iconButtonStyle} title="Copier">
               {copied ? <Check size={16} color="#10a37f" /> : <Copy size={16} />}
             </button>
-            <button onClick={handleDownload} style={actionButtonStyle} title="Télécharger">
+            <button onClick={handleDownload} style={iconButtonStyle} title="Télécharger">
               <Download size={16} />
             </button>
-            <button onClick={handleOpenExternal} style={actionButtonStyle} title="Ouvrir dans un nouvel onglet">
+            <button onClick={handleOpenExternal} style={iconButtonStyle} title="Nouvel onglet">
               <ExternalLink size={16} />
             </button>
-            <button onClick={() => setIsFullscreen(true)} style={actionButtonStyle} title="Plein écran">
+            <button onClick={() => setIsFullscreen(true)} style={iconButtonStyle} title="Plein écran">
               <Maximize2 size={16} />
             </button>
-            <button onClick={closePanel} style={actionButtonStyle} title="Fermer">
+            <button onClick={closePanel} style={iconButtonStyle} title="Fermer">
               <X size={16} />
             </button>
           </div>
-        </div>
-
-        {/* View Toggle */}
-        <div style={{
-          display: 'flex',
-          padding: '12px 20px',
-          backgroundColor: '#151515',
-          borderBottom: '1px solid #333',
-          gap: '4px',
-        }}>
-          <button
-            onClick={() => setView('preview')}
-            style={{
-              flex: 1,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-              padding: '10px 16px',
-              backgroundColor: view === 'preview' ? '#10a37f' : 'transparent',
-              border: view === 'preview' ? 'none' : '1px solid #404040',
-              borderRadius: '8px',
-              color: view === 'preview' ? '#fff' : '#888',
-              cursor: 'pointer',
-              fontSize: '13px',
-              fontWeight: 500,
-              transition: 'all 0.2s',
-            }}
-          >
-            <Eye size={16} />
-            Aperçu
-          </button>
-          <button
-            onClick={() => setView('code')}
-            style={{
-              flex: 1,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-              padding: '10px 16px',
-              backgroundColor: view === 'code' ? '#10a37f' : 'transparent',
-              border: view === 'code' ? 'none' : '1px solid #404040',
-              borderRadius: '8px',
-              color: view === 'code' ? '#fff' : '#888',
-              cursor: 'pointer',
-              fontSize: '13px',
-              fontWeight: 500,
-              transition: 'all 0.2s',
-            }}
-          >
-            <Code size={16} />
-            Code
-          </button>
         </div>
 
         {/* File Tabs - Only show if multi-file artifact */}
@@ -513,8 +501,8 @@ export const ArtifactPanel = () => {
           <div style={{
             display: 'flex',
             alignItems: 'center',
-            padding: '8px 20px',
-            backgroundColor: '#0d0d0d',
+            padding: '8px 16px',
+            backgroundColor: '#151515',
             borderBottom: '1px solid #333',
             gap: '4px',
             overflowX: 'auto',
@@ -546,10 +534,9 @@ export const ArtifactPanel = () => {
             <button
               onClick={() => {
                 const newFileName = prompt('Nom du nouveau fichier:');
-                if (newFileName && artifact) {
-                  const newFiles = [...files, { name: newFileName, code: '', language: 'javascript' }];
-                  // Update artifact with new files - for now just log
-                  console.log('New files:', newFiles);
+                if (newFileName) {
+                  // TODO: Add file to artifact
+                  void newFileName;
                 }
               }}
               style={{
@@ -563,7 +550,6 @@ export const ArtifactPanel = () => {
                 borderRadius: '6px',
                 color: '#666',
                 cursor: 'pointer',
-                transition: 'all 0.2s',
               }}
               title="Ajouter un fichier"
             >
@@ -572,93 +558,209 @@ export const ArtifactPanel = () => {
           </div>
         )}
 
-        {/* Content */}
-        <div style={{ flex: 1, overflow: 'hidden' }}>
-          {view === 'preview' ? (
-            <iframe
-              ref={iframeRef}
-              key={previewKey}
-              srcDoc={generatePreview()}
-              style={{ 
-                width: '100%', 
-                height: '100%', 
-                border: 'none',
-                backgroundColor: '#fff',
-              }}
-              sandbox="allow-scripts allow-modals allow-same-origin"
-              title={artifact.title}
-            />
-          ) : (
-            <Editor
-              height="100%"
-              language={currentFile?.language || artifact.language}
-              value={currentFile?.code || artifact.code}
-              theme="vs-dark"
-              onChange={handleCodeChange}
-              options={{
-                minimap: { enabled: false },
-                fontSize: 13,
-                fontFamily: "'Fira Code', 'JetBrains Mono', monospace",
-                lineNumbers: 'on',
-                scrollBeyondLastLine: false,
-                automaticLayout: true,
-                tabSize: 2,
-                wordWrap: 'on',
-                padding: { top: 16 },
-              }}
-            />
+        {/* Content Area */}
+        <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+          {/* Code Editor */}
+          {(viewMode === 'split' || viewMode === 'code') && (
+            <div style={{
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              borderRight: viewMode === 'split' ? '1px solid #333' : 'none',
+              backgroundColor: '#1e1e1e',
+            }}>
+              {/* File Tab */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                padding: '0 12px',
+                height: '36px',
+                backgroundColor: '#252525',
+                borderBottom: '1px solid #333',
+              }}>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '6px 12px',
+                  backgroundColor: '#1e1e1e',
+                  borderRadius: '6px 6px 0 0',
+                  marginBottom: '-1px',
+                  borderBottom: '1px solid #1e1e1e',
+                  color: config.color,
+                }}>
+                  {config.icon}
+                  <span style={{ color: '#fff', fontSize: '12px' }}>
+                    {currentFile?.name || artifact.title}.{artifact.type === 'react' ? 'jsx' : artifact.type}
+                  </span>
+                </div>
+              </div>
+
+              {/* Monaco Editor */}
+              <div style={{ flex: 1 }}>
+                <Editor
+                  height="100%"
+                  language={config.monacoLang}
+                  value={currentFile?.code || artifact.code}
+                  theme="vs-dark"
+                  onChange={handleCodeChange}
+                  options={{
+                    minimap: { enabled: false },
+                    fontSize: 13,
+                    fontFamily: "'Fira Code', 'JetBrains Mono', monospace",
+                    lineNumbers: 'on',
+                    scrollBeyondLastLine: false,
+                    automaticLayout: true,
+                    tabSize: 2,
+                    wordWrap: 'on',
+                    padding: { top: 12 },
+                    renderLineHighlight: 'line',
+                  }}
+                />
+              </div>
+
+              {/* Editor Footer */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '6px 12px',
+                backgroundColor: '#1a1a1a',
+                borderTop: '1px solid #333',
+                fontSize: '11px',
+                color: '#666',
+              }}>
+                <span>Ln {artifact.code.split('\n').length}</span>
+                <span>{artifact.code.length} chars</span>
+              </div>
+            </div>
+          )}
+
+          {/* Preview Panel */}
+          {(viewMode === 'split' || viewMode === 'preview') && (
+            <div style={{
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              backgroundColor: '#0d0d0d',
+            }}>
+              {/* Preview Header */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '0 12px',
+                height: '36px',
+                backgroundColor: '#1a1a1a',
+                borderBottom: '1px solid #333',
+              }}>
+                <span style={{ color: '#888', fontSize: '12px' }}>Preview</span>
+                <span style={{ color: '#666', fontSize: '11px' }}>
+                  {new Date().toLocaleTimeString('fr-FR')}
+                </span>
+              </div>
+
+              {/* Preview Content */}
+              <div style={{ flex: 1, backgroundColor: '#fff' }}>
+                <iframe
+                  ref={iframeRef}
+                  key={previewKey}
+                  srcDoc={generatePreview()}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    border: 'none',
+                  }}
+                  sandbox="allow-scripts allow-modals allow-same-origin"
+                  title={artifact.title}
+                />
+              </div>
+
+              {/* Console */}
+              {showConsole && (
+                <div style={{
+                  height: '120px',
+                  backgroundColor: '#0d0d0d',
+                  borderTop: '1px solid #333',
+                  display: 'flex',
+                  flexDirection: 'column',
+                }}>
+                  <div
+                    onClick={() => setShowConsole(!showConsole)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '6px 12px',
+                      backgroundColor: '#1a1a1a',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Terminal size={14} color="#888" />
+                      <span style={{ color: '#888', fontSize: '12px', fontWeight: 500 }}>Console</span>
+                      {consoleOutput.length > 0 && (
+                        <span style={{
+                          padding: '2px 6px',
+                          backgroundColor: '#10a37f30',
+                          color: '#10a37f',
+                          borderRadius: '4px',
+                          fontSize: '10px',
+                        }}>
+                          {consoleOutput.length}
+                        </span>
+                      )}
+                    </div>
+                    <ChevronDown
+                      size={14}
+                      color="#666"
+                      style={{ transform: showConsole ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}
+                    />
+                  </div>
+                  <div style={{
+                    flex: 1,
+                    overflow: 'auto',
+                    padding: '8px 12px',
+                    fontFamily: "'Fira Code', monospace",
+                    fontSize: '12px',
+                    lineHeight: 1.5,
+                  }}>
+                    {consoleOutput.length === 0 ? (
+                      <span style={{ color: '#555' }}>// Console output will appear here</span>
+                    ) : (
+                      consoleOutput.map((line, i) => (
+                        <div
+                          key={i}
+                          style={{
+                            color: line.startsWith('❌') ? '#ef4444' : line.startsWith('⚠️') ? '#f59e0b' : '#10a37f',
+                          }}
+                        >
+                          {line}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
           )}
         </div>
-
-        {/* Footer - Code stats */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '10px 20px',
-          backgroundColor: '#1a1a1a',
-          borderTop: '1px solid #333',
-          fontSize: '12px',
-          color: '#666',
-        }}>
-          <span>{artifact.code.split('\n').length} lignes</span>
-          <span>{artifact.code.length} caractères</span>
-        </div>
       </div>
-
-      {/* Animations */}
-      <style>{`
-        @keyframes slideIn {
-          from {
-            transform: translateX(100%);
-            opacity: 0;
-          }
-          to {
-            transform: translateX(0);
-            opacity: 1;
-          }
-        }
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-      `}</style>
     </>
   );
 };
 
-const actionButtonStyle: React.CSSProperties = {
+const iconButtonStyle: React.CSSProperties = {
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  width: '36px',
-  height: '36px',
+  width: '32px',
+  height: '32px',
   backgroundColor: 'transparent',
   border: '1px solid #404040',
   borderRadius: '8px',
   color: '#888',
   cursor: 'pointer',
-  transition: 'all 0.2s',
 };
 
 export default ArtifactPanel;

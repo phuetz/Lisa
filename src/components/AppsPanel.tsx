@@ -1,16 +1,17 @@
-import { useVisionAudioStore } from '../store/visionAudioStore';
+import { useAppStore } from '../store/appStore';
 import { useTranslation } from 'react-i18next';
 import { useMcpClient } from '../hooks';
 
 export default function AppsPanel() {
   const { t } = useTranslation();
-  const intent = useVisionAudioStore(s => s.intent);
-  const intentPayload = useVisionAudioStore(s => s.intentPayload);
-  const setState = useVisionAudioStore(s=>s.setState);
+  const intent = useAppStore(s => s.intent);
+  const intentPayload = useAppStore(s => s.intentPayload);
+  const setState = useAppStore(s=>s.setState);
   const { readResource } = useMcpClient();
 
   if (intent !== 'mcp_list' || !intentPayload || !('resources' in intentPayload)) return null;
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const resources = (intentPayload as any).resources as { uri: string; name?: string; type?: string }[];
 
   return (

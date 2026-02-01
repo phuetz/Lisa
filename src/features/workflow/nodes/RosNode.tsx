@@ -1,7 +1,6 @@
-
 import React, { memo } from 'react';
 import { Handle, Position, NodeProps } from 'reactflow';
-import { RosAgentParams } from '../../../agents/RosAgent';
+import { RosAgentParams } from '../../agents/RosAgent';
 
 const RosNode: React.FC<NodeProps<RosAgentParams>> = ({ data }) => {
   return (

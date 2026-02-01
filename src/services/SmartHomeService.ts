@@ -203,7 +203,6 @@ class SmartHomeServiceImpl {
     }
 
     this.presenceDetectionEnabled = true;
-    console.log('Détection de présence activée');
   }
 
   /**
@@ -211,7 +210,6 @@ class SmartHomeServiceImpl {
    */
   disablePresenceDetection(): void {
     this.presenceDetectionEnabled = false;
-    console.log('Détection de présence désactivée');
   }
 
   /**
@@ -352,7 +350,7 @@ class SmartHomeServiceImpl {
         break;
       }
       case 'notification': {
-        console.log(`[SmartHome] Notification: ${action.config.message}`);
+        // Notification action handled by notification service
         break;
       }
     }

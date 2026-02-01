@@ -1,6 +1,6 @@
 import type { Percept } from './percept';
 
-export type EventHandler<T = any> = (event: T) => void;
+export type EventHandler<T = unknown> = (event: T) => void;
 
 export interface EventBus {
   on<T>(event: string, handler: EventHandler<T>): () => void;

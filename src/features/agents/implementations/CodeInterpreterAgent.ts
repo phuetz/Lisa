@@ -1,17 +1,26 @@
 /**
  * CodeInterpreterAgent: An agent that uses the CodeInterpreterTool to execute Python code.
  */
-import { agentRegistry } from '../core/registry';
-import { CodeInterpreterTool } from '../tools/CodeInterpreterTool';
-import type { BaseAgent, AgentExecuteProps, AgentExecuteResult } from '../core/types';
+
+import { CodeInterpreterTool } from '../../../tools/CodeInterpreterTool';
+import type { BaseAgent, AgentExecuteProps, AgentExecuteResult, AgentDomain } from '../core/types';
+import { AgentDomains } from '../core/types';
 
 export class CodeInterpreterAgent implements BaseAgent {
   name = 'CodeInterpreterAgent';
   description = 'Executes Python code to perform calculations, data analysis, or other programmatic tasks. Use this for any task that involves running code.';
+  version = '1.0.0';
+  domain: AgentDomain = AgentDomains.ANALYSIS;
+  capabilities = [
+    'execute_python',
+    'data_analysis',
+    'calculations',
+    'code_execution'
+  ];
   private tool: CodeInterpreterTool;
 
-  constructor() {
-    this.tool = new CodeInterpreterTool();
+  constructor(tool?: CodeInterpreterTool) {
+    this.tool = tool || new CodeInterpreterTool();
   }
 
   async execute(props: AgentExecuteProps): Promise<AgentExecuteResult> {
@@ -34,4 +43,4 @@ export class CodeInterpreterAgent implements BaseAgent {
   }
 }
 
-agentRegistry.register(new CodeInterpreterAgent());
+

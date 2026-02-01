@@ -12,37 +12,43 @@ import rehypeKatex from 'rehype-katex';
 import rehypeHighlight from 'rehype-highlight';
 import remarkGfm from 'remark-gfm';
 import { Copy, Check, ExternalLink } from 'lucide-react';
-import { useArtifactPanelStore } from '../../store/artifactPanelStore';
+import { useArtifactPanelStore } from '../../store/chatHistoryStore';
 import 'katex/dist/katex.min.css';
 import 'highlight.js/styles/atom-one-dark.css';
 
 // Styles personnalisés pour KaTeX (améliorer l'espacement des formules)
 const katexStyles = `
   .katex-display {
-    margin: 16px 0 !important;
-    padding: 12px 0 !important;
+    margin: 20px 0 !important;
+    padding: 16px 0 !important;
     overflow-x: auto !important;
     overflow-y: hidden !important;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 8px;
   }
   .katex-display > .katex {
     text-align: left !important;
-    padding-left: 8px !important;
+    padding-left: 12px !important;
   }
   .katex {
-    font-size: 1.1em !important;
-    color: inherit !important;
+    font-size: 1.15em !important;
+    color: #e5e5e5 !important;
   }
   .katex-html {
-    color: inherit !important;
+    color: #e5e5e5 !important;
   }
   /* Améliorer les accolades et parenthèses */
   .katex .delimsizing,
   .katex .delimsizinginner {
-    color: #888 !important;
+    color: #999 !important;
   }
   /* Style pour les fractions */
   .katex .frac-line {
-    border-color: currentColor !important;
+    border-color: #999 !important;
+  }
+  /* Inline math */
+  .katex:not(.katex-display .katex) {
+    padding: 0 2px;
   }
 `;
 // Lazy load ChartRenderer (recharts = ~150KB)
@@ -258,15 +264,18 @@ const PreBlock = ({ children, ...props }: { children: ReactNode }) => {
   );
 };
 
-// Préprocesseur pour convertir les délimiteurs LaTeX - version simplifiée
+// Préprocesseur pour convertir les délimiteurs LaTeX
 const preprocessLatex = (text: string): string => {
   let processed = text;
   
-  // 1. Convertir \[ ... \] en $$ ... $$
-  processed = processed.replace(/\\\[([\s\S]*?)\\\]/g, '$$$$1$$');
+  // 1. Convertir \[ ... \] en $$ ... $$ (display math)
+  processed = processed.replace(/\\\[([\s\S]*?)\\\]/g, '\n$$\n$1\n$$\n');
   
-  // 2. Convertir \( ... \) en $ ... $
+  // 2. Convertir \( ... \) en $ ... $ (inline math)
   processed = processed.replace(/\\\(([\s\S]*?)\\\)/g, '$$$1$$');
+  
+  // 3. Protéger les $ isolés qui ne sont pas du LaTeX
+  // Ne rien faire ici - laisser remark-math gérer
   
   return processed;
 };
@@ -299,8 +308,8 @@ export const MarkdownRenderer = ({ content }: MarkdownRendererProps) => {
     <>
       <style>{katexStyles}</style>
       <ReactMarkdown
-        remarkPlugins={[[remarkMath, { singleDollarTextMath: true }], remarkGfm]}
-        rehypePlugins={[[rehypeKatex, { strict: false, throwOnError: false, output: 'html' }], rehypeHighlight]}
+        remarkPlugins={[remarkMath, remarkGfm]}
+        rehypePlugins={[rehypeKatex, rehypeHighlight]}
         components={{
         // Pre wrapper pour les blocs de code (avec header et bouton copier)
         pre({ children, ...props }) {
@@ -409,24 +418,24 @@ export const MarkdownRenderer = ({ content }: MarkdownRendererProps) => {
             </a>
           );
         },
-        // Lists
+        // Lists - Style amélioré avec meilleure indentation
         ul({ children }) {
           return (
-            <ul style={{ margin: '8px 0', paddingLeft: '24px', listStyleType: 'disc' }}>
+            <ul style={{ margin: '12px 0', paddingLeft: '28px', listStyleType: 'disc', lineHeight: 1.7 }}>
               {children}
             </ul>
           );
         },
         ol({ children }) {
           return (
-            <ol style={{ margin: '8px 0', paddingLeft: '24px', listStyleType: 'decimal' }}>
+            <ol style={{ margin: '12px 0', paddingLeft: '28px', listStyleType: 'decimal', lineHeight: 1.7 }}>
               {children}
             </ol>
           );
         },
         li({ children }) {
           return (
-            <li style={{ margin: '4px 0', lineHeight: 1.6 }}>
+            <li style={{ margin: '6px 0', lineHeight: 1.7, paddingLeft: '4px' }}>
               {children}
             </li>
           );
@@ -448,15 +457,18 @@ export const MarkdownRenderer = ({ content }: MarkdownRendererProps) => {
             </blockquote>
           );
         },
-        // Headings
+        // Headings - Style amélioré type Claude/ChatGPT
         h1({ children }) {
-          return <h1 style={{ fontSize: '1.5em', fontWeight: 600, margin: '16px 0 8px', color: '#fff' }}>{children}</h1>;
+          return <h1 style={{ fontSize: '1.5em', fontWeight: 700, margin: '24px 0 12px', color: '#fff', borderBottom: '1px solid #333', paddingBottom: '8px' }}>{children}</h1>;
         },
         h2({ children }) {
-          return <h2 style={{ fontSize: '1.3em', fontWeight: 600, margin: '14px 0 8px', color: '#fff' }}>{children}</h2>;
+          return <h2 style={{ fontSize: '1.35em', fontWeight: 600, margin: '20px 0 10px', color: '#fff' }}>{children}</h2>;
         },
         h3({ children }) {
-          return <h3 style={{ fontSize: '1.1em', fontWeight: 600, margin: '12px 0 6px', color: '#fff' }}>{children}</h3>;
+          return <h3 style={{ fontSize: '1.15em', fontWeight: 600, margin: '16px 0 8px', color: '#e5e5e5' }}>{children}</h3>;
+        },
+        h4({ children }) {
+          return <h4 style={{ fontSize: '1.05em', fontWeight: 600, margin: '12px 0 6px', color: '#d1d5db' }}>{children}</h4>;
         },
         // Horizontal rule
         hr() {

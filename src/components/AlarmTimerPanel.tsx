@@ -1,14 +1,14 @@
 import { useState } from 'react';
-import { useVisionAudioStore } from '../store/visionAudioStore';
+import { useAppStore } from '../store/appStore';
 import { useTranslation } from 'react-i18next';
 import { useNotifications } from '../hooks/useNotifications';
 import { NotificationPermissionPrompt } from './NotificationPermissionPrompt';
 
 export default function AlarmTimerPanel() {
   const { t } = useTranslation();
-  const alarms = useVisionAudioStore(s => s.alarms);
-  const timers = useVisionAudioStore(s => s.timers);
-  const setState = useVisionAudioStore(s => s.setState);
+  const alarms = useAppStore(s => s.alarms);
+  const timers = useAppStore(s => s.timers);
+  const setState = useAppStore(s => s.setState);
   const { permissionState } = useNotifications();
   const [showPermissionPrompt, setShowPermissionPrompt] = useState(false);
 

@@ -1,17 +1,26 @@
 /**
  * WebContentReaderAgent: An agent that uses the WebContentReaderTool to read and summarize web pages.
  */
-import { agentRegistry } from '../core/registry';
-import { WebContentReaderTool } from '../tools/WebContentReaderTool';
-import type { BaseAgent, AgentExecuteProps, AgentExecuteResult } from '../core/types';
+
+import { WebContentReaderTool } from '../../../tools/WebContentReaderTool';
+import type { BaseAgent, AgentExecuteProps, AgentExecuteResult, AgentDomain } from '../core/types';
+import { AgentDomains } from '../core/types';
 
 export class WebContentReaderAgent implements BaseAgent {
   name = 'WebContentReaderAgent';
   description = 'Reads and summarizes the content of a given URL. Use this when you need to understand the content of a specific web page.';
+  version = '1.0.0';
+  domain: AgentDomain = AgentDomains.KNOWLEDGE;
+  capabilities = [
+    'read_web_content',
+    'summarize_url',
+    'extract_text',
+    'web_scraping'
+  ];
   private tool: WebContentReaderTool;
 
-  constructor() {
-    this.tool = new WebContentReaderTool();
+  constructor(tool?: WebContentReaderTool) {
+    this.tool = tool || new WebContentReaderTool();
   }
 
   async execute(props: AgentExecuteProps): Promise<AgentExecuteResult> {
@@ -34,5 +43,5 @@ export class WebContentReaderAgent implements BaseAgent {
   }
 }
 
-agentRegistry.register(new WebContentReaderAgent());
+
 

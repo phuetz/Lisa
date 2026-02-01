@@ -6,9 +6,9 @@
  * ce qui est visible via la webcam ou des captures d'écran.
  */
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Box, Typography, Button, Select, MenuItem, FormControl, 
-  InputLabel, CircularProgress, Paper, Chip, Alert, Switch, FormControlLabel } from '@mui/material';
+  InputLabel, CircularProgress, Paper, Chip, Grid, Alert } from '@mui/material';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 import ScreenshotIcon from '@mui/icons-material/Screenshot';
@@ -17,10 +17,10 @@ import FaceIcon from '@mui/icons-material/Face';
 import ColorLensIcon from '@mui/icons-material/ColorLens';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
-import { agentRegistry } from '../features/agents/core/registry';
+import { agentRegistry } from '../agents/registry';
 import { useMediaPermissions } from '../hooks/useMediaPermissions';
-import type { VisionAgent, VisionSource, VisionTask, VisionResult } from '../agents/VisionAgent';
-import { useAppStore } from '../store/appStore';
+import { VisionAgent } from '../agents/VisionAgent';
+import type { VisionSource, VisionTask, VisionResult } from '../agents/VisionAgent';
 
 interface VisionPanelProps {
   expanded?: boolean;
@@ -28,10 +28,7 @@ interface VisionPanelProps {
 
 export const VisionPanel: React.FC<VisionPanelProps> = ({ expanded = false }) => {
   // Media permissions hook
-  const { requestCamera } = useMediaPermissions();
-  // Global state - use separate selectors to avoid infinite loop
-  const featureFlags = useAppStore((s) => s.featureFlags);
-  const setState = useAppStore((s) => s.setState);
+  const { permissions, requestCamera } = useMediaPermissions();
   // États du composant
   const [isExpanded, setIsExpanded] = useState(expanded);
   const [source, setSource] = useState<VisionSource>('webcam');
@@ -42,39 +39,16 @@ export const VisionPanel: React.FC<VisionPanelProps> = ({ expanded = false }) =>
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [webcamActive, setWebcamActive] = useState(false);
 
-  const handleAdvancedVisionToggle = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setState((state) => ({
-      featureFlags: {
-        ...state.featureFlags,
-        advancedVision: event.target.checked,
-      },
-    }));
-  };
-
   // Référence à l'élément vidéo pour la webcam
   const videoRef = useRef<HTMLVideoElement | null>(null);
   // Référence au stream de la webcam
   const streamRef = useRef<MediaStream | null>(null);
 
-  // Référence à l'agent Vision (lazy loading)
-  const [visionAgent, setVisionAgent] = useState<VisionAgent | null>(null);
-  const [agentAvailable, setAgentAvailable] = useState(false);
+  // Référence à l'agent Vision
+  const visionAgent = agentRegistry.getAgent('VisionAgent') as VisionAgent;
 
-  // Charger l'agent de manière asynchrone
-  const loadVisionAgent = useCallback(async () => {
-    try {
-      const agent = await agentRegistry.getAgentAsync('VisionAgent');
-      setVisionAgent(agent as VisionAgent | null);
-      setAgentAvailable(!!agent);
-    } catch (err) {
-      console.error('Erreur chargement VisionAgent:', err);
-      setAgentAvailable(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    loadVisionAgent();
-  }, [loadVisionAgent]);
+  // Vérification de la disponibilité de l'agent
+  const agentAvailable = !!visionAgent;
 
   // Initialiser ou arrêter la webcam en fonction de l'état du panneau et de la source
   useEffect(() => {
@@ -357,20 +331,6 @@ export const VisionPanel: React.FC<VisionPanelProps> = ({ expanded = false }) =>
             </Alert>
           ) : (
             <>
-              <Box sx={{ mb: 2 }}>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={featureFlags.advancedVision}
-                      onChange={handleAdvancedVisionToggle}
-                      name="advancedVision"
-                      color="primary"
-                    />
-                  }
-                  label="Activer la Vision Avancée (YOLOv8-n)"
-                />
-              </Box>
-
               <Box sx={{ mb: 2 }}>
                 <FormControl fullWidth>
                   <InputLabel>Source</InputLabel>

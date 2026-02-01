@@ -9,8 +9,11 @@ import { Shield, AlertTriangle, CheckCircle, RefreshCw } from 'lucide-react';
 export const SecurityPanel = () => {
   const { loading, error, securityScore, scanSecurity, detectRisks, getRecommendations } = useSecurity();
   const [isExpanded, setIsExpanded] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [scanResult, setScanResult] = useState<any>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [risks, setRisks] = useState<any>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [recommendations, setRecommendations] = useState<any>(null);
 
   const handleScan = async () => {
@@ -105,6 +108,7 @@ export const SecurityPanel = () => {
               {scanResult.risks && scanResult.risks.length > 0 && (
                 <div className="mt-2 max-h-40 overflow-y-auto">
                   <div className="font-semibold text-sm mb-1">Risks Found:</div>
+                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                   {scanResult.risks.map((risk: any, i: number) => (
                     <div key={i} className="text-xs p-2 bg-white dark:bg-gray-800 rounded mb-1">
                       <div className="font-semibold text-red-500">{risk.type}</div>
@@ -133,6 +137,7 @@ export const SecurityPanel = () => {
 
           {recommendations && recommendations.recommendations && (
             <div className="max-h-60 overflow-y-auto space-y-2">
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
               {recommendations.recommendations.map((rec: any, i: number) => (
                 <div key={i} className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded text-sm">
                   <div className="font-semibold">{rec.title}</div>

@@ -4,7 +4,8 @@
  */
 
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { ModernLayout } from '../components/layout/ModernLayout';
+import { OfficePageLayout } from '../components/layout/OfficePageLayout';
+import { useOfficeThemeStore } from '../store/officeThemeStore';
 import Editor from '@monaco-editor/react';
 import {
   Play, Code, Eye, Copy, Download,
@@ -940,6 +941,8 @@ const getInitialCodeForMode = (mode: PlaygroundMode): Record<string, string> => 
 };
 
 export default function CodePlayground() {
+  const { getCurrentColors } = useOfficeThemeStore();
+  const colors = getCurrentColors();
   const [mode, setMode] = useState<PlaygroundMode>('web');
   const [activeTab, setActiveTab] = useState<string>('html');
   const [code, setCode] = useState<Record<string, string>>(getInitialCodeForMode('web'));
@@ -1354,7 +1357,7 @@ export default function CodePlayground() {
   const currentTab = currentTabs.find((t: EditorTab) => t.id === activeTab) || currentTabs[0];
 
   return (
-    <ModernLayout title="Code Playground">
+    <OfficePageLayout title="Code Playground" subtitle="Editeur de code en temps reel">
       <div style={{
         display: 'flex',
         flexDirection: 'column',
@@ -1827,6 +1830,6 @@ export default function CodePlayground() {
           </div>
         </div>
       </div>
-    </ModernLayout>
+    </OfficePageLayout>
   );
 }

@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { ModernLayout } from '../components/layout/ModernLayout';
-import { 
-  Eye, Camera, ScanLine, Palette, Users, 
+import { OfficePageLayout } from '../components/layout/OfficePageLayout';
+import { useOfficeThemeStore } from '../store/officeThemeStore';
+import {
+  Eye, Camera, ScanLine, Palette, Users,
   Play, Square, AlertCircle, CheckCircle, AlertTriangle,
   Zap, ChevronDown, Upload, Copy, Download, Maximize2, Minimize2,
   History, Trash2
@@ -187,6 +188,9 @@ const _DetectionTag = ({
 );
 
 export default function VisionPage() {
+  const { getCurrentColors } = useOfficeThemeStore();
+  const colors = getCurrentColors();
+
   const [source, _setSource] = useState('webcam');
   const [task, setTask] = useState<VisionTask>('general_description');
   const [_advancedVision, _setAdvancedVision] = useState(false);
@@ -1081,7 +1085,7 @@ export default function VisionPage() {
   const TaskIcon = taskIcons[task] || Eye;
 
   return (
-    <ModernLayout title="Vision">
+    <OfficePageLayout title="Vision" subtitle="Detection d'objets, visages et poses en temps reel">
       {/* Hidden canvas for frame capture */}
       <canvas ref={canvasRef} style={{ display: 'none' }} />
       
@@ -1844,6 +1848,6 @@ export default function VisionPage() {
           )}
         </div>
       </div>
-    </ModernLayout>
+    </OfficePageLayout>
   );
 }

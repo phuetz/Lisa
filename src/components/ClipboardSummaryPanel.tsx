@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useVisionAudioStore } from '../store/visionAudioStore';
+import { useAppStore } from '../store/appStore';
 import { useClipboardSummarizer } from '../hooks/useClipboardSummarizer';
 
 export function ClipboardSummaryPanel() {
   const { t } = useTranslation();
-  const clipboardSummary = useVisionAudioStore(state => state.clipboardSummary);
-  const isMonitoringEnabled = useVisionAudioStore(state => state.clipboardMonitoringEnabled);
+  const clipboardSummary = useAppStore(state => state.clipboardSummary);
+  const isMonitoringEnabled = useAppStore(state => state.clipboardMonitoringEnabled);
   const { isSummarizing, toggleClipboardMonitoring, summarizeClipboard } = useClipboardSummarizer();
   const [isExpanded, setIsExpanded] = useState(false);
 

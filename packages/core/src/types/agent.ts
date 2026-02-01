@@ -36,13 +36,13 @@ export interface AgentContext {
 
 export interface AgentExecuteProps {
   intent?: string;
-  parameters?: Record<string, any>;
-  [key: string]: any;
+  parameters?: Record<string, unknown>;
+  [key: string]: unknown;
 }
 
 export interface AgentExecuteResult {
   success: boolean;
-  output: any;
+  output: unknown;
   error?: string;
   metadata?: {
     executionTime?: number;
@@ -60,7 +60,7 @@ export interface Agent {
   domain: AgentDomain;
   
   /** Zod schema for configuration validation */
-  configSchema?: z.ZodObject<any>;
+  configSchema?: z.ZodObject<z.ZodRawShape>;
 
   /** Main execution method */
   execute(props: AgentExecuteProps, context: AgentContext): Promise<AgentExecuteResult>;

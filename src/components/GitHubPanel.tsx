@@ -376,9 +376,11 @@ const GitHubPanel: React.FC = () => {
         useCache
       });
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const typedResult = result as any;
       setReadme({
-        content: (result as any).content ?? null,
-        url: (result as any).url ?? null,
+        content: typedResult.content ?? null,
+        url: typedResult.url ?? null,
       });
       setCurrentView('readme');
     } catch (error) {
@@ -421,6 +423,7 @@ const GitHubPanel: React.FC = () => {
         body
       });
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const issueNumber = (result as any)?.number ?? 'N/A';
       setNotification({ message: `Issue créée: #${issueNumber}`, type: 'success' });
       // Recharger les issues pour afficher la nouvelle

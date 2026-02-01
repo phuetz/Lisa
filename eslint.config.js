@@ -6,13 +6,14 @@ import tseslint from 'typescript-eslint'
 
 export default tseslint.config(
   { ignores: [
-    'dist', 
-    'src/generated/**', 
-    '**/dist/**', 
-    '**/node_modules/**', 
-    'apps/mobile/android/**', 
+    'dist',
+    'src/generated/**',
+    '**/dist/**',
+    '**/node_modules/**',
+    'apps/mobile/android/**',
     'apps/mobile/ios/**',
-    'packages/*/dist/**'
+    'packages/*/dist/**',
+    'public/**/*.js'  // Service workers and static JS files
   ] },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],

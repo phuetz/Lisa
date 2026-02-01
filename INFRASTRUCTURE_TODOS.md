@@ -65,75 +65,12 @@ keywords: [BuiltInKeyword.PORCUPINE], // TODO: replace by custom "lisa" keyword
 ---
 
 ### 3. ROS Bridge URL Configuration
-
-**File:** `src/agents/RobotAgent.ts` (line 14)
-
-**Current State:** Hardcoded to `ws://localhost:9090`
-
-**TODO:**
-```typescript
-// TODO: Make ROS Bridge URL configurable (e.g., via environment variable)
-```
-
-**Impact:** Low - Only affects users with robotics integration
-
-**Implementation:**
-```typescript
-const ROS_BRIDGE_URL = import.meta.env.VITE_ROS_BRIDGE_URL || 'ws://localhost:9090';
-this.ros = new ROSLIB.Ros({ url: ROS_BRIDGE_URL });
-```
-
-**Status:** **✅ SIMPLE FIX - Can implement immediately**
+**Status:** **✅ COMPLETED** - Implemented in `RobotAgent.ts`.
 
 ---
 
 ### 4. Pose Skeleton Rendering
-
-**File:** `src/components/LisaCanvas.tsx` (line 211)
-
-**Current State:** Comment placeholder
-
-**TODO:**
-```typescript
-// TODO: pose skeleton
-```
-
-**Impact:** Low - MediaPipe already provides pose landmarks, just not rendered
-
-**Implementation:**
-```typescript
-if (p.payload.poseLandmarks) {
-  drawPoseSkeleton(ctx, p.payload.poseLandmarks);
-}
-
-function drawPoseSkeleton(ctx: CanvasRenderingContext2D, landmarks: any[]) {
-  // Draw lines between key body points
-  const connections = [
-    [11, 12], // shoulders
-    [11, 13], [13, 15], // left arm
-    [12, 14], [14, 16], // right arm  
-    [11, 23], [12, 24], // torso
-    [23, 25], [25, 27], // left leg
-    [24, 26], [26, 28]  // right leg
-  ];
-  
-  ctx.strokeStyle = '#00ff00';
-  ctx.lineWidth = 2;
-  
-  connections.forEach(([start, end]) => {
-    const p1 = landmarks[start];
-    const p2 = landmarks[end];
-    if (p1 && p2) {
-      ctx.beginPath();
-      ctx.moveTo(p1.x * canvas.width, p1.y * canvas.height);
-      ctx.lineTo(p2.x * canvas.width, p2.y * canvas.height);
-      ctx.stroke();
-    }
-  });
-}
-```
-
-**Status:** **✅ SIMPLE FIX - Can implement if requested**
+**Status:** **✅ COMPLETED** - Implemented in `LisaCanvas.tsx`.
 
 ---
 
@@ -186,46 +123,7 @@ onNodesChange: (changes) => {
 ---
 
 ### 6. Logging System Integration
-
-**File:** `src/utils/structuredLogger.ts` (line 135)
-
-**Current State:** Logs to console only
-
-**TODO:**
-```typescript
-// TODO: Intégrer avec Sentry, DataDog, etc.
-```
-
-**Impact:** High - Important for production monitoring
-
-**Implementation:**
-```typescript
-import * as Sentry from '@sentry/browser';
-
-constructor() {
-  if (import.meta.env.VITE_SENTRY_DSN) {
-    Sentry.init({
-      dsn: import.meta.env.VITE_SENTRY_DSN,
-      environment: import.meta.env.MODE
-    });
-  }
-}
-
-logError(error: Error, context?: any) {
-  console.error('[ERROR]', error, context);
-  
-  if (import.meta.env.VITE_SENTRY_DSN) {
-    Sentry.captureException(error, { extra: context });
-  }
-}
-```
-
-**.env addition:**
-```env
-VITE_SENTRY_DSN=https://your_sentry_dsn@sentry.io/project
-```
-
-**Status:** **🔴 HIGH PRIORITY for production deployment**
+**Status:** **✅ COMPLETED** - Integrated with Sentry.
 
 ---
 

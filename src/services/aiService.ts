@@ -1,18 +1,29 @@
 /**
  * AI Service - Service unifié pour les API IA
  * Supporte OpenAI, Anthropic (Claude), Gemini, et API locales (LM Studio, Ollama)
+ * OpenClaw-inspired: connection management, retry, circuit breaker, model failover
  */
 
 import { getLMStudioUrl, getOllamaUrl, logNetworkConfig } from '../config/networkConfig';
 import { lmStudioService } from './LMStudioService';
 import { useChatSettingsStore } from '../store/chatSettingsStore';
+import { getConnectionManager, type AIProviderType } from './ConnectionManager';
+import { RetryService, isRetryableError } from './RetryService';
+import { getCircuitBreaker, CircuitBreakerError } from './CircuitBreaker';
 
 export type AIProvider = 'openai' | 'anthropic' | 'gemini' | 'xai' | 'local' | 'lmstudio' | 'ollama';
 
 export interface AIMessage {
-  role: 'system' | 'user' | 'assistant';
+  role: 'system' | 'user' | 'assistant' | 'tool';
   content: string;
   image?: string; // Base64 ou URL
+  // OpenAI tool calling extensions
+  tool_calls?: Array<{
+    id: string;
+    type: 'function';
+    function: { name: string; arguments: string };
+  }>;
+  tool_call_id?: string;
 }
 
 export interface AIStreamChunk {
@@ -33,8 +44,75 @@ export interface AIServiceConfig {
 const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta';
 const XAI_API_BASE = 'https://api.x.ai/v1';
 
+// ============================================================================
+// Model Failover Configuration (OpenClaw-inspired)
+// ============================================================================
+
+/**
+ * Fallback models when primary model fails
+ * Order matters: first available fallback will be used
+ */
+const MODEL_FALLBACKS: Record<string, string[]> = {
+  // Gemini fallbacks
+  'gemini-2.0-flash': ['gpt-4o-mini', 'claude-3-haiku-20240307'],
+  'gemini-2.0-flash-exp': ['gemini-2.0-flash', 'gpt-4o-mini'],
+  'gemini-1.5-flash': ['gpt-4o-mini', 'claude-3-haiku-20240307'],
+  'gemini-1.5-pro': ['gpt-4o', 'claude-3-5-sonnet-20241022'],
+
+  // OpenAI fallbacks
+  'gpt-4o': ['claude-3-5-sonnet-20241022', 'gemini-1.5-pro'],
+  'gpt-4o-mini': ['claude-3-haiku-20240307', 'gemini-2.0-flash'],
+  'gpt-4-turbo': ['claude-3-opus-20240229', 'gemini-1.5-pro'],
+
+  // Anthropic fallbacks
+  'claude-3-5-sonnet-20241022': ['gpt-4o', 'gemini-1.5-pro'],
+  'claude-3-opus-20240229': ['gpt-4-turbo', 'gemini-1.5-pro'],
+  'claude-3-haiku-20240307': ['gpt-4o-mini', 'gemini-2.0-flash'],
+
+  // xAI fallbacks
+  'grok-2-latest': ['gpt-4o', 'claude-3-5-sonnet-20241022'],
+  'grok-beta': ['gpt-4o-mini', 'gemini-2.0-flash']
+};
+
+/**
+ * Map model to its provider
+ */
+function getProviderForModel(model: string): AIProvider {
+  if (model.startsWith('gemini')) return 'gemini';
+  if (model.startsWith('gpt')) return 'openai';
+  if (model.startsWith('claude')) return 'anthropic';
+  if (model.startsWith('grok')) return 'xai';
+  return 'lmstudio';
+}
+
+/**
+ * Check if a provider has a valid API key configured
+ */
+function hasApiKey(provider: AIProvider): boolean {
+  const store = useChatSettingsStore.getState();
+  const storeKey = store.getApiKeyForProvider(provider);
+  if (storeKey) return true;
+
+  switch (provider) {
+    case 'openai':
+      return !!import.meta.env.VITE_OPENAI_API_KEY;
+    case 'anthropic':
+      return !!import.meta.env.VITE_ANTHROPIC_API_KEY;
+    case 'gemini':
+      return !!import.meta.env.VITE_GEMINI_API_KEY;
+    case 'xai':
+      return !!import.meta.env.GROK_API_KEY;
+    default:
+      return true; // Local providers don't need API key
+  }
+}
+
 class AIService {
   private config: AIServiceConfig;
+  private retryService: RetryService;
+  private failoverEnabled: boolean = true;
+  private failoverAttempts: number = 0;
+  private maxFailoverAttempts: number = 2;
 
   constructor(config?: Partial<AIServiceConfig>) {
     // Configuration par défaut
@@ -50,6 +128,55 @@ class AIService {
     if (!this.config.apiKey) {
       this.config.apiKey = this.getApiKeyForProvider(this.config.provider);
     }
+
+    // Initialize retry service with OpenClaw-inspired config
+    this.retryService = new RetryService({
+      attempts: 3,
+      minDelayMs: 400,
+      maxDelayMs: 30000,
+      jitter: 0.1,
+      onRetry: (attempt, error, delay) => {
+        console.log(`[AIService] Retry ${attempt}/3 after ${delay}ms:`, error.message);
+      }
+    });
+  }
+
+  /**
+   * Enable/disable automatic model failover
+   */
+  setFailoverEnabled(enabled: boolean): void {
+    this.failoverEnabled = enabled;
+  }
+
+  /**
+   * Get available fallback models for current model
+   */
+  getAvailableFallbacks(): string[] {
+    const currentModel = this.config.model || 'gpt-4o-mini';
+    const fallbacks = MODEL_FALLBACKS[currentModel] || [];
+
+    // Filter to only models with available API keys
+    return fallbacks.filter(model => {
+      const provider = getProviderForModel(model);
+      return hasApiKey(provider);
+    });
+  }
+
+  /**
+   * Get circuit breaker for a provider
+   */
+  private getCircuitBreaker(provider: AIProvider) {
+    return getCircuitBreaker(`ai-${provider}`, {
+      failureThreshold: 3,
+      resetTimeout: 60000, // 1 minute
+      successThreshold: 2,
+      onStateChange: (from, to, breaker) => {
+        console.log(`[AIService] Circuit breaker ${breaker.name}: ${from} -> ${to}`);
+        if (to === 'open') {
+          console.warn(`[AIService] Provider ${provider} circuit opened - will fail fast`);
+        }
+      }
+    });
   }
 
   /**
@@ -60,28 +187,119 @@ class AIService {
     // Essayer d'abord le store (clés configurées par l'utilisateur)
     const store = useChatSettingsStore.getState();
     const storeKey = store.getApiKeyForProvider(provider);
-    if (storeKey) return storeKey;
+    if (storeKey) {
+      console.log(`[AIService] API key for ${provider} found in store`);
+      return storeKey;
+    }
 
     // Fallback sur les variables d'environnement
+    let envKey: string | undefined;
     switch (provider) {
       case 'openai':
-        return import.meta.env.VITE_OPENAI_API_KEY;
+        envKey = import.meta.env.VITE_OPENAI_API_KEY;
+        break;
       case 'anthropic':
-        return import.meta.env.VITE_ANTHROPIC_API_KEY;
+        envKey = import.meta.env.VITE_ANTHROPIC_API_KEY;
+        break;
       case 'gemini':
-        return import.meta.env.VITE_GEMINI_API_KEY;
+        envKey = import.meta.env.VITE_GEMINI_API_KEY;
+        break;
       case 'xai':
-        return import.meta.env.GROK_API_KEY;
+        envKey = import.meta.env.GROK_API_KEY;
+        break;
       default:
-        return undefined;
+        envKey = undefined;
     }
+
+    console.log(`[AIService] API key for ${provider} from env: ${envKey ? 'found (' + envKey.slice(0, 10) + '...)' : 'NOT FOUND'}`);
+    return envKey;
   }
 
   /**
    * Envoyer un message et recevoir une réponse complète
+   * Includes automatic retry and model failover (OpenClaw-inspired)
    */
   async sendMessage(messages: AIMessage[]): Promise<string> {
+    this.failoverAttempts = 0;
+    return this.sendWithFailover(messages);
+  }
+
+  /**
+   * Send with automatic failover to backup models
+   */
+  private async sendWithFailover(messages: AIMessage[]): Promise<string> {
     const provider = this.config.provider;
+    const circuitBreaker = this.getCircuitBreaker(provider);
+
+    // Check circuit breaker first
+    if (!circuitBreaker.isAllowed()) {
+      console.warn(`[AIService] Circuit breaker open for ${provider}, attempting failover`);
+
+      if (this.failoverEnabled && this.failoverAttempts < this.maxFailoverAttempts) {
+        return this.attemptSendFailover(messages);
+      }
+
+      throw new Error(`Service ${provider} temporarily unavailable`);
+    }
+
+    try {
+      // Use retry service for transient failures
+      const result = await this.retryService.withRetry(
+        () => this.doSend(provider, messages)
+      );
+
+      // Record success
+      circuitBreaker.recordSuccess();
+      return result;
+    } catch (error) {
+      // Record failure
+      circuitBreaker.recordFailure();
+
+      // Attempt failover if enabled
+      if (this.failoverEnabled && this.failoverAttempts < this.maxFailoverAttempts) {
+        console.log(`[AIService] Primary provider failed, attempting failover`);
+        return this.attemptSendFailover(messages);
+      }
+
+      throw error;
+    }
+  }
+
+  /**
+   * Attempt to failover for non-streaming requests
+   */
+  private async attemptSendFailover(messages: AIMessage[]): Promise<string> {
+    const fallbacks = this.getAvailableFallbacks();
+
+    if (fallbacks.length === 0) {
+      throw new Error('No fallback models available. Please check your API keys.');
+    }
+
+    this.failoverAttempts++;
+    const fallbackModel = fallbacks[0];
+    const fallbackProvider = getProviderForModel(fallbackModel);
+
+    console.log(`[AIService] Failing over to ${fallbackModel} (${fallbackProvider})`);
+
+    // Temporarily switch config
+    const originalConfig = { ...this.config };
+    this.updateConfig({
+      provider: fallbackProvider,
+      model: fallbackModel
+    });
+
+    try {
+      return await this.sendWithFailover(messages);
+    } finally {
+      // Restore original config
+      this.config = originalConfig;
+    }
+  }
+
+  /**
+   * Internal send dispatch
+   */
+  private async doSend(provider: AIProvider, messages: AIMessage[]): Promise<string> {
     if (provider === 'openai') {
       return this.sendOpenAI(messages, false);
     } else if (provider === 'anthropic') {
@@ -93,15 +311,113 @@ class AIService {
     } else if (provider === 'local' || provider === 'lmstudio' || provider === 'ollama') {
       return this.sendLocal(messages);
     }
-    
+
     throw new Error(`Provider non supporté: ${provider}`);
   }
 
   /**
    * Envoyer un message avec streaming
+   * Includes automatic retry and model failover (OpenClaw-inspired)
    */
   async *streamMessage(messages: AIMessage[]): AsyncGenerator<AIStreamChunk> {
+    this.failoverAttempts = 0;
+    yield* this.streamWithFailover(messages);
+  }
+
+  /**
+   * Stream with automatic failover to backup models
+   */
+  private async *streamWithFailover(messages: AIMessage[]): AsyncGenerator<AIStreamChunk> {
     const provider = this.config.provider;
+    const circuitBreaker = this.getCircuitBreaker(provider);
+
+    // Check circuit breaker first
+    if (!circuitBreaker.isAllowed()) {
+      const stats = circuitBreaker.getStats();
+      console.warn(`[AIService] Circuit breaker open for ${provider}, attempting failover`);
+
+      if (this.failoverEnabled && this.failoverAttempts < this.maxFailoverAttempts) {
+        yield* this.attemptFailover(messages);
+        return;
+      }
+
+      yield {
+        content: '',
+        done: true,
+        error: `Service ${provider} temporarily unavailable. Try again in ${Math.ceil((stats.nextAttemptAt! - Date.now()) / 1000)}s`
+      };
+      return;
+    }
+
+    try {
+      // Stream from the appropriate provider
+      yield* this.doStream(provider, messages);
+
+      // Record success
+      circuitBreaker.recordSuccess();
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
+
+      // Record failure
+      circuitBreaker.recordFailure();
+
+      // Attempt failover if enabled and error is retryable
+      if (this.failoverEnabled && this.failoverAttempts < this.maxFailoverAttempts) {
+        console.log(`[AIService] Primary provider failed, attempting failover`);
+        yield* this.attemptFailover(messages);
+        return;
+      }
+
+      yield { content: '', done: true, error: err.message };
+    }
+  }
+
+  /**
+   * Attempt to failover to a backup model
+   */
+  private async *attemptFailover(messages: AIMessage[]): AsyncGenerator<AIStreamChunk> {
+    const fallbacks = this.getAvailableFallbacks();
+
+    if (fallbacks.length === 0) {
+      yield {
+        content: '',
+        done: true,
+        error: 'No fallback models available. Please check your API keys.'
+      };
+      return;
+    }
+
+    this.failoverAttempts++;
+    const fallbackModel = fallbacks[0];
+    const fallbackProvider = getProviderForModel(fallbackModel);
+
+    console.log(`[AIService] Failing over to ${fallbackModel} (${fallbackProvider}) - attempt ${this.failoverAttempts}`);
+
+    // Temporarily switch config
+    const originalConfig = { ...this.config };
+    this.updateConfig({
+      provider: fallbackProvider,
+      model: fallbackModel
+    });
+
+    try {
+      // Notify user about failover
+      yield {
+        content: `[Basculement vers ${fallbackModel}...]\n\n`,
+        done: false
+      };
+
+      yield* this.streamWithFailover(messages);
+    } finally {
+      // Restore original config
+      this.config = originalConfig;
+    }
+  }
+
+  /**
+   * Internal streaming dispatch
+   */
+  private async *doStream(provider: AIProvider, messages: AIMessage[]): AsyncGenerator<AIStreamChunk> {
     if (provider === 'openai') {
       yield* this.streamOpenAI(messages);
     } else if (provider === 'anthropic') {
@@ -149,17 +465,23 @@ class AIService {
    * Gemini API - Streaming
    */
   private async *streamGemini(messages: AIMessage[]): AsyncGenerator<AIStreamChunk> {
+    const connectionManager = getConnectionManager();
+
     if (!this.config.apiKey) {
+      console.error('[AIService] Gemini API key not configured');
+      connectionManager.reportFailure('gemini', 'API key not configured');
       yield { content: '', done: true, error: 'VITE_GEMINI_API_KEY non configurée' };
       return;
     }
 
     const requestBody = this.formatBodyForGemini(messages, true);
+    const model = this.config.model || 'gemini-2.0-flash';
+    const url = `${GEMINI_API_BASE}/models/${model}:streamGenerateContent?key=${this.config.apiKey}&alt=sse`;
+
+    console.log('[AIService] Gemini streaming request:', { model, url: url.replace(this.config.apiKey, '***') });
 
     try {
-      const response = await fetch(
-        `${GEMINI_API_BASE}/models/${this.config.model || 'gemini-1.5-flash'}:streamGenerateContent?key=${this.config.apiKey}&alt=sse`,
-        {
+      const response = await fetch(url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(requestBody)
@@ -167,8 +489,15 @@ class AIService {
       );
 
       if (!response.ok) {
-        const error = await response.json();
-        yield { content: '', done: true, error: error.error?.message || `Gemini API error: ${response.status}` };
+        const errorText = await response.text();
+        console.error('[AIService] Gemini API error:', response.status, errorText);
+        connectionManager.reportFailure('gemini', errorText, response.status);
+        try {
+          const error = JSON.parse(errorText);
+          yield { content: '', done: true, error: error.error?.message || `Gemini API error: ${response.status}` };
+        } catch {
+          yield { content: '', done: true, error: `Gemini API error: ${response.status} - ${errorText}` };
+        }
         return;
       }
 
@@ -180,16 +509,21 @@ class AIService {
         return;
       }
 
+      let buffer = '';
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
 
-        const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split('\n');
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || ''; // Keep incomplete line in buffer
 
         for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const jsonStr = line.slice(6);
+          const trimmedLine = line.trim();
+          if (!trimmedLine) continue;
+
+          if (trimmedLine.startsWith('data: ')) {
+            const jsonStr = trimmedLine.slice(6);
             if (jsonStr === '[DONE]') {
               yield { content: '', done: true };
               return;
@@ -198,18 +532,42 @@ class AIService {
             try {
               const data = JSON.parse(jsonStr);
               const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+              const finishReason = data.candidates?.[0]?.finishReason;
+
               if (text) {
                 yield { content: text, done: false };
               }
-            } catch {
-              // Skip invalid JSON
+
+              // Check if this is the final chunk
+              if (finishReason === 'STOP') {
+                yield { content: '', done: true };
+                return;
+              }
+            } catch (e) {
+              console.warn('[AIService] Gemini parse error:', e, 'Line:', jsonStr.slice(0, 100));
             }
           }
         }
       }
 
+      // Process any remaining buffer
+      if (buffer.trim().startsWith('data: ')) {
+        try {
+          const jsonStr = buffer.trim().slice(6);
+          const data = JSON.parse(jsonStr);
+          const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+          if (text) {
+            yield { content: text, done: false };
+          }
+        } catch { /* ignore */ }
+      }
+
+      // Report success to connection manager
+      connectionManager.reportSuccess('gemini');
       yield { content: '', done: true };
     } catch (error) {
+      console.error('[AIService] Gemini streaming error:', error);
+      connectionManager.reportFailure('gemini', error as Error);
       yield { content: '', done: true, error: (error as Error).message };
     }
   }
@@ -442,7 +800,10 @@ class AIService {
    * OpenAI API - Streaming
    */
   private async *streamOpenAI(messages: AIMessage[]): AsyncGenerator<AIStreamChunk> {
+    const connectionManager = getConnectionManager();
+
     if (!this.config.apiKey) {
+      connectionManager.reportFailure('openai', 'API key not configured');
       yield { content: '', done: true, error: 'VITE_OPENAI_API_KEY non configurée' };
       return;
     }
@@ -465,6 +826,7 @@ class AIService {
 
       if (!response.ok) {
         const error = await response.json().catch(() => ({ error: { message: response.statusText } }));
+        connectionManager.reportFailure('openai', error.error?.message || response.statusText, response.status);
         yield { content: '', done: true, error: error.error?.message || response.statusText };
         return;
       }
@@ -506,8 +868,10 @@ class AIService {
         }
       }
 
+      connectionManager.reportSuccess('openai');
       yield { content: '', done: true };
     } catch (error) {
+      connectionManager.reportFailure('openai', error as Error);
       yield { content: '', done: true, error: (error as Error).message };
     }
   }
@@ -548,7 +912,10 @@ class AIService {
    * Anthropic (Claude) API - Streaming
    */
   private async *streamAnthropic(messages: AIMessage[]): AsyncGenerator<AIStreamChunk> {
+    const connectionManager = getConnectionManager();
+
     if (!this.config.apiKey) {
+      connectionManager.reportFailure('anthropic', 'API key not configured');
       yield { content: '', done: true, error: 'VITE_ANTHROPIC_API_KEY non configurée' };
       return;
     }
@@ -572,6 +939,7 @@ class AIService {
 
       if (!response.ok) {
         const error = await response.json().catch(() => ({ error: { message: response.statusText } }));
+        connectionManager.reportFailure('anthropic', error.error?.message || response.statusText, response.status);
         yield { content: '', done: true, error: error.error?.message || response.statusText };
         return;
       }
@@ -613,8 +981,10 @@ class AIService {
         }
       }
 
+      connectionManager.reportSuccess('anthropic');
       yield { content: '', done: true };
     } catch (error) {
+      connectionManager.reportFailure('anthropic', error as Error);
       yield { content: '', done: true, error: (error as Error).message };
     }
   }
@@ -655,7 +1025,10 @@ class AIService {
    * xAI (Grok) API - Streaming
    */
   private async *streamXAI(messages: AIMessage[]): AsyncGenerator<AIStreamChunk> {
+    const connectionManager = getConnectionManager();
+
     if (!this.config.apiKey) {
+      connectionManager.reportFailure('xai', 'API key not configured');
       yield { content: '', done: true, error: 'GROK_API_KEY non configurée' };
       return;
     }
@@ -678,6 +1051,7 @@ class AIService {
 
       if (!response.ok) {
         const error = await response.json().catch(() => ({ error: { message: response.statusText } }));
+        connectionManager.reportFailure('xai', error.error?.message || response.statusText, response.status);
         yield { content: '', done: true, error: error.error?.message || response.statusText };
         return;
       }
@@ -719,8 +1093,10 @@ class AIService {
         }
       }
 
+      connectionManager.reportSuccess('xai');
       yield { content: '', done: true };
     } catch (error) {
+      connectionManager.reportFailure('xai', error as Error);
       yield { content: '', done: true, error: (error as Error).message };
     }
   }
@@ -786,6 +1162,12 @@ class AIService {
    */
   updateConfig(config: Partial<AIServiceConfig>) {
     this.config = { ...this.config, ...config };
+
+    // Si le provider change, récupérer automatiquement la clé API correspondante
+    if (config.provider && !config.apiKey) {
+      this.config.apiKey = this.getApiKeyForProvider(config.provider);
+      console.log(`[AIService] Provider changed to ${config.provider}, API key ${this.config.apiKey ? 'found' : 'NOT FOUND'}`);
+    }
   }
 
   /**

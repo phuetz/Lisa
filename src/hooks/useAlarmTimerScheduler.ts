@@ -1,11 +1,11 @@
 import { useEffect } from 'react';
-import { useVisionAudioStore } from '../store/visionAudioStore';
+import { useAppStore } from '../store/appStore';
 import { useNotifications } from './useNotifications';
 
 export default function useAlarmTimerScheduler() {
-  const alarms = useVisionAudioStore(s => s.alarms);
-  const timers = useVisionAudioStore(s => s.timers);
-  const setState = useVisionAudioStore(s => s.setState);
+  const alarms = useAppStore(s => s.alarms);
+  const timers = useAppStore(s => s.timers);
+  const setState = useAppStore(s => s.setState);
   const { sendNotification, permissionState } = useNotifications();
 
   useEffect(() => {

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import type { GestureRecognizer } from '@mediapipe/tasks-vision';
-import { useVisionAudioStore } from '../store/visionAudioStore';
+import { useAppStore } from '../store/appStore';
 import type { Percept, MediaPipeGesturePayload } from '../features/vision/api';
 
 export function useGestureRecognizer(
@@ -8,7 +8,7 @@ export function useGestureRecognizer(
   gestureRecognizer: GestureRecognizer | null
 ) {
   const lastProcessedTimeRef = useRef<number>(0);
-  const setState = useVisionAudioStore((s) => s.setState);
+  const setState = useAppStore((s) => s.setState);
 
   useEffect(() => {
     if (!videoElement || !gestureRecognizer) return;

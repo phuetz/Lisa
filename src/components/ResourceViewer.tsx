@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { X } from 'lucide-react';
-import { useVisionAudioStore } from '../store/visionAudioStore';
+import { useAppStore } from '../store/appStore';
 import { useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import ReactJson from '@microlink/react-json-view';
@@ -12,9 +12,9 @@ import ReactJson from '@microlink/react-json-view';
  */
 export default function ResourceViewer() {
   const { t } = useTranslation();
-  const intent = useVisionAudioStore(s => s.intent);
-  const intentPayload = useVisionAudioStore(s => s.intentPayload);
-  const setState = useVisionAudioStore(s => s.setState);
+  const intent = useAppStore(s => s.intent);
+  const intentPayload = useAppStore(s => s.intentPayload);
+  const setState = useAppStore(s => s.setState);
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -26,6 +26,7 @@ export default function ResourceViewer() {
   const close = () => setState({ intent: undefined, intentPayload: undefined });
 
   // Detect mime / content type heuristically
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const payload = intentPayload as any;
   let render: React.ReactNode;
 

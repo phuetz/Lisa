@@ -209,12 +209,57 @@ VITE_MCP_TOKEN=...         # MCP protocol auth
 1. **Agent Registration**: Must add to `registry.ts` `agentDefinitions` array, not just create the file
 2. **Sense Singletons**: Use exported singletons (`visionSense`, `hearingSense`), don't instantiate
 3. **Mobile Network**:
-   - Uses `CapacitorHttp` plugin to bypass CORS
+   - Uses `CapacitorHttp` plugin to bypass CORS (in `LMStudioService.ts`)
    - Physical devices need PC's LAN IP in `src/config/networkConfig.ts`
    - Emulators use `adb reverse tcp:1234 tcp:1234`
 4. **Feature Workers**: Vision/Hearing workers only load when `advancedVision`/`advancedHearing` flags enabled
 5. **E2E Tests**: Require `pnpm build` first - Playwright uses preview server at port 4173
 6. **Workspace Imports**: Use `workspace:*` protocol for internal packages
+7. **Android Bundle Sync**: After code changes, always run `pnpm build && cd apps/mobile && npx cap sync android` before testing on Android
+
+## Mobile Development (Capacitor)
+
+### Android LM Studio Connection
+
+The app uses a different network strategy for web vs mobile:
+
+```
+Web:     fetch('/lmstudio/v1/...') → Vite proxy → localhost:1234
+Mobile:  CapacitorHttp.request('http://localhost:1234/v1/...') → ADB reverse → PC
+```
+
+**Key files for mobile networking:**
+- `src/config/networkConfig.ts` - Platform detection and URL configuration
+- `src/services/LMStudioService.ts` - CapacitorHttp integration for mobile
+- `src/services/aiService.ts` - Delegates to LMStudioService for LM Studio provider
+
+### Testing on Android Emulator
+
+```bash
+# 1. Build and sync
+pnpm build && cd apps/mobile && npx cap sync android
+
+# 2. Configure port forwarding (run once per emulator session)
+adb reverse tcp:1234 tcp:1234
+
+# 3. Open Android Studio and run the app
+npx cap open android
+```
+
+### Debugging Android
+
+View JavaScript console logs:
+```bash
+adb logcat -s "Capacitor/Console:I" | grep -E "LMStudioService|NetworkConfig|AIService"
+```
+
+Expected logs when LM Studio connection works:
+```
+[NetworkConfig] isNative: true hostname: lisa.ai
+[AIService] Delegating stream to LMStudioService
+[LMStudioService] chatStream starting (mobile fallback)
+[LMStudioService] CapacitorHttp response status: 200
+```
 
 ## Key Files Reference
 

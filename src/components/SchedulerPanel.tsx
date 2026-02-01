@@ -11,7 +11,9 @@ export const SchedulerPanel = () => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [purpose, setPurpose] = useState('');
   const [duration, setDuration] = useState(60);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [suggestions, setSuggestions] = useState<any>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [availability, setAvailability] = useState<any>(null);
 
   const handleSuggestTime = async () => {
@@ -99,6 +101,7 @@ export const SchedulerPanel = () => {
           {suggestions && suggestions.suggestions && (
             <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded max-h-60 overflow-y-auto">
               <div className="font-semibold mb-2">Suggested Times:</div>
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
               {suggestions.suggestions.map((sug: any, i: number) => (
                 <div key={i} className="p-2 bg-white dark:bg-gray-800 rounded mb-2">
                   <div className="flex items-center justify-between">

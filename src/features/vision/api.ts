@@ -1,6 +1,5 @@
 import { visionAdapter } from '../../services/VisionAdapter';
 import type { Percept, VisionPayload } from '../../types';
-import { useAppStore } from '../../store/appStore';
 import config from '../../config';
 import VisionWorker from './worker?worker';
 
@@ -13,19 +12,16 @@ let onPerceptCallback: ((percept: Percept<VisionPayload>) => void) | null = null
 let isInitialized = false;
 let worker: Worker | null = null;
 
-function updateStoreAndNotify(percept: Percept<VisionPayload>) {
-    // 1. Update Legacy Store (Zustand)
-    useAppStore.setState((state) => {
-        const currentPercepts = state.percepts || [];
-        return {
-            percepts: [...currentPercepts, percept].slice(-50)
-        };
-    });
+async function updateStoreAndNotify(percept: Percept<VisionPayload>) {
+  // 1. Update Legacy Store (Zustand)
+  // 1. Update Legacy Store (Zustand)
+  const { useVisionStore } = await import('../../store/visionStore');
+  useVisionStore.getState().addPercept(percept);
 
-    // 2. Call the legacy callback registered by consumers
-    if (onPerceptCallback) {
-        onPerceptCallback(percept);
-    }
+  // 2. Call the legacy callback registered by consumers
+  if (onPerceptCallback) {
+    onPerceptCallback(percept);
+  }
 }
 
 /**
@@ -37,50 +33,44 @@ export async function initializeVisionWorker(): Promise<void> {
     console.warn('[Vision] Already initialized.');
     return;
   }
-  
+
   if (config.features.advancedVision) {
     try {
-        console.log('[Vision] Initializing Advanced Vision Worker (YOLOv8)...');
-        worker = new VisionWorker();
-        
-        worker.onmessage = (e: MessageEvent) => {
-            const { type, payload, modality, confidence, timestamp } = e.data;
-            
-            if (modality === 'vision') {
-                const percept: Percept<VisionPayload> = {
-                    modality: 'vision',
-                    payload: payload, // Ensure payload structure matches VisionPayload
-                    confidence: confidence || 0,
-                    ts: timestamp || Date.now()
-                };
-                updateStoreAndNotify(percept);
-            } else if (type === 'MODEL_LOADED') {
-                console.log('[Vision] Worker Model Loaded:', e.data.success ? 'Success' : 'Failed');
-            } else if (type === 'ERROR') {
-                console.error('[Vision] Worker Error:', e.data.error);
-            }
-        };
+      worker = new VisionWorker();
 
-        worker.postMessage({ type: 'LOAD_MODEL' });
-        isInitialized = true;
-        console.log('[Vision] Worker initialized.');
-        return;
+      worker.onmessage = (e: MessageEvent) => {
+        const { type, payload, modality, confidence, timestamp } = e.data;
+
+        if (modality === 'vision') {
+          const percept: Percept<VisionPayload> = {
+            modality: 'vision',
+            payload: payload,
+            confidence: confidence || 0,
+            ts: timestamp || Date.now()
+          };
+          updateStoreAndNotify(percept);
+        } else if (type === 'ERROR') {
+          console.error('[Vision] Worker Error:', e.data.error);
+        }
+      };
+
+      worker.postMessage({ type: 'LOAD_MODEL' });
+      isInitialized = true;
+      return;
     } catch (err) {
-        console.error('[Vision] Failed to init worker, falling back to Adapter.', err);
+      console.error('[Vision] Failed to init worker, falling back to Adapter.', err);
     }
   }
 
   // Fallback / Standard Mode via Adapter
   try {
-    console.log('[Vision] Initializing via VisionAdapter (Packages)...');
     await visionAdapter.initialize();
-    
+
     visionAdapter.setOnPerceptCallback((percept) => {
-        updateStoreAndNotify(percept as Percept<VisionPayload>);
+      updateStoreAndNotify(percept as Percept<VisionPayload>);
     });
-    
+
     isInitialized = true;
-    console.log('[Vision] System fully initialized via Adapter.');
   } catch (error) {
     console.error('[Vision] Failed to initialize via Adapter:', error);
   }
@@ -93,14 +83,14 @@ export function processVideoFrame(frame: ImageData | HTMLVideoElement): void {
   if (!isInitialized) return;
 
   if (worker) {
-      // Create bitmap for efficient transfer
-      createImageBitmap(frame).then(bitmap => {
-          if (worker) {
-            worker.postMessage({ type: 'PROCESS_FRAME', payload: bitmap }, [bitmap]);
-          }
-      }).catch(err => console.error('[Vision] Frame conversion failed:', err));
+    // Create bitmap for efficient transfer
+    createImageBitmap(frame).then(bitmap => {
+      if (worker) {
+        worker.postMessage({ type: 'PROCESS_FRAME', payload: bitmap }, [bitmap]);
+      }
+    }).catch(err => console.error('[Vision] Frame conversion failed:', err));
   } else {
-      visionAdapter.processFrame(frame);
+    visionAdapter.processFrame(frame);
   }
 }
 
@@ -108,7 +98,7 @@ export function processVideoFrame(frame: ImageData | HTMLVideoElement): void {
  * Check if the vision model is loaded and ready.
  */
 export function isVisionModelReady(): boolean {
-  return isInitialized; 
+  return isInitialized;
 }
 
 /**
@@ -122,7 +112,7 @@ export function setOnPerceptCallback(cb: ((percept: Percept<VisionPayload>) => v
  * Helper to emit non-SDK (legacy) percepts directly
  */
 export function emitLegacyPercept(percept: Percept<VisionPayload>) {
-    updateStoreAndNotify(percept);
+  updateStoreAndNotify(percept);
 }
 
 export function start(): void {
@@ -131,31 +121,30 @@ export function start(): void {
 
 export function stop(): void {
   if (worker) {
-      worker.terminate();
-      worker = null;
+    worker.terminate();
+    worker = null;
   }
   visionAdapter.terminate();
   isInitialized = false;
-  console.log('[Vision] Stopped.');
 }
 
 /**
  * Switch vision model dynamically.
  */
 export async function setModel(modelId: string): Promise<void> {
-    console.log('[Vision] setModel called via legacy API.', modelId);
-    if (worker) {
-         // TODO: Pass model URL to worker
-    }
+  if (worker) {
+    // TODO: Pass model URL to worker
+    void modelId;
+  }
 }
 
 // SDK Interop (deprecated)
 export function setOnSdkPerceptCallback(cb: any) {
-    console.warn('[Vision] setOnSdkPerceptCallback is deprecated. Use adapter directly.');
+  console.warn('[Vision] setOnSdkPerceptCallback is deprecated. Use adapter directly.');
 }
 
 export function emitPercept(sdkPercept: any) {
-   // No-op
+  // No-op
 }
 
 export const visionSense = {

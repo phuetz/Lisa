@@ -1,11 +1,11 @@
 import { useEffect } from 'react';
 import type { HandLandmarker, HandLandmarkerResult } from '@mediapipe/tasks-vision';
-import { useVisionAudioStore } from '../store/visionAudioStore';
+import { useAppStore } from '../store/appStore';
 // import { loadTask } from '../utils/loadTask';
 import type { Percept, MediaPipeHandPayload } from '../features/vision/api'; // Import new types
 
 export function useHandLandmarker(video?: HTMLVideoElement, handLandmarker?: HandLandmarker | null) {
-  const setState = useVisionAudioStore((s) => s.setState);
+  const setState = useAppStore((s) => s.setState);
 
   useEffect(() => {
     if (!video || !handLandmarker) return;

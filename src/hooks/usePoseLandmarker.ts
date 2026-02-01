@@ -1,12 +1,12 @@
 import { useEffect } from 'react';
 import type { PoseLandmarker, PoseLandmarkerResult } from '@mediapipe/tasks-vision';
-import { useVisionAudioStore } from '../store/visionAudioStore';
+import { useAppStore } from '../store/appStore';
 // import { loadTask } from '../utils/loadTask';
 import type { Percept } from '../types';
 import type { MediaPipePosePayload } from '../features/vision/api'; // Import Percept and VisionPayload
 
 export function usePoseLandmarker(video?: HTMLVideoElement, poseLandmarker?: PoseLandmarker | null) {
-  const setState = useVisionAudioStore((s) => s.setState);
+  const setState = useAppStore((s) => s.setState);
 
   useEffect(() => {
     if (!video || !poseLandmarker) return;

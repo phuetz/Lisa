@@ -1,5 +1,5 @@
-import { ModernLayout } from '../components/layout/ModernLayout';
-import { ModernCard, ModernCardHeader, ModernCardBody } from '../components/ui/ModernCard';
+import { OfficePageLayout } from '../components/layout/OfficePageLayout';
+import { useOfficeThemeStore } from '../store/officeThemeStore';
 import { WorkflowManagerPanel } from '../components/WorkflowManagerPanel';
 import { UserWorkflowPanel } from '../components/UserWorkflowPanel';
 import { useIntentHandler } from '../hooks/useIntentHandler';
@@ -7,24 +7,63 @@ import { Workflow, User } from 'lucide-react';
 
 export default function WorkflowsPage() {
   const { handleIntent } = useIntentHandler();
+  const { getCurrentColors } = useOfficeThemeStore();
+  const colors = getCurrentColors();
+
+  const cardStyle = {
+    backgroundColor: colors.dialog,
+    borderRadius: '12px',
+    border: `1px solid ${colors.border}`,
+    overflow: 'hidden',
+  };
+
+  const headerStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    padding: '16px 20px',
+    borderBottom: `1px solid ${colors.border}`,
+    backgroundColor: colors.sidebar,
+  };
+
+  const bodyStyle = {
+    padding: '20px',
+  };
 
   return (
-    <ModernLayout title="Workflows">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <ModernCard gradient hover>
-          <ModernCardHeader title="Workflow Manager" icon={<Workflow />} />
-          <ModernCardBody>
+    <OfficePageLayout
+      title="Workflows"
+      subtitle="Gestion des workflows et automatisations"
+    >
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
+        gap: '24px',
+      }}>
+        <div style={cardStyle}>
+          <div style={headerStyle}>
+            <Workflow size={20} color={colors.accent} />
+            <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600, color: colors.editorText }}>
+              Workflow Manager
+            </h3>
+          </div>
+          <div style={bodyStyle}>
             <WorkflowManagerPanel handleIntent={handleIntent} />
-          </ModernCardBody>
-        </ModernCard>
-        
-        <ModernCard gradient hover>
-          <ModernCardHeader title="User Workflows" icon={<User />} />
-          <ModernCardBody>
+          </div>
+        </div>
+
+        <div style={cardStyle}>
+          <div style={headerStyle}>
+            <User size={20} color={colors.accent} />
+            <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600, color: colors.editorText }}>
+              User Workflows
+            </h3>
+          </div>
+          <div style={bodyStyle}>
             <UserWorkflowPanel handleIntent={handleIntent} />
-          </ModernCardBody>
-        </ModernCard>
+          </div>
+        </div>
       </div>
-    </ModernLayout>
+    </OfficePageLayout>
   );
 }

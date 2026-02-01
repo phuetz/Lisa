@@ -1,7 +1,6 @@
-import type { BaseAgent, AgentExecuteProps, AgentExecuteResult, AgentCapability } from '../core/types';
-import { AgentDomains } from '../core/types';
-import { agentRegistry } from '../core/registry';
-import { useMetaHumanStore } from '../../../store/metaHumanStore';
+import { BaseAgent, AgentExecuteProps, AgentExecuteResult, AgentDomains } from './types';
+import { agentRegistry } from './registry';
+import { useMetaHumanStore } from '../store/metaHumanStore';
 
 export class MetaHumanAgent implements BaseAgent {
   name = 'MetaHumanAgent';
@@ -30,9 +29,9 @@ export class MetaHumanAgent implements BaseAgent {
         default:
           return { success: false, error: `Unknown intent: ${intent}`, output: null };
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error(`${this.name} execution error:`, error);
-      return { success: false, error: error instanceof Error ? error.message : 'An unknown error occurred', output: null };
+      return { success: false, error: error.message || 'An unknown error occurred', output: null };
     }
   }
 
@@ -48,7 +47,7 @@ export class MetaHumanAgent implements BaseAgent {
     return [
       { name: 'set_expression', description: 'Sets a facial expression on the MetaHuman.', parameters: [{ name: 'expression', type: 'string', required: true }, { name: 'intensity', type: 'number', required: false }] },
       { name: 'set_pose', description: 'Sets a body pose on the MetaHuman.', parameters: [{ name: 'pose', type: 'string', required: true }] },
-      { name: 'animate_speech', description: 'Animates the MetaHuman\'s face and body based on speech.', parameters: [{ name: 'text', type: 'string', required: true }, { name: 'duration', type: 'number', required: false }] },
+      { name: 'animate_speech', description: 'Animates the MetaHuman's face and body based on speech.', parameters: [{ name: 'text', type: 'string', required: true }, { name: 'duration', type: 'number', required: false }] },
     ];
   }
 }

@@ -106,7 +106,7 @@ class OfflineService {
         this.handleConnectionChange(status.connected);
       });
     } catch {
-      console.log('[OfflineService] Network plugin not available, using browser API');
+      // Network plugin not available, using browser API
     }
   }
 
@@ -114,14 +114,11 @@ class OfflineService {
     const wasOffline = !this.state.isOnline;
     this.state.isOnline = isOnline;
 
-    console.log(`[OfflineService] Connection status: ${isOnline ? 'ONLINE' : 'OFFLINE'}`);
-
     // Notifier les listeners
     this.listeners.forEach(listener => listener(isOnline));
 
     // Si on revient en ligne, synchroniser les messages en attente
     if (isOnline && wasOffline && this.state.pendingMessages.length > 0) {
-      console.log('[OfflineService] Back online, syncing pending messages...');
       this.syncPendingMessages();
     }
   }
@@ -153,8 +150,7 @@ class OfflineService {
 
     this.state.pendingMessages.push(message);
     this.savePendingMessages();
-    
-    console.log(`[OfflineService] Message queued: ${message.id}`);
+
     return message.id;
   }
 
@@ -182,7 +178,6 @@ class OfflineService {
     }
 
     this.syncInProgress = true;
-    console.log(`[OfflineService] Syncing ${this.state.pendingMessages.length} pending messages...`);
 
     const messagesToSync = [...this.state.pendingMessages];
     const results: { success: string[]; failed: string[] } = { success: [], failed: [] };
@@ -196,9 +191,8 @@ class OfflineService {
       } catch (error) {
         console.error(`[OfflineService] Failed to sync message ${message.id}:`, error);
         message.retryCount++;
-        
+
         if (message.retryCount >= this.MAX_RETRIES) {
-          console.log(`[OfflineService] Max retries reached for ${message.id}, removing`);
           results.failed.push(message.id);
           this.removeFromQueue(message.id);
         }
@@ -207,8 +201,6 @@ class OfflineService {
 
     this.state.lastSyncTime = Date.now();
     this.syncInProgress = false;
-    
-    console.log(`[OfflineService] Sync complete. Success: ${results.success.length}, Failed: ${results.failed.length}`);
   }
 
   /**
@@ -244,7 +236,6 @@ class OfflineService {
       const stored = localStorage.getItem(this.STORAGE_KEY);
       if (stored) {
         this.state.pendingMessages = JSON.parse(stored);
-        console.log(`[OfflineService] Loaded ${this.state.pendingMessages.length} pending messages`);
       }
     } catch (error) {
       console.error('[OfflineService] Failed to load pending messages:', error);
@@ -258,7 +249,6 @@ class OfflineService {
   clearQueue(): void {
     this.state.pendingMessages = [];
     this.savePendingMessages();
-    console.log('[OfflineService] Queue cleared');
   }
 
   /**
@@ -409,8 +399,6 @@ class OfflineService {
     this.saveConflicts();
     this.notifyConflictListeners();
 
-    console.log(`[OfflineService] Conflict ${conflictId} resolved using ${strategy} strategy`);
-
     return {
       success: true,
       resolvedData,
@@ -481,7 +469,6 @@ class OfflineService {
       }
     }
 
-    console.log(`[OfflineService] Bulk resolve: ${results.resolved} resolved, ${results.failed} failed`);
     return results;
   }
 
@@ -544,7 +531,6 @@ class OfflineService {
       const stored = localStorage.getItem(this.CONFLICTS_KEY);
       if (stored) {
         this.pendingConflicts = JSON.parse(stored);
-        console.log(`[OfflineService] Loaded ${this.pendingConflicts.length} pending conflicts`);
       }
 
       // Load resolution preferences
@@ -568,7 +554,6 @@ class OfflineService {
     this.pendingConflicts = [];
     this.saveConflicts();
     this.notifyConflictListeners();
-    console.log('[OfflineService] All conflicts cleared');
   }
 
   /**
@@ -625,7 +610,6 @@ class OfflineService {
         }
       }
 
-      console.log(`[OfflineService] Sync complete: ${synced.length} synced, ${conflicts.length} conflicts`);
       return { synced, conflicts };
     } catch (error) {
       console.error('[OfflineService] Sync with conflict detection failed:', error);

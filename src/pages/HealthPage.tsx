@@ -1,25 +1,44 @@
 /**
- * 🏥 Health Page - Monitoring Santé
+ * Health Page - Monitoring Sante
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { ModernLayout } from '../components/layout/ModernLayout';
-import { 
+import { OfficePageLayout } from '../components/layout/OfficePageLayout';
+import { useOfficeThemeStore } from '../store/officeThemeStore';
+import {
   Heart, Activity, AlertTriangle, Bell, Check,
   Droplets, Pill, Clock, TrendingUp, Shield
 } from 'lucide-react';
-import { 
-  healthMonitoringService, 
-  type HealthAlert, 
-  type DailyHealthSummary 
+import {
+  healthMonitoringService,
+  type HealthAlert,
+  type DailyHealthSummary
 } from '../services/HealthMonitoringService';
 
-const AlertCard = ({ 
-  alert, 
-  onAction 
-}: { 
-  alert: HealthAlert; 
+interface ThemeColors {
+  sidebar: string;
+  sidebarHover: string;
+  sidebarActive: string;
+  editor: string;
+  editorText: string;
+  editorSecondary: string;
+  dialog: string;
+  border: string;
+  accent: string;
+  success: string;
+  error: string;
+  inputBg: string;
+  inputBorder: string;
+}
+
+const AlertCard = ({
+  alert,
+  onAction,
+  colors
+}: {
+  alert: HealthAlert;
   onAction: (alertId: string, actionType: string) => void;
+  colors: ThemeColors;
 }) => {
   const severityColors = {
     info: { bg: 'rgba(59, 130, 246, 0.1)', border: 'rgba(59, 130, 246, 0.3)', icon: '#3b82f6' },
@@ -27,29 +46,29 @@ const AlertCard = ({
     critical: { bg: 'rgba(239, 68, 68, 0.15)', border: 'rgba(239, 68, 68, 0.4)', icon: '#ef4444' },
   };
 
-  const colors = severityColors[alert.severity];
+  const sColors = severityColors[alert.severity];
 
   return (
     <div
       role="alert"
       style={{
         padding: '16px',
-        backgroundColor: colors.bg,
+        backgroundColor: sColors.bg,
         borderRadius: '12px',
-        border: `1px solid ${colors.border}`,
+        border: `1px solid ${sColors.border}`,
         marginBottom: '12px',
       }}
     >
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
-        <AlertTriangle size={24} color={colors.icon} />
+        <AlertTriangle size={24} color={sColors.icon} />
         <div style={{ flex: 1 }}>
-          <p style={{ fontSize: '15px', fontWeight: 600, color: '#fff', margin: 0 }}>
+          <p style={{ fontSize: '15px', fontWeight: 600, color: colors.editorText, margin: 0 }}>
             {alert.title}
           </p>
-          <p style={{ fontSize: '13px', color: '#aaa', margin: '6px 0 0 0' }}>
+          <p style={{ fontSize: '13px', color: colors.editorSecondary, margin: '6px 0 0 0' }}>
             {alert.message}
           </p>
-          <p style={{ fontSize: '11px', color: '#666', margin: '8px 0 0 0' }}>
+          <p style={{ fontSize: '11px', color: colors.editorSecondary, opacity: 0.7, margin: '8px 0 0 0' }}>
             {new Date(alert.timestamp).toLocaleTimeString('fr-FR')}
           </p>
         </div>
@@ -62,9 +81,9 @@ const AlertCard = ({
               onClick={() => onAction(alert.id, action.type)}
               style={{
                 padding: '8px 14px',
-                backgroundColor: index === 0 ? colors.icon : 'transparent',
-                color: index === 0 ? '#fff' : colors.icon,
-                border: index === 0 ? 'none' : `1px solid ${colors.icon}`,
+                backgroundColor: index === 0 ? sColors.icon : 'transparent',
+                color: index === 0 ? '#fff' : sColors.icon,
+                border: index === 0 ? 'none' : `1px solid ${sColors.icon}`,
                 borderRadius: '6px',
                 fontSize: '13px',
                 cursor: 'pointer',
@@ -79,31 +98,33 @@ const AlertCard = ({
   );
 };
 
-const StatCard = ({ 
-  label, 
-  value, 
-  icon: Icon, 
-  color, 
-  suffix = '' 
-}: { 
-  label: string; 
-  value: number; 
-  icon: typeof Heart; 
+const StatCard = ({
+  label,
+  value,
+  icon: Icon,
+  color,
+  suffix = '',
+  colors
+}: {
+  label: string;
+  value: number;
+  icon: typeof Heart;
   color: string;
   suffix?: string;
+  colors: ThemeColors;
 }) => (
   <div
     style={{
       padding: '20px',
-      backgroundColor: '#2d2d2d',
+      backgroundColor: colors.dialog,
       borderRadius: '12px',
-      border: `1px solid ${color}30`,
+      border: `1px solid ${colors.border}`,
     }}
   >
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
       <div>
-        <p style={{ fontSize: '13px', color: '#888', marginBottom: '8px' }}>{label}</p>
-        <p style={{ fontSize: '28px', fontWeight: 600, color: '#fff' }}>
+        <p style={{ fontSize: '13px', color: colors.editorSecondary, marginBottom: '8px' }}>{label}</p>
+        <p style={{ fontSize: '28px', fontWeight: 600, color: colors.editorText }}>
           {value}{suffix}
         </p>
       </div>
@@ -124,16 +145,18 @@ const StatCard = ({
   </div>
 );
 
-const QuickAction = ({ 
-  icon: Icon, 
-  label, 
-  onClick, 
-  color 
-}: { 
-  icon: typeof Heart; 
-  label: string; 
+const QuickAction = ({
+  icon: Icon,
+  label,
+  onClick,
+  color,
+  colors
+}: {
+  icon: typeof Heart;
+  label: string;
   onClick: () => void;
   color: string;
+  colors: ThemeColors;
 }) => (
   <button
     onClick={onClick}
@@ -143,8 +166,8 @@ const QuickAction = ({
       alignItems: 'center',
       gap: '8px',
       padding: '16px',
-      backgroundColor: '#1a1a1a',
-      border: '1px solid #2d2d2d',
+      backgroundColor: colors.sidebar,
+      border: `1px solid ${colors.border}`,
       borderRadius: '12px',
       cursor: 'pointer',
       transition: 'all 0.2s ease',
@@ -164,13 +187,16 @@ const QuickAction = ({
     >
       <Icon size={24} color={color} />
     </div>
-    <span style={{ fontSize: '13px', color: '#fff' }}>{label}</span>
+    <span style={{ fontSize: '13px', color: colors.editorText }}>{label}</span>
   </button>
 );
 
 export default function HealthPage() {
   const [alerts, setAlerts] = useState<HealthAlert[]>([]);
   const [summary, setSummary] = useState<DailyHealthSummary | null>(null);
+
+  const { getCurrentColors } = useOfficeThemeStore();
+  const colors = getCurrentColors();
 
   useEffect(() => {
     setAlerts(healthMonitoringService.getActiveAlerts());
@@ -196,30 +222,15 @@ export default function HealthPage() {
   }, []);
 
   const handleMedicationReminder = useCallback(() => {
-    healthMonitoringService.createMedicationReminder('Médicament', new Date().toLocaleTimeString());
+    healthMonitoringService.createMedicationReminder('Medicament', new Date().toLocaleTimeString());
     setAlerts(healthMonitoringService.getActiveAlerts());
   }, []);
 
   return (
-    <ModernLayout title="Santé">
-      {/* Header */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '12px',
-        marginBottom: '24px',
-      }}>
-        <Heart size={24} color="#ef4444" />
-        <div>
-          <h2 style={{ fontSize: '20px', fontWeight: 600, color: '#fff', margin: 0 }}>
-            Monitoring Santé
-          </h2>
-          <p style={{ fontSize: '13px', color: '#666', margin: '4px 0 0 0' }}>
-            Surveillance et alertes proactives
-          </p>
-        </div>
-      </div>
-
+    <OfficePageLayout
+      title="Sante"
+      subtitle="Surveillance et alertes proactives"
+    >
       {/* Stats Overview */}
       <div style={{
         display: 'grid',
@@ -228,11 +239,12 @@ export default function HealthPage() {
         marginBottom: '24px',
       }}>
         <StatCard
-          label="Score Activité"
+          label="Score Activite"
           value={summary?.activityScore || 0}
           icon={Activity}
           color="#10a37f"
           suffix="%"
+          colors={colors}
         />
         <StatCard
           label="Risque Chute"
@@ -240,6 +252,7 @@ export default function HealthPage() {
           icon={Shield}
           color={summary?.fallRiskScore && summary.fallRiskScore > 50 ? '#ef4444' : '#10a37f'}
           suffix="%"
+          colors={colors}
         />
         <StatCard
           label="Hydratation"
@@ -247,12 +260,14 @@ export default function HealthPage() {
           icon={Droplets}
           color="#3b82f6"
           suffix="%"
+          colors={colors}
         />
         <StatCard
           label="Alertes Aujourd'hui"
           value={summary?.alerts || 0}
           icon={Bell}
           color="#f59e0b"
+          colors={colors}
         />
       </div>
 
@@ -264,9 +279,10 @@ export default function HealthPage() {
         {/* Alerts Section */}
         <div
           style={{
-            backgroundColor: '#2d2d2d',
+            backgroundColor: colors.dialog,
             borderRadius: '12px',
             padding: '20px',
+            border: `1px solid ${colors.border}`,
           }}
         >
           <div style={{
@@ -276,7 +292,7 @@ export default function HealthPage() {
             marginBottom: '16px',
           }}>
             <AlertTriangle size={20} color="#f59e0b" />
-            <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#fff', margin: 0 }}>
+            <h3 style={{ fontSize: '16px', fontWeight: 600, color: colors.editorText, margin: 0 }}>
               Alertes Actives
             </h3>
             {alerts.length > 0 && (
@@ -298,17 +314,18 @@ export default function HealthPage() {
                 key={alert.id}
                 alert={alert}
                 onAction={handleAlertAction}
+                colors={colors}
               />
             ))
           ) : (
             <div style={{
               textAlign: 'center',
               padding: '40px 20px',
-              color: '#666',
+              color: colors.editorSecondary,
             }}>
               <Check size={48} style={{ marginBottom: '12px', color: '#10a37f' }} />
               <p style={{ fontSize: '15px', margin: 0 }}>Aucune alerte active</p>
-              <p style={{ fontSize: '13px', marginTop: '4px' }}>Tout va bien ! 👍</p>
+              <p style={{ fontSize: '13px', marginTop: '4px' }}>Tout va bien !</p>
             </div>
           )}
         </div>
@@ -316,16 +333,17 @@ export default function HealthPage() {
         {/* Quick Actions */}
         <div
           style={{
-            backgroundColor: '#2d2d2d',
+            backgroundColor: colors.dialog,
             borderRadius: '12px',
             padding: '20px',
+            border: `1px solid ${colors.border}`,
           }}
         >
-          <h3 style={{ 
-            fontSize: '16px', 
-            fontWeight: 600, 
-            color: '#fff', 
-            margin: '0 0 16px 0' 
+          <h3 style={{
+            fontSize: '16px',
+            fontWeight: 600,
+            color: colors.editorText,
+            margin: '0 0 16px 0'
           }}>
             Actions Rapides
           </h3>
@@ -336,24 +354,28 @@ export default function HealthPage() {
               label="Je suis actif"
               onClick={handleRecordActivity}
               color="#10a37f"
+              colors={colors}
             />
             <QuickAction
               icon={Droplets}
               label="Rappel eau"
               onClick={handleHydrationReminder}
               color="#3b82f6"
+              colors={colors}
             />
             <QuickAction
               icon={Pill}
-              label="Médicament"
+              label="Medicament"
               onClick={handleMedicationReminder}
               color="#8b5cf6"
+              colors={colors}
             />
             <QuickAction
               icon={Clock}
               label="Historique"
               onClick={() => {}}
               color="#f59e0b"
+              colors={colors}
             />
           </div>
 
@@ -386,9 +408,10 @@ export default function HealthPage() {
       <div
         style={{
           marginTop: '24px',
-          backgroundColor: '#2d2d2d',
+          backgroundColor: colors.dialog,
           borderRadius: '12px',
           padding: '20px',
+          border: `1px solid ${colors.border}`,
         }}
       >
         <div style={{
@@ -398,8 +421,8 @@ export default function HealthPage() {
           marginBottom: '16px',
         }}>
           <TrendingUp size={20} color="#10a37f" />
-          <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#fff', margin: 0 }}>
-            Résumé du Jour
+          <h3 style={{ fontSize: '16px', fontWeight: 600, color: colors.editorText, margin: 0 }}>
+            Resume du Jour
           </h3>
         </div>
 
@@ -408,32 +431,32 @@ export default function HealthPage() {
           gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
           gap: '16px',
         }}>
-          <div style={{ textAlign: 'center', padding: '16px', backgroundColor: '#1a1a1a', borderRadius: '10px' }}>
+          <div style={{ textAlign: 'center', padding: '16px', backgroundColor: colors.sidebar, borderRadius: '10px' }}>
             <p style={{ fontSize: '24px', fontWeight: 600, color: '#10a37f', margin: 0 }}>
               {summary?.activityScore || 0}%
             </p>
-            <p style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>Activité</p>
+            <p style={{ fontSize: '12px', color: colors.editorSecondary, marginTop: '4px' }}>Activite</p>
           </div>
-          <div style={{ textAlign: 'center', padding: '16px', backgroundColor: '#1a1a1a', borderRadius: '10px' }}>
+          <div style={{ textAlign: 'center', padding: '16px', backgroundColor: colors.sidebar, borderRadius: '10px' }}>
             <p style={{ fontSize: '24px', fontWeight: 600, color: '#3b82f6', margin: 0 }}>
               {summary?.hydrationLevel || 0}%
             </p>
-            <p style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>Hydratation</p>
+            <p style={{ fontSize: '12px', color: colors.editorSecondary, marginTop: '4px' }}>Hydratation</p>
           </div>
-          <div style={{ textAlign: 'center', padding: '16px', backgroundColor: '#1a1a1a', borderRadius: '10px' }}>
+          <div style={{ textAlign: 'center', padding: '16px', backgroundColor: colors.sidebar, borderRadius: '10px' }}>
             <p style={{ fontSize: '24px', fontWeight: 600, color: '#8b5cf6', margin: 0 }}>
               {summary?.medicationAdherence || 0}%
             </p>
-            <p style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>Médicaments</p>
+            <p style={{ fontSize: '12px', color: colors.editorSecondary, marginTop: '4px' }}>Medicaments</p>
           </div>
-          <div style={{ textAlign: 'center', padding: '16px', backgroundColor: '#1a1a1a', borderRadius: '10px' }}>
+          <div style={{ textAlign: 'center', padding: '16px', backgroundColor: colors.sidebar, borderRadius: '10px' }}>
             <p style={{ fontSize: '24px', fontWeight: 600, color: '#f59e0b', margin: 0 }}>
               {summary?.alerts || 0}
             </p>
-            <p style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>Alertes</p>
+            <p style={{ fontSize: '12px', color: colors.editorSecondary, marginTop: '4px' }}>Alertes</p>
           </div>
         </div>
       </div>
-    </ModernLayout>
+    </OfficePageLayout>
   );
 }

@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { useVisionAudioStore } from '../store/visionAudioStore';
+import { useAppStore } from '../store/appStore';
 import { agentRegistry } from '../features/agents/core/registry';
 import { ContextAgent } from '../agents/ContextAgent';
 import type {

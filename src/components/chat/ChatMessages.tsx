@@ -8,7 +8,7 @@ import { useChatHistoryStore } from '../../store/chatHistoryStore';
 import { Bot, User, Sparkles, Code, FileText, Lightbulb, Zap, Copy, Check, Clock, Hash, Edit2, RefreshCw, Trash2, Package, Play, Brain, Search } from 'lucide-react';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import { parseArtifacts } from '../../utils/artifactParser';
-import { useArtifactPanelStore } from '../../store/artifactPanelStore';
+import { useArtifactPanelStore } from '../../store/chatHistoryStore';
 import type { AIProvider } from '../../services/aiService';
 
 // Suggestions de prompts pour l'écran d'accueil
@@ -546,7 +546,8 @@ export const ChatMessages = () => {
         justifyContent: 'center',
         padding: '40px',
         flex: 1,
-        minHeight: 0
+        minHeight: '400px',
+        height: '100%'
       }}>
         <div style={{ textAlign: 'center', maxWidth: '600px' }}>
           {/* Logo animé */}
@@ -665,7 +666,7 @@ export const ChatMessages = () => {
           }}
         >
           <div style={{
-            maxWidth: '800px',
+            maxWidth: '1100px',
             margin: '0 auto',
             padding: '0 24px',
             display: 'flex',
@@ -745,7 +746,7 @@ export const ChatMessages = () => {
       {streamingMessage && (
         <div style={{ padding: '24px 0', backgroundColor: '#2d2d2d' }}>
           <div style={{
-            maxWidth: '800px',
+            maxWidth: '1100px',
             margin: '0 auto',
             padding: '0 24px',
             display: 'flex',
@@ -792,7 +793,7 @@ export const ChatMessages = () => {
       {isTyping && !streamingMessage && (
         <div style={{ padding: '24px 0', backgroundColor: '#2d2d2d' }}>
           <div style={{
-            maxWidth: '800px',
+            maxWidth: '1100px',
             margin: '0 auto',
             padding: '0 24px',
             display: 'flex',

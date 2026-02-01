@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import type { ImageClassifier } from '@mediapipe/tasks-vision';
-import { useVisionAudioStore } from '../store/visionAudioStore';
+import { useAppStore } from '../store/appStore';
 import type { Percept, MediaPipeImageClassificationPayload } from '../features/vision/api';
 
 export function useImageClassifier(
@@ -8,7 +8,7 @@ export function useImageClassifier(
   imageClassifier: ImageClassifier | null
 ) {
   const lastProcessedTimeRef = useRef<number>(0);
-  const setState = useVisionAudioStore((s) => s.setState);
+  const setState = useAppStore((s) => s.setState);
 
   useEffect(() => {
     if (!videoElement || !imageClassifier) return;

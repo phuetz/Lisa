@@ -37,7 +37,7 @@ describe('chatSettingsStore', () => {
       expect(state.streamingEnabled).toBe(true);
       expect(state.incognitoMode).toBe(false);
       expect(state.autoSpeakEnabled).toBe(false);
-      expect(state.theme).toBe('dark');
+      // Theme is now managed by officeThemeStore
       expect(state.selectedVoiceProvider).toBe('browser');
       expect(state.longTermMemoryEnabled).toBe(true);
     });
@@ -185,15 +185,8 @@ describe('chatSettingsStore', () => {
     });
   });
 
-  describe('Theme', () => {
-    it('should set theme', () => {
-      useChatSettingsStore.getState().setTheme('light');
-      expect(useChatSettingsStore.getState().theme).toBe('light');
-
-      useChatSettingsStore.getState().setTheme('system');
-      expect(useChatSettingsStore.getState().theme).toBe('system');
-    });
-  });
+  // Theme tests removed - Theme is now managed by officeThemeStore
+  // See: src/store/__tests__/officeThemeStore.test.ts
 
   describe('Feature Toggles', () => {
     it('should toggle streaming', () => {

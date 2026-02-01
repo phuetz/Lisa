@@ -1,18 +1,25 @@
 /**
  * Chat History Store
  * Gestion de l'historique des conversations avec persistance
+ * + Gestion du panneau d'artefacts (transient, non persisté)
  */
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Message, Conversation } from '../types/chat';
+import type { ArtifactData } from '../components/chat/Artifact';
 
 interface ChatHistoryStore {
-  // State
+  // State - Conversation History (persisted)
   conversations: Conversation[];
   currentConversationId: string | null;
   isTyping: boolean;
   streamingMessage: string | null; // Message en cours de streaming
+
+  // State - Artifact Panel (transient, not persisted)
+  artifactPanelOpen: boolean;
+  currentArtifact: ArtifactData | null;
+  artifactView: 'preview' | 'code';
   
   // Actions
   createConversation: () => string;
@@ -30,15 +37,27 @@ interface ChatHistoryStore {
   searchConversations: (query: string) => Conversation[];
   exportConversation: (id: string) => string;
   importConversation: (data: string) => void;
+
+  // Artifact Panel Actions (transient)
+  openArtifact: (artifact: ArtifactData) => void;
+  closeArtifactPanel: () => void;
+  setArtifactView: (view: 'preview' | 'code') => void;
+  updateArtifactCode: (code: string) => void;
 }
 
 export const useChatHistoryStore = create<ChatHistoryStore>()(
   persist(
     (set, get) => ({
+      // Persisted state
       conversations: [],
       currentConversationId: null,
       isTyping: false,
       streamingMessage: null,
+
+      // Transient artifact panel state (not persisted)
+      artifactPanelOpen: false,
+      currentArtifact: null,
+      artifactView: 'preview' as const,
       
       createConversation: () => {
         const id = crypto.randomUUID();
@@ -210,7 +229,7 @@ export const useChatHistoryStore = create<ChatHistoryStore>()(
           conversation.id = crypto.randomUUID(); // New ID
           conversation.createdAt = new Date();
           conversation.updatedAt = new Date();
-          
+
           set((state) => ({
             conversations: [conversation, ...state.conversations],
           }));
@@ -218,10 +237,61 @@ export const useChatHistoryStore = create<ChatHistoryStore>()(
           console.error('Failed to import conversation:', error);
         }
       },
+
+      // Artifact Panel Actions (transient, not persisted)
+      openArtifact: (artifact) => set({
+        artifactPanelOpen: true,
+        currentArtifact: artifact,
+        artifactView: 'preview',
+      }),
+
+      closeArtifactPanel: () => set({
+        artifactPanelOpen: false,
+        currentArtifact: null,
+      }),
+
+      setArtifactView: (view) => set({ artifactView: view }),
+
+      updateArtifactCode: (code) => set((state) => ({
+        currentArtifact: state.currentArtifact
+          ? { ...state.currentArtifact, code }
+          : null,
+      })),
     }),
     {
       name: 'chat-history-storage',
       version: 1,
+      partialize: (state) => ({
+        // Only persist conversation-related state, not artifact panel
+        conversations: state.conversations,
+        currentConversationId: state.currentConversationId,
+      }),
     }
   )
 );
+
+/**
+ * @deprecated Use useChatHistoryStore instead
+ * Backward-compatible hook for artifact panel
+ */
+export const useArtifactPanelStore = () => {
+  const {
+    artifactPanelOpen,
+    currentArtifact,
+    artifactView,
+    openArtifact,
+    closeArtifactPanel,
+    setArtifactView,
+    updateArtifactCode,
+  } = useChatHistoryStore();
+
+  return {
+    isOpen: artifactPanelOpen,
+    artifact: currentArtifact,
+    view: artifactView,
+    openArtifact,
+    closePanel: closeArtifactPanel,
+    setView: setArtifactView,
+    updateCode: updateArtifactCode,
+  };
+};

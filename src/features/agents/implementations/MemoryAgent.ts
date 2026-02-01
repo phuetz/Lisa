@@ -7,7 +7,7 @@
  */
 
 import { AgentDomains, type AgentExecuteProps, type AgentExecuteResult, type BaseAgent } from '../core/types';
-import { useVisionAudioStore } from '../../../store/visionAudioStore';
+import { useAppStore } from '../../../store/appStore';
 
 // Types for memory management
 export interface Memory {
@@ -282,7 +282,7 @@ export class MemoryAgent implements BaseAgent {
       .sort((a, b) => b.timestamp - a.timestamp)
       .slice(0, 5);
 
-    const { setState } = useVisionAudioStore.getState();
+    const { setState } = useAppStore.getState();
     setState((state) => {
       const previousContext = state.conversationContext ?? { timestamp: Date.now() };
       const ensuredTimestamp = previousContext.timestamp ?? Date.now();

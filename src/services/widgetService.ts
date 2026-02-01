@@ -62,13 +62,11 @@ class WidgetService {
    */
   async initialize(): Promise<void> {
     if (!this.isNative) {
-      console.log('[WidgetService] Not on native platform, skipping');
       return;
     }
 
     await this.loadWidgetData();
     this.startRefreshInterval();
-    console.log('[WidgetService] Initialized');
   }
 
   /**
@@ -162,7 +160,6 @@ class WidgetService {
 
       // Broadcast widget update intent
       // This would be handled by a custom Capacitor plugin
-      console.log('[WidgetService] Android widgets updated');
     } catch (error) {
       console.error('[WidgetService] Android widget update failed:', error);
     }
@@ -182,7 +179,6 @@ class WidgetService {
 
       // Trigger widget timeline reload
       // This would be handled by WidgetKit integration
-      console.log('[WidgetService] iOS widgets updated');
     } catch (error) {
       console.error('[WidgetService] iOS widget update failed:', error);
     }
@@ -330,11 +326,9 @@ class WidgetService {
     if (this.platform === 'android') {
       // Android: Register with Google Assistant App Actions
       // This would require a custom Capacitor plugin
-      console.log('[WidgetService] Registering Android voice shortcut:', shortcut.phrase);
     } else if (this.platform === 'ios') {
       // iOS: Register with Siri via INIntent
       // This would require a custom Capacitor plugin
-      console.log('[WidgetService] Registering iOS Siri shortcut:', shortcut.phrase);
     }
   }
 
@@ -394,7 +388,6 @@ class WidgetService {
       voiceShortcuts: [],
     };
     await this.syncToNative();
-    console.log('[WidgetService] All data cleared');
   }
 }
 

@@ -7,7 +7,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
-import { Menu, X, Plus, MessageSquare, Settings, Trash2, LayoutDashboard, Eye, Mic, Workflow, Bot, Search, Edit2, Download, Pin, Archive, EyeOff, FileText, Wrench, Home, Code, Activity, Brain } from 'lucide-react';
+import { Menu, X, Plus, MessageSquare, Settings, Trash2, LayoutDashboard, Eye, Mic, Workflow, Bot, Search, Edit2, Download, Pin, Archive, EyeOff, FileText, Wrench, Home, Code, Activity, Brain, Globe, Puzzle, Zap } from 'lucide-react';
 import { useChatHistoryStore } from '../../store/chatHistoryStore';
 import { useChatSettingsStore } from '../../store/chatSettingsStore';
 import { ChatMessages } from './ChatMessages';
@@ -374,6 +374,9 @@ export const ChatLayout = () => {
             </div>
             {[
               { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
+              { icon: Globe, label: 'Gateway', path: '/gateway' },
+              { icon: Puzzle, label: 'Skills', path: '/skills' },
+              { icon: Zap, label: 'Automation', path: '/automation' },
               { icon: Eye, label: 'Vision', path: '/vision' },
               { icon: Mic, label: 'Audio', path: '/audio' },
               { icon: Bot, label: 'Agents', path: '/agents' },
@@ -517,10 +520,13 @@ export const ChatLayout = () => {
         </header>
 
         {/* Zone 1: Messages Area - scrollable */}
-        <div style={{ 
+        <div style={{
           overflowY: 'auto',
           overflowX: 'hidden',
-          minHeight: 0
+          minHeight: 0,
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column'
         }}>
           <ChatMessages />
         </div>
@@ -529,7 +535,7 @@ export const ChatLayout = () => {
         <div style={{ 
           padding: '16px 24px',
           paddingBottom: '24px',
-          maxWidth: '800px',
+          maxWidth: '1100px',
           margin: '0 auto',
           width: '100%',
           backgroundColor: '#212121',

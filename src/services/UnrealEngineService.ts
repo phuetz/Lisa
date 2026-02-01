@@ -80,7 +80,6 @@ export class UnrealEngineService {
         }
 
         this.ws.onopen = () => {
-          console.log('Connected to Unreal Engine MetaHuman service');
           this.isConnected = true;
           this.reconnectAttempts = 0;
           this.processMessageQueue();
@@ -96,7 +95,6 @@ export class UnrealEngineService {
         };
 
         this.ws.onclose = () => {
-          console.log('Disconnected from Unreal Engine');
           this.isConnected = false;
           this.emit('disconnected');
           this.handleReconnection();
@@ -148,7 +146,6 @@ export class UnrealEngineService {
 
     try {
       this.ws.send(JSON.stringify(commandWithId));
-      console.log('Sent command to Unreal Engine:', command.type);
       return true;
     } catch (error) {
       console.error('Failed to send command:', error);
@@ -328,7 +325,6 @@ export class UnrealEngineService {
   private handleMessage(data: string): void {
     try {
       const message = JSON.parse(data);
-      console.log('Received from Unreal Engine:', message);
       this.emit('message', message);
 
       // Handle specific message types
@@ -360,7 +356,6 @@ export class UnrealEngineService {
       if (command && this.ws) {
         try {
           this.ws.send(JSON.stringify(command));
-          console.log('Processed queued command:', command.type);
         } catch (error) {
           console.error('Failed to process queued command:', error);
           // Put it back at the front of the queue
@@ -377,7 +372,6 @@ export class UnrealEngineService {
   private handleReconnection(): void {
     if (this.reconnectAttempts < this.maxReconnectAttempts) {
       this.reconnectAttempts++;
-      console.log(`Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`);
 
       setTimeout(() => {
         this.connect().catch(error => {
@@ -394,16 +388,8 @@ export class UnrealEngineService {
    * Setup default event listeners
    */
   private setupEventListeners(): void {
-    this.on('connected', () => {
-      console.log('✅ MetaHuman service connected to Unreal Engine');
-    });
-
-    this.on('disconnected', () => {
-      console.log('❌ MetaHuman service disconnected from Unreal Engine');
-    });
-
     this.on('error', (error: any) => {
-      console.error('🚨 Unreal Engine service error:', error);
+      console.error('[UnrealEngineService] Error:', error);
     });
   }
 

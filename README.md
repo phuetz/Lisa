@@ -1,784 +1,550 @@
-# 🤖 Lisa – Assistant IA Multi-Sensoriel
+# Lisa – Vision & Hearing Assistant
 
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue.svg)](https://www.typescriptlang.org/)
-[![React](https://img.shields.io/badge/React-19-61dafb.svg)](https://reactjs.org/)
-[![Vite](https://img.shields.io/badge/Vite-6-646cff.svg)](https://vitejs.dev/)
-[![Accessibility](https://img.shields.io/badge/WCAG-2.1%20AA-green.svg)](#accessibilité)
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+Lisa est un assistant virtuel exécuté 100 % dans le navigateur qui perçoit le visage, les mains, les objets, la posture et les sons ambiants. Elle propose désormais une architecture basée sur des agents intelligents, des fonctionnalités PWA avancées et une API REST pour l'intégration externe.
 
-> **Assistant virtuel vivant** avec perception multi-sensorielle (5 sens), 50+ agents IA, workflows visuels et interface accessible WCAG 2.1 AA.
+## Vue d'ensemble
 
-Lisa est un assistant IA **100% navigateur** qui perçoit, raisonne et agit. Elle combine vision, audition, toucher, environnement et proprioception pour créer une expérience utilisateur immersive.
+Lisa est conçue comme un assistant virtuel moderne qui:
 
-**Status**: ✅ **Production-Ready** | **Score UX/UI**: 10/10 | **Accessibilité**: WCAG 2.1 AA | **Dernière MàJ**: 31 Jan 2026
+- **Fonctionne entièrement côté client**: Aucun serveur backend n'est nécessaire pour les fonctionnalités de base
+- **Respecte la vie privée**: Les données sensibles restent sur l'appareil de l'utilisateur
+- **Utilise des technologies web modernes**: WebRTC, TensorFlow.js, Web Speech API, Notifications API
+- **S'adapte à l'utilisateur**: Interface contextuelle qui répond à l'attention et aux intentions de l'utilisateur
 
-[![Android](https://img.shields.io/badge/Android-Capacitor-3DDC84.svg)](https://capacitorjs.com/)
-[![Gemini](https://img.shields.io/badge/Gemini_3-Supported-4285F4.svg)](https://ai.google.dev/)
-[![Telegram](https://img.shields.io/badge/Telegram-Bot-26A5E4.svg)](https://core.telegram.org/bots)
-[![Discord](https://img.shields.io/badge/Discord-Bot-5865F2.svg)](https://discord.js.org/)
-[![Chrome](https://img.shields.io/badge/Chrome-Extension-4285F4.svg)](#-extension-chrome)
+## Configuration
 
----
+### Variables d'environnement
+Créez un fichier `.env.local` à la racine du projet :
 
-## 🌟 Nouveautés - Modernisation OpenClaw (Jan 2026)
+```env
+VITE_GOOGLE_CLIENT_ID=<votre client id>
+VITE_GOOGLE_API_KEY=<votre api key>
+VITE_GOOGLE_SEARCH_API_KEY=<votre clé API Google Search>
+VITE_GOOGLE_SEARCH_ENGINE_ID=<votre ID Google Custom Search Engine>
+VITE_LLM_API_KEY=<votre clé API OpenAI>
+VITE_OPENAI_API_KEY=<votre clé API OpenAI pour PlannerAgent>
+VITE_MCP_TOKEN=<token bearer facultatif>
+VITE_PV_ACCESS_KEY=<clé Picovoice Porcupine>
+JWT_SECRET=<votre chaîne de caractères secrète pour les jetons d'authentification>
+```
 
-Lisa intègre désormais des fonctionnalités inspirées d'[OpenClaw](https://github.com/openclaw/openclaw) :
+### Wake-word (Porcupine)
 
-| Module | Description | Technologie |
-|--------|-------------|-------------|
-| **Telegram Bot** | Bot Telegram fonctionnel | grammy |
-| **Discord Bot** | Bot Discord avec commandes | discord.js |
-| **Model Failover** | Multi-provider avec fallback auto | OpenAI, Anthropic, Google, Ollama, Groq, Mistral |
-| **Voice Wake Pro** | Détection wake word avancée | Porcupine + Web Speech API |
-| **Edge TTS** | Synthèse vocale gratuite | Microsoft Edge TTS |
-| **Sessions Tools Pro** | Communication Agent-to-Agent | WebSocket |
+Lisa peut utiliser [Picovoice Porcupine](https://picovoice.ai/) pour détecter « Hey Lisa » de manière fiable, hors-ligne.
 
-> Voir [OPENCLAW_VS_LISA_COMPARISON.md](OPENCLAW_VS_LISA_COMPARISON.md) pour les détails.
+1. Créez un compte gratuit sur picovoice.ai et récupérez votre **Access Key**.  
+2. Ajoutez-la dans `.env.local` :
 
----
+```env
+VITE_PV_ACCESS_KEY=<votre access key Picovoice>
+```
 
-## 🌐 Extension Chrome (Computer Use)
-
-Lisa dispose d'une **extension Chrome** permettant le contrôle autonome du navigateur, similaire à Claude Computer Use.
-
-### Installation
+3. Installez les dépendances :
 
 ```bash
-# 1. Générer les icônes
-# Ouvrir apps/chrome-extension/generate-icons.html dans Chrome
-# Cliquer "Télécharger tous les icônes" → les placer dans icons/
-
-# 2. Installer dans Chrome
-# Aller à chrome://extensions/
-# Activer "Mode développeur"
-# "Charger l'extension non empaquetée" → sélectionner apps/chrome-extension
+npm i @picovoice/porcupine-web @picovoice/web-voice-processor
 ```
 
-### Fonctionnalités
-
-| Fonctionnalité | Raccourci | Description |
-|----------------|-----------|-------------|
-| **Ouvrir Lisa** | `Ctrl+Shift+L` | Ouvre le popup |
-| **Screenshot** | `Ctrl+Shift+S` | Capture et envoie à Lisa pour analyse |
-| **Menu contextuel** | Clic droit | "Analyser avec Lisa" |
-
-### Commandes supportées
-
-| Commande | Description |
-|----------|-------------|
-| `browser.navigate` | Naviguer vers une URL |
-| `browser.click` | Cliquer sur un élément (sélecteur ou coordonnées) |
-| `browser.type` | Saisir du texte |
-| `browser.scroll` | Faire défiler la page |
-| `browser.screenshot` | Capturer la page |
-| `browser.evaluate` | Exécuter JavaScript |
-| `browser.getContent` | Extraire le contenu de la page |
-
-### Architecture
-
-```
-apps/chrome-extension/
-├── manifest.json      # Manifest V3
-├── background.js      # Service Worker (connexion Gateway)
-├── content.js         # Script injecté dans les pages
-├── popup.html/js      # Interface popup
-└── icons/             # Icônes PNG
-```
-
-> 📖 Voir [apps/chrome-extension/README.md](apps/chrome-extension/README.md) pour la documentation complète.
-
----
-
-## 🖥️ Gateway & Contrôle Ordinateur
-
-Lisa intègre un **Gateway WebSocket** (inspiré d'OpenClaw) pour le contrôle de l'ordinateur.
-
-### Composants
-
-| Module | Description | Fichier |
-|--------|-------------|---------|
-| **GatewayServer** | Control plane WebSocket | `src/gateway/GatewayServer.ts` |
-| **DesktopController** | Souris, clavier, fenêtres | `src/gateway/DesktopController.ts` |
-| **BrowserController** | Automatisation navigateur | `src/gateway/BrowserController.ts` |
-| **ScreenCapture** | Screenshots et enregistrement | `src/gateway/ScreenCapture.ts` |
-| **NodeManager** | Contrôle multi-appareils | `src/gateway/NodeManager.ts` |
-
-### Exemple d'utilisation
-
-```typescript
-import { getDesktopController, getBrowserController, getScreenCapture } from './gateway';
-
-// Contrôle souris/clavier
-const desktop = getDesktopController();
-await desktop.mouseMove(500, 300);
-await desktop.mouseClick('left');
-await desktop.type("Bonjour Lisa!");
-await desktop.hotkey('save'); // Ctrl+S
-
-// Automatisation navigateur
-const browser = getBrowserController();
-await browser.navigate('https://google.com');
-await browser.type('#search', 'Lisa AI assistant');
-await browser.click('button[type="submit"]');
-
-// Capture d'écran
-const capture = getScreenCapture();
-const screenshot = await capture.captureScreen();
-await capture.startRecording();
-```
+4. (Optionnel) Pour un mot-clé personnalisé, placez le fichier `lisa.ppn` dans `public/porcupine/` et remplacez `BuiltInKeyword.PORCUPINE` par le chemin du modèle dans `useWakeWord.ts`.
 
 ### Sécurité
+- Le jeton Google OAuth est désormais stocké dans **`sessionStorage`** (au lieu de `localStorage`) et sera purgé à la fermeture de l'onglet.
+- Un **Content-Security-Policy** strict est injecté via un plugin Vite (`csp-headers`). Vous pouvez l'ajuster dans `vite.config.ts`.
+- Les appels MCP utilisent un en-tête `Authorization: Bearer <VITE_MCP_TOKEN>` si la variable est définie.
+- Les notifications push utilisent un **Service Worker** conforme aux bonnes pratiques de sécurité.
 
-- **blockedApps** : `['taskmgr', 'regedit', 'cmd', 'powershell']`
-- **safeMode** : Confirmation requise pour actions destructives
-- **allowedApps** : Whitelist optionnelle
+### Architecture Basée sur des Agents
 
----
+Lisa utilise une architecture modulaire basée sur des agents qui permet une extensibilité et une maintenance simplifiée :
 
-## 🧠 Les 5 Sens de Lisa
+### Écosystème d'agents spécialisés
 
-Lisa perçoit le monde à travers **5 modalités sensorielles** :
+Lisa implémente une architecture multi-agents inspirée de GenSpark, où chaque agent est spécialisé dans un domaine particulier et collabore au sein d'un réseau d'agents pour résoudre des problèmes complexes.
 
-| Sens | Icône | Description | Technologies |
-|------|-------|-------------|--------------|
-| **Vision** | 👁️ | Détection objets, visages, gestes, poses | MediaPipe, TensorFlow.js |
-| **Ouïe** | 👂 | Reconnaissance vocale, émotions audio | Web Speech API, Whisper |
-| **Toucher** | ✋ | Gestes souris/tactile, IoT | Pointer Events, WebHID |
-| **Environnement** | 🌍 | Météo, qualité air, géolocalisation | APIs externes |
-| **Proprioception** | 💭 | État système, mémoire, CPU | Performance API |
+![Architecture multi-agents](https://via.placeholder.com/800x400?text=Architecture+Multi-Agents+de+Lisa)
+
+#### PlannerAgent
+
+L'agent de planification central qui :
+- Analyse les requêtes en langage naturel pour comprendre l'intention de l'utilisateur
+- Décompose les tâches complexes en étapes exécutables
+- Génère dynamiquement des plans d'exécution optimisés
+- Coordonne l'exécution parallèle des tâches lorsque c'est possible
+- Surveille et ajuste les plans en temps réel
+- Intègre les résultats des agents spécialisés
 
 ```typescript
-// Utilisation
-import { useSenses } from './hooks/useSenses';
-
-const { percepts, status, enableSense } = useSenses({
-  enableVision: true,
-  enableHearing: true,
+// Exemple d'utilisation du PlannerAgent
+const planner = agentRegistry.getAgent('PlannerAgent');
+const result = await planner.execute({ 
+  request: "Résume les derniers articles sur l'IA et crée un rappel pour demain", 
+  language: 'fr' 
 });
 ```
 
----
+#### Répertoire d'agents spécialisés
 
-## 🤖 50+ Agents IA
+Lisa dispose d'un ensemble complet d'agents spécialisés couvrant différents domaines d'expertise :
 
-### Agents de Perception
+##### Agents de connaissances et d'information
 
-| Agent | Description |
-|-------|-------------|
-| **VisionAgent** | Analyse et décrit le contenu visuel (webcam, captures d'écran, images) |
-| **HearingAgent** | Traite l'audio avec transcription et détection d'émotions |
-| **AudioAnalysisAgent** | Analyse audio avancée avec transcription, émotions et filtrage |
-| **ImageAnalysisAgent** | Analyse d'images avec détection d'objets et description |
-| **OCRAgent** | Extraction de texte depuis images, captures d'écran ou zones sélectionnées |
+| Agent | Description | Capacités |  
+|-------|-------------|----------|  
+| **WeatherAgent** | Fournit des données météorologiques précises et des prévisions | Conditions actuelles, prévisions, alertes météo |
+| **WebSearchAgent** | Effectue des recherches web pour répondre aux questions | Recherche sémantique, filtrage des résultats, extraction d'information |
+| **WebContentReaderAgent** | Extrait et analyse le contenu des pages web | Extraction de texte, analyse de structure, résumé de contenu |
+| **NewsAgent** | Agrège et résume les actualités | Collecte multi-sources, classification par thème, détection de biais |
+| **WikiAgent** | Accède aux informations encyclopédiques | Recherche précise, vérification des faits, extraction de définitions |
 
-### Agents de Communication
+##### Agents de productivité et organisation
 
-| Agent | Description |
-|-------|-------------|
-| **SmallTalkAgent** | Conversations décontractées avec réponses personnalisées et contexte émotionnel |
-| **EmailAgent** | Composition et gestion d'emails avec templates intelligents |
-| **TranslationAgent** | Traduction entre langues avec adaptation culturelle et contextuelle |
-| **SpeechSynthesisAgent** | Convertit le texte en parole pour communication verbale |
-| **ContentGeneratorAgent** | Génère et manipule du contenu textuel avec options stylistiques |
+| Agent | Description | Capacités |  
+|-------|-------------|----------|  
+| **CalendarAgent** | Gère les événements et planifications | Création/modification d'événements, rappels, conflits |
+| **TodoAgent** | Gère les listes de tâches | Création/modification de tâches, priorités, échéances |
+| **NotesAgent** | Crée et organise des notes | Prise de notes, catégorisation, recherche contextuelle |
+| **EmailAgent** | Assiste dans la gestion des emails | Analyse, classement, suggestion de réponses |
+| **SchedulerAgent** | Optimise la planification d'événements | Analyse de disponibilité, suggestion de créneaux |
 
-### Agents de Productivité
+##### Agents d'analyse et de création
 
-| Agent | Description |
-|-------|-------------|
-| **CalendarAgent** | Gestion des événements Google Calendar (création, mise à jour, consultation) |
-| **TodoAgent** | Gestion de liste de tâches (ajout, suppression, mise à jour) |
-| **SchedulerAgent** | Optimisation de planning avec analyse de disponibilité |
-| **MemoryAgent** | Gestion de la mémoire épisodique et long terme |
-| **ProactiveSuggestionsAgent** | Suggestions proactives basées sur le contexte utilisateur |
-| **PersonalizationAgent** | Adaptation de l'expérience selon préférences et comportements |
+| Agent | Description | Capacités |  
+|-------|-------------|----------|  
+| **CodeInterpreterAgent** | Exécute et explique du code | Analyse de code, exécution sécurisée, débogage |
+| **DataAnalysisAgent** | Analyse des ensembles de données | Statistiques, visualisations, tendances |
+| **ContentGeneratorAgent** | Crée du contenu textuel et créatif | Rédaction, résumés, traductions |
+| **ImageAnalysisAgent** | Analyse des images et du contenu visuel | Reconnaissance d'objets, analyse de scènes, OCR |
+| **AudioAnalysisAgent** | Traite et analyse les signaux audio | Transcription, détection d'émotions, filtrage |
 
-### Agents de Développement
+##### Agents d'assistance et d'intégration
 
-| Agent | Description |
-|-------|-------------|
-| **CodeInterpreterAgent** | Exécution de code Python pour calculs et analyse de données |
-| **GitHubAgent** | Interaction avec GitHub (repos, issues, PRs, commits) |
-| **GeminiCodeAgent** | Génération de code via l'API Gemini |
-| **GeminiCliAgent** | Interaction avec le CLI Gemini |
-| **GrokCliAgent** | Interaction avec le CLI Grok |
-| **WorkflowCodeAgent** | Exécution sécurisée de code JS/TS dans les workflows |
-| **PowerShellAgent** | Exécution sécurisée de commandes PowerShell |
+| Agent | Description | Capacités |  
+|-------|-------------|----------|  
+| **SmartHomeAgent** | Intègre les appareils connectés | Contrôle d'appareils, scénarios, surveillance |
+| **HealthMonitorAgent** | Suit les données de santé et bien-être | Analyse de tendances, rappels, recommandations |
+| **TranslationAgent** | Traduit le contenu entre différentes langues | Traduction contextuelle, adaptation culturelle |
+| **PersonalizationAgent** | Adapte l'expérience à l'utilisateur | Apprentissage des préférences, suggestions personnalisées |
+| **SecurityAgent** | Surveille et protège la vie privée | Détection de risques, recommendations de sécurité |
+| **RosAgent** | Interagit avec les systèmes ROS (Robot Operating System) | Publication de messages, souscription à des topics, appel de services ROS |
 
-### Agents d'Intégration IoT/Robotique
+#### Architecture du registre d'agents
 
-| Agent | Description |
-|-------|-------------|
-| **RosAgent** | Interaction avec topics et services ROS via rosbridge |
-| **RosPublisherAgent** | Publication de messages sur topics ROS |
-| **RobotAgent** | Contrôle et interaction avec robots |
-| **MQTTAgent** | Communication via protocole MQTT |
-| **SmartHomeAgent** | Contrôle des appareils connectés et scénarios domotiques |
-| **SystemIntegrationAgent** | Intégration avec systèmes externes |
+Le système de registre centralise tous les agents disponibles :
 
-### Agents de Workflow
-
-| Agent | Description |
-|-------|-------------|
-| **PlannerAgent** | Génère et exécute des workflows multi-étapes complexes |
-| **TriggerAgent** | Gestion des triggers et webhooks dans les workflows |
-| **TransformAgent** | Transformation de données dans les workflows |
-| **ConditionAgent** | Évaluation de conditions dans les workflows |
-| **DelayAgent** | Introduction de délais dans les workflows |
-| **ForEachAgent** | Itération sur collections dans les workflows |
-| **SetAgent** | Gestion des variables et état dans les workflows |
-| **WorkflowHTTPAgent** | Requêtes HTTP dans les workflows |
-| **UserWorkflowAgent** | Gestion des workflows utilisateur personnalisés |
-
-### Agents d'Analyse
-
-| Agent | Description |
-|-------|-------------|
-| **NLUAgent** | Analyse NLU (sentiment, émotions, entités) |
-| **DataAnalysisAgent** | Analyse de données et génération de rapports |
-| **KnowledgeGraphAgent** | Gestion du graphe de connaissances (entités, relations) |
-| **ContextAgent** | Gestion du contexte avancé pour mémoire et cohérence |
-| **CriticAgent** | Évaluation critique et amélioration des réponses |
-
-### Agents Spécialisés
-
-| Agent | Description |
-|-------|-------------|
-| **WeatherAgent** | Données météo actuelles et prévisions |
-| **WebSearchAgent** | Recherche web et réponses concises |
-| **WebContentReaderAgent** | Lecture et résumé de contenu web |
-| **ScreenShareAgent** | Gestion du partage d'écran |
-| **MetaHumanAgent** | Contrôle du MetaHuman (expressions, poses) |
-| **HealthMonitorAgent** | Surveillance de la santé et bien-être |
-| **SecurityAgent** | Surveillance sécurité et détection de risques |
-| **CoordinatorAgent** | Coordination entre agents multiples |
-| **LLMAgent** | Assistant LLM universel pour texte et code |
-
----
-
-## 🛠️ Tools IA Intégrés
-
-Lisa dispose de **10 outils** que l'IA peut utiliser automatiquement :
-
-| Tool | Description | API |
-|------|-------------|-----|
-| **WeatherTool** | Météo actuelle + prévisions 7 jours | Open-Meteo (gratuit) |
-| **ReminderTool** | Rappels et alarmes avec notifications | Local + Capacitor |
-| **CalculatorTool** | Calculs, conversions, pourcentages | JavaScript |
-| **TranslatorTool** | Traduction 25+ langues | MyMemory (gratuit) |
-| **DictionaryTool** | Définitions, synonymes, étymologie | Free Dictionary |
-| **SummarizerTool** | Résumé de pages web/texte | JavaScript |
-| **ImageGeneratorTool** | Génération d'images | DALL-E / Imagen |
-| **WebSearchTool** | Recherche web | OpenAI |
-| **WebContentReaderTool** | Extraction contenu web | Fetch |
-| **CodeInterpreterTool** | Exécution Python | Pyodide |
+- Implémente le pattern Singleton pour garantir une instance unique
+- Permet de rechercher des agents par nom, domaine ou capacité
+- Facilite l'ajout de nouvelles capacités sans modifier le code existant
+- Chaque agent respecte une interface commune pour une intégration standardisée
 
 ```typescript
-// Utilisation
-import { toolRegistry } from './tools';
+// Interface standardisée pour tous les agents
+interface BaseAgent {
+  // Propriétés d'identification
+  name: string;                    // Nom unique de l'agent
+  description: string;             // Description courte
+  version: string;                 // Version de l'agent
+  domain: AgentDomain;             // Domaine d'expertise (enum)
+  capabilities: string[];          // Liste de capacités spécifiques
+  requiresAuthentication?: boolean; // Nécessite une authentification
+  
+  // Méthodes
+  execute(props: AgentExecuteProps): Promise<AgentExecuteResult>;
+  canHandle(query: string, context?: any): Promise<number>; // Score de confiance 0-1
+  getRequiredParameters(task: string): Promise<AgentParameter[]>;
+}
 
-const weather = await toolRegistry.weather.execute({ city: 'Paris', days: 3 });
-const calc = await toolRegistry.calculator.execute({ expression: '20% of 150' });
-```
-
----
-
-## 🔀 Workflows Visuels
-
-Éditeur de workflows drag-and-drop avec nodes spécialisés :
-
-| Node | Description |
-|------|-------------|
-| **SenseNode** | Entrée des 5 sens avec filtrage |
-| **AIAgentNode** | Exécution d'agents IA |
-| **ConditionNode** | Branching conditionnel |
-| **RosServiceNode** | Appel services ROS |
-| **TransformNode** | Transformation de données |
-
----
-
-## ♿ Accessibilité (WCAG 2.1 AA)
-
-Lisa est **entièrement accessible** :
-
-- ✅ **Skip Links** - Navigation clavier rapide
-- ✅ **Focus Visible** - Indicateurs de focus clairs
-- ✅ **Aria Labels** - Boutons et icônes labellisés
-- ✅ **Contraste** - Ratios conformes WCAG
-- ✅ **Mouvement Réduit** - Respect `prefers-reduced-motion`
-- ✅ **Texte Agrandi** - Mode texte +25%
-- ✅ **Haut Contraste** - Mode contraste élevé
-
-```tsx
-// Composant AccessibilitySettings inclus
-<AccessibilitySettings onConfigChange={handleA11yChange} />
-```
-
----
-
-## 🚀 Démarrage Rapide
-
-### Installation
-
-```bash
-# Cloner et installer
-git clone https://github.com/votre-username/Lisa.git
-cd Lisa && pnpm install
-
-# Configurer
-cp .env.example .env
-```
-
-### Configuration (.env)
-
-```env
-# IA Providers (au moins un requis)
-VITE_GEMINI_API_KEY=AIzaSy...    # Google Gemini 3 (recommandé)
-VITE_OPENAI_API_KEY=sk-...       # OpenAI GPT-4
-VITE_ANTHROPIC_API_KEY=sk-ant-...# Anthropic Claude
-
-# Local (optionnel)
-VITE_LMSTUDIO_URL=http://localhost:1234  # LM Studio
-VITE_OLLAMA_URL=http://localhost:11434   # Ollama
-
-# APIs externes (optionnel)
-VITE_WEATHER_API_KEY=...         # API Météo
-VITE_AIR_QUALITY_API_KEY=...     # API Qualité Air
-```
-
-> 💡 **Astuce** : Les clés API peuvent aussi être configurées dans l'app via **Paramètres > Clés API**
-
----
-
-## 🖥️ Version Web (PC / Navigateur)
-
-C'est la version principale de développement. Elle s'exécute directement dans votre navigateur.
-
-**Particularités :**
-- Utilise les API standards du navigateur (Webcam, Micro)
-- Idéale pour le développement rapide (Hot Reload)
-- C'est le "Cerveau" central qui est mis à jour en premier
-
-**Démarrage :**
-
-```bash
-pnpm dev
-# ou
-npm run dev
-```
-
-> **Accès** : Ouvrez http://localhost:5180 dans votre navigateur.
-
----
-
-## 📱 Version Mobile (Android / iOS)
-
-Application native générée via **Capacitor**. Elle "encapsule" la version Web dans une coquille native et lui donne des super-pouvoirs.
-
-**Particularités :**
-- **Architecture** : Le code React est compilé et injecté dans une WebView native
-- **Super-pouvoirs (Plugins)** via `apps/mobile/capacitor.config.ts` :
-  - 🔔 **Notifications Push** - `@capacitor/push-notifications`
-  - 📳 **Haptique** - Vibrations précises `@capacitor/haptics`
-  - 📸 **Caméra Native** - Meilleures perfs `@capacitor/camera`
-  - ⌨️ **Clavier Natif** - `@capacitor/keyboard`
-- **Source** : Fichiers compilés depuis `../../dist` (build de la version web)
-
-**Workflow de démarrage :**
-
-```bash
-# 1. Construire le code Web (génère le dossier dist)
-pnpm build
-
-# 2. Synchroniser avec le Mobile (copie dist vers Android/iOS)
-pnpm mobile:sync
-
-# 3. Ouvrir Android Studio
-cd apps/mobile
-npx cap open android
-# Cliquez sur "Run" ▶️ pour lancer sur téléphone/émulateur
-```
-
-### Script Automatisé (Windows PowerShell)
-
-```powershell
-# Lancement complet (build + sync + emulator + run)
-.\scripts\run-android.ps1
-
-# Options
-.\scripts\run-android.ps1 -Clean        # Nettoie avant build
-.\scripts\run-android.ps1 -Release      # Build release
-.\scripts\run-android.ps1 -NoEmulator   # Sans émulateur (device physique)
-.\scripts\run-android.ps1 -Device "Pixel_7_API_34"  # Émulateur spécifique
-```
-
----
-
-## ⚡ Différences Web vs Mobile
-
-| Fonctionnalité | Version Web 🖥️ | Version Mobile 📱 |
-|----------------|-----------------|-------------------|
-| **Moteur** | Navigateur (V8/SpiderMonkey) | WebView Native + Capacitor Bridge |
-| **Accès Caméra** | API HTML5 MediaDevices | Plugin Natif (@capacitor/camera) |
-| **Vibration** | Limitée (navigator.vibrate) | Avancée (@capacitor/haptics) |
-| **Réseau** | HTTPS strict | HTTPS + Scheme natif (lisa://) |
-| **Debug** | Console Nav. (F12) | Android Studio / Safari DevTools |
-| **Fichiers** | dist/ servi par Vite | dist/ copié dans l'APK/IPA |
-
-> 💡 **Conseil** : Développez toujours sur la version Web (`pnpm dev`) pour la logique et l'UI. Ne passez sur la version Mobile que pour tester les fonctionnalités natives ou faire une release.
-
----
-
-## 🧪 Tests & Qualité
-
-```bash
-pnpm test                              # Tests unitaires (Vitest)
-pnpm test -- src/path/file.test.ts     # Test fichier unique
-pnpm test -- -t "nom du test"          # Tests par pattern
-pnpm test:watch                        # Mode watch
-pnpm typecheck                         # Vérification TypeScript
-pnpm lint                              # ESLint
-pnpm test:e2e                          # Tests E2E (Playwright)
-```
-
----
-
-## 🏗️ Architecture
-
-```
-src/
-├── features/              # Organisation par feature
-│   ├── agents/            # 50+ agents IA
-│   │   ├── core/          # Registry, types, lazy-loading
-│   │   └── implementations/ # Tous les agents
-│   ├── vision/            # Vision (YOLOv8, MediaPipe)
-│   │   ├── api.ts         # Point d'entrée
-│   │   └── worker.ts      # Web Worker
-│   ├── hearing/           # Ouïe (Whisper, Web Speech)
-│   │   ├── api.ts         # Point d'entrée
-│   │   └── worker.ts      # Web Worker
-│   └── workflow/          # Système de workflows
-│       ├── executor/      # Moteur d'exécution
-│       └── nodes/         # Types de nodes
-├── senses/                # Sens de base
-│   ├── touch.ts           # Toucher
-│   ├── environment.ts     # Environnement
-│   └── proprioception.ts  # Proprioception
-├── components/            # Composants React
-│   ├── chat/              # Interface chat
-│   └── ui/                # Design system
-├── hooks/                 # Hooks personnalisés
-├── store/                 # Zustand stores
-├── services/              # Services métier
-├── api/                   # Serveur Express
-└── packages/              # SDK monorepo
-```
-
-### Stack Technique
-
-| Catégorie | Technologies |
-|-----------|--------------|
-| **Frontend** | React 19, TypeScript 5.8, Vite 6, MUI 7, Tailwind |
-| **IA** | TensorFlow.js, MediaPipe, Whisper, GPT-5 |
-| **3D** | Three.js, Unreal Engine 5.6 (MetaHuman) |
-| **Backend** | Express 5, Prisma, PostgreSQL |
-| **Tests** | Vitest, Playwright |
-
----
-
-## 📱 Pages
-
-| Route | Description |
-|-------|-------------|
-| `/chat` | Interface chat IA principale |
-| `/dashboard` | Vue d'ensemble |
-| `/senses` | Dashboard des 5 sens |
-| `/agents` | Liste des 50+ agents |
-| `/workflows` | Éditeur de workflows |
-| `/vision` | Panel vision + OCR |
-| `/audio` | Panel audio + TTS |
-| `/settings` | Configuration |
-
----
-
-## 🔧 Développement
-
-### Créer un Agent
-
-```typescript
-// src/features/agents/implementations/MonAgent.ts
-import type { BaseAgent, AgentExecuteProps, AgentExecuteResult } from '../core/types';
-
-export class MonAgent implements BaseAgent {
-  name = 'MonAgent';
-  description = 'Mon agent personnalisé';
+// Exemple d'implémentation d'un nouvel agent
+class SmartHomeAgent implements BaseAgent {
+  name = 'SmartHomeAgent';
+  description = 'Contrôle les appareils connectés et gère les scénarios domotiques';
   version = '1.0.0';
-  domain = 'custom';
-  capabilities = ['ma-capacite'];
-
+  domain = AgentDomain.INTEGRATION;
+  capabilities = ['device_control', 'scene_management', 'status_monitoring'];
+  
   async execute(props: AgentExecuteProps): Promise<AgentExecuteResult> {
-    return { success: true, output: 'Résultat' };
+    // Logique de contrôle domotique
+    const { intent, devices, action, parameters } = props;
+    
+    switch (intent) {
+      case 'toggle_device':
+        return await this.toggleDevice(devices[0], parameters);
+      case 'run_scene':
+        return await this.activateScene(parameters.sceneName);
+      case 'get_status':
+        return await this.getDeviceStatus(devices);
+      default:
+        return { 
+          success: false, 
+          output: `Intent non supporté: ${intent}`,
+          error: new Error('UNSUPPORTED_INTENT')
+        };
+    }
+  }
+  
+  async canHandle(query: string, context?: any): Promise<number> {
+    // Analyse si la requête concerne la domotique
+    const smartHomeKeywords = ['lumière', 'chauffage', 'température', 'scénario', 'allumer', 'éteindre'];
+    return this.calculateKeywordMatch(query, smartHomeKeywords);
+  }
+  
+  async getRequiredParameters(task: string): Promise<AgentParameter[]> {
+    // Détermine les paramètres nécessaires en fonction de la tâche
+    if (task.includes('allumer') || task.includes('éteindre')) {
+      return [{ name: 'device', type: 'string', required: true }];
+    }
+    return [];
+  }
+  
+  private calculateKeywordMatch(query: string, keywords: string[]): number {
+    // Calcule un score de correspondance entre 0 et 1
+    const words = query.toLowerCase().split(' ');
+    const matches = keywords.filter(kw => words.some(w => w.includes(kw.toLowerCase())));
+    return matches.length / Math.max(keywords.length, 1);
   }
 }
 
-// Ajouter dans src/features/agents/core/registry.ts:
-// ['MonAgent', '../implementations/MonAgent'],
+// Enregistrement de l'agent dans le registre
+agentRegistry.register(new SmartHomeAgent());
 ```
 
-### Utiliser les 5 Sens
+#### Collaboration inter-agents
+
+Le système implémente un mécanisme sophistiqué de collaboration entre agents:
+
+##### Protocole de communication
+
+Les agents communiquent via un protocole standardisé qui permet :
+- **Communication asynchrone** : Messages et événements entre agents
+- **Partage de contexte** : Transmission de contexte entre différents agents 
+- **Réduction d'incertitude** : Mécanismes de clarification et validation
+- **Fusion de connaissances** : Combinaison des informations de multiples agents
 
 ```typescript
-import { useSenses } from './hooks/useSenses';
+// Exemple de communication inter-agents
+const weatherAgent = agentRegistry.getAgent('WeatherAgent');
+const schedulerAgent = agentRegistry.getAgent('SchedulerAgent');
 
-function MyComponent() {
-  const { percepts, status, enableSense, disableSense } = useSenses({
-    enableVision: true,
-    enableHearing: true,
-    enableTouch: true,
+// WeatherAgent détecte des conditions météo défavorables
+const weatherAlert = await weatherAgent.execute({ intent: 'check_weather_alert', location: 'Paris' });
+
+// Communication de l'alerte au SchedulerAgent
+if (weatherAlert.output.severity > 0.7) {
+  await schedulerAgent.execute({ 
+    intent: 'adjust_schedule',
+    context: { weatherAlert: weatherAlert.output },
+    parameters: { adjustmentReason: 'WEATHER_ALERT' }
   });
-
-  // Accéder aux derniers percepts
-  const visionPercept = percepts.vision[0];
-  const hearingPercept = percepts.hearing[0];
 }
 ```
 
----
+##### Orchestration de plans complexes
 
-## 📚 Documentation
+Le PlannerAgent orchestre des workflows complexes en :
 
-| Document | Description |
-|----------|-------------|
-| [SETUP_GUIDE.md](SETUP_GUIDE.md) | Installation détaillée |
-| [AUDIT_UX_UI_2025.md](AUDIT_UX_UI_2025.md) | Rapport accessibilité |
-| [OPENCLAW_VS_LISA_COMPARISON.md](OPENCLAW_VS_LISA_COMPARISON.md) | Comparaison OpenClaw vs Lisa |
-| [docs/MODULES_OPENCLAW.md](docs/MODULES_OPENCLAW.md) | Documentation modules OpenClaw |
-| [docs/GATEWAY.md](docs/GATEWAY.md) | Gateway & Contrôle Ordinateur |
-| [apps/chrome-extension/README.md](apps/chrome-extension/README.md) | Extension Chrome |
+- Déterminant l'ordre optimal d'exécution des agents
+- Gérant les dépendances entre tâches et sous-tâches
+- Parallélisant l'exécution quand les tâches sont indépendantes
+- Adaptant le plan en cas d'échec ou de nouvelles contraintes
+- Optimisant les ressources système disponibles
 
----
+```typescript
+// Exemple de plan généré pour une requête complexe
+const plan = {
+  goal: "Organiser une réunion demain en tenant compte de la météo et préparer un résumé des documents pertinents",
+  steps: [
+    {
+      id: "weather-check",
+      agent: "WeatherAgent",
+      task: "Vérifier la météo pour demain",
+      dependencies: [],
+      status: "pending"
+    },
+    {
+      id: "calendar-check",
+      agent: "CalendarAgent",
+      task: "Vérifier les disponibilités de demain",
+      dependencies: [],
+      status: "pending"
+    },
+    {
+      id: "doc-search",
+      agent: "WebSearchAgent",
+      task: "Rechercher les documents pertinents",
+      dependencies: [],
+      status: "pending"
+    },
+    {
+      id: "schedule-meeting",
+      agent: "SchedulerAgent",
+      task: "Programmer la réunion",
+      dependencies: ["weather-check", "calendar-check"],
+      status: "waiting"
+    },
+    {
+      id: "summarize-docs",
+      agent: "ContentGeneratorAgent",
+      task: "Résumer les documents trouvés",
+      dependencies: ["doc-search"],
+      status: "waiting"
+    },
+    {
+      id: "prepare-briefing",
+      agent: "NotesAgent",
+      task: "Préparer un briefing pour la réunion",
+      dependencies: ["schedule-meeting", "summarize-docs"],
+      status: "waiting"
+    }
+  ]
+};
+```
 
-## 🤝 Contribution
+#### Interface de gestion de workflow
+
+L'interface utilisateur de gestion des workflows permet de :
+
+- Visualiser en temps réel l'exécution des étapes d'un plan
+- Voir les dépendances entre les étapes et leur état (en attente, en cours, terminé, échoué)
+- Intervenir manuellement pour ajuster ou corriger un plan en cours d'exécution
+- Sauvegarder un plan réussi comme modèle pour une réutilisation ultérieure
+- Créer des points de contrôle (checkpoints) pour reprendre l'exécution après un arrêt
+
+### Fonctionnalités PWA
+
+Lisa est une Progressive Web App (PWA) complète offrant une expérience similaire à une application native :
+
+#### Installation et intégration système
+
+- **Manifest PWA**: Définit l'apparence, l'orientation et les icones de l'application
+- **Installation sur l'écran d'accueil**: Ajout d'icône sur l'écran d'accueil comme une application native
+- **Icônes adaptatives**: Support des icônes maskables et badges de notification
+- **Raccourcis d'application**: Actions rapides accessibles depuis l'icône de l'application
+
+```json
+// Extrait du fichier manifest.json
+{
+  "name": "Lisa Virtual Assistant",
+  "short_name": "Lisa",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#121212",
+  "theme_color": "#6e8efb"  
+}
+```
+
+#### Service Worker
+
+Le Service Worker offre de nombreuses fonctionnalités avancées :
+
+- **Cache stratégique**: Mise en cache des ressources statiques pour un chargement rapide
+- **Fonctionnement hors-ligne**: Accès aux fonctionnalités de base sans connexion internet
+- **Mise à jour en arrière-plan**: Installation automatique des nouvelles versions
+- **Gestion des notifications**: Réception et traitement des notifications push
+
+```javascript
+// Enregistrement du Service Worker dans main.tsx
+const registerServiceWorker = async () => {
+  if ('serviceWorker' in navigator) {
+    try {
+      const registration = await navigator.serviceWorker.register('/service-worker.js');
+      console.log('Service Worker registered with scope:', registration.scope);
+    } catch (error) {
+      console.error('Service Worker registration failed:', error);
+    }
+  }
+};
+```
+
+#### Notifications Push
+
+Le système de notifications permet de :
+
+- **Recevoir des alertes**: Notifications pour alarmes et minuteurs même lorsque le navigateur est fermé
+- **Actions rapides**: Boutons d'action directement dans la notification (snooze, arrêt, etc.)
+- **Planification**: Programmation de notifications futures pour rappels ou événements
+- **Permission utilisateur**: Gestion respectueuse des autorisations via une interface dédiée
+
+## Internationalisation (i18n)
+
+Lisa supports English and French. The language is auto-detected from your browser locale (`navigator.language`). Any locale starting with **`fr`** selects French, otherwise English.
+
+If you want to override the language manually for testing, open your browser console and run:
+
+```js
+localStorage.setItem('i18nextLng', 'fr'); // or 'en'
+location.reload();
+```
+
+At runtime you may also build a custom toggle:
+```tsx
+import { useTranslation } from 'react-i18next';
+const { i18n } = useTranslation();
+<i onClick={() => i18n.changeLanguage('fr')}>FR</i>
+<i onClick={() => i18n.changeLanguage('en')}>EN</i>
+```
+
+All user-facing strings live in `src/locales/{en,fr}/common.json`.
+
+### Fonctionnalités Avancées
+
+Lisa offre un ensemble de fonctionnalités avancées pour améliorer la productivité et l'expérience utilisateur:
+
+#### Résumé de presse-papiers
+
+- **Surveillance intelligente**: Détection automatique du contenu copié dans le presse-papiers
+- **Résumé via LLM**: Utilisation d'un modèle de langage pour générer des résumés concis
+- **Contrôle utilisateur**: Options pour activer/désactiver la surveillance ou déclencher manuellement un résumé
+- **Support multi-langue**: Analyse et résumé dans la langue de l'interface (EN/FR/ES)
+
+```typescript
+// Exemple d'utilisation du résumé de presse-papiers
+const { summarizeClipboard, toggleClipboardMonitoring } = useClipboardSummarizer();
+// Résumer manuellement le contenu actuel du presse-papiers
+const summary = await summarizeClipboard();
+// Activer/désactiver la surveillance automatique
+toggleClipboardMonitoring();
+```
+
+#### Recherche web et réponses
+
+- **Intégration Google Search**: Recherche de résultats pertinents via l'API Google Custom Search
+- **Synthèse d'information**: Génération de réponses concises à partir de multiples sources
+- **Citation des sources**: Indication des sources utilisées pour la réponse
+- **Contexte de conversation**: Les résultats sont conservés pour les questions de suivi
+
+#### Conversations contextuelles
+
+Lisa maintient un contexte conversationnel pour des interactions plus naturelles :
+
+- **Mémoire à court terme**: Rappel des sujets récents et des interactions
+- **Questions de suivi**: Compréhension des questions comme "Et pour demain?" après une demande de météo
+- **Références contextuelles**: Résolution correcte des pronoms et références
+- **Historique conversationnel**: Conservation d'un historique limité pour le contexte
+
+#### Support multi-langue
+
+L'assistant est entièrement disponible en plusieurs langues :
+
+- **Interface utilisateur**: Traduction complète de l'interface (i18next)
+- **Reconnaissance vocale**: Détection automatique de la langue parlée
+- **Analyses d'intention**: Compréhension des commandes en anglais, français et espagnol
+- **Synthèse vocale**: Réponses vocales dans la langue détectée
+- **LLM multilingue**: Traitement des requêtes dans toutes les langues supportées
+
+#### API REST pour intégrations externes
+
+Lisa expose désormais une API REST complète permettant à des applications externes (comme GPT Lisa) d'accéder aux fonctionnalités de l'assistant :
+
+- **Authentification par clé API**: Sécurité robuste avec en-tête `x-api-key`
+- **Points d'accès complets**: Accès aux agents, intentions, météo, tâches et mémoire
+- **Format JSON standard**: Toutes les réponses suivent une structure cohérente
+- **Gestion d'erreurs avancée**: Codes d'erreur et messages explicites
+- **Documentation complète**: Dans `src/api/README.md`
 
 ```bash
-# Fork et clone
-git clone https://github.com/votre-username/Lisa.git
-
-# Créer branche
-git checkout -b feature/ma-feature
-
-# Tester
-npm test && npm run typecheck
-
-# Push
-git push origin feature/ma-feature
+# Démarrage de l'API (après configuration du fichier .env)
+npm run start-api
 ```
 
----
+```javascript
+// Exemple d'utilisation du client JavaScript pour l'API Lisa
+import LisaApiClient from './lisa-api-client.js';
 
-## 📄 Licence
+const lisa = new LisaApiClient('votre-cle-api-securisee');
 
-**MIT** - Voir [LICENSE](LICENSE)
-
-### Technologies
-
-| Technologie | Usage |
-|-------------|-------|
-| MediaPipe | Vision par ordinateur |
-| TensorFlow.js | IA embarquée |
-| React 19 | Interface utilisateur |
-| Three.js | Rendu 3D |
-| Zustand | State management |
-
----
-
----
-
-## 🎨 Thèmes
-
-8 thèmes prédéfinis + couleurs personnalisables :
-
-| Thème | Couleur principale |
-|-------|-------------------|
-| Sombre (défaut) | `#10b981` |
-| Clair | `#059669` |
-| Minuit | `#8b5cf6` |
-| Océan | `#06b6d4` |
-| Forêt | `#22c55e` |
-| Coucher de soleil | `#f97316` |
-| Rose | `#ec4899` |
-| Monochrome | `#a0a0a0` |
-
----
-
-## 📤 Export Conversations
-
-Formats supportés :
-- **Markdown** (.md) - Format lisible
-- **JSON** (.json) - Import/export
-- **PDF** (.html → Print) - Partage
-- **Texte** (.txt) - Simple
-
-```typescript
-import { conversationExportService } from './services/ConversationExportService';
-
-const blob = await conversationExportService.export(conversation, { format: 'markdown' });
-conversationExportService.download(blob, 'ma-conversation.md');
+async function askLisa() {
+  // Vérifier si l'API est disponible
+  const isHealthy = await lisa.isHealthy();
+  if (!isHealthy) return console.error('API Lisa indisponible');
+  
+  // Traiter une intention
+  const result = await lisa.processIntent('Quel temps fait-il à Paris ?');
+  console.log(result.data.response);
+}
 ```
 
----
+### Organisation du code
 
-## 🎯 Modèles IA Supportés (avec Failover)
+Le projet suit une structure modulaire claire pour faciliter la maintenance et l'extension :
 
-Lisa supporte **6 providers** avec basculement automatique :
+```
+src/
+├── agents/              # Système d'agents intelligents
+│   ├── registry.ts     # Registre central des agents
+│   ├── types.ts        # Types et interfaces des agents
+│   ├── PlannerAgent.ts # Agent d'orchestration principal
+│   └── MetaHumanAgent.ts # Agent de contrôle du MetaHuman
+├── components/         # Composants React réutilisables
+│   ├── UI/             # Éléments d'interface générique
+│   ├── panels/         # Panneaux fonctionnels (alarmes, todos, etc.)
+│   ├── MetaHumanCanvas.tsx # Composant de rendu 3D pour le MetaHuman
+│   ├── ModelLoader.tsx # Chargeur de modèles 3D
+│   └── MetaHumanControlsPanel.tsx # Panneau de contrôle du MetaHuman
+├── hooks/              # Hooks React personnalisés
+│   ├── useAlarmTimerScheduler.ts  # Gestion des alarmes et minuteurs
+│   ├── useClipboardSummarizer.ts  # Surveillance et résumé du presse-papiers
+│   └── useNotifications.ts        # Gestion des notifications push
+├── store/              # État global de l'application
+│   ├── visionAudioStore.ts        # Store Zustand principal
+│   └── metaHumanStore.ts # Store Zustand pour le MetaHuman
+├── tools/              # Outils spécifiques
+├── locales/            # Fichiers de traduction
+│   ├── en/             # Anglais
+│   ├── fr/             # Français
+│   └── es/             # Espagnol
+└── public/             # Ressources statiques et service worker
+```
 
-| Provider | Modèles | Failover |
-|----------|---------|----------|
-| **Google Gemini** | Gemini 3 Pro, Gemini 3 Flash, Gemini 2.5 Pro/Flash | ✅ |
-| **OpenAI** | GPT-4, GPT-4o, GPT-3.5 Turbo | ✅ |
-| **Anthropic** | Claude 3 Opus, Sonnet, Haiku | ✅ |
-| **Groq** | Llama 3, Mixtral (ultra-rapide) | ✅ |
-| **Mistral** | Mistral Large, Medium, Small | ✅ |
-| **Local** | LM Studio, Ollama (tous modèles) | ✅ |
+## Démo locale
+```bash
+npm install
+npm run dev
+# http://localhost:5173
+```
 
-```typescript
-// Exemple Model Failover
-import { getModelFailover } from '@/gateway';
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
 
-const failover = getModelFailover({
-  models: [
-    { provider: 'anthropic', model: 'claude-3-sonnet', apiKey: '...', priority: 1 },
-    { provider: 'openai', model: 'gpt-4', apiKey: '...', priority: 2 },
-    { provider: 'ollama', model: 'llama3', baseUrl: 'http://localhost:11434', priority: 3 },
+## Expanding the ESLint configuration
+
+If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+
+```js
+export default tseslint.config({
+  extends: [
+    // Remove ...tseslint.configs.recommended and replace with this
+    ...tseslint.configs.recommendedTypeChecked,
+    // Alternatively, use this for stricter rules
+    ...tseslint.configs.strictTypeChecked,
+    // Optionally, add this for stylistic rules
+    ...tseslint.configs.stylisticTypeChecked,
   ],
-  maxRetries: 3,
-  timeoutMs: 30000,
-});
-
-const response = await failover.complete({
-  messages: [{ role: 'user', content: 'Bonjour Lisa!' }],
-});
+  languageOptions: {
+    // other options...
+    parserOptions: {
+      project: ['./tsconfig.node.json', './tsconfig.app.json'],
+      tsconfigRootDir: import.meta.dirname,
+    },
+  },
+})
 ```
 
----
+You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
 
-## 📱 Channels de Communication
+```js
+// eslint.config.js
+import reactX from 'eslint-plugin-react-x'
+import reactDom from 'eslint-plugin-react-dom'
 
-### Telegram Bot
-
-```typescript
-import { getTelegramBot } from '@/gateway';
-
-const bot = getTelegramBot({ 
-  token: process.env.TELEGRAM_BOT_TOKEN,
-  allowedUsers: ['123456789'], // Optional whitelist
-});
-
-bot.setMessageHandler(async (msg) => {
-  // Traiter le message et retourner la réponse
-  return `Bonjour ${msg.firstName}! Tu as dit: ${msg.text}`;
-});
-
-await bot.start();
+export default tseslint.config({
+  plugins: {
+    // Add the react-x and react-dom plugins
+    'react-x': reactX,
+    'react-dom': reactDom,
+  },
+  rules: {
+    // other rules...
+    // Enable its recommended typescript rules
+    ...reactX.configs['recommended-typescript'].rules,
+    ...reactDom.configs.recommended.rules,
+  },
+})
 ```
-
-**Commandes disponibles:**
-- `/start` - Démarrer la conversation
-- `/status` - État de Lisa
-- `/mood` - Humeur actuelle
-- `/reset` - Réinitialiser la conversation
-
-### Discord Bot
-
-```typescript
-import { getDiscordBot } from '@/gateway';
-
-const discord = getDiscordBot({
-  token: process.env.DISCORD_BOT_TOKEN,
-  commandPrefix: '!lisa',
-});
-
-discord.setMessageHandler(async (msg) => {
-  return `Salut ${msg.displayName}! ${msg.text}`;
-});
-
-await discord.start();
-```
-
-**Commandes disponibles:**
-- `!lisa help` - Aide
-- `!lisa status` - État
-- `!lisa mood` - Humeur
-- `!lisa reset` - Réinitialiser
-- `@Lisa <message>` - Mentionner Lisa
-
----
-
-## 🎤 Voice Wake & TTS
-
-### Voice Wake Pro (Porcupine)
-
-```typescript
-import { getVoiceWakePro } from '@/gateway';
-
-const voiceWake = await getVoiceWakePro({
-  accessKey: process.env.PICOVOICE_ACCESS_KEY, // Optionnel
-  wakeWords: ['Lisa', 'Hey Lisa'],
-  sensitivity: 0.5,
-});
-
-voiceWake.on('wake', (event) => {
-  console.log(`Wake word détecté: ${event.keyword}`);
-});
-
-await voiceWake.start();
-```
-
-### Edge TTS (Gratuit)
-
-```typescript
-import { getEdgeTTS, LISA_VOICES } from '@/gateway';
-
-const tts = getEdgeTTS({
-  voice: 'fr-FR-DeniseNeural', // Voix française naturelle
-  rate: '+0%',
-  pitch: '+0Hz',
-});
-
-await tts.initialize();
-await tts.speak("Bonjour! Je suis Lisa, ta compagne virtuelle.");
-```
-
-**Voix françaises disponibles:**
-- `fr-FR-DeniseNeural` (Femme, France)
-- `fr-FR-HenriNeural` (Homme, France)
-- `fr-FR-EloiseNeural` (Femme, France)
-- `fr-CA-SylvieNeural` (Femme, Canada)
-
----
-
-## 🤝 Agent-to-Agent Communication
-
-```typescript
-import { getSessionsTools } from '@/gateway';
-
-const sessions = getSessionsTools();
-
-// Lister les sessions actives
-const activeSessions = await sessions.sessionsList({ status: 'active' });
-
-// Envoyer un message à une autre session
-const result = await sessions.sessionsSend('session-123', 'Bonjour!', {
-  replyBack: true,
-  timeout: 30000,
-});
-
-// Créer une nouvelle session
-const newSession = await sessions.sessionsSpawn('Assistant Recherche', {
-  channelType: 'internal',
-  initialMessages: [{ role: 'system', content: 'Tu es un assistant de recherche.' }],
-});
-```
-
----
-
-**🚀 Développé avec ❤️ pour l'assistant IA du futur**

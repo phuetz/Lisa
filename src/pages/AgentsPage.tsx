@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { ModernLayout } from '../components/layout/ModernLayout';
+import { OfficePageLayout } from '../components/layout/OfficePageLayout';
+import { useOfficeThemeStore } from '../store/officeThemeStore';
 import { Brain, Eye, Mic, Code, Settings, Play, Pause, Plus, X, Search, BarChart3, Palette, FileCode } from 'lucide-react';
 
 interface Agent {
@@ -12,26 +13,42 @@ interface Agent {
   tasks: number;
 }
 
+interface ThemeColors {
+  sidebar: string;
+  sidebarHover: string;
+  sidebarActive: string;
+  editor: string;
+  editorText: string;
+  editorSecondary: string;
+  dialog: string;
+  border: string;
+  accent: string;
+  success: string;
+  error: string;
+}
+
 // Tab Button Component
-const TabButton = ({ 
-  label, 
-  active, 
-  count, 
-  onClick 
-}: { 
-  label: string; 
-  active: boolean; 
-  count: number; 
+const TabButton = ({
+  label,
+  active,
+  count,
+  onClick,
+  colors
+}: {
+  label: string;
+  active: boolean;
+  count: number;
   onClick: () => void;
+  colors: ThemeColors;
 }) => (
   <button
     onClick={onClick}
     style={{
       padding: '10px 16px',
-      backgroundColor: active ? '#2d2d2d' : 'transparent',
+      backgroundColor: active ? colors.sidebarActive : 'transparent',
       border: 'none',
       borderRadius: '8px',
-      color: active ? '#fff' : '#888',
+      color: active ? colors.editorText : colors.editorSecondary,
       cursor: 'pointer',
       fontSize: '14px',
       fontWeight: 500,
@@ -44,10 +61,10 @@ const TabButton = ({
     {label}
     <span style={{
       padding: '2px 8px',
-      backgroundColor: active ? '#10a37f' : '#404040',
+      backgroundColor: active ? colors.accent : colors.sidebarHover,
       borderRadius: '12px',
       fontSize: '12px',
-      color: active ? '#fff' : '#888'
+      color: active ? '#fff' : colors.editorSecondary
     }}>
       {count}
     </span>
@@ -55,14 +72,16 @@ const TabButton = ({
 );
 
 // Agent Card Component
-const AgentCard = ({ 
-  agent, 
-  onSelect, 
-  onToggle 
-}: { 
-  agent: Agent; 
-  onSelect: () => void; 
+const AgentCard = ({
+  agent,
+  onSelect,
+  onToggle,
+  colors
+}: {
+  agent: Agent;
+  onSelect: () => void;
   onToggle: () => void;
+  colors: ThemeColors;
 }) => {
   const Icon = agent.icon;
   const categoryColors: Record<string, string> = {
@@ -73,19 +92,18 @@ const AgentCard = ({
     analysis: '#ec4899',
     creative: '#f97316',
   };
-  const color = categoryColors[agent.category] || '#10a37f';
+  const color = categoryColors[agent.category] || colors.accent;
 
   return (
     <div
       onClick={onSelect}
-      className="nav-item"
       style={{
-        backgroundColor: '#2d2d2d',
+        backgroundColor: colors.dialog,
         borderRadius: '12px',
         padding: '20px',
         cursor: 'pointer',
         transition: 'all 0.2s ease',
-        border: '1px solid #404040'
+        border: `1px solid ${colors.border}`
       }}
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
@@ -106,7 +124,7 @@ const AgentCard = ({
             padding: '6px',
             backgroundColor: 'transparent',
             border: 'none',
-            color: '#666',
+            color: colors.editorSecondary,
             cursor: 'pointer',
             borderRadius: '6px'
           }}
@@ -115,10 +133,10 @@ const AgentCard = ({
         </button>
       </div>
 
-      <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#fff', marginBottom: '8px' }}>
+      <h3 style={{ fontSize: '16px', fontWeight: 600, color: colors.editorText, marginBottom: '8px' }}>
         {agent.name}
       </h3>
-      <p style={{ fontSize: '13px', color: '#888', marginBottom: '16px', lineHeight: 1.5 }}>
+      <p style={{ fontSize: '13px', color: colors.editorSecondary, marginBottom: '16px', lineHeight: 1.5 }}>
         {agent.description}
       </p>
 
@@ -138,26 +156,26 @@ const AgentCard = ({
             width: '8px',
             height: '8px',
             borderRadius: '50%',
-            backgroundColor: agent.status === 'active' ? '#10a37f' : '#666'
+            backgroundColor: agent.status === 'active' ? colors.success : colors.editorSecondary
           }} />
-          <span style={{ fontSize: '13px', color: agent.status === 'active' ? '#10a37f' : '#666' }}>
+          <span style={{ fontSize: '13px', color: agent.status === 'active' ? colors.success : colors.editorSecondary }}>
             {agent.status === 'active' ? 'Actif' : 'Inactif'}
           </span>
         </div>
       </div>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{ fontSize: '13px', color: '#666' }}>
-          <strong style={{ color: '#fff' }}>{agent.tasks}</strong> tâches
+        <span style={{ fontSize: '13px', color: colors.editorSecondary }}>
+          <strong style={{ color: colors.editorText }}>{agent.tasks}</strong> taches
         </span>
         <button
           onClick={(e) => { e.stopPropagation(); onToggle(); }}
           style={{
             padding: '8px 14px',
-            backgroundColor: agent.status === 'active' ? '#ef444420' : '#10a37f20',
+            backgroundColor: agent.status === 'active' ? `${colors.error}20` : `${colors.success}20`,
             border: 'none',
             borderRadius: '8px',
-            color: agent.status === 'active' ? '#ef4444' : '#10a37f',
+            color: agent.status === 'active' ? colors.error : colors.success,
             cursor: 'pointer',
             fontSize: '13px',
             fontWeight: 500,
@@ -167,7 +185,7 @@ const AgentCard = ({
           }}
         >
           {agent.status === 'active' ? <Pause size={14} /> : <Play size={14} />}
-          {agent.status === 'active' ? 'Arrêter' : 'Démarrer'}
+          {agent.status === 'active' ? 'Arreter' : 'Demarrer'}
         </button>
       </div>
     </div>
@@ -175,14 +193,16 @@ const AgentCard = ({
 };
 
 // Modal Component
-const Modal = ({ 
-  isOpen, 
-  onClose, 
-  agent 
-}: { 
-  isOpen: boolean; 
-  onClose: () => void; 
+const Modal = ({
+  isOpen,
+  onClose,
+  agent,
+  colors
+}: {
+  isOpen: boolean;
+  onClose: () => void;
   agent: Agent | null;
+  colors: ThemeColors;
 }) => {
   if (!isOpen || !agent) return null;
   const Icon = agent.icon;
@@ -194,7 +214,7 @@ const Modal = ({
     analysis: '#ec4899',
     creative: '#f97316',
   };
-  const color = categoryColors[agent.category] || '#10a37f';
+  const color = categoryColors[agent.category] || colors.accent;
 
   return (
     <div style={{
@@ -207,21 +227,22 @@ const Modal = ({
       zIndex: 1000
     }}>
       <div style={{
-        backgroundColor: '#2d2d2d',
+        backgroundColor: colors.dialog,
         borderRadius: '16px',
         width: '100%',
         maxWidth: '500px',
-        padding: '24px'
+        padding: '24px',
+        border: `1px solid ${colors.border}`
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-          <h2 style={{ fontSize: '18px', fontWeight: 600, color: '#fff', margin: 0 }}>{agent.name}</h2>
+          <h2 style={{ fontSize: '18px', fontWeight: 600, color: colors.editorText, margin: 0 }}>{agent.name}</h2>
           <button
             onClick={onClose}
             style={{
               padding: '8px',
               backgroundColor: 'transparent',
               border: 'none',
-              color: '#888',
+              color: colors.editorSecondary,
               cursor: 'pointer',
               borderRadius: '6px'
             }}
@@ -248,9 +269,9 @@ const Modal = ({
                 width: '8px',
                 height: '8px',
                 borderRadius: '50%',
-                backgroundColor: agent.status === 'active' ? '#10a37f' : '#666'
+                backgroundColor: agent.status === 'active' ? colors.success : colors.editorSecondary
               }} />
-              <span style={{ fontSize: '14px', color: agent.status === 'active' ? '#10a37f' : '#666' }}>
+              <span style={{ fontSize: '14px', color: agent.status === 'active' ? colors.success : colors.editorSecondary }}>
                 {agent.status === 'active' ? 'Actif' : 'Inactif'}
               </span>
             </div>
@@ -267,7 +288,7 @@ const Modal = ({
           </div>
         </div>
 
-        <p style={{ fontSize: '14px', color: '#888', marginBottom: '20px', lineHeight: 1.6 }}>
+        <p style={{ fontSize: '14px', color: colors.editorSecondary, marginBottom: '20px', lineHeight: 1.6 }}>
           {agent.description}
         </p>
 
@@ -276,17 +297,17 @@ const Modal = ({
           gridTemplateColumns: '1fr 1fr',
           gap: '12px',
           padding: '16px',
-          backgroundColor: '#1a1a1a',
+          backgroundColor: colors.sidebar,
           borderRadius: '10px',
           marginBottom: '20px'
         }}>
           <div>
-            <p style={{ fontSize: '12px', color: '#666', marginBottom: '4px' }}>Catégorie</p>
-            <p style={{ fontSize: '14px', color: '#fff', textTransform: 'capitalize' }}>{agent.category}</p>
+            <p style={{ fontSize: '12px', color: colors.editorSecondary, marginBottom: '4px' }}>Categorie</p>
+            <p style={{ fontSize: '14px', color: colors.editorText, textTransform: 'capitalize' }}>{agent.category}</p>
           </div>
           <div>
-            <p style={{ fontSize: '12px', color: '#666', marginBottom: '4px' }}>Tâches</p>
-            <p style={{ fontSize: '14px', color: '#fff' }}>{agent.tasks}</p>
+            <p style={{ fontSize: '12px', color: colors.editorSecondary, marginBottom: '4px' }}>Taches</p>
+            <p style={{ fontSize: '14px', color: colors.editorText }}>{agent.tasks}</p>
           </div>
         </div>
 
@@ -296,9 +317,9 @@ const Modal = ({
             style={{
               padding: '10px 20px',
               backgroundColor: 'transparent',
-              border: '1px solid #404040',
+              border: `1px solid ${colors.border}`,
               borderRadius: '8px',
-              color: '#888',
+              color: colors.editorSecondary,
               cursor: 'pointer',
               fontSize: '14px'
             }}
@@ -308,7 +329,7 @@ const Modal = ({
           <button
             style={{
               padding: '10px 20px',
-              backgroundColor: '#10a37f',
+              backgroundColor: colors.accent,
               border: 'none',
               borderRadius: '8px',
               color: '#fff',
@@ -334,12 +355,16 @@ export default function AgentsPage() {
   const [showModal, setShowModal] = useState(false);
   const [activeTab, setActiveTab] = useState('all');
 
+  // Get theme colors
+  const { getCurrentColors } = useOfficeThemeStore();
+  const colors = getCurrentColors();
+
   const agents: Agent[] = [
     {
       id: '1',
       name: 'Vision Agent',
       category: 'perception',
-      description: 'Détection d\'objets et reconnaissance visuelle en temps réel',
+      description: 'Detection d\'objets et reconnaissance visuelle en temps reel',
       status: 'active',
       icon: Eye,
       tasks: 45,
@@ -357,7 +382,7 @@ export default function AgentsPage() {
       id: '3',
       name: 'Memory Manager',
       category: 'cognitive',
-      description: 'Gestion de la mémoire à court et long terme',
+      description: 'Gestion de la memoire a court et long terme',
       status: 'active',
       icon: Brain,
       tasks: 67,
@@ -366,7 +391,7 @@ export default function AgentsPage() {
       id: '4',
       name: 'Code Interpreter',
       category: 'tools',
-      description: 'Exécution et interprétation de code',
+      description: 'Execution et interpretation de code',
       status: 'inactive',
       icon: Code,
       tasks: 0,
@@ -375,7 +400,7 @@ export default function AgentsPage() {
       id: '5',
       name: 'Research Agent',
       category: 'research',
-      description: 'Recherche web, synthèse d\'actualités et veille en temps réel',
+      description: 'Recherche web, synthese d\'actualites et veille en temps reel',
       status: 'active',
       icon: Search,
       tasks: 12,
@@ -384,7 +409,7 @@ export default function AgentsPage() {
       id: '6',
       name: 'Data Analyst',
       category: 'analysis',
-      description: 'Analyse CSV/Excel, statistiques, corrélations et graphiques',
+      description: 'Analyse CSV/Excel, statistiques, correlations et graphiques',
       status: 'active',
       icon: BarChart3,
       tasks: 8,
@@ -393,7 +418,7 @@ export default function AgentsPage() {
       id: '7',
       name: 'Creative Marketing',
       category: 'creative',
-      description: 'Copywriting, posts réseaux sociaux, campagnes email',
+      description: 'Copywriting, posts reseaux sociaux, campagnes email',
       status: 'active',
       icon: Palette,
       tasks: 15,
@@ -402,25 +427,26 @@ export default function AgentsPage() {
       id: '8',
       name: 'Code Review',
       category: 'analysis',
-      description: 'Revue de code, génération, refactoring et tests',
+      description: 'Revue de code, generation, refactoring et tests',
       status: 'active',
       icon: FileCode,
       tasks: 22,
     },
   ];
 
-  const filteredAgents = activeTab === 'all' 
-    ? agents 
+  const filteredAgents = activeTab === 'all'
+    ? agents
     : agents.filter(a => a.category === activeTab);
 
   return (
-    <ModernLayout
+    <OfficePageLayout
       title="Agents"
+      subtitle={`${agents.filter(a => a.status === 'active').length} agents actifs`}
       action={
         <button
           style={{
             padding: '10px 16px',
-            backgroundColor: '#10a37f',
+            backgroundColor: colors.accent,
             border: 'none',
             borderRadius: '8px',
             color: '#fff',
@@ -442,18 +468,19 @@ export default function AgentsPage() {
         display: 'flex',
         gap: '8px',
         marginBottom: '24px',
-        backgroundColor: '#1a1a1a',
+        backgroundColor: colors.sidebar,
         padding: '6px',
         borderRadius: '10px',
-        width: 'fit-content'
+        width: 'fit-content',
+        flexWrap: 'wrap'
       }}>
-        <TabButton label="Tous" active={activeTab === 'all'} count={agents.length} onClick={() => setActiveTab('all')} />
-        <TabButton label="Perception" active={activeTab === 'perception'} count={agents.filter(a => a.category === 'perception').length} onClick={() => setActiveTab('perception')} />
-        <TabButton label="Cognitifs" active={activeTab === 'cognitive'} count={agents.filter(a => a.category === 'cognitive').length} onClick={() => setActiveTab('cognitive')} />
-        <TabButton label="Outils" active={activeTab === 'tools'} count={agents.filter(a => a.category === 'tools').length} onClick={() => setActiveTab('tools')} />
-        <TabButton label="Recherche" active={activeTab === 'research'} count={agents.filter(a => a.category === 'research').length} onClick={() => setActiveTab('research')} />
-        <TabButton label="Analyse" active={activeTab === 'analysis'} count={agents.filter(a => a.category === 'analysis').length} onClick={() => setActiveTab('analysis')} />
-        <TabButton label="Créatif" active={activeTab === 'creative'} count={agents.filter(a => a.category === 'creative').length} onClick={() => setActiveTab('creative')} />
+        <TabButton label="Tous" active={activeTab === 'all'} count={agents.length} onClick={() => setActiveTab('all')} colors={colors} />
+        <TabButton label="Perception" active={activeTab === 'perception'} count={agents.filter(a => a.category === 'perception').length} onClick={() => setActiveTab('perception')} colors={colors} />
+        <TabButton label="Cognitifs" active={activeTab === 'cognitive'} count={agents.filter(a => a.category === 'cognitive').length} onClick={() => setActiveTab('cognitive')} colors={colors} />
+        <TabButton label="Outils" active={activeTab === 'tools'} count={agents.filter(a => a.category === 'tools').length} onClick={() => setActiveTab('tools')} colors={colors} />
+        <TabButton label="Recherche" active={activeTab === 'research'} count={agents.filter(a => a.category === 'research').length} onClick={() => setActiveTab('research')} colors={colors} />
+        <TabButton label="Analyse" active={activeTab === 'analysis'} count={agents.filter(a => a.category === 'analysis').length} onClick={() => setActiveTab('analysis')} colors={colors} />
+        <TabButton label="Creatif" active={activeTab === 'creative'} count={agents.filter(a => a.category === 'creative').length} onClick={() => setActiveTab('creative')} colors={colors} />
       </div>
 
       {/* Agents Grid */}
@@ -468,12 +495,13 @@ export default function AgentsPage() {
             agent={agent}
             onSelect={() => { setSelectedAgent(agent); setShowModal(true); }}
             onToggle={() => console.log('Toggle', agent.name)}
+            colors={colors}
           />
         ))}
       </div>
 
       {/* Modal */}
-      <Modal isOpen={showModal} onClose={() => setShowModal(false)} agent={selectedAgent} />
-    </ModernLayout>
+      <Modal isOpen={showModal} onClose={() => setShowModal(false)} agent={selectedAgent} colors={colors} />
+    </OfficePageLayout>
   );
 }

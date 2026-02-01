@@ -10,6 +10,7 @@ export const DataAnalysisPanel = () => {
   const { loading, error, analyzeData, calculateStatistics, detectTrends } = useDataAnalysis();
   const [isExpanded, setIsExpanded] = useState(false);
   const [dataInput, setDataInput] = useState('1, 2, 3, 4, 5, 6, 7, 8, 9, 10');
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [result, setResult] = useState<any>(null);
   const [resultType, setResultType] = useState<string>('');
 

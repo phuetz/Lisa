@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { agentRegistry } from '../features/agents/core/registry';
-import { useVisionAudioStore } from '../store/visionAudioStore';
+import { useAppStore } from '../store/appStore';
 import type { PlannerAgent } from '../agents/PlannerAgent';
 
 /**
@@ -16,8 +16,8 @@ export const useWorkflowManager = () => {
         const checkpoints = planner.getCheckpoints();
         
         // Accéder directement au store sans dépendances
-        useVisionAudioStore.getState().setTemplates(templates);
-        useVisionAudioStore.getState().setCheckpoints(checkpoints);
+        useAppStore.getState().setTemplates(templates);
+        useAppStore.getState().setCheckpoints(checkpoints);
       }
     };
     

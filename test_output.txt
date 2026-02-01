@@ -1,0 +1,60 @@
+
+> lisa-monorepo@1.0.0 test C:\Users\patri\CascadeProjects\Lisa
+> vitest run "src/features/workflow/store/__tests__/useWorkflowStore.test.ts"
+
+
+[7m[1m[36m RUN [39m[22m[27m [36mv1.6.1[39m [90mC:/Users/patri/CascadeProjects/Lisa[39m
+
+[90mstdout[2m | src/features/workflow/store/__tests__/useWorkflowStore.test.ts[2m > [22m[2museWorkflowStore Undo/Redo[2m > [22m[2mshould track history and support undo/redo[22m[39m
+Initial nodes: []
+Initial past: []
+Nodes after add: [
+  {
+    id: [32m'1'[39m,
+    type: [32m'test'[39m,
+    position: { x: [33m0[39m, y: [33m0[39m },
+    data: { label: [32m'Node 1'[39m }
+  }
+]
+Past after add: [ { nodes: [], edges: [] }, { nodes: [ [36m[Object][39m ], edges: [] } ]
+Nodes after undo: [
+  {
+    id: [32m'1'[39m,
+    type: [32m'test'[39m,
+    position: { x: [33m0[39m, y: [33m0[39m },
+    data: { label: [32m'Node 1'[39m }
+  }
+]
+Future after undo: [ { nodes: [ [36m[Object][39m ], edges: [] } ]
+
+ [33mÔØ»[39m src/features/workflow/store/__tests__/useWorkflowStore.test.ts [2m ([22m[2m2 tests[22m [2m|[22m [31m1 failed[39m[2m)[22m[90m 10[2mms[22m[39m
+[31m   [33mÔØ»[31m src/features/workflow/store/__tests__/useWorkflowStore.test.ts[2m > [22museWorkflowStore Undo/Redo[2m > [22mshould track history and support undo/redo[39m
+[31m     ÔåÆ expected [ { id: '1', type: 'test', ÔÇª(2) } ] to have a length of +0 but got 1[39m
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ» Failed Tests 1 ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»
+
+ FAIL  src/features/workflow/store/__tests__/useWorkflowStore.test.ts > useWorkflowStore Undo/Redo > should track history and support undo/redo
+AssertionError: expected [ { id: '1', type: 'test', ÔÇª(2) } ] to have a length of +0 but got 1
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ÔØ» src/features/workflow/store/__tests__/useWorkflowStore.test.ts:44:51
+     42|         console.log('Future after undo:', temporal.getState().futureStÔÇª
+     43| 
+     44|         expect(useWorkflowStore.getState().nodes).toHaveLength(0);
+       |                                                   ^
+     45|         expect(temporal.getState().futureStates.length).toBeGreaterThaÔÇª
+     46| 
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[1/1]ÔÄ»
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m1 passed[39m[22m[90m (2)[39m
+[2m   Start at [22m 00:54:07
+[2m   Duration [22m 1.66s[2m (transform 96ms, setup 114ms, collect 187ms, tests 10ms, environment 512ms, prepare 207ms)[22m
+
+ÔÇëELIFECYCLEÔÇë Test failed. See above for more details.

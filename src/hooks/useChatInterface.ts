@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useIntentHandler } from './useIntentHandler';
-import { useVisionAudioStore } from '../store/visionAudioStore';
+import { useAppStore } from '../store/appStore';
 import { useSpeechSynthesis } from './useSpeechSynthesis';
 
 export interface ChatMessage {
@@ -34,8 +34,8 @@ export const useChatInterface = () => {
   const { speak, stop: stopSpeaking } = useSpeechSynthesis();
   // Use separate primitive selectors to avoid creating a new object each render,
   // which can trigger infinite re-renders with useSyncExternalStore.
-  const intent = useVisionAudioStore(state => state.intent);
-  const setState = useVisionAudioStore(state => state.setState);
+  const intent = useAppStore(state => state.intent);
+  const setState = useAppStore(state => state.setState);
 
   // Add a new message to the chat
   const addMessage = useCallback((message: Omit<ChatMessage, 'id' | 'timestamp'>) => {

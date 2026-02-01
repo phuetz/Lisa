@@ -1,12 +1,14 @@
 /**
  * useFallDetector - Hook React pour intégrer la détection de chute
- * 
+ *
  * Surveille les percepts de pose et utilise le FallDetectorService
  * pour détecter automatiquement les chutes.
+ * Uses facade stores for better separation of concerns.
  */
 
 import { useEffect, useState, useRef } from 'react';
-import { useAppStore } from '../store/appStore';
+import { useVisionStore, visionSelectors } from '../store/visionStore';
+import { uiActions } from '../store/uiStore';
 import { fallDetector, type FallEvent } from '../services/FallDetector';
 import type { MediaPipePosePayload } from '../features/vision/api';
 
@@ -20,19 +22,19 @@ export function useFallDetector(options: UseFallDetectorOptions = {}) {
     const { enabled = true, onFallDetected, onFalsePositive } = options;
     const [lastEvent, setLastEvent] = useState<FallEvent | null>(null);
     const [isActive, setIsActive] = useState(false);
-    
+
     // Use refs to avoid re-running effect when callbacks change
     const onFallDetectedRef = useRef(onFallDetected);
     const onFalsePositiveRef = useRef(onFalsePositive);
-    
+
     // Update refs when callbacks change
     useEffect(() => {
         onFallDetectedRef.current = onFallDetected;
         onFalsePositiveRef.current = onFalsePositive;
     }, [onFallDetected, onFalsePositive]);
 
-    // Surveiller les percepts de pose du store
-    const percepts = useAppStore((state) => state.percepts || []);
+    // Surveiller les percepts de pose du store via facade
+    const percepts = useVisionStore(visionSelectors.percepts);
 
     useEffect(() => {
         if (!enabled) {
@@ -80,10 +82,7 @@ export function useFallDetector(options: UseFallDetectorOptions = {}) {
     }, [percepts, enabled, isActive]);
 
     const dismissAlert = () => {
-        useAppStore.setState({
-            fallDetected: false,
-            fallEventTimestamp: null,
-        });
+        uiActions.clearFallAlert();
         setLastEvent(null);
     };
 

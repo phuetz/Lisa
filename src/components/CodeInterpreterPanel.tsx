@@ -33,6 +33,7 @@ export const CodeInterpreterPanel: React.FC<CodeInterpreterPanelProps> = ({ expa
   const [isExpanded, setIsExpanded] = useState(expanded);
   const [code, setCode] = useState<string>('# Enter your Python code here\n# Example:\nimport numpy as np\n\narr = np.array([1, 2, 3, 4, 5])\nresult = np.mean(arr)\nprint(f"Mean value: {result}")');
   const [isExecuting, setIsExecuting] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -69,8 +70,8 @@ export const CodeInterpreterPanel: React.FC<CodeInterpreterPanelProps> = ({ expa
       }
 
       setResult(executionResult.output);
-    } catch (err: any) {
-      setError(err.message || 'An error occurred while executing the code');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred while executing the code');
     } finally {
       setIsExecuting(false);
     }
@@ -102,6 +103,7 @@ export const CodeInterpreterPanel: React.FC<CodeInterpreterPanelProps> = ({ expa
   };
 
   // Format the execution result for display
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const formatResult = (result: any): string => {
     if (result === null || result === undefined) return 'No result';
     

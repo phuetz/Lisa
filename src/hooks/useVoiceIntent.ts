@@ -1,6 +1,6 @@
 import { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useVisionAudioStore } from '../store/visionAudioStore';
+import { useAppStore } from '../store/appStore';
 import { useSmallTalk } from './useSmallTalk';
 import { useSpeechRecognition } from './useSpeechRecognition';
 import { useIntentHandler } from './useIntentHandler';
@@ -55,8 +55,8 @@ const detectCalendarListPeriod = (transcript: string): CalendarPeriod | null => 
 
 export function useVoiceIntent() {
   const { i18n } = useTranslation();
-  const listeningActive = useVisionAudioStore(state => state.listeningActive);
-  const setState = useVisionAudioStore(state => state.setState);
+  const listeningActive = useAppStore(state => state.listeningActive);
+  const setState = useAppStore(state => state.setState);
   const { isSmallTalk, processSmallTalk } = useSmallTalk();
   const { handleIntent } = useIntentHandler();
   const { createEvent, isSignedIn } = useGoogleCalendar();

@@ -88,8 +88,8 @@ export const OCRPanel: React.FC<OCRPanelProps> = ({ expanded = false }) => {
       if (source === 'screenshot') {
         setImagePreview("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==");
       }
-    } catch (err: any) {
-      setError(err.message || 'Une erreur est survenue lors de l\'extraction du texte');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Une erreur est survenue lors de l\'extraction du texte');
       setResult(null);
     } finally {
       setIsProcessing(false);

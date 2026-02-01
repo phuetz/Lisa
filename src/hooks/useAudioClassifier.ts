@@ -1,12 +1,12 @@
 import { useEffect, useRef } from 'react';
 import type { AudioClassifier, AudioClassifierResult } from '@mediapipe/tasks-audio';
-import { useVisionAudioStore } from '../store/visionAudioStore';
+import { useAppStore } from '../store/appStore';
 
 /**
  * Classify microphone audio and publish to Zustand, handles silence timer.
  */
 export function useAudioClassifier(audioCtx?: AudioContext, micStream?: MediaStream, audioClassifier?: AudioClassifier | null) {
-  const setState = useVisionAudioStore((s) => s.setState);
+  const setState = useAppStore((s) => s.setState);
   const silenceTimeout = useRef<number>(0);
 
   // Connect to mic

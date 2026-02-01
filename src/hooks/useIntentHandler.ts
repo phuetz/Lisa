@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useVisionAudioStore } from '../store/visionAudioStore';
-import type { WorkflowStep } from '../store/visionAudioStore';
+import { useAppStore } from '../store/appStore';
+import type { WorkflowStep } from '../store/appStore';
 import { agentRegistry } from '../features/agents/core/registry';
 import { useSpeechResponder } from './useSpeechResponder';
 import type { AgentExecuteProps } from '../features/agents/core/types';
@@ -12,11 +12,11 @@ import { useMemory } from './useMemory';
 
 export const useIntentHandler = () => {
   const { i18n } = useTranslation();
-  const setPlan = useVisionAudioStore(state => state.setPlan);
-  const setState = useVisionAudioStore(state => state.setState);
+  const setPlan = useAppStore(state => state.setPlan);
+  const setState = useAppStore(state => state.setState);
   
   // Get AI Model preferences
-  const selectedLLM = useVisionAudioStore(state => state.selectedLLM);
+  const selectedLLM = useAppStore(state => state.selectedLLM);
 
   // Obtenir les fonctions de gestion des workflows utilisateur
   const { checkTriggerPhrase, executeWorkflow } = useUserWorkflows();

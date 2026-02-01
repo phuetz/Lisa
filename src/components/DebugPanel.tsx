@@ -1,4 +1,4 @@
-import { useVisionAudioStore } from '../store/visionAudioStore';
+import { useAppStore } from '../store/appStore';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import usePlanTracer from '../hooks/usePlanTracer';
@@ -7,13 +7,13 @@ import { fr } from 'date-fns/locale';
 
 export default function DebugPanel() {
   const { t } = useTranslation();
-  const smileDetected = useVisionAudioStore(s => s.smileDetected);
-  const speechDetected = useVisionAudioStore(s => s.speechDetected);
+  const smileDetected = useAppStore(s => s.smileDetected);
+  const speechDetected = useAppStore(s => s.speechDetected);
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<'store' | 'plans' | 'trace'>('store');
   
   // Get snapshot only when needed for display
-  const getSnapshot = () => useVisionAudioStore.getState();
+  const getSnapshot = () => useAppStore.getState();
   const { traces, selectedTrace, selectTrace, getTracesStats } = usePlanTracer({
     refreshInterval: 3000, // Rafraîchir toutes les 3 secondes
     limit: 10 // Limiter à 10 traces
@@ -34,10 +34,10 @@ export default function DebugPanel() {
     
     // TypeScript ne permet pas directement de typer l'événement personnalisé
     // donc on doit utiliser 'as any' ici
-    window.addEventListener('open-debug-trace', handleOpenTrace as any);
+    window.addEventListener('open-debug-trace', handleOpenTrace as EventListener);
     
     return () => {
-      window.removeEventListener('open-debug-trace', handleOpenTrace as any);
+      window.removeEventListener('open-debug-trace', handleOpenTrace as EventListener);
     };
   }, [selectTrace]);
   

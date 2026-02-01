@@ -25,6 +25,7 @@ const DocumentsPage = lazy(() => import('../pages/DocumentsPage'));
 const CodeAssistantPage = lazy(() => import('../pages/CodeAssistantPage'));
 const CodePlayground = lazy(() => import('../pages/CodePlayground'));
 const NotebookPage = lazy(() => import('../pages/NotebookPage'));
+const GatewayPage = lazy(() => import('../pages/GatewayPage'));
 
 export const router = createBrowserRouter([
   {
@@ -152,6 +153,14 @@ export const router = createBrowserRouter([
         element: (
           <Suspense fallback={<LoadingFallback />}>
             <NotebookPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'gateway',
+        element: (
+          <Suspense fallback={<LoadingFallback />}>
+            <GatewayPage />
           </Suspense>
         ),
       },
