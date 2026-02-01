@@ -1,8 +1,9 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+import { RouterProvider } from 'react-router-dom'
 import './index.css'
 import './i18n'
-import App from './App.tsx'
+import { router } from './router'
 
 // Register service worker for PWA functionality
 const registerServiceWorker = async () => {
@@ -34,7 +35,7 @@ const registerServiceWorker = async () => {
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    <RouterProvider router={router} />
   </StrictMode>,
 );
 
