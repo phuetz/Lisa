@@ -112,7 +112,8 @@ function App() {
         <AlarmTimerPanel />
         <TodoPanel />
       </div>
-      <MetaHumanCanvas />
+      {/* MetaHuman désactivé temporairement - triangle.gltf manquant */}
+      {/* <MetaHumanCanvas /> */}
     </div>
   );
 }

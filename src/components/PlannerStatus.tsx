@@ -1,9 +1,8 @@
 import React from 'react';
-import ReactJson from 'react-json-view';
 import { useVisionAudioStore } from '../store/visionAudioStore';
 import type { WorkflowStep } from '../store/visionAudioStore';
 
-const statusIcon = {
+const statusIcon: Record<string, string> = {
   pending: '⚪',
   in_progress: '➡️',
   completed: '✔️',
@@ -49,14 +48,9 @@ const PlannerStatus: React.FC = () => {
                 <div className="text-xs text-green-300 mt-1 pl-6">
                   <span className="font-semibold">Output:</span>
                   {typeof step.output === 'object' ? (
-                    <ReactJson
-                      src={step.output}
-                      theme="ocean"
-                      iconStyle="circle"
-                      displayDataTypes={false}
-                      name={false}
-                      style={{ background: 'transparent', paddingTop: '4px' }}
-                    />
+                    <pre className="mt-1 p-2 bg-gray-900 rounded text-xs overflow-x-auto max-h-32">
+                      {JSON.stringify(step.output, null, 2)}
+                    </pre>
                   ) : (
                     <p className="whitespace-pre-wrap">{String(step.output)}</p>
                   )}

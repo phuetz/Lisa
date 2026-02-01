@@ -4,19 +4,20 @@
  * A lightweight, modular orchestrator that coordinates complex workflows using
  * separate utilities for planning, execution, error handling and logging.
  */
-import { agentRegistry } from './registry';
+import { agentRegistry } from '../core/registry';
 import { v4 as uuidv4 } from 'uuid';
-import { saveToStorage, loadFromStorage } from '../utils/storage';
+import { saveToStorage, loadFromStorage } from '../../../utils/storage';
 
 // Import refactored utilities
-import { buildPlannerPrompt, buildPlanExplanationPrompt, PromptOptions } from '../utils/buildPlannerPrompt';
-import { runWorkflowPlan } from '../utils/runWorkflowPlan';
-import { logEvent } from '../utils/logger';
-import { revisePlan } from '../utils/revisePlan';
-import { planTracer } from '../utils/planTracer';
+import { buildPlannerPrompt, buildPlanExplanationPrompt } from '../../../utils/buildPlannerPrompt';
+import type { PromptOptions } from '../../../utils/buildPlannerPrompt';
+import { runWorkflowPlan } from '../../../utils/runWorkflowPlan';
+import { logEvent } from '../../../utils/logger';
+import { revisePlan } from '../../../utils/revisePlan';
+import { planTracer } from '../../../utils/planTracer';
 // Import types
-import type { BaseAgent, AgentExecuteResult } from './types';
-import type { WorkflowStep, PlannerAgentExecuteProps, PlannerResult } from '../types/Planner';
+import type { BaseAgent, AgentExecuteResult } from '../core/types';
+import type { WorkflowStep, PlannerAgentExecuteProps, PlannerResult } from '../../../types/Planner';
 
 // Constants
 const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;

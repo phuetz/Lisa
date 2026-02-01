@@ -1,4 +1,4 @@
-import { BaseAgent } from './types';
+import { BaseAgent } from '../core/types';
 
 /**
  * @class GeminiCliAgent

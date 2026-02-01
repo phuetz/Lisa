@@ -1,6 +1,7 @@
-import { BaseAgent, AgentExecuteProps, AgentExecuteResult, AgentDomains } from './types';
-import { agentRegistry } from './registry';
-import { useMetaHumanStore } from '../store/metaHumanStore';
+import type { BaseAgent, AgentExecuteProps, AgentExecuteResult, AgentCapability } from '../core/types';
+import { AgentDomains } from '../core/types';
+import { agentRegistry } from '../core/registry';
+import { useMetaHumanStore } from '../../../store/metaHumanStore';
 
 export class MetaHumanAgent implements BaseAgent {
   name = 'MetaHumanAgent';
@@ -45,9 +46,9 @@ export class MetaHumanAgent implements BaseAgent {
 
   async getCapabilities(): Promise<AgentCapability[]> {
     return [
-      { name: 'set_expression', description: 'Sets a facial expression on the MetaHuman.', parameters: [{ name: 'expression', type: 'string', required: true }, { name: 'intensity', type: 'number', required: false }] },
-      { name: 'set_pose', description: 'Sets a body pose on the MetaHuman.', parameters: [{ name: 'pose', type: 'string', required: true }] },
-      { name: 'animate_speech', description: 'Animates the MetaHuman's face and body based on speech.', parameters: [{ name: 'text', type: 'string', required: true }, { name: 'duration', type: 'number', required: false }] },
+      { name: 'set_expression', description: 'Sets a facial expression on the MetaHuman.', requiredParameters: [{ name: 'expression', type: 'string', required: true }, { name: 'intensity', type: 'number', required: false }] },
+      { name: 'set_pose', description: 'Sets a body pose on the MetaHuman.', requiredParameters: [{ name: 'pose', type: 'string', required: true }] },
+      { name: 'animate_speech', description: "Animates the MetaHuman's face and body based on speech.", requiredParameters: [{ name: 'text', type: 'string', required: true }, { name: 'duration', type: 'number', required: false }] },
     ];
   }
 }

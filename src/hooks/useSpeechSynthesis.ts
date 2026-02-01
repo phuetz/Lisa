@@ -7,10 +7,10 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { useVisionAudioStore } from '../store/visionAudioStore';
-import { agentRegistry } from '../agents/registry';
-import type { VoiceSettings, SpeechSynthesisIntent, SpeechFormat } from '../agents/SpeechSynthesisAgent';
+import { agentRegistry } from '../features/agents/core/registry';
+import type { VoiceSettings, SpeechSynthesisIntent, SpeechFormat } from '../features/agents/implementations/SpeechSynthesisAgent';
 import { useMetaHumanStore } from '../store/metaHumanStore';
-import { MetaHumanAgent } from '../agents/MetaHumanAgent';
+import { MetaHumanAgent } from '../features/agents/implementations/MetaHumanAgent';
 
 export interface SpeechSynthesisOptions {
   autoStart?: boolean;

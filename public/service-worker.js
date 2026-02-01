@@ -11,12 +11,19 @@ const assetsToCache = [
   '/manifest.json'
 ];
 
-// Install event - cache assets
+// Install event - cache assets (gracefully handle failures)
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
-        return cache.addAll(assetsToCache);
+        // Use individual add() calls to handle failures gracefully
+        return Promise.allSettled(
+          assetsToCache.map(url =>
+            cache.add(url).catch(err => {
+              console.warn(`[SW] Failed to cache ${url}:`, err.message);
+            })
+          )
+        );
       })
       .then(() => self.skipWaiting())
   );

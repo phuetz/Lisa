@@ -2,14 +2,20 @@ import { Canvas } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import { Suspense } from 'react';
 import { Html } from '@react-three/drei';
+import { useShallow } from 'zustand/react/shallow';
 import { ModelLoader } from './ModelLoader';
 import { useMetaHumanStore } from '../store/metaHumanStore';
 
 function Scene() {
-  const { expression, expressionIntensity, pose, speechText, isSpeaking } = useMetaHumanStore();
-
-  // Log the state for now
-  console.log('MetaHuman State:', { expression, expressionIntensity, pose, speechText, isSpeaking });
+  const { expression, expressionIntensity, pose, speechText, isSpeaking } = useMetaHumanStore(
+    useShallow((state) => ({
+      expression: state.expression,
+      expressionIntensity: state.expressionIntensity,
+      pose: state.pose,
+      speechText: state.speechText,
+      isSpeaking: state.isSpeaking,
+    }))
+  );
 
   return (
     <>

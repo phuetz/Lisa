@@ -1,4 +1,4 @@
-import { Agent, AgentContext } from './types';
+import { Agent, AgentContext } from '../core/types';
 import { Ros, Topic, Message, Service, ServiceRequest } from 'roslib';
 
 interface RosAgentParams {

@@ -2,7 +2,7 @@
  * The central registry for all agents in the system.
  * This follows the Singleton pattern to ensure only one instance exists.
  */
-import type { BaseAgent } from './types';
+import type { BaseAgent } from '../core/types';
 import { RobotAgent } from './RobotAgent';
 import { TriggerAgent } from './TriggerAgent';
 import { TransformAgent } from './TransformAgent';

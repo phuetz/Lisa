@@ -21,7 +21,7 @@ export function useClipboardSummarizer(options: SummarizerOptions = {}) {
   const setState = useAppStore(state => state.setState);
   
   const apiEndpoint = options.apiEndpoint || 'https://api.openai.com/v1/chat/completions';
-  const apiKey = options.apiKey || process.env.VITE_LLM_API_KEY;
+  const apiKey = options.apiKey || import.meta.env.VITE_LLM_API_KEY;
   const model = options.model || 'gpt-3.5-turbo';
   const maxTokens = options.maxTokens || 150;
   const temperature = options.temperature || 0.5;

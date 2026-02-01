@@ -4,7 +4,7 @@
  */
 import type { BaseAgent, AgentExecuteProps, AgentExecuteResult } from '../core/types';
 import { AgentDomains } from '../core/types';
-import { ContextManager } from '../context/ContextManager';
+import { ContextManager } from '../../../context/ContextManager';
 import type {
   ContextItem,
   ContextQueryOptions,
@@ -12,7 +12,7 @@ import type {
   EntityContextItem,
   IntentHistoryContextItem,
   ContextType
-} from '../context/types';
+} from '../../../context/types';
 
 /**
  * Types de requêtes pour l'agent de contexte

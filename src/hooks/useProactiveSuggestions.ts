@@ -6,7 +6,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { agentRegistry } from '../features/agents/core/registry';
 import { useContextManager } from './useContextManager';
-import type { ProactiveSuggestionsAgent, Suggestion } from '../agents/ProactiveSuggestionsAgent';
+import type { ProactiveSuggestionsAgent, Suggestion } from '../features/agents/implementations/ProactiveSuggestionsAgent';
 import type { ContextItem } from '../context/types';
 
 /**
@@ -24,7 +24,7 @@ export function useProactiveSuggestions() {
    * Récupère l'agent de suggestions proactives
    */
   const getSuggestionsAgent = useCallback(async (): Promise<ProactiveSuggestionsAgent> => {
-    const agent = await agentRegistry.getAgentAsync('Proactive Suggestions');
+    const agent = await agentRegistry.getAgentAsync('ProactiveSuggestionsAgent');
     if (!agent) {
       throw new Error("Agent de suggestions proactives non disponible");
     }
@@ -46,7 +46,7 @@ export function useProactiveSuggestions() {
         throw new Error("Aucun contexte disponible pour générer des suggestions");
       }
       
-      const agent = getSuggestionsAgent();
+      const agent = await getSuggestionsAgent();
       const result = await agent.execute({
         intent: 'generate_suggestions',
         parameters: { context }
@@ -75,7 +75,7 @@ export function useProactiveSuggestions() {
     try {
       setIsLoading(true);
       
-      const agent = getSuggestionsAgent();
+      const agent = await getSuggestionsAgent();
       const result = await agent.execute({
         intent: 'get_suggestions'
       });
@@ -103,7 +103,7 @@ export function useProactiveSuggestions() {
     try {
       setIsLoading(true);
       
-      const agent = getSuggestionsAgent();
+      const agent = await getSuggestionsAgent();
       const result = await agent.execute({
         intent: 'dismiss_suggestion',
         parameters: { suggestionId }
@@ -132,7 +132,7 @@ export function useProactiveSuggestions() {
     try {
       setIsLoading(true);
       
-      const agent = getSuggestionsAgent();
+      const agent = await getSuggestionsAgent();
       const result = await agent.execute({
         intent: 'clear_suggestions'
       });
@@ -164,7 +164,7 @@ export function useProactiveSuggestions() {
     try {
       setIsLoading(true);
       
-      const agent = getSuggestionsAgent();
+      const agent = await getSuggestionsAgent();
       const result = await agent.execute({
         intent: 'execute_suggestion',
         parameters: { suggestionId }

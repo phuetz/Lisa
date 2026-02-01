@@ -18,16 +18,24 @@ function visionStatePlugin() {
 
 // CSP plugin to send Content-Security-Policy headers & inject meta tag
 function cspPlugin() {
+  const isDev = process.env.NODE_ENV !== 'production';
+  // In development, allow 'unsafe-inline' for Vite HMR scripts
+  const scriptSrc = isDev
+    ? "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://accounts.google.com gsi.gstatic.com blob: https://cdn.jsdelivr.net"
+    : "script-src 'self' 'wasm-unsafe-eval' https://accounts.google.com gsi.gstatic.com blob: https://cdn.jsdelivr.net";
+  const workerSrc = "worker-src 'self' blob: https://cdn.jsdelivr.net";
+  const csp = `default-src 'self' https://accounts.google.com https://www.googleapis.com; img-src 'self' data: blob:; ${scriptSrc}; ${workerSrc}; style-src 'self' 'unsafe-inline'; connect-src 'self' data: ws://localhost:* http://localhost:* https://api.openai.com https://generativelanguage.googleapis.com https://api.anthropic.com https://accounts.google.com https://cdn.jsdelivr.net https://storage.googleapis.com`;
+
   return {
     name: 'csp-headers',
     configureServer(server: any) {
       server.middlewares.use((_: any, res: any, next: any) => {
-        res.setHeader('Content-Security-Policy', "default-src 'self' https://accounts.google.com https://www.googleapis.com; img-src 'self' data:; script-src 'self' https://accounts.google.com gsi.gstatic.com; style-src 'self' 'unsafe-inline'");
+        res.setHeader('Content-Security-Policy', csp);
         next();
       });
     },
     transformIndexHtml(html: string) {
-      const meta = `<meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'self' https://accounts.google.com https://www.googleapis.com; img-src 'self' data:; script-src 'self' https://accounts.google.com gsi.gstatic.com; style-src 'self' 'unsafe-inline'\">`;
+      const meta = `<meta http-equiv="Content-Security-Policy" content="${csp}">`;
       return html.replace('<head>', `<head>${meta}`);
     },
   };

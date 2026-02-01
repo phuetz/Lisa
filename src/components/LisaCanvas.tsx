@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useShallow } from 'zustand/react/shallow';
 
 import DrawWorker from '../workers/drawWorker.ts?worker';
 import { useVisionAudioStore } from '../store/visionAudioStore';
@@ -15,7 +16,7 @@ export default function LisaCanvas({ video }: Props) {
   const { t } = useTranslation();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { faces, hands, objects, poses, lastSilenceMs, audio, smileDetected, speechDetected } =
-    useVisionAudioStore((s) => ({
+    useVisionAudioStore(useShallow((s) => ({
       faces: s.faces,
       hands: s.hands,
       objects: s.objects,
@@ -24,29 +25,45 @@ export default function LisaCanvas({ video }: Props) {
       audio: s.audio,
       smileDetected: s.smileDetected,
       speechDetected: s.speechDetected,
-    }));
+    })));
   const workerRef = useRef<Worker | null>(null);
   const useWorker = useRef<boolean>(false);
+  const transferredRef = useRef<boolean>(false);
   const cheerUntilRef = useRef<number>(0);
 
   // Init worker & offscreen if supported
   useEffect(() => {
-    if (!canvasRef.current) return;
+    if (!canvasRef.current || transferredRef.current) return;
     if ('transferControlToOffscreen' in canvasRef.current) {
-      const off = (canvasRef.current as any).transferControlToOffscreen();
-      workerRef.current = new DrawWorker();
-      workerRef.current.postMessage({ canvas: off }, [off]);
-      useWorker.current = true;
+      try {
+        const off = (canvasRef.current as any).transferControlToOffscreen();
+        workerRef.current = new DrawWorker();
+        workerRef.current.postMessage({ canvas: off }, [off]);
+        useWorker.current = true;
+        transferredRef.current = true;
+      } catch (e) {
+        // Canvas already transferred (React Strict Mode double-mount)
+        console.warn('[LisaCanvas] OffscreenCanvas already transferred');
+      }
     }
   }, []);
 
   // Resize canvas to match video size on mount / resize
   useEffect(() => {
-    if (!video || !canvasRef.current) return;
+    if (!video) return;
     const resize = () => {
-      if (!canvasRef.current || !video) return;
-      canvasRef.current.width = video.videoWidth;
-      canvasRef.current.height = video.videoHeight;
+      if (!video) return;
+      const width = video.videoWidth;
+      const height = video.videoHeight;
+
+      if (useWorker.current && workerRef.current) {
+        // Send resize to worker (canvas already transferred)
+        workerRef.current.postMessage({ type: 'resize', width, height });
+      } else if (canvasRef.current && !transferredRef.current) {
+        // Direct DOM only if canvas not transferred
+        canvasRef.current.width = width;
+        canvasRef.current.height = height;
+      }
     };
     resize();
     window.addEventListener('resize', resize);

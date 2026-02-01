@@ -1,12 +1,20 @@
 import { useRef, useEffect } from 'react';
 import { useGLTF } from '@react-three/drei';
 import { AnimationMixer, Clock, AnimationAction, Color, Mesh, MeshStandardMaterial } from 'three';
+import { useShallow } from 'zustand/react/shallow';
 import { useMetaHumanStore } from '../store/metaHumanStore';
 
 export function ModelLoader() {
   const group = useRef();
   const { scene, animations } = useGLTF('/triangle.gltf'); // Still using triangle.gltf for now
-  const { expression, expressionIntensity, pose, isSpeaking } = useMetaHumanStore();
+  const { expression, expressionIntensity, pose, isSpeaking } = useMetaHumanStore(
+    useShallow((state) => ({
+      expression: state.expression,
+      expressionIntensity: state.expressionIntensity,
+      pose: state.pose,
+      isSpeaking: state.isSpeaking,
+    }))
+  );
 
   const mixer = useRef<AnimationMixer | null>(null);
   const actions = useRef<Map<string, AnimationAction>>(new Map());

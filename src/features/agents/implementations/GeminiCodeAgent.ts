@@ -1,12 +1,12 @@
-import { AgentDomains } from './types';
-import type { 
+import { AgentDomains } from '../core/types';
+import type {
   AgentDomain,
   AgentParameter,
   AgentCapability,
-  AgentExecuteProps, 
-  AgentExecuteResult, 
-  BaseAgent 
-} from './types';
+  AgentExecuteProps,
+  AgentExecuteResult,
+  BaseAgent
+} from '../core/types';
 
 /**
  * Agent spécialisé pour la génération de code via l'API Gemini

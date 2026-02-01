@@ -7,14 +7,14 @@
 
 // L'import de agentRegistry est supprimé car il n'est pas utilisé directement dans ce fichier
 import { createWorker, OEM } from 'tesseract.js';
-import type { 
-  AgentCapability, 
+import type {
+  AgentCapability,
   AgentDomain,
-  AgentExecuteProps, 
-  AgentExecuteResult, 
+  AgentExecuteProps,
+  AgentExecuteResult,
   BaseAgent
-} from './types';
-import { AgentDomains } from './types';
+} from '../core/types';
+import { AgentDomains } from '../core/types';
 
 // Types spécifiques à l'OCR
 export type OCRSource = 'screenshot' | 'webcam' | 'file' | 'clipboard' | 'selection';
@@ -79,11 +79,8 @@ export class OCRAgent implements BaseAgent {
 
   private async initializeWorker() {
     try {
-      const worker = await createWorker({
-        logger: m => console.log(m), // Optional: log progress
-      });
-      await worker.loadLanguage('eng+fra');
-      await worker.initialize('eng+fra');
+      // Note: logger function removed - cannot be cloned for postMessage to Worker
+      const worker = await createWorker('eng+fra');
       this.worker = worker;
       this.isInitialized = true;
       console.log('Tesseract worker initialized.');

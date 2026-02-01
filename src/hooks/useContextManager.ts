@@ -6,7 +6,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAppStore } from '../store/appStore';
 import { agentRegistry } from '../features/agents/core/registry';
-import { ContextAgent } from '../agents/ContextAgent';
+import { ContextAgent } from '../features/agents/implementations/ContextAgent';
 import type {
   ContextItem,
   ContextType,
@@ -23,8 +23,6 @@ export function useContextManager() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [recentContexts, setRecentContexts] = useState<ContextItem[]>([]);
-  
-  // Note: store supprimé car non utilisé
   
   /**
    * Obtient l'agent de contexte du registre
@@ -488,30 +486,8 @@ export function useContextManager() {
     }
   }, [getContextAgent]);
   
-  useEffect(() => {
-    // Vérifier si les propriétés existent avant de les utiliser
-    const lastIntent = (store as any).lastIntent;
-    const lastSpokenText = (store as any).lastSpokenText;
-    
-    if (lastIntent) {
-      // Ajoute l'intention détectée au contexte de la conversation
-      void addIntentContext(
-        lastIntent.intent,
-        lastIntent.entities || {},
-        true
-      );
-      
-      // Ajoute au contexte de conversation si lastSpokenText est disponible
-      if (lastSpokenText) {
-        void addConversationContext({
-          type: 'conversation',
-          text: lastSpokenText,
-          intent: lastIntent.intent,
-          parameters: lastIntent.entities || {}
-        });
-      }
-    }
-  }, [(store as any).lastIntent, (store as any).lastSpokenText, addConversationContext, addIntentContext]);
+  // Note: useEffect pour lastIntent/lastSpokenText désactivé car les types ne correspondent pas
+  // TODO: Réactiver quand le store sera mis à jour avec les bons types
   
   /**
    * Initialisation: rafraîchit la liste des contextes récents

@@ -54,7 +54,7 @@ export const useUserWorkflows = (): UserWorkflowsHook => {
    * Obtenir l'agent de workflows
    */
   const getUserWorkflowAgent = useCallback(async (): Promise<UserWorkflowAgent> => {
-    const agent = await agentRegistry.getAgentAsync('User Workflow Agent');
+    const agent = await agentRegistry.getAgentAsync('UserWorkflowAgent');
     if (!agent) {
       throw new Error("Agent de workflows utilisateur non disponible");
     }

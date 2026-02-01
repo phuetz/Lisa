@@ -49,7 +49,7 @@ export const useSystemIntegration = (): SystemIntegrationHook => {
    * Obtenir l'agent d'intégration système
    */
   const getSystemIntegrationAgent = useCallback(async () => {
-    const agent = await agentRegistry.getAgentAsync('System Integration Agent');
+    const agent = await agentRegistry.getAgentAsync('SystemIntegrationAgent');
     if (!agent) {
       throw new Error("Agent d'intégration système non disponible");
     }
