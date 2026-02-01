@@ -74,7 +74,8 @@ const listTodosTool: ToolDefinition = {
         description: 'Filter: all, active (not completed), or completed',
         enum: ['all', 'active', 'completed']
       }
-    }
+    },
+    required: []  // No required params - filter is optional
   },
   handler: async (args) => {
     const filter = (args.filter as string) || 'all';
@@ -119,7 +120,8 @@ const completeTodoTool: ToolDefinition = {
         type: 'string',
         description: 'Alternative: the text of the todo to complete (will find closest match)'
       }
-    }
+    },
+    required: []  // Either id or text can be used
   },
   handler: async (args) => {
     const todos = useAppStore.getState().todos || [];
@@ -179,7 +181,8 @@ const removeTodoTool: ToolDefinition = {
         type: 'string',
         description: 'Alternative: the text of the todo to remove (will find closest match)'
       }
-    }
+    },
+    required: []  // Either id or text can be used
   },
   handler: async (args) => {
     const todos = useAppStore.getState().todos || [];
@@ -227,7 +230,8 @@ const clearCompletedTool: ToolDefinition = {
   description: 'Remove all completed tasks from the list. Use this to clean up finished tasks.',
   parameters: {
     type: 'object',
-    properties: {}
+    properties: {},
+    required: []
   },
   handler: async () => {
     const todos = useAppStore.getState().todos || [];

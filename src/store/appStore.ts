@@ -20,7 +20,13 @@ export type AudioResult = { category: string; score: number; timestamp: number }
 
 export interface Alarm { id: string; time: number; label?: string; triggered?: boolean; recurrence?: 'daily' | 'weekdays' }
 export interface Timer { id: string; finish: number; label?: string; triggered?: boolean }
-export interface Todo { id: string; text: string }
+export interface Todo {
+  id: string;
+  text: string;
+  completed?: boolean;
+  priority?: 'low' | 'medium' | 'high';
+  createdAt?: string;
+}
 
 export interface ChatMessage { role: string; content: string }
 
@@ -100,7 +106,7 @@ interface UiSlice {
   fallDetected: boolean;
   fallEventTimestamp: number | null;
   setLastPlanExplanation: (explanation: string | null, traceId?: string) => void;
-  addTodo: (todo: Todo | { id: string; text: string; completed?: boolean; priority?: string; createdAt?: string }) => void;
+  addTodo: (todo: Todo) => void;
   removeTodo: (id: string) => void;
   toggleTodo: (id: string) => void;
 }

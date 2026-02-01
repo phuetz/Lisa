@@ -253,10 +253,19 @@ class AIWithToolsService {
         const result = await toolCallingService.executeTool(call);
         const duration = Date.now() - startTime;
 
+        // Parse result safely
+        let parsedResult: unknown;
+        try {
+          parsedResult = JSON.parse(result.content);
+        } catch {
+          console.warn('[AIWithTools] Failed to parse tool result:', result.content);
+          parsedResult = { raw: result.content };
+        }
+
         const toolUsage: ToolUsageInfo = {
           toolName: call.name,
           arguments: call.arguments,
-          result: JSON.parse(result.content),
+          result: parsedResult,
           duration
         };
 
@@ -610,8 +619,10 @@ class AIWithToolsService {
     const todoTriggers = [
       'ajoute une tâche', 'ajouter une tâche', 'nouvelle tâche', 'créer une tâche',
       'ajoute un todo', 'ajoute un rappel', 'rappelle-moi', 'rappelle moi',
-      'liste mes tâches', 'mes tâches', 'quelles tâches', 'voir les tâches',
-      'liste des tâches', 'todo list', 'todolist', 'to-do', 'ma todo',
+      'liste mes tâches', 'liste les tâches', 'mes tâches', 'les tâches',
+      'quelles tâches', 'voir les tâches', 'voir mes tâches', 'affiche les tâches',
+      'liste des tâches', 'montre les tâches', 'montre mes tâches',
+      'todo list', 'todolist', 'to-do', 'ma todo', 'list tasks', 'show tasks',
       'tâche terminée', 'j\'ai fini', 'j\'ai terminé', 'marque comme fait',
       'supprime la tâche', 'supprimer la tâche', 'enlève la tâche',
       'add task', 'add todo', 'add a task', 'create task', 'new task',
