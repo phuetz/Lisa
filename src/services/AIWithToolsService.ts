@@ -371,13 +371,16 @@ class AIWithToolsService {
 
         if (parsed._gemini_function_response) {
           // This is a function response
-          // Gemini API: functionResponse goes in a "user" role message
+          // Gemini API: functionResponse goes in a "function" role message
           contents.push({
-            role: 'user',
+            role: 'function',
             parts: [{
               functionResponse: {
                 name: parsed._gemini_function_response.name,
-                response: parsed._gemini_function_response.response
+                response: {
+                  name: parsed._gemini_function_response.name,
+                  content: parsed._gemini_function_response.response
+                }
               }
             }]
           });
