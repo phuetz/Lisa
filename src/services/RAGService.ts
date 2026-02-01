@@ -1,12 +1,16 @@
 /**
  * 🔍 RAG Service - Retrieval Augmented Generation
  * Augmente le contexte avec des souvenirs pertinents via embeddings
+ *
+ * Enhanced with HNSW vector index for O(log n) similarity search.
+ * Falls back to linear search when vector index is not available.
  */
 
 import type { Memory } from './MemoryService';
 import { memoryService } from './MemoryService';
 import { auditActions } from './AuditService';
 import { embeddingService, type EmbeddingProvider } from './EmbeddingService';
+import { vectorStore } from './VectorStoreService';
 
 export interface Embedding {
   text: string;
@@ -29,6 +33,8 @@ export interface RAGConfig {
   similarityThreshold: number;
   maxResults: number;
   includeConversationHistory: boolean;
+  /** Use HNSW vector index for fast search (default: true) */
+  useVectorIndex: boolean;
 }
 
 const DEFAULT_RAG_CONFIG: RAGConfig = {
@@ -36,16 +42,83 @@ const DEFAULT_RAG_CONFIG: RAGConfig = {
   provider: 'local',
   similarityThreshold: 0.5,
   maxResults: 5,
-  includeConversationHistory: true
+  includeConversationHistory: true,
+  useVectorIndex: true
 };
 
 class RAGServiceImpl {
   private embeddings: Map<string, Embedding> = new Map();
   private config: RAGConfig = DEFAULT_RAG_CONFIG;
+  private vectorIndexInitialized = false;
+  private indexedMemoryIds: Set<string> = new Set();
 
   constructor() {
     this.loadEmbeddingsFromStorage();
     this.loadConfigFromStorage();
+    this.initializeVectorIndex();
+  }
+
+  /**
+   * Initialize the HNSW vector index
+   */
+  private async initializeVectorIndex(): Promise<void> {
+    if (!this.config.useVectorIndex || this.vectorIndexInitialized) return;
+
+    try {
+      await vectorStore.initialize();
+      this.vectorIndexInitialized = true;
+
+      // Migrate existing embeddings to vector index
+      await this.migrateEmbeddingsToVectorIndex();
+
+      console.log('[RAG] Vector index initialized');
+    } catch (error) {
+      console.warn('[RAG] Vector index initialization failed, using linear search:', error);
+      this.vectorIndexInitialized = false;
+    }
+  }
+
+  /**
+   * Migrate existing embeddings to the vector index
+   */
+  private async migrateEmbeddingsToVectorIndex(): Promise<void> {
+    if (!this.vectorIndexInitialized) return;
+
+    let migrated = 0;
+    for (const [text, embedding] of this.embeddings) {
+      const id = this.textToId(text);
+      if (!this.indexedMemoryIds.has(id)) {
+        try {
+          await vectorStore.add({
+            id,
+            vector: embedding.vector,
+            metadata: { text, timestamp: embedding.timestamp, model: embedding.model }
+          });
+          this.indexedMemoryIds.add(id);
+          migrated++;
+        } catch {
+          // Skip individual failures
+        }
+      }
+    }
+
+    if (migrated > 0) {
+      console.log(`[RAG] Migrated ${migrated} embeddings to vector index`);
+    }
+  }
+
+  /**
+   * Generate a stable ID from text
+   */
+  private textToId(text: string): string {
+    // Simple hash for ID generation
+    let hash = 0;
+    for (let i = 0; i < text.length; i++) {
+      const char = text.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash;
+    }
+    return `emb-${Math.abs(hash).toString(36)}`;
   }
 
   /**
@@ -91,6 +164,23 @@ class RAGServiceImpl {
         model: result.model
       });
 
+      // Also add to vector index
+      if (this.config.useVectorIndex && this.vectorIndexInitialized) {
+        const id = this.textToId(text);
+        if (!this.indexedMemoryIds.has(id)) {
+          try {
+            await vectorStore.add({
+              id,
+              vector: result.vector,
+              metadata: { text, timestamp: new Date().toISOString(), model: result.model }
+            });
+            this.indexedMemoryIds.add(id);
+          } catch {
+            // Non-critical, continue
+          }
+        }
+      }
+
       this.saveEmbeddingsToStorage();
       return result.vector;
     } catch (error) {
@@ -102,6 +192,8 @@ class RAGServiceImpl {
 
   /**
    * Rechercher des souvenirs similaires
+   * Uses HNSW vector index for O(log n) search when available,
+   * falls back to linear O(n) search otherwise.
    */
   async searchSimilar(query: string, limit?: number): Promise<Array<Memory & { similarity: number }>> {
     if (!this.config.enabled) {
@@ -114,29 +206,73 @@ class RAGServiceImpl {
       // Générer l'embedding de la requête
       const queryEmbedding = await this.generateEmbedding(query);
 
-      // Récupérer tous les souvenirs
-      const context = memoryService.getContext();
-      const allMemories = [...context.shortTerm, ...context.longTerm];
+      // Use HNSW vector index if available
+      if (this.config.useVectorIndex && this.vectorIndexInitialized && vectorStore.getStats().size > 0) {
+        return this.searchSimilarFast(queryEmbedding, maxResults);
+      }
 
-      // Scorer les souvenirs par similarité
-      const scored = await Promise.all(
-        allMemories.map(async (memory) => {
-          const memoryEmbedding = await this.generateEmbedding(memory.content);
-          const similarity = embeddingService.cosineSimilarity(queryEmbedding, memoryEmbedding);
-          return { ...memory, similarity };
-        })
-      );
-
-      // Filtrer par seuil de similarité et trier
-      return scored
-        .filter(item => item.similarity >= this.config.similarityThreshold)
-        .sort((a, b) => b.similarity - a.similarity)
-        .slice(0, maxResults);
+      // Fallback to linear search
+      return this.searchSimilarLinear(queryEmbedding, maxResults);
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
       auditActions.errorOccurred(`RAG search failed: ${errorMsg}`, { query });
       return [];
     }
+  }
+
+  /**
+   * Fast O(log n) search using HNSW vector index
+   */
+  private async searchSimilarFast(queryEmbedding: number[], maxResults: number): Promise<Array<Memory & { similarity: number }>> {
+    const results = vectorStore.search(queryEmbedding, maxResults * 2); // Get extra for threshold filtering
+
+    // Get all memories for ID lookup
+    const context = memoryService.getContext();
+    const allMemories = [...context.shortTerm, ...context.longTerm];
+    const memoryMap = new Map(allMemories.map(m => [this.textToId(m.content), m]));
+
+    // Map results back to memories
+    const scored: Array<Memory & { similarity: number }> = [];
+
+    for (const result of results) {
+      // Try to find memory by ID
+      let memory = memoryMap.get(result.id);
+
+      // If not found by ID, try to find by text from metadata
+      if (!memory && result.metadata.text) {
+        memory = allMemories.find(m => m.content === result.metadata.text);
+      }
+
+      if (memory && result.score >= this.config.similarityThreshold) {
+        scored.push({ ...memory, similarity: result.score });
+      }
+    }
+
+    return scored.slice(0, maxResults);
+  }
+
+  /**
+   * Linear O(n) search fallback
+   */
+  private async searchSimilarLinear(queryEmbedding: number[], maxResults: number): Promise<Array<Memory & { similarity: number }>> {
+    // Récupérer tous les souvenirs
+    const context = memoryService.getContext();
+    const allMemories = [...context.shortTerm, ...context.longTerm];
+
+    // Scorer les souvenirs par similarité
+    const scored = await Promise.all(
+      allMemories.map(async (memory) => {
+        const memoryEmbedding = await this.generateEmbedding(memory.content);
+        const similarity = embeddingService.cosineSimilarity(queryEmbedding, memoryEmbedding);
+        return { ...memory, similarity };
+      })
+    );
+
+    // Filtrer par seuil de similarité et trier
+    return scored
+      .filter(item => item.similarity >= this.config.similarityThreshold)
+      .sort((a, b) => b.similarity - a.similarity)
+      .slice(0, maxResults);
   }
 
   /**
@@ -225,12 +361,20 @@ class RAGServiceImpl {
       0
     );
 
+    const vectorStats = this.vectorIndexInitialized ? vectorStore.getStats() : null;
+
     return {
       totalEmbeddings: embeddings.length,
-      embeddingDimension: this.embeddingDimension,
+      embeddingDimension: embeddingService.getConfig().dimension ?? 384,
       totalSize,
       oldestEmbedding: embeddings.length > 0 ? embeddings[0].timestamp : '',
-      newestEmbedding: embeddings.length > 0 ? embeddings[embeddings.length - 1].timestamp : ''
+      newestEmbedding: embeddings.length > 0 ? embeddings[embeddings.length - 1].timestamp : '',
+      vectorIndex: {
+        enabled: this.config.useVectorIndex,
+        initialized: this.vectorIndexInitialized,
+        size: vectorStats?.size ?? 0,
+        maxLevel: vectorStats?.maxLevel ?? 0
+      }
     };
   }
 
