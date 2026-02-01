@@ -14,7 +14,6 @@ import {
   getDefaultTheme,
   resolveMode,
   applyCssVariables,
-  getSystemColorScheme,
 } from '../theme/officeThemes';
 
 interface OfficeThemeState {
@@ -59,8 +58,8 @@ interface OfficeThemeState {
 }
 
 const DEFAULT_STATE = {
-  themeId: 'teams-purple',
-  mode: 'system' as ThemeMode,
+  themeId: 'office-classic',
+  mode: 'light' as ThemeMode,
   fontSize: 'medium' as const,
   fontFamily: 'Segoe UI',
   borderRadius: 8,
@@ -76,7 +75,8 @@ export const useOfficeThemeStore = create<OfficeThemeState>()(
   persist(
     (set, get) => ({
       ...DEFAULT_STATE,
-      _resolvedMode: getSystemColorScheme(),
+      // Don't use getSystemColorScheme() here - it causes race with persistence
+      // The onRehydrateStorage callback will set the correct mode
 
       setTheme: (themeId) => {
         set({ themeId });
@@ -176,18 +176,35 @@ export const useOfficeThemeStore = create<OfficeThemeState>()(
   )
 );
 
-// Listen for system color scheme changes
+// Apply initial theme on store creation (for first load without persisted state)
 if (typeof window !== 'undefined') {
-  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+  // Small delay to ensure DOM is ready
+  requestAnimationFrame(() => {
     const state = useOfficeThemeStore.getState();
-    if (state.mode === 'system') {
-      const resolved = e.matches ? 'dark' : 'light';
-      useOfficeThemeStore.setState({ _resolvedMode: resolved });
-      const theme = state.getCurrentTheme();
-      const colors = resolved === 'dark' ? theme.dark : theme.light;
-      applyCssVariables(colors);
-    }
+    const theme = getThemeById(state.themeId) || getDefaultTheme();
+    const colors = state._resolvedMode === 'dark' ? theme.dark : theme.light;
+    applyCssVariables(colors);
+    document.documentElement.classList.remove('theme-light', 'theme-dark');
+    document.documentElement.classList.add(`theme-${state._resolvedMode}`);
   });
+}
+
+// Listen for system color scheme changes
+if (typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
+  try {
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+      const state = useOfficeThemeStore.getState();
+      if (state.mode === 'system') {
+        const resolved = e.matches ? 'dark' : 'light';
+        useOfficeThemeStore.setState({ _resolvedMode: resolved });
+        const theme = state.getCurrentTheme();
+        const colors = resolved === 'dark' ? theme.dark : theme.light;
+        applyCssVariables(colors);
+      }
+    });
+  } catch {
+    // matchMedia not available (e.g., in test environment)
+  }
 }
 
 // Hook for accessing colors
