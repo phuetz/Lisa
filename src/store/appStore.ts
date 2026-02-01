@@ -89,6 +89,16 @@ interface UiSlice {
   intent?: string;
   intentPayload?: unknown;
   conversationContext?: ConversationContext;
+  featureFlags: {
+    advancedVision: boolean;
+    advancedHearing: boolean;
+    fallDetector: boolean;
+  };
+  selectedLLM: string;
+  selectedVisionModel: string;
+  hearingLanguage: string;
+  fallDetected: boolean;
+  fallEventTimestamp: number | null;
   setLastPlanExplanation: (explanation: string | null, traceId?: string) => void;
 }
 
@@ -141,6 +151,16 @@ const createUiSlice = (set: any): UiSlice => ({
   intent: undefined,
   intentPayload: undefined,
   conversationContext: undefined,
+  featureFlags: {
+    advancedVision: false,
+    advancedHearing: false,
+    fallDetector: false,
+  },
+  selectedLLM: 'gemini-2.0-flash',
+  selectedVisionModel: 'mediapipe',
+  hearingLanguage: 'fr-FR',
+  fallDetected: false,
+  fallEventTimestamp: null,
   setLastPlanExplanation: (explanation, traceId) =>
     set({ lastPlanExplanation: explanation, lastPlanTraceId: traceId }),
 });
