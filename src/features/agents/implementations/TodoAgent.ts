@@ -144,9 +144,13 @@ export class TodoAgent implements BaseAgent {
       }
 
       if (!validationResult.success) {
+        // Handle both string errors and Zod validation errors
+        const errorMessage = typeof validationResult.error === 'string'
+          ? validationResult.error
+          : validationResult.error?.errors?.map((err: { message: string }) => err.message).join(', ') || 'Validation failed';
         return {
           success: false,
-          error: validationResult.error.errors.map(err => err.message).join(', '),
+          error: errorMessage,
           output: null,
           metadata: {
             executionTime: Date.now() - startTime
