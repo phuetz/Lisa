@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Lisa Icon Generator</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    canvas { border: 1px solid #ccc; margin: 10px; }
+    .icons { display: flex; gap: 20px; flex-wrap: wrap; }
+    button { padding: 10px 20px; margin: 20px 0; }
+  </style>
+</head>
+<body>
+  <h1>Lisa Icon Generator</h1>
+  <p>Cliquez sur le bouton pour télécharger les icônes PNG.</p>
+
+  <div class="icons">
+    <div>
+      <h3>16x16</h3>
+      <canvas id="icon16" width="16" height="16"></canvas>
+    </div>
+    <div>
+      <h3>48x48</h3>
+      <canvas id="icon48" width="48" height="48"></canvas>
+    </div>
+    <div>
+      <h3>128x128</h3>
+      <canvas id="icon128" width="128" height="128"></canvas>
+    </div>
+  </div>
+
+  <button onclick="downloadAll()">Télécharger tous les icônes</button>
+
+  <script>
+    function drawIcon(canvas) {
+      const ctx = canvas.getContext('2d');
+      const size = canvas.width;
+      const center = size / 2;
+      const radius = size * 0.44;
+
+      // Gradient background
+      const gradient = ctx.createLinearGradient(0, 0, size, size);
+      gradient.addColorStop(0, '#667eea');
+      gradient.addColorStop(1, '#764ba2');
+
+      // Circle
+      ctx.beginPath();
+      ctx.arc(center, center, radius, 0, Math.PI * 2);
+      ctx.fillStyle = gradient;
+      ctx.fill();
+
+      // Eyes
+      const eyeY = center * 0.8;
+      const eyeRadius = size * 0.08;
+      const pupilRadius = size * 0.04;
+
+      // Left eye
+      ctx.beginPath();
+      ctx.arc(center - size * 0.15, eyeY, eyeRadius, 0, Math.PI * 2);
+      ctx.fillStyle = 'white';
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(center - size * 0.15, eyeY, pupilRadius, 0, Math.PI * 2);
+      ctx.fillStyle = '#333';
+      ctx.fill();
+
+      // Right eye
+      ctx.beginPath();
+      ctx.arc(center + size * 0.15, eyeY, eyeRadius, 0, Math.PI * 2);
+      ctx.fillStyle = 'white';
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(center + size * 0.15, eyeY, pupilRadius, 0, Math.PI * 2);
+      ctx.fillStyle = '#333';
+      ctx.fill();
+
+      // Smile
+      ctx.beginPath();
+      ctx.arc(center, center, size * 0.25, 0.2 * Math.PI, 0.8 * Math.PI);
+      ctx.strokeStyle = 'white';
+      ctx.lineWidth = size * 0.05;
+      ctx.lineCap = 'round';
+      ctx.stroke();
+    }
+
+    function downloadCanvas(canvas, filename) {
+      const link = document.createElement('a');
+      link.download = filename;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }
+
+    function downloadAll() {
+      downloadCanvas(document.getElementById('icon16'), 'icon16.png');
+      setTimeout(() => downloadCanvas(document.getElementById('icon48'), 'icon48.png'), 100);
+      setTimeout(() => downloadCanvas(document.getElementById('icon128'), 'icon128.png'), 200);
+    }
+
+    // Draw all icons on load
+    drawIcon(document.getElementById('icon16'));
+    drawIcon(document.getElementById('icon48'));
+    drawIcon(document.getElementById('icon128'));
+  </script>
+</body>
+</html>

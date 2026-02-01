@@ -10,10 +10,128 @@
 
 Lisa est un assistant IA **100% navigateur** qui perçoit, raisonne et agit. Elle combine vision, audition, toucher, environnement et proprioception pour créer une expérience utilisateur immersive.
 
-**Status**: ✅ **Production-Ready** | **Score UX/UI**: 10/10 | **Accessibilité**: WCAG 2.1 AA | **Dernière MàJ**: 23 Jan 2026
+**Status**: ✅ **Production-Ready** | **Score UX/UI**: 10/10 | **Accessibilité**: WCAG 2.1 AA | **Dernière MàJ**: 31 Jan 2026
 
 [![Android](https://img.shields.io/badge/Android-Capacitor-3DDC84.svg)](https://capacitorjs.com/)
 [![Gemini](https://img.shields.io/badge/Gemini_3-Supported-4285F4.svg)](https://ai.google.dev/)
+[![Telegram](https://img.shields.io/badge/Telegram-Bot-26A5E4.svg)](https://core.telegram.org/bots)
+[![Discord](https://img.shields.io/badge/Discord-Bot-5865F2.svg)](https://discord.js.org/)
+[![Chrome](https://img.shields.io/badge/Chrome-Extension-4285F4.svg)](#-extension-chrome)
+
+---
+
+## 🌟 Nouveautés - Modernisation OpenClaw (Jan 2026)
+
+Lisa intègre désormais des fonctionnalités inspirées d'[OpenClaw](https://github.com/openclaw/openclaw) :
+
+| Module | Description | Technologie |
+|--------|-------------|-------------|
+| **Telegram Bot** | Bot Telegram fonctionnel | grammy |
+| **Discord Bot** | Bot Discord avec commandes | discord.js |
+| **Model Failover** | Multi-provider avec fallback auto | OpenAI, Anthropic, Google, Ollama, Groq, Mistral |
+| **Voice Wake Pro** | Détection wake word avancée | Porcupine + Web Speech API |
+| **Edge TTS** | Synthèse vocale gratuite | Microsoft Edge TTS |
+| **Sessions Tools Pro** | Communication Agent-to-Agent | WebSocket |
+
+> Voir [OPENCLAW_VS_LISA_COMPARISON.md](OPENCLAW_VS_LISA_COMPARISON.md) pour les détails.
+
+---
+
+## 🌐 Extension Chrome (Computer Use)
+
+Lisa dispose d'une **extension Chrome** permettant le contrôle autonome du navigateur, similaire à Claude Computer Use.
+
+### Installation
+
+```bash
+# 1. Générer les icônes
+# Ouvrir apps/chrome-extension/generate-icons.html dans Chrome
+# Cliquer "Télécharger tous les icônes" → les placer dans icons/
+
+# 2. Installer dans Chrome
+# Aller à chrome://extensions/
+# Activer "Mode développeur"
+# "Charger l'extension non empaquetée" → sélectionner apps/chrome-extension
+```
+
+### Fonctionnalités
+
+| Fonctionnalité | Raccourci | Description |
+|----------------|-----------|-------------|
+| **Ouvrir Lisa** | `Ctrl+Shift+L` | Ouvre le popup |
+| **Screenshot** | `Ctrl+Shift+S` | Capture et envoie à Lisa pour analyse |
+| **Menu contextuel** | Clic droit | "Analyser avec Lisa" |
+
+### Commandes supportées
+
+| Commande | Description |
+|----------|-------------|
+| `browser.navigate` | Naviguer vers une URL |
+| `browser.click` | Cliquer sur un élément (sélecteur ou coordonnées) |
+| `browser.type` | Saisir du texte |
+| `browser.scroll` | Faire défiler la page |
+| `browser.screenshot` | Capturer la page |
+| `browser.evaluate` | Exécuter JavaScript |
+| `browser.getContent` | Extraire le contenu de la page |
+
+### Architecture
+
+```
+apps/chrome-extension/
+├── manifest.json      # Manifest V3
+├── background.js      # Service Worker (connexion Gateway)
+├── content.js         # Script injecté dans les pages
+├── popup.html/js      # Interface popup
+└── icons/             # Icônes PNG
+```
+
+> 📖 Voir [apps/chrome-extension/README.md](apps/chrome-extension/README.md) pour la documentation complète.
+
+---
+
+## 🖥️ Gateway & Contrôle Ordinateur
+
+Lisa intègre un **Gateway WebSocket** (inspiré d'OpenClaw) pour le contrôle de l'ordinateur.
+
+### Composants
+
+| Module | Description | Fichier |
+|--------|-------------|---------|
+| **GatewayServer** | Control plane WebSocket | `src/gateway/GatewayServer.ts` |
+| **DesktopController** | Souris, clavier, fenêtres | `src/gateway/DesktopController.ts` |
+| **BrowserController** | Automatisation navigateur | `src/gateway/BrowserController.ts` |
+| **ScreenCapture** | Screenshots et enregistrement | `src/gateway/ScreenCapture.ts` |
+| **NodeManager** | Contrôle multi-appareils | `src/gateway/NodeManager.ts` |
+
+### Exemple d'utilisation
+
+```typescript
+import { getDesktopController, getBrowserController, getScreenCapture } from './gateway';
+
+// Contrôle souris/clavier
+const desktop = getDesktopController();
+await desktop.mouseMove(500, 300);
+await desktop.mouseClick('left');
+await desktop.type("Bonjour Lisa!");
+await desktop.hotkey('save'); // Ctrl+S
+
+// Automatisation navigateur
+const browser = getBrowserController();
+await browser.navigate('https://google.com');
+await browser.type('#search', 'Lisa AI assistant');
+await browser.click('button[type="submit"]');
+
+// Capture d'écran
+const capture = getScreenCapture();
+const screenshot = await capture.captureScreen();
+await capture.startRecording();
+```
+
+### Sécurité
+
+- **blockedApps** : `['taskmgr', 'regedit', 'cmd', 'powershell']`
+- **safeMode** : Confirmation requise pour actions destructives
+- **allowedApps** : Whitelist optionnelle
 
 ---
 
@@ -432,6 +550,10 @@ function MyComponent() {
 |----------|-------------|
 | [SETUP_GUIDE.md](SETUP_GUIDE.md) | Installation détaillée |
 | [AUDIT_UX_UI_2025.md](AUDIT_UX_UI_2025.md) | Rapport accessibilité |
+| [OPENCLAW_VS_LISA_COMPARISON.md](OPENCLAW_VS_LISA_COMPARISON.md) | Comparaison OpenClaw vs Lisa |
+| [docs/MODULES_OPENCLAW.md](docs/MODULES_OPENCLAW.md) | Documentation modules OpenClaw |
+| [docs/GATEWAY.md](docs/GATEWAY.md) | Gateway & Contrôle Ordinateur |
+| [apps/chrome-extension/README.md](apps/chrome-extension/README.md) | Extension Chrome |
 
 ---
 
@@ -505,14 +627,157 @@ conversationExportService.download(blob, 'ma-conversation.md');
 
 ---
 
-## 🎯 Modèles IA Supportés
+## 🎯 Modèles IA Supportés (avec Failover)
 
-| Provider | Modèles |
-|----------|--------|
-| **Google Gemini** | Gemini 3 Pro, Gemini 3 Flash, Gemini 2.5 Pro/Flash |
-| **OpenAI** | GPT-4, GPT-3.5 Turbo |
-| **Anthropic** | Claude 3 |
-| **Local** | LM Studio, Ollama (tous modèles) |
+Lisa supporte **6 providers** avec basculement automatique :
+
+| Provider | Modèles | Failover |
+|----------|---------|----------|
+| **Google Gemini** | Gemini 3 Pro, Gemini 3 Flash, Gemini 2.5 Pro/Flash | ✅ |
+| **OpenAI** | GPT-4, GPT-4o, GPT-3.5 Turbo | ✅ |
+| **Anthropic** | Claude 3 Opus, Sonnet, Haiku | ✅ |
+| **Groq** | Llama 3, Mixtral (ultra-rapide) | ✅ |
+| **Mistral** | Mistral Large, Medium, Small | ✅ |
+| **Local** | LM Studio, Ollama (tous modèles) | ✅ |
+
+```typescript
+// Exemple Model Failover
+import { getModelFailover } from '@/gateway';
+
+const failover = getModelFailover({
+  models: [
+    { provider: 'anthropic', model: 'claude-3-sonnet', apiKey: '...', priority: 1 },
+    { provider: 'openai', model: 'gpt-4', apiKey: '...', priority: 2 },
+    { provider: 'ollama', model: 'llama3', baseUrl: 'http://localhost:11434', priority: 3 },
+  ],
+  maxRetries: 3,
+  timeoutMs: 30000,
+});
+
+const response = await failover.complete({
+  messages: [{ role: 'user', content: 'Bonjour Lisa!' }],
+});
+```
+
+---
+
+## 📱 Channels de Communication
+
+### Telegram Bot
+
+```typescript
+import { getTelegramBot } from '@/gateway';
+
+const bot = getTelegramBot({ 
+  token: process.env.TELEGRAM_BOT_TOKEN,
+  allowedUsers: ['123456789'], // Optional whitelist
+});
+
+bot.setMessageHandler(async (msg) => {
+  // Traiter le message et retourner la réponse
+  return `Bonjour ${msg.firstName}! Tu as dit: ${msg.text}`;
+});
+
+await bot.start();
+```
+
+**Commandes disponibles:**
+- `/start` - Démarrer la conversation
+- `/status` - État de Lisa
+- `/mood` - Humeur actuelle
+- `/reset` - Réinitialiser la conversation
+
+### Discord Bot
+
+```typescript
+import { getDiscordBot } from '@/gateway';
+
+const discord = getDiscordBot({
+  token: process.env.DISCORD_BOT_TOKEN,
+  commandPrefix: '!lisa',
+});
+
+discord.setMessageHandler(async (msg) => {
+  return `Salut ${msg.displayName}! ${msg.text}`;
+});
+
+await discord.start();
+```
+
+**Commandes disponibles:**
+- `!lisa help` - Aide
+- `!lisa status` - État
+- `!lisa mood` - Humeur
+- `!lisa reset` - Réinitialiser
+- `@Lisa <message>` - Mentionner Lisa
+
+---
+
+## 🎤 Voice Wake & TTS
+
+### Voice Wake Pro (Porcupine)
+
+```typescript
+import { getVoiceWakePro } from '@/gateway';
+
+const voiceWake = await getVoiceWakePro({
+  accessKey: process.env.PICOVOICE_ACCESS_KEY, // Optionnel
+  wakeWords: ['Lisa', 'Hey Lisa'],
+  sensitivity: 0.5,
+});
+
+voiceWake.on('wake', (event) => {
+  console.log(`Wake word détecté: ${event.keyword}`);
+});
+
+await voiceWake.start();
+```
+
+### Edge TTS (Gratuit)
+
+```typescript
+import { getEdgeTTS, LISA_VOICES } from '@/gateway';
+
+const tts = getEdgeTTS({
+  voice: 'fr-FR-DeniseNeural', // Voix française naturelle
+  rate: '+0%',
+  pitch: '+0Hz',
+});
+
+await tts.initialize();
+await tts.speak("Bonjour! Je suis Lisa, ta compagne virtuelle.");
+```
+
+**Voix françaises disponibles:**
+- `fr-FR-DeniseNeural` (Femme, France)
+- `fr-FR-HenriNeural` (Homme, France)
+- `fr-FR-EloiseNeural` (Femme, France)
+- `fr-CA-SylvieNeural` (Femme, Canada)
+
+---
+
+## 🤝 Agent-to-Agent Communication
+
+```typescript
+import { getSessionsTools } from '@/gateway';
+
+const sessions = getSessionsTools();
+
+// Lister les sessions actives
+const activeSessions = await sessions.sessionsList({ status: 'active' });
+
+// Envoyer un message à une autre session
+const result = await sessions.sessionsSend('session-123', 'Bonjour!', {
+  replyBack: true,
+  timeout: 30000,
+});
+
+// Créer une nouvelle session
+const newSession = await sessions.sessionsSpawn('Assistant Recherche', {
+  channelType: 'internal',
+  initialMessages: [{ role: 'system', content: 'Tu es un assistant de recherche.' }],
+});
+```
 
 ---
 
