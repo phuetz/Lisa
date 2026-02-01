@@ -51,6 +51,13 @@ self.addEventListener('activate', event => {
 
 // Fetch event - serve from cache if available
 self.addEventListener('fetch', event => {
+  // Skip external URLs - let the browser handle them directly
+  // This avoids CSP violations when service worker tries to fetch cross-origin resources
+  const url = new URL(event.request.url);
+  if (url.origin !== self.location.origin) {
+    return; // Don't intercept, let browser handle normally
+  }
+
   event.respondWith(
     caches.match(event.request)
       .then(response => {
