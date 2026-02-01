@@ -10,6 +10,7 @@ import { Send, Mic, MicOff, Volume2, VolumeX, Settings2, Paperclip, Image, X, St
 import { useChatHistoryStore } from '../../store/chatHistoryStore';
 import { useChatSettingsStore } from '../../store/chatSettingsStore';
 import { aiService, type AIMessage, type AIProvider } from '../../services/aiService';
+import { aiWithToolsService } from '../../services/AIWithToolsService';
 // LMStudioService importé via aiService
 import { agentRouterService } from '../../services/AgentRouterService';
 import { DEFAULT_MODELS } from '../../store/chatSettingsStore';
@@ -294,6 +295,44 @@ export const ChatInput = () => {
           image: m.image
         }));
 
+      // Add system prompt for tool calling
+      // This is critical - tells the LLM to use tools for web searches
+      const toolCallingSystemPrompt = `Tu es Lisa, une assistante IA avec accès à des outils.
+
+## RÈGLE CRITIQUE - APPEL DE FONCTIONS OBLIGATOIRE
+
+Tu as accès à ces fonctions que tu DOIS APPELER:
+
+### RECHERCHE WEB
+- **web_search(query)** - Recherche actualités, météo, TV, prix, événements
+- **fetch_url(url)** - Récupère le contenu d'une page web
+- **get_current_datetime()** - Date et heure actuelle
+
+### GESTION DES TÂCHES (TODOS)
+- **add_todo(text, priority?)** - Ajouter une tâche. Priority: "low", "medium", "high"
+- **list_todos(filter?)** - Lister les tâches. Filter: "all", "active", "completed"
+- **complete_todo(id?, text?)** - Marquer une tâche terminée (par ID ou texte)
+- **remove_todo(id?, text?)** - Supprimer une tâche
+- **clear_completed_todos()** - Supprimer toutes les tâches terminées
+
+## COMPORTEMENT OBLIGATOIRE
+
+1. "Ajoute une tâche..." → APPELLE add_todo
+2. "Liste mes tâches" / "Quelles tâches" → APPELLE list_todos
+3. "J'ai fini..." / "Terminé..." → APPELLE complete_todo
+4. "Supprime la tâche..." → APPELLE remove_todo
+5. Question actualités/TV/météo → APPELLE web_search
+
+NE DIS JAMAIS "je n'ai pas de système de tâches" - TU AS add_todo et list_todos!
+NE DIS JAMAIS "je n'ai pas accès aux informations en temps réel" - TU AS web_search!
+
+Réponds en français, sois concis.`;
+
+      history.unshift({
+        role: 'system',
+        content: toolCallingSystemPrompt,
+      });
+
       // Add long-term memory context if enabled
       if (longTermMemoryEnabled) {
         try {
@@ -337,24 +376,57 @@ export const ChatInput = () => {
       }
 
       // Configure Unified AI Service
+      // Determine if we should use native tool calling
+      const TOOL_CALLING_PROVIDERS = ['gemini', 'openai', 'anthropic'];
+      let effectiveProvider = currentModel.provider as AIProvider;
+      let effectiveModel = currentModel.id;
+
+      // If provider doesn't support tool calling, switch to Gemini for web search capabilities
+      const providerSupportsTools = TOOL_CALLING_PROVIDERS.includes(effectiveProvider);
+      if (!providerSupportsTools) {
+        console.log('[ChatInput] Provider', effectiveProvider, 'does not support tool calling. Switching to Gemini.');
+        effectiveProvider = 'gemini' as AIProvider;
+        effectiveModel = 'gemini-2.0-flash';
+      }
+
       aiService.updateConfig({
-        provider: currentModel.provider as AIProvider,
-        model: currentModel.id,
+        provider: effectiveProvider,
+        model: effectiveModel,
         temperature,
         maxTokens,
         baseURL: currentModel.provider === 'lmstudio' ? '/lmstudio/v1' : undefined
       });
 
+      // Configure tool calling service
+      aiWithToolsService.setConfig({
+        enableTools: true,
+        showToolUsage: true,
+        maxIterations: 5
+      });
+
+      console.log('[ChatInput] Using provider:', effectiveProvider, 'model:', effectiveModel, 'useNativeTools:', true);
+
       if (streamingEnabled) {
         let fullResponse = '';
-        
+
         // Show streaming message while receiving
+        // Use aiWithToolsService for native tool calling
         try {
-          for await (const chunk of aiService.streamMessage(history)) {
+          for await (const chunk of aiWithToolsService.streamMessage(history)) {
             if (controller.signal.aborted) break;
+
+            // Check for API errors
+            if (chunk.error) {
+              console.error('[ChatInput] Stream error:', chunk.error);
+              throw new Error(chunk.error);
+            }
+
+            if (chunk.content) {
+              fullResponse += chunk.content;
+              setStreamingMessage(fullResponse);
+            }
+
             if (chunk.done) break;
-            fullResponse += chunk.content;
-            setStreamingMessage(fullResponse);
           }
         } catch (error) {
           // Save partial response on error before rethrowing
@@ -369,10 +441,10 @@ export const ChatInput = () => {
           if (!controller.signal.aborted) throw error;
           return; // Exit early on abort
         }
-        
+
         // Clear streaming and add final message
         setStreamingMessage(null);
-        
+
         if (!fullResponse) {
           addMessage({
             role: 'assistant',
@@ -381,30 +453,31 @@ export const ChatInput = () => {
           });
           return;
         }
-        
+
         addMessage({
           role: 'assistant',
           content: fullResponse,
           conversationId: convId,
         });
-        
+
         const duration = Math.round(performance.now() - startTime);
         if (!incognitoMode) {
           if (longTermMemoryEnabled) {
             longTermMemoryService.extractAndRemember(userMessage, fullResponse).catch(console.warn);
           }
           if (autoSpeakEnabled) speak(fullResponse.replace(/[*#_`]/g, ''));
-          console.log(`[Chat] Response completed in ${duration}ms, ~${Math.round(fullResponse.length / 4)} tokens`);
         }
       } else {
-        const fullResponse = await aiService.sendMessage(history);
+        // Non-streaming mode also uses tool calling
+        const result = await aiWithToolsService.sendMessage(history);
+        const fullResponse = result.content;
         const duration = Math.round(performance.now() - startTime);
         if (!incognitoMode) {
           addMessage({
             role: 'assistant',
             content: fullResponse || 'Désolé, je n\'ai pas pu générer de réponse.',
             conversationId: convId,
-            metadata: { model: currentModel.id, duration, tokens: Math.round(fullResponse.length / 4) },
+            metadata: { model: effectiveModel, duration, tokens: Math.round(fullResponse.length / 4), toolsUsed: result.toolsUsed.length },
           });
           if (longTermMemoryEnabled && fullResponse) {
             longTermMemoryService.extractAndRemember(userMessage, fullResponse).catch(console.warn);
