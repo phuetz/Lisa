@@ -38,26 +38,41 @@ const webSearchTool: ToolDefinition = {
     const query = sanitizeUserInput(args.query as string);
     const numResults = Math.min(args.num_results as number || 5, 10);
 
+    console.log('[WebTools] web_search called with query:', query);
+
     // Try Serper API first (if configured)
     const serperKey = import.meta.env.VITE_SERPER_API_KEY;
     if (serperKey) {
-      return searchWithSerper(query, numResults, serperKey);
+      console.log('[WebTools] Using Serper API');
+      try {
+        return await searchWithSerper(query, numResults, serperKey);
+      } catch (error) {
+        console.error('[WebTools] Serper failed, trying fallbacks:', error);
+      }
     }
 
     // Fallback to Google Custom Search
     const googleKey = import.meta.env.VITE_GOOGLE_API_KEY;
     const googleCx = import.meta.env.VITE_GOOGLE_CX;
     if (googleKey && googleCx) {
-      return searchWithGoogle(query, numResults, googleKey, googleCx);
+      console.log('[WebTools] Using Google Custom Search');
+      try {
+        return await searchWithGoogle(query, numResults, googleKey, googleCx);
+      } catch (error) {
+        console.error('[WebTools] Google failed, trying DuckDuckGo:', error);
+      }
     }
 
     // Fallback to DuckDuckGo (no API key needed, but limited)
+    console.log('[WebTools] Using DuckDuckGo (limited)');
     return searchWithDuckDuckGo(query, numResults);
   }
 };
 
 async function searchWithSerper(query: string, numResults: number, apiKey: string) {
   try {
+    console.log('[WebTools] Serper request:', { query, numResults });
+
     const response = await fetch('https://google.serper.dev/search', {
       method: 'POST',
       headers: {
@@ -66,16 +81,25 @@ async function searchWithSerper(query: string, numResults: number, apiKey: strin
       },
       body: JSON.stringify({
         q: query,
-        num: numResults
+        num: numResults,
+        gl: 'fr',  // Country: France
+        hl: 'fr'   // Language: French
       })
     });
 
+    console.log('[WebTools] Serper response status:', response.status);
+
     if (!response.ok) {
-      throw new Error(`Serper API error: ${response.status}`);
+      const errorText = await response.text();
+      console.error('[WebTools] Serper error response:', errorText);
+      throw new Error(`Serper API error: ${response.status} - ${errorText}`);
     }
 
     const data = await response.json();
+    console.log('[WebTools] Serper data keys:', Object.keys(data));
+
     const results = data.organic?.slice(0, numResults) || [];
+    console.log('[WebTools] Serper results count:', results.length);
 
     return {
       source: 'serper',
@@ -350,6 +374,131 @@ const getCurrentDateTimeTool: ToolDefinition = {
 };
 
 // ============================================================================
+// Get News Tool (combines search + fetch)
+// ============================================================================
+
+const getNewsTool: ToolDefinition = {
+  name: 'get_news',
+  description: 'Get current news articles. This tool searches for news and automatically fetches content from top sources. Use this when the user asks for news, actualités, or current events.',
+  parameters: {
+    type: 'object',
+    properties: {
+      topic: {
+        type: 'string',
+        description: 'Optional topic to search news about (e.g., "France", "sports", "technology"). Leave empty for general news.'
+      },
+      num_articles: {
+        type: 'number',
+        description: 'Number of articles to fetch (default: 3, max: 5)'
+      }
+    }
+  },
+  handler: async (args) => {
+    const topic = args.topic ? sanitizeUserInput(args.topic as string) : '';
+    const numArticles = Math.min(args.num_articles as number || 3, 5);
+
+    console.log('[WebTools] get_news called:', { topic, numArticles });
+
+    // Build search query for news
+    const searchQuery = topic
+      ? `${topic} actualités aujourd'hui`
+      : `actualités France aujourd'hui`;
+
+    // First, search for news
+    const serperKey = import.meta.env.VITE_SERPER_API_KEY;
+    let searchResults: Array<{ title: string; url: string; snippet: string }> = [];
+
+    if (serperKey) {
+      try {
+        // Use Serper's news endpoint for better results
+        const response = await fetch('https://google.serper.dev/news', {
+          method: 'POST',
+          headers: {
+            'X-API-KEY': serperKey,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            q: searchQuery,
+            num: numArticles + 2, // Get a few extra in case some fail
+            gl: 'fr',
+            hl: 'fr'
+          })
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          searchResults = (data.news || []).slice(0, numArticles + 2).map((r: { title: string; link: string; snippet: string }) => ({
+            title: r.title,
+            url: r.link,
+            snippet: r.snippet
+          }));
+          console.log('[WebTools] News search found:', searchResults.length, 'articles');
+        }
+      } catch (error) {
+        console.error('[WebTools] News search failed:', error);
+      }
+    }
+
+    // Fallback to regular search if news search failed
+    if (searchResults.length === 0) {
+      try {
+        const searchResponse = await webSearchTool.handler({ query: searchQuery, num_results: numArticles + 2 });
+        if (searchResponse && 'results' in searchResponse) {
+          searchResults = searchResponse.results as Array<{ title: string; url: string; snippet: string }>;
+        }
+      } catch (error) {
+        console.error('[WebTools] Fallback search failed:', error);
+      }
+    }
+
+    if (searchResults.length === 0) {
+      return {
+        error: 'Impossible de trouver des actualités pour le moment',
+        suggestion: 'Réessayez plus tard ou spécifiez un sujet différent'
+      };
+    }
+
+    // Fetch content from top articles
+    const articles: Array<{
+      title: string;
+      url: string;
+      snippet: string;
+      content?: string;
+      fetchError?: string;
+    }> = [];
+
+    for (const result of searchResults.slice(0, numArticles)) {
+      const article: typeof articles[0] = {
+        title: result.title,
+        url: result.url,
+        snippet: result.snippet
+      };
+
+      // Try to fetch the full content
+      try {
+        const fetchResult = await fetchUrlTool.handler({ url: result.url, extract_type: 'text' });
+        if (fetchResult && 'content' in fetchResult && typeof fetchResult.content === 'string') {
+          // Limit content to avoid overwhelming the context
+          article.content = fetchResult.content.slice(0, 2000);
+        }
+      } catch (error) {
+        article.fetchError = 'Contenu non disponible';
+        console.warn('[WebTools] Failed to fetch article:', result.url);
+      }
+
+      articles.push(article);
+    }
+
+    return {
+      topic: topic || 'actualités générales',
+      fetchedAt: new Date().toISOString(),
+      articlesCount: articles.length,
+      articles
+    };
+  }
+};
+
+// ============================================================================
 // Registration
 // ============================================================================
 
@@ -360,15 +509,16 @@ export function registerWebTools(): void {
   toolCallingService.registerTool(webSearchTool);
   toolCallingService.registerTool(fetchUrlTool);
   toolCallingService.registerTool(getCurrentDateTimeTool);
+  toolCallingService.registerTool(getNewsTool);
 
-  console.log('[WebTools] Registered: web_search, fetch_url, get_current_datetime');
+  console.log('[WebTools] Registered: web_search, fetch_url, get_current_datetime, get_news');
 }
 
 /**
  * Get all web tool definitions
  */
 export function getWebTools(): ToolDefinition[] {
-  return [webSearchTool, fetchUrlTool, getCurrentDateTimeTool];
+  return [webSearchTool, fetchUrlTool, getCurrentDateTimeTool, getNewsTool];
 }
 
-export { webSearchTool, fetchUrlTool, getCurrentDateTimeTool };
+export { webSearchTool, fetchUrlTool, getCurrentDateTimeTool, getNewsTool };

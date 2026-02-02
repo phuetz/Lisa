@@ -18,9 +18,14 @@ import { aiService, type AIMessage, type AIStreamChunk, type AIProvider } from '
 import { toolCallingService, type ToolCall, type ToolResult, type ToolDefinition } from './ToolCallingService';
 import { registerWebTools, getWebTools } from './WebTools';
 import { registerTodoTools, getTodoTools } from './TodoTools';
+import { sanitizeMessagesForProvider } from './ToolSanitizer';
+import { toolLogger } from './ToolLogger';
+import { toolPolicyService } from './ToolPolicy';
 
 // Re-export for external use
 export { getWebTools, getTodoTools };
+export { toolLogger } from './ToolLogger';
+export { toolPolicyService, type ToolPolicy } from './ToolPolicy';
 
 // ============================================================================
 // Types
@@ -62,6 +67,9 @@ const DEFAULT_CONFIG: AIWithToolsConfig = {
   showToolUsage: true
 };
 
+/** Maximum number of messages to keep in history */
+const MAX_HISTORY_MESSAGES = 20;
+
 // ============================================================================
 // AI With Tools Service
 // ============================================================================
@@ -99,6 +107,36 @@ class AIWithToolsService {
   }
 
   /**
+   * Limit and sanitize messages before sending to API
+   * OpenClaw Pattern: sanitization must happen AFTER history limiting
+   */
+  private sanitizeMessages(messages: AIMessage[], provider: AIProvider): AIMessage[] {
+    let sanitized = [...messages];
+
+    // 1. Keep system message if present
+    const systemMessage = sanitized.find(m => m.role === 'system');
+    const otherMessages = sanitized.filter(m => m.role !== 'system');
+
+    // 2. Limit history to prevent context overflow
+    if (otherMessages.length > MAX_HISTORY_MESSAGES) {
+      toolLogger.logSanitized('limit_history', {
+        before: otherMessages.length,
+        after: MAX_HISTORY_MESSAGES
+      });
+      sanitized = [
+        ...(systemMessage ? [systemMessage] : []),
+        ...otherMessages.slice(-MAX_HISTORY_MESSAGES)
+      ];
+    }
+
+    // 3. CRITICAL: Re-validate after limiting (OpenClaw pattern)
+    // This fixes orphaned tool results and consecutive same-role messages
+    sanitized = sanitizeMessagesForProvider(sanitized, provider);
+
+    return sanitized;
+  }
+
+  /**
    * Send a message with tool support (non-streaming)
    */
   async sendMessage(messages: AIMessage[]): Promise<AIWithToolsResponse> {
@@ -132,10 +170,12 @@ class AIWithToolsService {
   private async sendWithToolLoop(messages: AIMessage[]): Promise<AIWithToolsResponse> {
     const toolsUsed: ToolUsageInfo[] = [];
     let iterations = 0;
-    let currentMessages = [...messages];
 
     const config = aiService.getConfig();
     const provider = config.provider;
+
+    // Sanitize messages before starting
+    let currentMessages = this.sanitizeMessages(messages, provider);
 
     while (iterations < this.config.maxIterations) {
       iterations++;
@@ -162,16 +202,33 @@ class AIWithToolsService {
       console.log(`[AIWithTools] Executing ${toolCalls.length} tool calls (${rawToolCalls.length} before dedup)`);
 
       for (const call of toolCalls) {
-        const startTime = Date.now();
-        const result = await toolCallingService.executeTool(call);
-        const duration = Date.now() - startTime;
+        // Log tool call start
+        const startTime = toolLogger.logCall(call.name, call.arguments);
+        let result: ToolResult;
 
-        toolsUsed.push({
-          toolName: call.name,
-          arguments: call.arguments,
-          result: JSON.parse(result.content),
-          duration
-        });
+        try {
+          result = await toolCallingService.executeTool(call);
+          const duration = Date.now() - startTime;
+
+          // Log success
+          let parsedResult: unknown;
+          try {
+            parsedResult = JSON.parse(result.content);
+          } catch {
+            parsedResult = { raw: result.content };
+          }
+          toolLogger.logResult(call.name, parsedResult, startTime);
+
+          toolsUsed.push({
+            toolName: call.name,
+            arguments: call.arguments,
+            result: parsedResult,
+            duration
+          });
+        } catch (error) {
+          toolLogger.logError(call.name, error instanceof Error ? error : String(error), startTime);
+          throw error;
+        }
 
         // Add tool result to messages
         currentMessages = this.addToolResultToMessages(
@@ -195,10 +252,12 @@ class AIWithToolsService {
     messages: AIMessage[]
   ): AsyncGenerator<AIStreamChunk & { toolUsage?: ToolUsageInfo }> {
     let iterations = 0;
-    let currentMessages = [...messages];
 
     const config = aiService.getConfig();
     const provider = config.provider;
+
+    // Sanitize messages before starting
+    let currentMessages = this.sanitizeMessages(messages, provider);
 
     console.log('[AIWithTools] streamWithToolLoop - provider:', provider, 'maxIterations:', this.config.maxIterations);
 
@@ -249,17 +308,33 @@ class AIWithToolsService {
           };
         }
 
-        const startTime = Date.now();
-        const result = await toolCallingService.executeTool(call);
-        const duration = Date.now() - startTime;
+        // Log tool call start
+        const startTime = toolLogger.logCall(call.name, call.arguments);
 
-        // Parse result safely
         let parsedResult: unknown;
+        let duration: number;
+        let result: ToolResult;
+
         try {
-          parsedResult = JSON.parse(result.content);
-        } catch {
-          console.warn('[AIWithTools] Failed to parse tool result:', result.content);
-          parsedResult = { raw: result.content };
+          result = await toolCallingService.executeTool(call);
+          duration = Date.now() - startTime;
+
+          // Parse result safely
+          try {
+            parsedResult = JSON.parse(result.content);
+          } catch {
+            console.warn('[AIWithTools] Failed to parse tool result:', result.content);
+            parsedResult = { raw: result.content };
+          }
+
+          // Log success
+          toolLogger.logResult(call.name, parsedResult, startTime);
+        } catch (error) {
+          duration = Date.now() - startTime;
+          toolLogger.logError(call.name, error instanceof Error ? error : String(error), startTime);
+          parsedResult = { error: error instanceof Error ? error.message : String(error) };
+          // Create error result for message chain
+          result = { success: false, content: JSON.stringify(parsedResult) };
         }
 
         const toolUsage: ToolUsageInfo = {
@@ -599,7 +674,7 @@ class AIWithToolsService {
   /**
    * Detect what type of request this is (todo, web_search, general)
    */
-  private detectRequestType(messages: AIMessage[]): 'todo' | 'web' | 'general' {
+  private detectRequestType(messages: AIMessage[]): 'todo' | 'web' | 'news' | 'general' {
     // Find the ORIGINAL user message (not function responses which are encoded as user role)
     // Skip messages that look like JSON (function call/response markers)
     const userMessages = messages.filter(m => {
@@ -641,9 +716,20 @@ class AIWithToolsService {
       return 'todo';
     }
 
-    // Web search triggers
-    const webTriggers = [
+    // NEWS triggers - specific to actualités (before general web)
+    const newsTriggers = [
       'actualités', 'actualité', 'actu', 'news', 'nouvelles',
+      'quoi de neuf', 'qu\'est-ce qui se passe', 'dernières infos',
+      'journal', 'informations du jour'
+    ];
+
+    if (newsTriggers.some(trigger => content.includes(trigger))) {
+      console.log('[AIWithTools] Detected NEWS request');
+      return 'news';
+    }
+
+    // Web search triggers (other than news)
+    const webTriggers = [
       'programme tv', 'programme télé', 'télé ce soir', 'tv ce soir',
       'météo', 'meteo', 'temps qu\'il fait',
       'prix de', 'combien coûte', 'recherche', 'cherche sur le web',
@@ -660,27 +746,45 @@ class AIWithToolsService {
 
   /**
    * Get the appropriate tools for a given request type
+   * Also applies policy-based filtering
    */
-  private getToolsForRequestType(requestType: 'todo' | 'web' | 'general'): ToolDefinition[] {
+  private getToolsForRequestType(requestType: 'todo' | 'web' | 'news' | 'general'): ToolDefinition[] {
     const todoTools = getTodoTools();
     const webTools = getWebTools();
+
+    let tools: ToolDefinition[];
 
     switch (requestType) {
       case 'todo':
         // ONLY return todo tools to force Gemini to use them
-        console.log('[AIWithTools] Providing TODO tools only:', todoTools.map(t => t.name));
-        return todoTools;
+        tools = todoTools;
+        console.log('[AIWithTools] Providing TODO tools only:', tools.map(t => t.name));
+        break;
+      case 'news':
+        // Return ONLY get_news tool to force it to be used
+        tools = webTools.filter(t => t.name === 'get_news');
+        console.log('[AIWithTools] Providing NEWS tool only:', tools.map(t => t.name));
+        break;
       case 'web':
         // Return web tools for web-related queries
-        console.log('[AIWithTools] Providing WEB tools:', webTools.map(t => t.name));
-        return webTools;
+        tools = webTools;
+        console.log('[AIWithTools] Providing WEB tools:', tools.map(t => t.name));
+        break;
       case 'general':
       default:
         // Return all tools for general queries
-        const allTools = [...todoTools, ...webTools];
-        console.log('[AIWithTools] Providing ALL tools:', allTools.map(t => t.name));
-        return allTools;
+        tools = [...todoTools, ...webTools];
+        console.log('[AIWithTools] Providing ALL tools:', tools.map(t => t.name));
+        break;
     }
+
+    // Apply policy-based filtering
+    const filteredTools = toolPolicyService.filterTools(tools);
+    if (filteredTools.length !== tools.length) {
+      console.log('[AIWithTools] After policy filter:', filteredTools.map(t => t.name));
+    }
+
+    return filteredTools;
   }
 
   /**
