@@ -10,6 +10,90 @@ Lisa est conçue comme un assistant virtuel moderne qui:
 - **Respecte la vie privée**: Les données sensibles restent sur l'appareil de l'utilisateur
 - **Utilise des technologies web modernes**: WebRTC, TensorFlow.js, Web Speech API, Notifications API
 - **S'adapte à l'utilisateur**: Interface contextuelle qui répond à l'attention et aux intentions de l'utilisateur
+- **Contrôle complet de l'ordinateur**: Automatisation du bureau via Code Buddy (inspiré d'Open Interpreter)
+
+## Code Buddy - Contrôle Informatique par IA
+
+Code Buddy est le module de contrôle d'ordinateur de Lisa, inspiré par [Open Interpreter](https://github.com/openinterpreter/open-interpreter). Il permet à l'IA de contrôler votre ordinateur de manière autonome.
+
+### Fonctionnalités
+
+| Fonctionnalité | Description |
+|----------------|-------------|
+| **Capture d'écran** | Screenshots en temps réel |
+| **Contrôle souris** | Clics, mouvements, défilement, drag & drop |
+| **Contrôle clavier** | Saisie de texte, raccourcis clavier |
+| **Détection d'éléments** | OCR pour trouver du texte à l'écran |
+| **Détection d'icônes** | Computer vision pour trouver des icônes (close, minimize, search, menu...) |
+| **Gestion du presse-papiers** | Lecture et écriture |
+| **Gestion de fichiers** | Lecture, écriture, listage de répertoires |
+| **Recherche web** | Recherche silencieuse sans ouvrir de navigateur |
+| **Système de compétences** | Enregistrement et réutilisation d'actions |
+
+### Installation du Backend Desktop
+
+```bash
+cd packages/lisa-desktop
+pip install aiohttp pyautogui pillow pyperclip pytesseract opencv-python numpy
+python src/server.py
+```
+
+Le serveur démarre sur `http://localhost:8765`.
+
+### API Computer (style Open Interpreter)
+
+```typescript
+import { computer } from './services/ComputerControlService';
+
+// Capture d'écran
+const screenshot = await computer.display.view();
+
+// Cliquer sur du texte ou des coordonnées
+await computer.mouse.click("Fichier");
+await computer.mouse.click({ x: 100, y: 200 });
+
+// Cliquer sur une icône détectée
+await computer.mouse.clickIcon("close");
+
+// Saisir du texte
+await computer.keyboard.write("Hello World!");
+
+// Raccourcis clavier
+await computer.keyboard.hotkey("ctrl", "s");
+
+// Recherche web silencieuse
+const results = await computer.browser.search("météo Paris");
+
+// Gestion de fichiers
+const content = await computer.files.read("/path/to/file.txt");
+await computer.files.write("/path/to/file.txt", "contenu");
+
+// Compétences réutilisables
+computer.skills.learn("ouvrir_chrome", "Ouvre Chrome et va sur Google", [
+  { keyboard: { type: 'hotkey', keys: ['win'] } },
+  { wait: 500 },
+  { keyboard: { type: 'write', text: 'chrome' } },
+  { keyboard: { type: 'press', key: 'enter' } }
+]);
+await computer.skills.run("ouvrir_chrome");
+```
+
+### Modes de sécurité
+
+| Mode | Description |
+|------|-------------|
+| `off` | Exécution automatique sans confirmation |
+| `ask` | Demande confirmation avant chaque action |
+| `auto` | Exécute sauf si action dangereuse détectée |
+
+### Profils préconfigurés
+
+- **default** - Mode équilibré avec confirmations
+- **fast** - Réponses rapides, auto-run activé
+- **vision** - Mode vision avec détection d'éléments
+- **safe** - Sécurité maximale, pas de contrôle machine
+- **local** - Utilise LM Studio en local
+- **coding** - Optimisé pour la génération de code
 
 ## Configuration
 

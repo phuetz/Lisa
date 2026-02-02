@@ -102,6 +102,9 @@ class AgentRegistry {
       { name: 'WorkflowCodeAgent', modulePath: '../implementations/WorkflowCodeAgent', priority: 'normal', domain: 'workflow' },
       { name: 'WorkflowHTTPAgent', modulePath: '../implementations/WorkflowHTTPAgent', priority: 'normal', domain: 'workflow' },
 
+      // Automation Agents
+      { name: 'CodeBuddyAgent', modulePath: '../implementations/CodeBuddyAgent', priority: 'normal', domain: 'integration', description: 'AI-powered computer control with vision and automation' },
+
       // Low Priority - Specialized features
       { name: 'MQTTAgent', modulePath: '../implementations/MQTTAgent', priority: 'low', domain: 'integration' },
       { name: 'MetaHumanAgent', modulePath: '../implementations/MetaHumanAgent', priority: 'low', domain: 'media' },

@@ -1,0 +1,54 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lisa-desktop"
+version = "1.0.0"
+description = "Desktop control backend for Lisa AI Assistant"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "Lisa Team"}
+]
+requires-python = ">=3.9"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+    "aiohttp>=3.9.0",
+    "pyautogui>=0.9.54",
+    "pillow>=10.0.0",
+    "pytesseract>=0.3.10",
+    "pyperclip>=1.8.2",
+    "opencv-python>=4.8.0",
+    "numpy>=1.24.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+]
+
+[project.scripts]
+lisa-desktop = "lisa_desktop.server:main"
+
+[project.urls]
+Homepage = "https://github.com/your-repo/lisa"
+Issues = "https://github.com/your-repo/lisa/issues"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-dir]
+"" = "src"
+lisa_desktop = "src"

@@ -24,7 +24,7 @@ function cspPlugin() {
     ? "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://accounts.google.com gsi.gstatic.com blob: https://cdn.jsdelivr.net"
     : "script-src 'self' 'wasm-unsafe-eval' https://accounts.google.com gsi.gstatic.com blob: https://cdn.jsdelivr.net";
   const workerSrc = "worker-src 'self' blob: https://cdn.jsdelivr.net";
-  const csp = `default-src 'self' https://accounts.google.com https://www.googleapis.com; img-src 'self' data: blob:; ${scriptSrc}; ${workerSrc}; style-src 'self' 'unsafe-inline'; connect-src 'self' data: ws://localhost:* http://localhost:* https://api.openai.com https://generativelanguage.googleapis.com https://api.anthropic.com https://accounts.google.com https://cdn.jsdelivr.net https://storage.googleapis.com`;
+  const csp = `default-src 'self' https://accounts.google.com https://www.googleapis.com; img-src 'self' data: blob:; ${scriptSrc}; ${workerSrc}; style-src 'self' 'unsafe-inline'; connect-src 'self' data: ws://localhost:* http://localhost:* https://api.openai.com https://generativelanguage.googleapis.com https://api.anthropic.com https://accounts.google.com https://cdn.jsdelivr.net https://storage.googleapis.com https://google.serper.dev https://api.duckduckgo.com https://www.googleapis.com`;
 
   return {
     name: 'csp-headers',
@@ -44,6 +44,10 @@ function cspPlugin() {
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react(), visionStatePlugin(), cspPlugin()],
+  server: {
+    port: 5180,
+    strictPort: true,
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
