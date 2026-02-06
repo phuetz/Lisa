@@ -20,7 +20,7 @@ export function ServiceProvider({ children }: ServiceProviderProps) {
     const initializeServices = async () => {
       try {
         // Initialize Pyodide for Python execution
-        await pyodideService.initialize();
+        await pyodideService.preload();
         console.log('[ServiceProvider] Pyodide initialized');
 
         // Start health monitoring
