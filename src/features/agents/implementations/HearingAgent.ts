@@ -84,7 +84,7 @@ export class HearingAgent implements BaseAgent {
     }
 
     // Get emotion from hearing percepts (Whisper + SER)
-    const appStoreModule = await import('../store/appStore');
+    const appStoreModule = await import('../../store/appStore');
     const useAppStore = appStoreModule.useAppStore;
     const percepts = useAppStore.getState().percepts
       .filter(p => p.modality === 'hearing')
@@ -248,7 +248,7 @@ export class HearingAgent implements BaseAgent {
     }
 
     // Get latest hearing percepts from store (Whisper transcriptions)
-    const appStoreModule = await import('../store/appStore');
+    const appStoreModule = await import('../../store/appStore');
     const useAppStore = appStoreModule.useAppStore;
     const percepts = useAppStore.getState().percepts
       .filter(p => p.modality === 'hearing')

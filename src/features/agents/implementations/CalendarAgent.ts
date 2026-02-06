@@ -51,7 +51,20 @@ export const DeleteEventParamsSchema = z.object({
 
 export const UpdateEventParamsSchema = z.object({
   eventId: z.string().min(1, 'Event ID is required'),
-  eventData: CreateEventParamsSchema.partial(), // Partial allows updating only some fields
+  eventData: z.object({
+    summary: z.string().min(1).optional(),
+    start: z.object({
+      dateTime: z.string().datetime(),
+      timeZone: z.string().optional(),
+    }).optional(),
+    end: z.object({
+      dateTime: z.string().datetime(),
+      timeZone: z.string().optional(),
+    }).optional(),
+    description: z.string().optional(),
+    location: z.string().optional(),
+    attendees: z.array(z.object({ email: z.string().email(), name: z.string().optional() })).optional(),
+  })
 });
 
 export const FindAvailableTimeParamsSchema = z.object({

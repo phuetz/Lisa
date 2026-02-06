@@ -1,7 +1,7 @@
 import type { Node, Edge } from 'reactflow';
 import type { ExecutionOptions, ExecutionResult } from './types/workflow.d';
-import { agentRegistry } from '../agents/AgentRegistry';
-import { SmallTalkAgent } from '../agents/SmallTalkAgent';
+import { agentRegistry } from '../features/agents/core/registry';
+import { SmallTalkAgent } from '../features/agents/implementations/SmallTalkAgent';
 
 /**
  * Classe WorkflowExecutor

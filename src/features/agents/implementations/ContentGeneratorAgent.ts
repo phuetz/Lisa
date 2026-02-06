@@ -13,7 +13,7 @@ import type {
   AgentParameter,
   BaseAgent
 } from '../core/types';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+// Import will be done dynamically to handle missing optional dependency
 
 /**
  * Supported content generation intents
@@ -52,18 +52,27 @@ export class ContentGeneratorAgent implements BaseAgent {
     'text_rewriting'
   ];
 
-  private genAI: GoogleGenerativeAI | null = null;
+  private genAI: any = null;
   private model: any = null;
 
   constructor() {
-    // Initialize Gemini API if key is available
+    // Initialize Gemini API if key is available (lazy loading)
     const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
     if (apiKey) {
+      this.initializeGeminiAsync(apiKey).catch(err => {
+        console.warn('[ContentGeneratorAgent] Failed to initialize Gemini API:', err.message);
+      });
+    }
+  }
+
+  private async initializeGeminiAsync(apiKey: string) {
+    try {
+      const { GoogleGenerativeAI } = await import(/* @vite-ignore */ '@google/generative-ai');
       this.genAI = new GoogleGenerativeAI(apiKey);
       this.model = this.genAI.getGenerativeModel({ model: "gemini-pro" });
       console.log('[ContentGeneratorAgent] Gemini API initialized');
-    } else {
-      console.warn('[ContentGeneratorAgent] No Gemini API key found. Set VITE_GEMINI_API_KEY in .env');
+    } catch (error) {
+      console.warn('[ContentGeneratorAgent] Gemini module not available, will use default responses');
     }
   }
 

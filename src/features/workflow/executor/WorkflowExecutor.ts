@@ -10,7 +10,13 @@
  * - Retry logic with exponential backoff
  * - Execution timeout per node
  * - Progress callbacks
+ * - SECURE: Uses SafeEvaluator instead of eval/new Function
  */
+
+import { safeEvaluate, safeEvaluateCondition, SafeEvaluationError } from './SafeEvaluator';
+
+// Re-export SafeEvaluationError for consumers
+export { SafeEvaluationError };
 
 type ExecutionData = Record<string, unknown>;
 
@@ -116,22 +122,31 @@ const nodeHandlers: Record<string, NodeHandler> = {
     }
   },
 
-  // Flux de contrôle
-  'condition': async (node) => {
+  // Flux de contrôle - Uses SafeEvaluator for secure condition evaluation
+  'condition': async (node, inputs) => {
     const { condition } = (node.config ?? Object.create(null)) as { condition?: string };
     if (typeof condition !== 'string') {
       throw new Error('Condition invalide pour le nœud condition');
     }
     try {
-      // Évaluation simple de la condition (à remplacer par une évaluation sécurisée)
-      const result = eval(condition); // ATTENTION: à remplacer par une sandbox!
-      return { result: Boolean(result) };
+      // SECURE: Using SafeEvaluator instead of eval()
+      // Context includes inputs and any config variables
+      const context: Record<string, unknown> = {
+        ...inputs,
+        ...(node.config ?? {}),
+      };
+      const result = safeEvaluateCondition(condition, context);
+      return { result };
     } catch (error) {
+      if (error instanceof SafeEvaluationError) {
+        throw new Error(`Erreur de sécurité dans la condition: ${error.message}`);
+      }
       throw new Error(`Erreur dans l'évaluation de condition: ${error instanceof Error ? error.message : String(error)}`);
     }
   },
 
-  // Code personnalisé
+  // Code personnalisé - Uses SafeEvaluator for secure expression evaluation
+  // NOTE: Full code execution requires CodeInterpreterAgent for complex scripts
   'code': async (node, inputs) => {
     const { code, language = 'javascript' } = (node.config ?? Object.create(null)) as {
       code?: string;
@@ -140,25 +155,51 @@ const nodeHandlers: Record<string, NodeHandler> = {
     if (typeof code !== 'string') {
       throw new Error('Code invalide pour le nœud code');
     }
-    
+
     try {
       if (language === 'javascript') {
-        // DANGER: À remplacer par une sandbox sécurisée comme VM2
-        const funcBody = `
-          const inputs = ${JSON.stringify(inputs)};
-          ${code}
-          return result;
-        `;
-        // Utiliser Function est dangereux - à remplacer par VM2
-        const result = new Function(funcBody)() as unknown;
-        return { result };
+        // SECURE: Using SafeEvaluator for expression evaluation
+        // For full code execution, use CodeInterpreterAgent via the agent registry
+        // SafeEvaluator supports: comparisons, arithmetic, property access, safe functions
+        const context: Record<string, unknown> = {
+          inputs,
+          data: inputs.data,
+          ...(node.config ?? {}),
+        };
+
+        // If code looks like a simple expression, evaluate it directly
+        // Otherwise, return an error suggesting to use CodeInterpreterAgent
+        const isSimpleExpression = !code.includes(';') &&
+                                    !code.includes('function') &&
+                                    !code.includes('=>') &&
+                                    !code.includes('for') &&
+                                    !code.includes('while') &&
+                                    !code.includes('if');
+
+        if (isSimpleExpression) {
+          const result = safeEvaluate(code, context);
+          return { result };
+        } else {
+          // For complex code, return a warning - full execution requires CodeInterpreterAgent
+          throw new SafeEvaluationError(
+            'Complex code execution is not allowed in workflow nodes for security reasons. ' +
+            'Use a simple expression or delegate to CodeInterpreterAgent for full code execution.'
+          );
+        }
       } else if (language === 'python') {
-        // Simuler l'exécution Python (à remplacer par Pyodide ou un service)
-        return { result: { success: true, message: "Python execution simulated" } };
+        // Python execution requires Pyodide or external service
+        // Return error suggesting to use CodeInterpreterAgent
+        throw new Error(
+          'Python execution requires CodeInterpreterAgent. ' +
+          'Use an agent node with CodeInterpreterAgent for Python code.'
+        );
       } else {
         throw new Error(`Language ${language} non supporté`);
       }
     } catch (error) {
+      if (error instanceof SafeEvaluationError) {
+        throw new Error(`Erreur de sécurité dans le code: ${error.message}`);
+      }
       throw new Error(`Erreur dans l'exécution du code: ${error instanceof Error ? error.message : String(error)}`);
     }
   },

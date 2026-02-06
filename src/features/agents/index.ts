@@ -7,7 +7,7 @@
  * les dépendances circulaires.
  */
 
-import { agentRegistry } from './registry';
+import { agentRegistry } from './core/registry';
 
 /**
  * Fonction d'initialisation (Legacy compatibility)
@@ -20,7 +20,10 @@ export const registerAllAgents = (): void => {
 };
 
 // Export des types et interfaces de base
-export * from '../features/agents/core/types';
+export * from './core/types';
 
 // Export du registre d'agents (Source unique de vérité)
-export { agentRegistry } from './registry';
+export { agentRegistry } from './core/registry';
+
+// Export des utilitaires enhanced
+export * from './core/registryEnhanced';

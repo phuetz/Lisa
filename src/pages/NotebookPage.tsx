@@ -6,6 +6,7 @@ import React, { useCallback } from 'react';
 import { OfficePageLayout } from '../components/layout/OfficePageLayout';
 import { useOfficeThemeStore } from '../store/officeThemeStore';
 import { NotebookEditor, type CellOutput } from '../components/notebook';
+import { safeEvaluate } from '../features/workflow/executor/SafeEvaluator';
 
 const NotebookPage: React.FC = () => {
   const { getCurrentColors } = useOfficeThemeStore();
@@ -40,8 +41,9 @@ const NotebookPage: React.FC = () => {
 
     if (lastLine && !lastLine.startsWith('#') && !lastLine.includes('=') && !lastLine.startsWith('import')) {
       try {
-        if (/^[\d\s+\-*/().]+$/.test(lastLine)) {
-          const result = eval(lastLine);
+        // Use SafeEvaluator instead of eval for security
+        const result = safeEvaluate(lastLine);
+        if (result !== undefined) {
           return [{
             output_type: 'execute_result',
             data: { 'text/plain': String(result) },
@@ -49,7 +51,7 @@ const NotebookPage: React.FC = () => {
           }];
         }
       } catch {
-        // Ignore eval errors
+        // Ignore evaluation errors - expression might not be evaluable
       }
 
       return [{

@@ -21,8 +21,8 @@ export {
   refreshWeather,
   refreshAirQuality 
 } from './environment';
-export { 
-  proprioceptionSense, 
+export {
+  proprioceptionSense,
   isProprioceptionReady,
   recordError,
   resetErrorCount,
@@ -31,8 +31,11 @@ export {
   updateModelStatus,
   updateMemoryMetrics,
   getUptime,
-  forceUpdate 
+  forceUpdate
 } from './proprioception';
+
+// SenseCoordinator - Unified sense management (recommended)
+export { senseCoordinator, SenseCoordinator } from '../features/senses';
 
 // Re-export all sense types
 export type {

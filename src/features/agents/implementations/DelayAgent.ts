@@ -1,4 +1,5 @@
-import { BaseAgent, AgentExecuteProps, AgentExecuteResult, AgentDomains } from "./types";
+import type { BaseAgent, AgentExecuteProps, AgentExecuteResult } from '../core/types';
+import { AgentDomains } from '../core/types';
 
 export class DelayAgent implements BaseAgent {
   name = "DelayAgent";

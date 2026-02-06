@@ -37,8 +37,7 @@ export class GeminiCodeAgent implements BaseAgent {
   }
 }
 
-// Enregistrement de l'agent dans le registre
-import { agentRegistry } from './AgentRegistry';
-agentRegistry.register(new GeminiCodeAgent());
+// Note: Agent is registered via lazy-loading in src/features/agents/core/registry.ts
+// No manual registration needed here
 
 export default GeminiCodeAgent;

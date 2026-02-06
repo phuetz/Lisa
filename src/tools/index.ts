@@ -51,6 +51,7 @@ import { summarizerTool } from './SummarizerTool';
 import { imageGeneratorTool } from './ImageGeneratorTool';
 
 // Tool Registry - All available tools
+// Legacy tool registry (simple object)
 export const toolRegistry = {
   weather: weatherTool,
   reminder: reminderTool,
@@ -65,3 +66,7 @@ export const toolRegistry = {
 };
 
 export type ToolName = keyof typeof toolRegistry;
+
+// New unified ToolRegistry (recommended)
+export { toolRegistry as unifiedToolRegistry, ToolRegistry } from '../features/tools';
+export type { Tool, ToolResult, ToolCategory } from '../features/tools';

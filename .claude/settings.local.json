@@ -41,7 +41,27 @@
       "Bash(git add:*)",
       "Bash(git commit -m \"$\\(cat <<''EOF''\nfeat: add todo tools and fix theme initialization\n\n- Create TodoTools.ts with 5 LLM tools: add_todo, list_todos, complete_todo, remove_todo, clear_completed_todos\n- Register todo tools in AIWithToolsService for native tool calling\n- Fix theme initialization race condition in officeThemeStore\n- Remove getSystemColorScheme\\(\\) call that was overriding persisted mode\n- Add requestAnimationFrame to apply CSS variables on store creation\n\nLisa can now manage todos via chat: \"Ajoute une tâche\", \"Liste mes tâches\", etc.\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
       "WebFetch(domain:raw.githubusercontent.com)",
-      "WebFetch(domain:api.github.com)"
+      "WebFetch(domain:api.github.com)",
+      "Bash(git checkout:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(pnpm dev:*)",
+      "Bash(pnpm build:packages:*)",
+      "Bash(pnpm -r build:*)",
+      "Bash(done)",
+      "WebFetch(domain:docs.openinterpreter.com)",
+      "Bash(pip install:*)",
+      "Bash(python:*)",
+      "Bash(ping:*)",
+      "Bash(npx vitest:*)",
+      "Bash(for f in \"src/features/agents/__tests__/MetaHumanAgent.test.ts\" \"src/gateway/__tests__/DiscordBot.test.ts\" \"src/gateway/__tests__/SlackBot.test.ts\" \"src/gateway/__tests__/TelegramBot.test.ts\" \"src/features/workflow/store/__tests__/useWorkflowStore.test.ts\" \"src/features/vision/__tests__/visionWorker.test.ts\" \"src/components/__tests__/MicIndicator.test.tsx\" \"src/components/__tests__/ChatSidebar.test.tsx\")",
+      "Bash(do echo \"=== $f ===\")",
+      "Bash(pnpm install:*)",
+      "Bash(pnpm store:*)",
+      "Bash(del \"d:\\\\CascadeProjects\\\\Lisa\\\\src\\\\agents\\\\VisionAgent.ts\")",
+      "Bash(pnpm remove:*)",
+      "Bash(grep:*)",
+      "Bash(store \")"
     ]
   }
 }

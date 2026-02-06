@@ -51,13 +51,61 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
-      '@agents': path.resolve(__dirname, './src/agents')
+      // Updated: @agents now points to the new features/agents location
+      '@agents': path.resolve(__dirname, './src/features/agents')
     }
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // React core
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          // UI libraries
+          'ui-vendor': ['@mui/material', '@mui/icons-material', '@emotion/react', '@emotion/styled'],
+          // State management
+          'state-vendor': ['zustand', 'rxjs'],
+          // Markdown & code rendering
+          'markdown-vendor': ['react-markdown', 'rehype-highlight', 'rehype-katex', 'remark-gfm', 'remark-math', 'katex', 'highlight.js'],
+          // Charts & visualization
+          'charts-vendor': ['recharts', 'reactflow'],
+          // 3D rendering
+          'three-vendor': ['three', '@react-three/fiber', '@react-three/drei'],
+          // ML/AI libraries (lazy loaded)
+          'ml-vendor': ['@tensorflow/tfjs', '@xenova/transformers'],
+          // MediaPipe
+          'mediapipe-vendor': ['@mediapipe/tasks-vision', '@mediapipe/tasks-audio'],
+          // PDF & Office
+          'office-vendor': ['pdfjs-dist', 'mammoth', 'xlsx', 'jspdf', 'html2canvas'],
+          // Monaco editor
+          'monaco-vendor': ['@monaco-editor/react'],
+        }
+      }
+    },
+    chunkSizeWarningLimit: 600, // Slightly above 500KB to reduce noise
   },
   test: {
     globals: true,
     environment: 'jsdom',
     include: ['src/**/*.test.{ts,tsx}'],
     setupFiles: './src/test/setup.ts',
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'json', 'html'],
+      exclude: [
+        'node_modules/',
+        'src/test/',
+        '**/*.d.ts',
+        '**/*.test.{ts,tsx}',
+        '**/types.ts',
+        'dist/',
+      ],
+      thresholds: {
+        statements: 30,
+        branches: 30,
+        functions: 30,
+        lines: 30,
+      },
+    },
   },
 });
