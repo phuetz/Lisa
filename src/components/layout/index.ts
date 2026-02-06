@@ -1,8 +1,14 @@
 /**
- * Layout Components
- * Export all layout components
+ * Layout Components - Extracted UI structure for Lisa
+ *
+ * Main layout building blocks for App.tsx
  */
 
-export { MobileLayout } from './MobileLayout';
-export { FluentLayout } from './FluentLayout';
-export { OfficePageLayout } from './OfficePageLayout';
+export { AppOverlays } from './AppOverlays';
+export type { AppOverlaysProps } from './AppOverlays';
+
+export { AppFooter } from './AppFooter';
+export type { AppFooterProps } from './AppFooter';
+
+export { AppVideo } from './AppVideo';
+export type { AppVideoProps } from './AppVideo';

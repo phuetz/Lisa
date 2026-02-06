@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { logComponent, startupLogger } from './utils/startupLogger';
 import { Outlet } from 'react-router-dom';
-import { Toaster } from 'sonner';
 import './App.css';
 import './styles/fluentAnimations.css';
 import {
@@ -21,7 +20,6 @@ import {
 import { useAppStore } from './store/appStore';
 import config from './config';
 
-import MicIndicator from './components/MicIndicator';
 import useAlarmTimerScheduler from './hooks/useAlarmTimerScheduler';
 import { useWakeWord } from './hooks/useWakeWord';
 import { useWorkflowManager } from './hooks/useWorkflowManager';
@@ -29,12 +27,9 @@ import useSpeechSynthesis from './hooks/useSpeechSynthesis';
 import { useAuth } from './hooks/useAuth';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { useFallDetector } from './hooks/useFallDetector';
-import { FallAlert, FallDetectorBadge } from './components/health/FallAlert';
 import { SkipLink } from './components/ui/SkipLink';
-import { ErrorToastContainer } from './components/ui/ErrorToast';
-import { SdkVisionMonitor } from './components/SdkVisionMonitor';
 import { useIsMobile } from './hooks/useIsMobile';
-import { VisionOverlay } from './components/vision/VisionOverlay';
+import { AppOverlays, AppFooter, AppVideo } from './components/layout';
 
 function App() {
   // Log only once on mount, not on every render
@@ -51,7 +46,7 @@ function App() {
   const [advancedVision] = useState(config.features.advancedVision && !isMobile);
   const [advancedHearing] = useState(config.features.advancedHearing); // Hearing is less resource intensive
 
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, logout } = useAuth();
 
   // Fall detector integration
   const { lastEvent, dismissAlert, confirmAlert } = useFallDetector({
@@ -82,8 +77,9 @@ function App() {
   useImageEmbedder(models.imageEmbedder);
 
   // MediaPipe Audio Tasks
-  useAudioClassifier(audioCtx, micStream, models.audioClassifier);
-  useWakeWord(audioCtx, micStream);
+  // Note: micStream is now managed by SenseProvider
+  useAudioClassifier(audioCtx, undefined, models.audioClassifier);
+  useWakeWord(audioCtx, undefined);
   useSpeechResponder();
   useVoiceIntent();
   useAlarmTimerScheduler();
@@ -113,70 +109,36 @@ function App() {
 
   return (
     <ErrorBoundary>
-        <div className="relative min-h-screen">
+      <div className="relative min-h-screen">
         {/* Skip Link pour accessibilité - WCAG 2.4.1 */}
         <SkipLink targetId="main-content" label="Aller au contenu principal" />
 
-        {/* Note: Auth form rendering is now handled by AuthProvider in src/providers/AuthProvider.tsx */}
+        {/* Global overlays */}
+        <AppOverlays
+          isMobile={isMobile}
+          lastEvent={lastEvent}
+          onDismiss={dismissAlert}
+          onConfirm={confirmAlert}
+        />
 
-        {/* Video feed caché pour MediaPipe - hidden on mobile */}
-        {!isMobile && (
-          <video
-            ref={videoRef}
-            autoPlay
-            playsInline
-            muted
-            style={{ position: 'fixed', bottom: 10, right: 10, width: 120, height: 90, borderRadius: 8, zIndex: 40, opacity: 0.8 }}
-          />
-        )}
+        {/* Video feed for MediaPipe */}
+        <AppVideo isMobile={isMobile} videoRef={videoRef} />
 
-        {/* Composants système globaux (overlays) */}
-        <Toaster />
-        <ErrorToastContainer />
-        <MicIndicator />
-        {/* Vision overlays - hidden on mobile */}
-        {!isMobile && <VisionOverlay />}
-        {!isMobile && <SdkVisionMonitor />}
-        
-        {/* Fall detection - overlay uniquement */}
-        <FallDetectorBadge />
-        {lastEvent && (
-          <FallAlert
-            event={lastEvent}
-            onDismiss={dismissAlert}
-            onConfirm={confirmAlert}
-          />
-        )}
+        {/* Auth footer buttons */}
+        <AppFooter isAuthenticated={isAuthenticated} onLogout={logout} />
 
-        {/* Auth buttons - discret en bas */}
-        {isAuthenticated ? (
-          <button
-            onClick={logout}
-            className="fixed bottom-4 left-4 z-50 px-3 py-1 text-xs bg-slate-900/50 hover:bg-slate-900 text-white rounded transition-colors"
-          >
-            Déconnexion
-          </button>
-        ) : (
-          <button
-            onClick={() => setShowAuthForm('login')}
-            className="fixed bottom-4 left-4 z-50 px-3 py-1 text-xs bg-slate-900/50 hover:bg-slate-900 text-white rounded transition-colors"
-          >
-            🔐 Connexion
-          </button>
-        )}
-
-        {/* Main content - pages routed - Accès direct sans auth */}
-        <main id="main-content" tabIndex={-1} className="outline-none" style={{ 
+        {/* Main content - routed pages */}
+        <main id="main-content" tabIndex={-1} className="outline-none" style={{
           position: 'fixed',
           top: 0,
           left: 0,
           right: 0,
           bottom: 0,
-          overflow: 'hidden'
+          overflow: 'hidden',
         }}>
           <Outlet />
         </main>
-        </div>
+      </div>
     </ErrorBoundary>
   );
 }
