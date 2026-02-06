@@ -4,6 +4,7 @@ import { RouterProvider } from 'react-router-dom'
 import './index.css'
 import './i18n'
 import { router } from './router'
+import { RootProviders } from './providers'
 
 // Register service worker for PWA functionality
 const registerServiceWorker = async () => {
@@ -35,7 +36,9 @@ const registerServiceWorker = async () => {
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <RouterProvider router={router} />
+    <RootProviders>
+      <RouterProvider router={router} />
+    </RootProviders>
   </StrictMode>,
 );
 

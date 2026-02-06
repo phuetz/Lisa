@@ -23,6 +23,15 @@ export class BrowserEventEmitter {
     return this;
   }
 
+  once(event: string, handler: EventHandler): this {
+    this.ensureEventsMap();
+    const wrapper: EventHandler = (...args: unknown[]) => {
+      this.off(event, wrapper);
+      handler(...args);
+    };
+    return this.on(event, wrapper);
+  }
+
   off(event: string, handler: EventHandler): this {
     this.ensureEventsMap();
     const handlers = this.events.get(event);
