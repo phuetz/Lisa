@@ -1,8 +1,8 @@
 # Lisa AI - Architecture Documentation
 
-> **Version**: 2.0.0
+> **Version**: 2.1.0
 > **Date**: 2026-02-06
-> **Status**: COMPLETE - Post Phase 4 Restructuration
+> **Status**: COMPLETE - Post Phase 5 Restructuration + Bug Fixes
 
 ---
 
@@ -10,7 +10,7 @@
 
 Lisa is a **multi-sensory AI assistant** that combines 5 senses (vision, hearing, touch, environment, proprioception) with 60+ specialized agents organized in a modular, feature-based architecture. The system supports visual workflow orchestration, real-time perception processing, and intelligent task automation across diverse integration types.
 
-### Key Metrics (Post Phase 4)
+### Key Metrics (Post Phase 5)
 
 | Metric | Value | Status |
 |--------|-------|--------|
@@ -20,7 +20,8 @@ Lisa is a **multi-sensory AI assistant** that combines 5 senses (vision, hearing
 | Total Unit Tests | 1,390+ | Comprehensive |
 | Senses Integrated | 5 | Coordinated |
 | Integration Types Supported | 8+ | Unified Registry |
-| Build Time | ~52s | Optimized |
+| Artifact Types Supported | 8 | HTML, React, JS, TS, CSS, Python, SVG, Mermaid |
+| Build Time | ~38s | Optimized |
 
 ---
 
@@ -34,6 +35,12 @@ Lisa is a **multi-sensory AI assistant** that combines 5 senses (vision, hearing
 ┌─────────────────────────────────────────────────────────────────┐
 │                  User Interface Layer (React 19)                 │
 │  • Dashboard, Vision, Audio, Chat, Workflow, Tools, Documents  │
+│  • Artifact System (Monaco editor + live preview)              │
+└────────────────────┬────────────────────────────────────────────┘
+                     │
+┌────────────────────▼────────────────────────────────────────────┐
+│           Providers Layer (ServiceProvider > SenseProvider >     │
+│                    AuthProvider)                                  │
 └────────────────────┬────────────────────────────────────────────┘
                      │
 ┌────────────────────▼────────────────────────────────────────────┐
@@ -80,6 +87,49 @@ Lisa is a **multi-sensory AI assistant** that combines 5 senses (vision, hearing
 ---
 
 ## 3. Core Components
+
+### 3.0 Providers Layer
+
+The application uses a provider composition pattern for initialization:
+
+```typescript
+// Location: src/providers/index.tsx
+// IMPORTANT: Uses import (not re-export) to make providers available locally
+import { ServiceProvider } from './ServiceProvider';
+import { SenseProvider, useSenseRefs } from './SenseProvider';
+import { AuthProvider, useAuthProvider } from './AuthProvider';
+
+export function RootProviders({ children }) {
+  return (
+    <ServiceProvider>      {/* Background services: Pyodide, HealthMonitoring */}
+      <SenseProvider>      {/* 5 senses: vision, hearing, touch, env, proprio */}
+        <AuthProvider>     {/* Auth state, login/register forms */}
+          {children}
+        </AuthProvider>
+      </SenseProvider>
+    </ServiceProvider>
+  );
+}
+```
+
+### 3.0.1 Artifact System
+
+Claude.ai-style interactive code artifact rendering:
+
+```
+Chat Message (AI response with code)
+  → artifactParser.ts (detects HTML, React, JS, Python, etc.)
+  → ChatMessages/MessageContent (renders clickable artifact cards)
+  → Click → chatHistoryStore.openArtifact()
+  → ArtifactPanel (modal with Monaco editor + live iframe preview)
+```
+
+**Supported artifact types**: HTML, React, JavaScript, TypeScript, CSS, Python (via Pyodide), SVG, Mermaid
+
+**Key files**:
+- `src/utils/artifactParser.ts` - Detection and extraction
+- `src/components/chat/ArtifactPanel.tsx` - Interactive panel (767 lines)
+- `src/store/chatHistoryStore.ts` - State management (`useArtifactPanelStore`)
 
 ### 3.1 Agent System
 
@@ -539,10 +589,12 @@ VITE_MCP_TOKEN=...
 - [ ] Real-time collaborative workflows
 
 ### Known Limitations
-- God component: App.tsx (331 lines) - slated for refactoring
-- Mega-store: appStore with 5 unrelated slices
-- 85 services without registry
-- 24 agents without test coverage
+- App.tsx reduced to ~130 lines (was 331) via Provider extraction, but could be further simplified
+- appStore uses facade pattern for workflow/UI (pragmatic, not ideal)
+- 85 services without centralized registry
+- 24 agents without test coverage (73% covered)
+- Desktop automation (ComputerControlService) requires external `lisa-desktop` Python backend
+- 101 pre-existing test failures from incomplete agent implementations
 
 ---
 
@@ -580,4 +632,4 @@ VITE_MCP_TOKEN=...
 
 **Last Updated**: 2026-02-06
 **Maintained By**: Claude AI Team
-**Version**: 2.0.0 (Post Phase 4 Restructuration)
+**Version**: 2.1.0 (Post Phase 5 Restructuration + Bug Fixes)

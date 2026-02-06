@@ -1,11 +1,11 @@
 # COLAB.md - Lisa AI Collaborative Development Guide
 
-> **Version**: 8.1.0 FINAL
+> **Version**: 8.2.0
 > **Date Audit**: 2026-02-06
-> **Last Update**: 2026-02-06 17:45 UTC
-> **Status**: RESTRUCTURATION COMPLETE ✅
-> **Phase Actuelle**: PHASE 5 COMPLETE - ALL PHASES DONE! (Phase 5 ✓ | Phase 4 ✓ | Phase 3 ✓ | Phase 2 ✓ | Phase 1 ✓)
-> **AI Lead**: Claude Opus 4.5 / Claude Haiku 4.5
+> **Last Update**: 2026-02-06 19:00 UTC
+> **Status**: RESTRUCTURATION COMPLETE + BUG FIXES ✅
+> **Phase Actuelle**: POST-RESTRUCTURATION (Phase 5 ✓ | Phase 4 ✓ | Phase 3 ✓ | Phase 2 ✓ | Phase 1 ✓)
+> **AI Lead**: Claude Opus 4.5 / Claude Opus 4.6
 
 ---
 
@@ -694,6 +694,45 @@ Task 5.3 -> Phase 5 (parallele)
 ## 8. JOURNAL DE TRAVAIL
 
 ```
+---
+[2026-02-06] [19:00] 🔧 POST-RESTRUCTURATION BUG FIXES
+AI: Claude Opus 4.6
+Iteration: Runtime Bug Fixes + Documentation Update
+Action: COMPLETE
+Summary:
+  Fixed critical runtime error: "ServiceProvider is not defined"
+  Root cause: providers/index.tsx used re-export syntax (export { X } from './Y')
+  which does NOT make X available in the local scope for RootProviders JSX.
+  Also fixed: pyodideService.initialize() → pyodideService.preload() (method didn't exist)
+  Updated all documentation (CLAUDE.md, ARCHITECTURE.md, COLAB.md)
+Details:
+  1. Fixed providers/index.tsx: Changed re-exports to proper imports + export
+     - `export { ServiceProvider } from './ServiceProvider'` → `import { ServiceProvider } from './ServiceProvider'`
+     - Same for SenseProvider and AuthProvider
+  2. Fixed ServiceProvider.tsx: Changed pyodideService.initialize() to preload()
+  3. Reverted unnecessary try-catch wrappers on service singletons (treating symptom not cause)
+  4. Audited codebase for similar re-export bugs (found 1 other, already has workaround)
+  5. Updated CLAUDE.md: Added providers architecture, artifact system, tool calling, new gotchas
+  6. Updated ARCHITECTURE.md v2.1.0: Added providers layer, artifact system docs
+  7. Updated COLAB.md v8.2.0: Added this journal entry
+Fichiers Modifies (7):
+  - src/providers/index.tsx (FIX: import instead of re-export)
+  - src/providers/ServiceProvider.tsx (FIX: preload() not initialize())
+  - src/services/HealthMonitoringService.ts (REVERT: remove unnecessary try-catch)
+  - src/services/ProactiveSuggestionsService.ts (REVERT: remove unnecessary try-catch)
+  - src/services/PyodideService.ts (REVERT: remove unnecessary try-catch)
+  - CLAUDE.md (DOC: providers, artifacts, tool calling, gotchas)
+  - docs/ARCHITECTURE.md (DOC: v2.1.0, providers layer, artifact system)
+Validation:
+  - pnpm typecheck -> PASS
+  - pnpm build -> PASS (38s)
+  - Dev server: http://localhost:5180 -> RUNNING
+  - Artifact system: FUNCTIONAL (ChatLayoutSimple + ArtifactPanel)
+Commits: 6bea383, 55c12df, bbc7cdf
+Key Learning:
+  `export { X } from './module'` is a PURE RE-EXPORT.
+  It does NOT make X available in the current file's scope.
+  If you use X locally, you MUST use `import { X } from './module'`.
 ---
 [2026-02-06] [17:45] 🎉 RESTRUCTURATION COMPLETE!
 AI: Claude Haiku 4.5

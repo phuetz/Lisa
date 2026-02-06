@@ -70,6 +70,19 @@ pnpm release:sdk          # Publish SDK packages
 
 ### Key Architectural Patterns
 
+#### 0. Providers Layer (`src/providers/`)
+
+Application-level providers compose in `RootProviders` (wrapped in `main.tsx`):
+- **ServiceProvider** - Initializes background services (Pyodide, HealthMonitoring, ProactiveSuggestions)
+- **SenseProvider** - Initializes 5 senses (vision, hearing, touch, environment, proprioception)
+- **AuthProvider** - Handles authentication state and login/register forms
+
+```
+main.tsx → RootProviders → ServiceProvider → SenseProvider → AuthProvider → RouterProvider
+```
+
+**IMPORTANT**: `providers/index.tsx` uses `import` (not `export ... from`) to make providers available locally in `RootProviders`. See Common Gotchas #8.
+
 #### 1. Feature-Based Organization (`src/features/`)
 
 The codebase uses feature-based organization:
@@ -104,7 +117,17 @@ Base sense implementations (touch, environment, proprioception):
 - Percepts typed as `Percept<T>` with modality, payload, confidence, timestamp
 - Unified access via `useSenses()` hook
 
-#### 3. Zustand Store (`src/store/appStore.ts`)
+#### 3. Artifact System (Chat)
+
+Claude.ai-style artifact rendering integrated into the chat:
+- **artifactParser.ts** - Detects code artifacts in AI responses (HTML, React, JS, TS, CSS, Python, SVG, Mermaid)
+- **ChatMessages.tsx** → `MessageContent` component parses artifacts and renders clickable cards
+- **ArtifactPanel.tsx** - Modal playground with Monaco editor + live preview + console output
+- **chatHistoryStore.ts** → `useArtifactPanelStore()` manages artifact panel state (open/close/view mode)
+
+Artifacts are automatically detected from fenced code blocks in assistant messages. Users click the card to open the interactive panel.
+
+#### 4. Zustand Store (`src/store/appStore.ts`)
 
 Centralized state with slices:
 - **VisionSlice**: Percepts array, smile/speech detection
@@ -112,7 +135,14 @@ Centralized state with slices:
 - **WorkflowSlice**: Plan, node/edge execution status
 - **UiSlice**: Todos, alarms, timers, feature flags, medications, emergency contacts
 
-#### 4. Monorepo Packages (`packages/`)
+#### 5. Tool Calling & AI Services
+
+- **aiService.ts** - Unified AI service supporting OpenAI, Gemini, Anthropic, LM Studio providers
+- **AIWithToolsService.ts** - LLM with automatic tool calling loop (web search, todos, datetime)
+- **ToolCallingService.ts** - Provider-agnostic tool/function calling interface
+- **ComputerControlService.ts** - Desktop automation API (requires `lisa-desktop` backend on port 8765)
+
+#### 6. Monorepo Packages (`packages/`)
 
 SDK packages (use `workspace:*` protocol):
 - **@lisa-sdk/core** - Types and interfaces
@@ -216,6 +246,10 @@ VITE_MCP_TOKEN=...         # MCP protocol auth
 5. **E2E Tests**: Require `pnpm build` first - Playwright uses preview server at port 4173
 6. **Workspace Imports**: Use `workspace:*` protocol for internal packages
 7. **Android Bundle Sync**: After code changes, always run `pnpm build && cd apps/mobile && npx cap sync android` before testing on Android
+8. **Re-export vs Import**: `export { X } from './module'` is a pure re-export — it does NOT make `X` available locally. If you need `X` in the same file, use `import { X } from './module'` then `export { X }` separately
+9. **PyodideService**: Uses `preload()` method (not `initialize()`) for initialization
+10. **ChatPage Layout**: `ChatPage.tsx` renders `ChatLayoutSimple` (not `ChatLayout`) — both exist but Simple is the active one
+11. **Vite Cache**: When debugging stale module issues, clear `node_modules/.vite` before rebuilding
 
 ## Mobile Development (Capacitor)
 
@@ -265,12 +299,20 @@ Expected logs when LM Studio connection works:
 
 | Path | Purpose |
 |------|---------|
+| `src/providers/index.tsx` | RootProviders composition (ServiceProvider > SenseProvider > AuthProvider) |
+| `src/providers/ServiceProvider.tsx` | Background service initialization (Pyodide, Health, Suggestions) |
 | `src/features/agents/core/registry.ts` | Agent lazy-loading system |
 | `src/features/vision/api.ts` | Vision sense entry point |
 | `src/features/hearing/api.ts` | Hearing sense entry point |
 | `src/features/workflow/executor/WorkflowExecutor.ts` | Workflow execution |
 | `src/senses/` | Touch, environment, proprioception senses |
 | `src/store/appStore.ts` | Centralized Zustand store |
+| `src/store/chatHistoryStore.ts` | Chat conversations + artifact panel state |
+| `src/components/chat/ChatLayoutSimple.tsx` | Active chat layout (with ArtifactPanel) |
+| `src/components/chat/ArtifactPanel.tsx` | Interactive code artifact panel (Monaco + preview) |
+| `src/utils/artifactParser.ts` | Detects artifacts in AI responses |
+| `src/services/aiService.ts` | Unified AI provider service |
+| `src/services/AIWithToolsService.ts` | LLM with tool calling loop |
 | `src/hooks/useSenses.ts` | Unified sense access hook |
 | `src/api/server.ts` | Express API entry point |
 | `packages/` | Publishable SDK packages |
