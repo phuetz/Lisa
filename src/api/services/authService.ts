@@ -1,20 +1,11 @@
-import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-
-let prisma: PrismaClient;
-
-const getPrismaClient = () => {
-  if (!prisma) {
-    prisma = new PrismaClient();
-  }
-  return prisma;
-};
+import { prisma } from '../utils/prisma.js';
 
 export const registerUser = async (email: string, password: string, name?: string) => {
   const hashedPassword = await bcrypt.hash(password, 10);
   
-  const user = await getPrismaClient().user.create({
+  const user = await prisma.user.create({
     data: {
       email,
       password: hashedPassword,
@@ -28,7 +19,7 @@ export const registerUser = async (email: string, password: string, name?: strin
 };
 
 export const loginUser = async (email: string, password_raw: string) => {
-  const user = await getPrismaClient().user.findUnique({
+  const user = await prisma.user.findUnique({
     where: { email },
   });
 
@@ -50,7 +41,7 @@ export const loginUser = async (email: string, password_raw: string) => {
   });
 
    
-  const { password, ...userWithoutPassword } = user;
+  const { password: _pwd, ...userWithoutPassword } = user;
 
   return { user: userWithoutPassword, token };
 };

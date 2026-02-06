@@ -2,39 +2,21 @@
  * Routes API pour gérer les todos de Lisa
  */
 import express from 'express';
-import type { ApiResponse } from '../config.js';
-import { agentRegistry } from '../../features/agents/core/registry.js';
+import { agentRegistry } from '../adapters/agents.js';
+import { sendJson, sendError, sendCreated } from '../utils/responses.js';
 
 const router = express.Router();
 
 // Récupérer toutes les tâches
 router.get('/', async (_req, res) => {
   try {
-    // Récupérer le TodoAgent
-    const todoAgent = agentRegistry.getAgent('TodoAgent');
-    
-    if (!todoAgent) {
-      return res.status(500).json({
-        success: false,
-        error: 'TodoAgent non disponible'
-      } as ApiResponse);
-    }
-    
-    // Exécuter le TodoAgent pour lister les tâches
-    const result = await todoAgent.execute({
-      action: 'listTodos',
-      source: 'api'
-    });
-    
-    res.status(200).json({
-      success: true,
-      data: result
-    } as ApiResponse);
+    const todoAgent = await agentRegistry.getAgentAsync('TodoAgent');
+    if (!todoAgent) { sendError(res, 'UNAVAILABLE', 'TodoAgent non disponible'); return; }
+
+    const result = await todoAgent.execute({ action: 'listTodos', source: 'api' });
+    sendJson(res, result);
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: `Erreur lors de la récupération des tâches: ${error}`
-    } as ApiResponse);
+    sendError(res, 'INTERNAL', `Erreur lors de la récupération des tâches: ${error}`);
   }
 });
 
@@ -42,43 +24,17 @@ router.get('/', async (_req, res) => {
 router.post('/', async (req, res) => {
   try {
     const { title, dueDate, priority, category } = req.body;
-    
-    if (!title) {
-      return res.status(400).json({
-        success: false,
-        error: 'Le titre de la tâche est requis'
-      } as ApiResponse);
-    }
-    
-    // Récupérer le TodoAgent
-    const todoAgent = agentRegistry.getAgent('TodoAgent');
-    
-    if (!todoAgent) {
-      return res.status(500).json({
-        success: false,
-        error: 'TodoAgent non disponible'
-      } as ApiResponse);
-    }
-    
-    // Exécuter le TodoAgent pour ajouter une tâche
+    if (!title) { sendError(res, 'VALIDATION', 'Le titre de la tâche est requis'); return; }
+
+    const todoAgent = await agentRegistry.getAgentAsync('TodoAgent');
+    if (!todoAgent) { sendError(res, 'UNAVAILABLE', 'TodoAgent non disponible'); return; }
+
     const result = await todoAgent.execute({
-      action: 'addTodo',
-      title,
-      dueDate,
-      priority,
-      category,
-      source: 'api'
+      action: 'addTodo', title, dueDate, priority, category, source: 'api'
     });
-    
-    res.status(201).json({
-      success: true,
-      data: result
-    } as ApiResponse);
+    sendCreated(res, result);
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: `Erreur lors de l'ajout de la tâche: ${error}`
-    } as ApiResponse);
+    sendError(res, 'INTERNAL', `Erreur lors de l'ajout de la tâche: ${error}`);
   }
 });
 
@@ -87,38 +43,16 @@ router.put('/:id', async (req, res) => {
   try {
     const id = req.params.id;
     const { title, completed, dueDate, priority, category } = req.body;
-    
-    // Récupérer le TodoAgent
-    const todoAgent = agentRegistry.getAgent('TodoAgent');
-    
-    if (!todoAgent) {
-      return res.status(500).json({
-        success: false,
-        error: 'TodoAgent non disponible'
-      } as ApiResponse);
-    }
-    
-    // Exécuter le TodoAgent pour mettre à jour une tâche
+
+    const todoAgent = await agentRegistry.getAgentAsync('TodoAgent');
+    if (!todoAgent) { sendError(res, 'UNAVAILABLE', 'TodoAgent non disponible'); return; }
+
     const result = await todoAgent.execute({
-      action: 'updateTodo',
-      id,
-      title,
-      completed,
-      dueDate,
-      priority,
-      category,
-      source: 'api'
+      action: 'updateTodo', id, title, completed, dueDate, priority, category, source: 'api'
     });
-    
-    res.status(200).json({
-      success: true,
-      data: result
-    } as ApiResponse);
+    sendJson(res, result);
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: `Erreur lors de la mise à jour de la tâche: ${error}`
-    } as ApiResponse);
+    sendError(res, 'INTERNAL', `Erreur lors de la mise à jour de la tâche: ${error}`);
   }
 });
 
@@ -126,33 +60,14 @@ router.put('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     const id = req.params.id;
-    
-    // Récupérer le TodoAgent
-    const todoAgent = agentRegistry.getAgent('TodoAgent');
-    
-    if (!todoAgent) {
-      return res.status(500).json({
-        success: false,
-        error: 'TodoAgent non disponible'
-      } as ApiResponse);
-    }
-    
-    // Exécuter le TodoAgent pour supprimer une tâche
-    const result = await todoAgent.execute({
-      action: 'removeTodo',
-      id,
-      source: 'api'
-    });
-    
-    res.status(200).json({
-      success: true,
-      data: result
-    } as ApiResponse);
+
+    const todoAgent = await agentRegistry.getAgentAsync('TodoAgent');
+    if (!todoAgent) { sendError(res, 'UNAVAILABLE', 'TodoAgent non disponible'); return; }
+
+    const result = await todoAgent.execute({ action: 'removeTodo', id, source: 'api' });
+    sendJson(res, result);
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: `Erreur lors de la suppression de la tâche: ${error}`
-    } as ApiResponse);
+    sendError(res, 'INTERNAL', `Erreur lors de la suppression de la tâche: ${error}`);
   }
 });
 
@@ -160,33 +75,14 @@ router.delete('/:id', async (req, res) => {
 router.patch('/:id/complete', async (req, res) => {
   try {
     const id = req.params.id;
-    
-    // Récupérer le TodoAgent
-    const todoAgent = agentRegistry.getAgent('TodoAgent');
-    
-    if (!todoAgent) {
-      return res.status(500).json({
-        success: false,
-        error: 'TodoAgent non disponible'
-      } as ApiResponse);
-    }
-    
-    // Exécuter le TodoAgent pour marquer une tâche comme terminée
-    const result = await todoAgent.execute({
-      action: 'completeTodo',
-      id,
-      source: 'api'
-    });
-    
-    res.status(200).json({
-      success: true,
-      data: result
-    } as ApiResponse);
+
+    const todoAgent = await agentRegistry.getAgentAsync('TodoAgent');
+    if (!todoAgent) { sendError(res, 'UNAVAILABLE', 'TodoAgent non disponible'); return; }
+
+    const result = await todoAgent.execute({ action: 'completeTodo', id, source: 'api' });
+    sendJson(res, result);
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: `Erreur lors du marquage de la tâche comme terminée: ${error}`
-    } as ApiResponse);
+    sendError(res, 'INTERNAL', `Erreur lors du marquage de la tâche comme terminée: ${error}`);
   }
 });
 

@@ -62,7 +62,7 @@ interface LLMRequestBody {
 interface ProviderConfig {
   baseUrl: string;
   apiKeyEnv: string;
-  formatRequest: (body: LLMRequestBody, apiKey: string) => { url: string; headers: HeadersInit; body: string };
+  formatRequest: (body: LLMRequestBody, apiKey: string) => { url: string; headers: Record<string, string>; body: string };
   parseResponse: (data: unknown) => { content: string; tool_calls?: ToolCall[] };
 }
 
@@ -307,7 +307,7 @@ router.post('/v1/chat/completions', requireAuth, validateRequest, async (req: Re
   }
 
   try {
-    const { url, headers, body: requestBody } = config.formatRequest(body, apiKey);
+    const { url, headers, body: requestBody } = config.formatRequest(body, apiKey ?? '');
 
     console.log(`[LLM Proxy] ${provider} request to ${body.model || 'default'}`);
 

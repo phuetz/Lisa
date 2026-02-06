@@ -2,8 +2,8 @@
  * Routes API pour accéder aux fonctionnalités météo de Lisa
  */
 import express from 'express';
-import type { ApiResponse } from '../config.js';
-import { agentRegistry } from '../../features/agents/core/registry.js';
+import { agentRegistry } from '../adapters/agents.js';
+import { sendJson, sendError } from '../utils/responses.js';
 
 const router = express.Router();
 
@@ -11,40 +11,27 @@ const router = express.Router();
 router.get('/', async (req, res) => {
   try {
     const location = req.query.location as string;
-    
+
     if (!location) {
-      return res.status(400).json({
-        success: false,
-        error: 'Le paramètre "location" est requis'
-      } as ApiResponse);
+      sendError(res, 'VALIDATION', 'Le paramètre "location" est requis');
+      return;
     }
-    
-    // Récupérer le WeatherAgent
-    const weatherAgent = agentRegistry.getAgent('WeatherAgent');
-    
+
+    const weatherAgent = await agentRegistry.getAgentAsync('WeatherAgent');
     if (!weatherAgent) {
-      return res.status(500).json({
-        success: false,
-        error: 'WeatherAgent non disponible'
-      } as ApiResponse);
+      sendError(res, 'UNAVAILABLE', 'WeatherAgent non disponible');
+      return;
     }
-    
-    // Exécuter le WeatherAgent pour obtenir les données météo
+
     const result = await weatherAgent.execute({
       action: 'getWeather',
       location,
       source: 'api'
     });
-    
-    res.status(200).json({
-      success: true,
-      data: result
-    } as ApiResponse);
+
+    sendJson(res, result);
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: `Erreur lors de la récupération des données météo: ${error}`
-    } as ApiResponse);
+    sendError(res, 'INTERNAL', `Erreur lors de la récupération des données météo: ${error}`);
   }
 });
 
@@ -53,41 +40,28 @@ router.get('/forecast', async (req, res) => {
   try {
     const location = req.query.location as string;
     const days = parseInt(req.query.days as string) || 5;
-    
+
     if (!location) {
-      return res.status(400).json({
-        success: false,
-        error: 'Le paramètre "location" est requis'
-      } as ApiResponse);
+      sendError(res, 'VALIDATION', 'Le paramètre "location" est requis');
+      return;
     }
-    
-    // Récupérer le WeatherAgent
-    const weatherAgent = agentRegistry.getAgent('WeatherAgent');
-    
+
+    const weatherAgent = await agentRegistry.getAgentAsync('WeatherAgent');
     if (!weatherAgent) {
-      return res.status(500).json({
-        success: false,
-        error: 'WeatherAgent non disponible'
-      } as ApiResponse);
+      sendError(res, 'UNAVAILABLE', 'WeatherAgent non disponible');
+      return;
     }
-    
-    // Exécuter le WeatherAgent pour obtenir les prévisions
+
     const result = await weatherAgent.execute({
       action: 'getForecast',
       location,
       days,
       source: 'api'
     });
-    
-    res.status(200).json({
-      success: true,
-      data: result
-    } as ApiResponse);
+
+    sendJson(res, result);
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: `Erreur lors de la récupération des prévisions météo: ${error}`
-    } as ApiResponse);
+    sendError(res, 'INTERNAL', `Erreur lors de la récupération des prévisions météo: ${error}`);
   }
 });
 

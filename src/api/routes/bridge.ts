@@ -7,8 +7,9 @@
 
 import { Router, type Request, type Response } from 'express';
 import { z } from 'zod';
-import { aiBridgeService } from '../../mcp/AIBridgeService.js';
-import { lisaMcpServer } from '../../mcp/LisaMcpServer.js';
+import { getBridgeService, getMcpServer } from '../adapters/bridge.js';
+import { timingSafeCompare } from '../utils/crypto.js';
+import { sendError } from '../utils/responses.js';
 
 const router = Router();
 
@@ -29,15 +30,18 @@ const sessionSchema = z.object({
   participants: z.array(z.enum(['lisa', 'chatgpt', 'claude'])).optional().default(['lisa'])
 });
 
-// Middleware d'authentification pour le bridge
+// Middleware d'authentification pour le bridge (timing-safe)
 const authenticateBridge = (req: Request, res: Response, next: () => void) => {
-  const apiKey = req.headers['x-lisa-api-key'] || req.headers.authorization?.replace('Bearer ', '');
+  const apiKey = (req.headers['x-lisa-api-key'] as string) || req.headers.authorization?.replace('Bearer ', '');
   const validKey = process.env.LISA_BRIDGE_API_KEY || process.env.LISA_API_KEY;
 
-  if (!validKey || apiKey === validKey) {
+  if (validKey && apiKey && timingSafeCompare(apiKey, validKey)) {
+    next();
+  } else if (!validKey && process.env.NODE_ENV !== 'production') {
+    // En dev sans clé configurée, on laisse passer avec un warning
     next();
   } else {
-    res.status(401).json({ error: 'Unauthorized', message: 'Invalid API key' });
+    sendError(res, 'UNAUTHORIZED', 'Invalid API key');
   }
 };
 
@@ -52,9 +56,9 @@ router.post('/chat', async (req: Request, res: Response) => {
     const { message, sessionId, context, target } = chatSchema.parse(req.body);
 
     // Créer ou récupérer la session
-    let session = sessionId ? aiBridgeService.getSession(sessionId) : null;
+    let session = sessionId ? (await getBridgeService()).getSession(sessionId) : null;
     if (!session) {
-      session = aiBridgeService.createSession([target]);
+      session = (await getBridgeService()).createSession([target]);
     }
 
     // Ajouter le contexte si fourni
@@ -63,7 +67,7 @@ router.post('/chat', async (req: Request, res: Response) => {
     }
 
     // Envoyer le message
-    const response = await aiBridgeService.sendMessage(
+    const response = await (await getBridgeService()).sendMessage(
       session.id,
       message,
       'user',
@@ -100,9 +104,9 @@ router.post('/chat/stream', async (req: Request, res: Response) => {
     const { message, sessionId, target } = chatSchema.parse(req.body);
 
     // Créer ou récupérer la session
-    let session = sessionId ? aiBridgeService.getSession(sessionId) : null;
+    let session = sessionId ? (await getBridgeService()).getSession(sessionId) : null;
     if (!session) {
-      session = aiBridgeService.createSession([target]);
+      session = (await getBridgeService()).createSession([target]);
     }
 
     // Configuration SSE
@@ -112,7 +116,7 @@ router.post('/chat/stream', async (req: Request, res: Response) => {
     res.setHeader('X-Session-Id', session.id);
 
     // Stream la réponse
-    for await (const chunk of aiBridgeService.streamMessage(session.id, message, 'user', target)) {
+    for await (const chunk of (await getBridgeService()).streamMessage(session.id, message, 'user', target)) {
       if (chunk.error) {
         res.write(`data: ${JSON.stringify({ error: chunk.error })}\n\n`);
         break;
@@ -142,12 +146,12 @@ router.post('/invoke', async (req: Request, res: Response) => {
     const { tool, arguments: args } = invokeToolSchema.parse(req.body);
 
     // Créer une session temporaire pour l'invocation
-    const session = aiBridgeService.createSession(['lisa']);
+    const session = (await getBridgeService()).createSession(['lisa']);
     
     // Formater le message comme un appel d'outil
     const toolCallMessage = `Exécute l'outil ${tool} avec les arguments: ${JSON.stringify(args)}`;
     
-    const response = await aiBridgeService.sendMessage(
+    const response = await (await getBridgeService()).sendMessage(
       session.id,
       toolCallMessage,
       'user',
@@ -177,10 +181,10 @@ router.post('/invoke', async (req: Request, res: Response) => {
  * GET /api/bridge/tools
  * Liste des outils disponibles (pour GPT Actions discovery)
  */
-router.get('/tools', (_req: Request, res: Response) => {
+router.get('/tools', async (_req: Request, res: Response) => {
   try {
-    const openaiTools = lisaMcpServer.getToolsAsOpenAIFunctions();
-    const anthropicTools = lisaMcpServer.getToolsAsAnthropicTools();
+    const openaiTools = (await getMcpServer()).getToolsAsOpenAIFunctions();
+    const anthropicTools = (await getMcpServer()).getToolsAsAnthropicTools();
 
     res.json({
       openai: openaiTools,
@@ -197,9 +201,9 @@ router.get('/tools', (_req: Request, res: Response) => {
  * GET /api/bridge/openapi.json
  * Schema OpenAPI pour GPT Actions
  */
-router.get('/openapi.json', (_req: Request, res: Response) => {
+router.get('/openapi.json', async (_req: Request, res: Response) => {
   try {
-    const schema = aiBridgeService.getOpenAPISchema();
+    const schema = (await getBridgeService()).getOpenAPISchema();
     res.json(schema);
   } catch (error) {
     console.error('Bridge OpenAPI error:', error);
@@ -211,10 +215,10 @@ router.get('/openapi.json', (_req: Request, res: Response) => {
  * POST /api/bridge/session
  * Créer une nouvelle session
  */
-router.post('/session', (req: Request, res: Response) => {
+router.post('/session', async (req: Request, res: Response) => {
   try {
     const { participants } = sessionSchema.parse(req.body);
-    const session = aiBridgeService.createSession(participants);
+    const session = (await getBridgeService()).createSession(participants);
 
     res.json({
       success: true,
@@ -238,9 +242,9 @@ router.post('/session', (req: Request, res: Response) => {
  * GET /api/bridge/session/:id
  * Récupérer une session
  */
-router.get('/session/:id', (req: Request, res: Response) => {
+router.get('/session/:id', async (req: Request, res: Response) => {
   try {
-    const session = aiBridgeService.getSession(req.params.id);
+    const session = (await getBridgeService()).getSession(req.params.id);
     
     if (!session) {
       res.status(404).json({ error: 'Session not found' });
@@ -267,9 +271,9 @@ router.get('/session/:id', (req: Request, res: Response) => {
  * GET /api/bridge/session/:id/messages
  * Récupérer les messages d'une session
  */
-router.get('/session/:id/messages', (req: Request, res: Response) => {
+router.get('/session/:id/messages', async (req: Request, res: Response) => {
   try {
-    const session = aiBridgeService.getSession(req.params.id);
+    const session = (await getBridgeService()).getSession(req.params.id);
     
     if (!session) {
       res.status(404).json({ error: 'Session not found' });
@@ -327,10 +331,10 @@ const toolRoutes = [
 for (const route of toolRoutes) {
   router.post(route.path, async (req: Request, res: Response) => {
     try {
-      const session = aiBridgeService.createSession(['lisa']);
+      const session = (await getBridgeService()).createSession(['lisa']);
       const toolCallMessage = `Exécute l'outil ${route.tool} avec les arguments: ${JSON.stringify(req.body)}`;
       
-      const response = await aiBridgeService.sendMessage(
+      const response = await (await getBridgeService()).sendMessage(
         session.id,
         toolCallMessage,
         'user',

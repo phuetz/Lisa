@@ -84,7 +84,7 @@ class RosBridgeService {
         this.scheduleReconnect();
       });
 
-      this.ws.on('error', (error) => {
+      this.ws.on('error', (error: Error) => {
         console.error('Erreur ROS Bridge:', error);
         this.isConnecting = false;
         this.scheduleReconnect();

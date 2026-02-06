@@ -67,8 +67,8 @@ router.post('/openai/chat', requireAuth, async (req: Request, res: Response) => 
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      res.status(response.status).json({ error: error.error?.message || 'OpenAI API error' });
+      const errorData = await response.json() as { error?: { message?: string } };
+      res.status(response.status).json({ error: errorData.error?.message || 'OpenAI API error' });
       return;
     }
 

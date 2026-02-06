@@ -1,50 +1,28 @@
 /**
- * Health Check Routes
- * 
- * Fournit des endpoints pour vérifier la santé de l'application
+ * Health Check Routes avec cache
+ * Inspiré du pattern OpenClaw (cached snapshots + probe mode)
  */
 
 import { Router } from 'express';
 import type { Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from '../utils/prisma.js';
+import { sendJson, sendError } from '../utils/responses.js';
 
 const router = Router();
 
-/**
- * Health check basique
- */
-router.get('/health', async (_req: Request, res: Response) => {
-  try {
-    // Vérifier la base de données
-    await prisma.$queryRaw`SELECT 1`;
+// --- Health cache (10s TTL) ---
+interface HealthSnapshot {
+  status: 'healthy' | 'degraded' | 'unhealthy';
+  checks: Record<string, boolean>;
+  details: Record<string, unknown>;
+  cachedAt: number;
+}
 
-    res.json({
-      status: 'healthy',
-      timestamp: new Date().toISOString(),
-      uptime: process.uptime(),
-      memory: {
-        used: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
-        total: Math.round(process.memoryUsage().heapTotal / 1024 / 1024),
-      },
-      database: 'connected',
-      version: '1.0.0',
-    });
-  } catch (error) {
-    res.status(503).json({
-      status: 'unhealthy',
-      error: error instanceof Error ? error.message : 'Unknown error',
-      timestamp: new Date().toISOString(),
-    });
-  }
-});
+let cachedHealth: HealthSnapshot | null = null;
+const CACHE_TTL_MS = 10_000;
 
-/**
- * Health check détaillé
- */
-router.get('/health/detailed', async (_req: Request, res: Response) => {
-  const checks = {
+async function probeHealth(): Promise<HealthSnapshot> {
+  const checks: Record<string, boolean> = {
     database: false,
     memory: false,
     uptime: false,
@@ -53,10 +31,10 @@ router.get('/health/detailed', async (_req: Request, res: Response) => {
   const details: Record<string, unknown> = {
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
-    memory: process.memoryUsage(),
+    version: '1.0.0',
   };
 
-  // Vérifier la base de données
+  // Check base de données
   try {
     await prisma.$queryRaw`SELECT 1`;
     checks.database = true;
@@ -64,21 +42,72 @@ router.get('/health/detailed', async (_req: Request, res: Response) => {
     details.databaseError = error instanceof Error ? error.message : 'Unknown error';
   }
 
-  // Vérifier la mémoire
-  const heapUsed = process.memoryUsage().heapUsed;
-  const heapTotal = process.memoryUsage().heapTotal;
-  checks.memory = heapUsed < heapTotal * 0.9; // Alerte si > 90%
+  // Check mémoire (alerte si > 90%)
+  const mem = process.memoryUsage();
+  checks.memory = mem.heapUsed < mem.heapTotal * 0.9;
+  details.memory = {
+    used: Math.round(mem.heapUsed / 1024 / 1024),
+    total: Math.round(mem.heapTotal / 1024 / 1024),
+  };
 
-  // Vérifier l'uptime
-  checks.uptime = process.uptime() > 60; // Au moins 1 minute
+  // Check uptime (au moins 10s)
+  checks.uptime = process.uptime() > 10;
 
   const allHealthy = Object.values(checks).every(v => v);
 
-  res.status(allHealthy ? 200 : 503).json({
-    status: allHealthy ? 'healthy' : 'degraded',
+  return {
+    status: allHealthy ? 'healthy' : checks.database ? 'degraded' : 'unhealthy',
     checks,
     details,
-  });
+    cachedAt: Date.now(),
+  };
+}
+
+async function getHealth(forceRefresh = false): Promise<HealthSnapshot> {
+  if (!forceRefresh && cachedHealth && (Date.now() - cachedHealth.cachedAt) < CACHE_TTL_MS) {
+    return cachedHealth;
+  }
+  cachedHealth = await probeHealth();
+  return cachedHealth;
+}
+
+// --- Routes ---
+
+/**
+ * Health check basique (avec cache)
+ */
+router.get('/health', async (_req: Request, res: Response) => {
+  try {
+    const health = await getHealth();
+    const status = health.status === 'unhealthy' ? 503 : 200;
+    res.status(status).json({
+      status: health.status,
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      memory: health.details.memory,
+      database: health.checks.database ? 'connected' : 'disconnected',
+      version: '1.0.0',
+    });
+  } catch (error) {
+    sendError(res, 'UNAVAILABLE', error instanceof Error ? error.message : 'Health check failed');
+  }
+});
+
+/**
+ * Health check détaillé (force refresh)
+ */
+router.get('/health/detailed', async (_req: Request, res: Response) => {
+  try {
+    const health = await getHealth(true);
+    const status = health.status === 'unhealthy' ? 503 : 200;
+    res.status(status).json({
+      status: health.status,
+      checks: health.checks,
+      details: health.details,
+    });
+  } catch (error) {
+    sendError(res, 'UNAVAILABLE', error instanceof Error ? error.message : 'Health check failed');
+  }
 });
 
 /**
@@ -87,7 +116,7 @@ router.get('/health/detailed', async (_req: Request, res: Response) => {
 router.get('/ready', async (_req: Request, res: Response) => {
   try {
     await prisma.$queryRaw`SELECT 1`;
-    res.json({ ready: true });
+    sendJson(res, { ready: true });
   } catch (error) {
     res.status(503).json({ ready: false, error: error instanceof Error ? error.message : 'Unknown error' });
   }
@@ -97,7 +126,7 @@ router.get('/ready', async (_req: Request, res: Response) => {
  * Liveness check (l'application est vivante)
  */
 router.get('/live', (_req: Request, res: Response) => {
-  res.json({ alive: true });
+  sendJson(res, { alive: true });
 });
 
 export default router;

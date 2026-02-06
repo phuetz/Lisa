@@ -165,7 +165,7 @@ function parseSize(size: string): number {
 /**
  * Sanitize les inputs
  */
-export function sanitizeInputs(req: Request, res: Response, next: NextFunction) {
+export function sanitizeInputs(req: Request, _res: Response, next: NextFunction) {
   // Sanitize query parameters
   if (req.query) {
     for (const key in req.query) {
