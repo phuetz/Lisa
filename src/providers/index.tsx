@@ -4,9 +4,11 @@
  * Re-exports all providers for easy access and composition
  */
 
-export { SenseProvider, useSenseRefs } from './SenseProvider';
-export { AuthProvider, useAuthProvider } from './AuthProvider';
-export { ServiceProvider } from './ServiceProvider';
+import { SenseProvider, useSenseRefs } from './SenseProvider';
+import { AuthProvider, useAuthProvider } from './AuthProvider';
+import { ServiceProvider } from './ServiceProvider';
+
+export { SenseProvider, useSenseRefs, AuthProvider, useAuthProvider, ServiceProvider };
 
 /**
  * RootProviders - Composes all providers in correct order
