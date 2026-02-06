@@ -421,4 +421,17 @@ class HealthMonitoringServiceImpl {
 }
 
 // Export singleton
-export const healthMonitoringService = new HealthMonitoringServiceImpl();
+let healthMonitoringServiceInstance: HealthMonitoringServiceImpl | null = null;
+
+try {
+  healthMonitoringServiceInstance = new HealthMonitoringServiceImpl();
+} catch (error) {
+  console.error('[HealthMonitoring] Failed to initialize:', error);
+  // Create a minimal stub to prevent import errors
+  healthMonitoringServiceInstance = {
+    start: () => console.warn('[HealthMonitoring] Service not available'),
+    stop: () => {},
+  } as unknown as HealthMonitoringServiceImpl;
+}
+
+export const healthMonitoringService = healthMonitoringServiceInstance;

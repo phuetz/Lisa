@@ -551,5 +551,19 @@ class PyodideServiceClass {
   }
 }
 
-export const pyodideService = new PyodideServiceClass();
+let pyodideServiceInstance: PyodideServiceClass | null = null;
+
+try {
+  pyodideServiceInstance = new PyodideServiceClass();
+} catch (error) {
+  console.error('[Pyodide] Failed to initialize:', error);
+  // Create a minimal stub to prevent import errors
+  pyodideServiceInstance = {
+    preload: async () => console.warn('[Pyodide] Service not available'),
+    getState: () => ({ status: 'error' as const, progress: 0, error: 'Not available' }),
+    subscribe: () => () => {},
+  } as unknown as PyodideServiceClass;
+}
+
+export const pyodideService = pyodideServiceInstance;
 export default pyodideService;

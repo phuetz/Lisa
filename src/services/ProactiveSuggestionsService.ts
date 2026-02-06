@@ -344,4 +344,18 @@ class ProactiveSuggestionsServiceImpl {
 }
 
 // Export singleton
-export const proactiveSuggestionsService = new ProactiveSuggestionsServiceImpl();
+let proactiveSuggestionsServiceInstance: ProactiveSuggestionsServiceImpl | null = null;
+
+try {
+  proactiveSuggestionsServiceInstance = new ProactiveSuggestionsServiceImpl();
+} catch (error) {
+  console.error('[ProactiveSuggestions] Failed to initialize:', error);
+  // Create a minimal stub to prevent import errors
+  proactiveSuggestionsServiceInstance = {
+    initialize: () => console.warn('[ProactiveSuggestions] Service not available'),
+    start: () => {},
+    stop: () => {},
+  } as unknown as ProactiveSuggestionsServiceImpl;
+}
+
+export const proactiveSuggestionsService = proactiveSuggestionsServiceInstance;

@@ -61,7 +61,8 @@
       "Bash(del \"d:\\\\CascadeProjects\\\\Lisa\\\\src\\\\agents\\\\VisionAgent.ts\")",
       "Bash(pnpm remove:*)",
       "Bash(grep:*)",
-      "Bash(store \")"
+      "Bash(store \")",
+      "Bash(lsof:*)"
     ]
   }
 }
