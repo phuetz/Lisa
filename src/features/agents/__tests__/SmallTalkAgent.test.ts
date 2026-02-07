@@ -6,7 +6,7 @@ import { SmallTalkAgent } from '../implementations/SmallTalkAgent';
 import { AgentDomains } from '../core/types';
 
 // Mock the smallTalk library
-vi.mock('../../../lib/smallTalk', () => ({
+vi.mock('../lib/smallTalk', () => ({
   isSmallTalk: vi.fn((text: string) => {
     const lowerText = text.toLowerCase();
     const patterns = [
@@ -220,7 +220,7 @@ describe('SmallTalkAgent', () => {
 
     it('should handle errors gracefully', async () => {
       // Import and mock processSmallTalk to throw an error
-      const smallTalkModule = await import('../../../lib/smallTalk');
+      const smallTalkModule = await import('../lib/smallTalk');
       vi.mocked(smallTalkModule.processSmallTalk).mockRejectedValueOnce(new Error('API Error'));
 
       const result = await agent.execute({
@@ -336,7 +336,7 @@ describe('SmallTalkAgent', () => {
 
   describe('fallback responses', () => {
     it('should provide fallback response on error', async () => {
-      const smallTalkModule = await import('../../../lib/smallTalk');
+      const smallTalkModule = await import('../lib/smallTalk');
       vi.mocked(smallTalkModule.processSmallTalk).mockRejectedValueOnce(new Error('Service unavailable'));
 
       const result = await agent.execute({

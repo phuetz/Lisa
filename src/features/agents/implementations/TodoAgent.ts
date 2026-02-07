@@ -244,17 +244,17 @@ export class TodoAgent implements BaseAgent {
       /marquer (la |une )?(tâche|todo) (comme )?(terminée|complète)/i
     ];
     
+    // Check for regex patterns first (higher confidence)
+    for (const regex of todoRegexes) {
+      if (regex.test(lowerQuery)) {
+        return 0.85; // 85% confidence
+      }
+    }
+
     // Check for keyword matches
     for (const keyword of todoKeywords) {
       if (lowerQuery.includes(keyword)) {
         return 0.6; // 60% confidence
-      }
-    }
-    
-    // Check for regex patterns
-    for (const regex of todoRegexes) {
-      if (regex.test(lowerQuery)) {
-        return 0.85; // 85% confidence
       }
     }
     

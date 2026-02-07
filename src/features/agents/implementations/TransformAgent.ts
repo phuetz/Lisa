@@ -17,10 +17,10 @@ export class TransformAgent implements BaseAgent {
 
     const { template, expression, input, context } = parameters;
 
-    if (template && template.includes('{{')) {
+    if (template != null) {
       // Template-based transformation
       try {
-        const output = this.applyTemplate(template, input);
+        const output = template.includes('{{') ? this.applyTemplate(template, input) : template;
         return { success: true, output };
       } catch (error: any) {
         return { success: false, output: null, error: `Template application failed: ${error.message}` };

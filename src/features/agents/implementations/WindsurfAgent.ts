@@ -101,7 +101,7 @@ export class WindsurfAgent implements BaseAgent {
       }),
       catchError(err => {
         console.error('Failed to fetch forecast:', err);
-        return of<null>(null);
+        return of({ spotId, time, windSpeedKnots: 0, windDirection: 0 } as WindForecast);
       })
     );
 

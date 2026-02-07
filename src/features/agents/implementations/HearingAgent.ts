@@ -73,6 +73,7 @@ export class HearingAgent implements BaseAgent {
    * Classify audio content
    */
   private async classifyAudio(params: any): Promise<AgentExecuteResult> {
+    const startTime = Date.now();
     const { audioData, audioBuffer } = params;
 
     if (!audioData && !audioBuffer) {
@@ -84,11 +85,11 @@ export class HearingAgent implements BaseAgent {
     }
 
     // Get emotion from hearing percepts (Whisper + SER)
-    const appStoreModule = await import('../../store/appStore');
-    const useAppStore = appStoreModule.useAppStore;
-    const percepts = useAppStore.getState().percepts
-      .filter(p => p.modality === 'hearing')
-      .sort((a, b) => b.ts - a.ts);
+    const visionStoreModule = await import('../../../store/visionStore');
+    const useVisionStore = visionStoreModule.useVisionStore;
+    const percepts = (useVisionStore.getState() as any).percepts
+      .filter((p: any) => p.modality === 'hearing')
+      .sort((a: any, b: any) => b.ts - a.ts);
 
     if (percepts.length === 0) {
       return {
@@ -122,6 +123,7 @@ export class HearingAgent implements BaseAgent {
       },
       metadata: {
         source: 'HearingAgent',
+        executionTime: Date.now() - startTime,
         timestamp: Date.now()
       }
     };
@@ -131,13 +133,15 @@ export class HearingAgent implements BaseAgent {
    * Recognize speech from audio
    */
   private async recognizeSpeech(params: any): Promise<AgentExecuteResult> {
-    const { audioBlob, language = 'fr-FR' } = params;
+    const { audioBlob, audioData, language = 'fr-FR' } = params;
+    const audio = audioBlob || audioData;
 
-    if (!audioBlob) {
+    if (!audio) {
       return {
         success: false,
         output: null,
-        error: 'No audio blob provided'
+        error: 'No audio blob provided',
+        metadata: { source: 'HearingAgent', timestamp: Date.now() }
       };
     }
 
@@ -147,7 +151,8 @@ export class HearingAgent implements BaseAgent {
         return {
           success: false,
           output: null,
-          error: 'Speech recognition not supported in this browser'
+          error: 'Speech recognition not supported in this browser',
+          metadata: { source: 'HearingAgent', timestamp: Date.now() }
         };
       }
 
@@ -248,11 +253,11 @@ export class HearingAgent implements BaseAgent {
     }
 
     // Get latest hearing percepts from store (Whisper transcriptions)
-    const appStoreModule = await import('../../store/appStore');
-    const useAppStore = appStoreModule.useAppStore;
-    const percepts = useAppStore.getState().percepts
-      .filter(p => p.modality === 'hearing')
-      .sort((a, b) => b.ts - a.ts);
+    const visionStoreModule = await import('../../../store/visionStore');
+    const useVisionStore = visionStoreModule.useVisionStore;
+    const percepts = (useVisionStore.getState() as any).percepts
+      .filter((p: any) => p.modality === 'hearing')
+      .sort((a: any, b: any) => b.ts - a.ts);
 
     if (percepts.length === 0) {
       return {

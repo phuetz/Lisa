@@ -1,5 +1,6 @@
+import { describe, it, expect, beforeEach } from 'vitest';
 import { MetaHumanAgent } from '../MetaHumanAgent';
-import { useMetaHumanStore } from '../../store/metaHumanStore';
+import { useMetaHumanStore } from '../../../../store/metaHumanStore';
 
 describe('MetaHumanAgent', () => {
   let agent: MetaHumanAgent;
@@ -8,9 +9,9 @@ describe('MetaHumanAgent', () => {
     agent = new MetaHumanAgent();
     // Reset the store before each test
     useMetaHumanStore.setState({
-      expression: 'neutral',
-      expressionIntensity: 0,
+      blendShapeWeights: {},
       pose: 'default',
+      currentAnimation: 'idle',
       speechText: '',
       isSpeaking: false,
     });
@@ -23,8 +24,7 @@ describe('MetaHumanAgent', () => {
     });
 
     expect(result.success).toBe(true);
-    expect(useMetaHumanStore.getState().expression).toBe('happy');
-    expect(useMetaHumanStore.getState().expressionIntensity).toBe(0.8);
+    expect(useMetaHumanStore.getState().blendShapeWeights['happy']).toBe(0.8);
   });
 
   it('should set pose correctly', async () => {

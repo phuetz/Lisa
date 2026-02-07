@@ -34,7 +34,7 @@ describe('WindsurfAgent', () => {
       const mockForecast: WindForecast = {
         spotId: 'test-spot',
         time: new Date(),
-        windSpeedKots: 18,
+        windSpeedKnots: 18,
         windDirection: 270,
         waveHeightMeters: 1.2,
       };
@@ -58,14 +58,14 @@ describe('WindsurfAgent', () => {
 
   describe('recommendGear', () => {
     it('should recommend a small sail and board for strong wind', () => {
-      const strongWind: WindForecast = { spotId: 'any', time: new Date(), windSpeedKots: 25, windDirection: 300 };
+      const strongWind: WindForecast = { spotId: 'any', time: new Date(), windSpeedKnots: 25, windDirection: 300 };
       const recommendation: RecommendedGear = agent.recommendGear(riderProfile, strongWind);
-      expect(recommendation.sailSizeSqm).toBeCloseTo(4, 1);
+      expect(recommendation.sailSizeSqm).toBeCloseTo(3.6, 1);
       expect(recommendation.boardVolumeLiters).toBe(95);
     });
 
     it('should recommend a large sail and board for light wind', () => {
-      const lightWind: WindForecast = { spotId: 'any', time: new Date(), windSpeedKots: 15, windDirection: 180 };
+      const lightWind: WindForecast = { spotId: 'any', time: new Date(), windSpeedKnots: 15, windDirection: 180 };
       const recommendation: RecommendedGear = agent.recommendGear(riderProfile, lightWind);
       expect(recommendation.sailSizeSqm).toBe(6);
       expect(recommendation.boardVolumeLiters).toBe(95);

@@ -241,24 +241,22 @@ export class WeatherAgent implements BaseAgent {
     ];
 
     const weatherRegexes = [
-      /what.?s the weather( like)?( today| tomorrow)?/i,
-      /comment fait-il( aujourd'hui| demain)?/i,
-      /quel temps fait-il( aujourd'hui| demain)?/i,
-      /forecast for (today|tomorrow|this week)/i,
-      /prévisions (météo|pour) (aujourd'hui|demain|cette semaine)/i
+      /^what.?s the weather\s*\??$/i,
+      /^comment fait-il( aujourd'hui| demain)?\s*\??$/i,
+      /^quel temps fait-il( aujourd'hui| demain)?\s*\??$/i
     ];
+
+    // Check for regex patterns first (higher confidence)
+    for (const regex of weatherRegexes) {
+      if (regex.test(lowerQuery)) {
+        return 0.9; // 90% confidence
+      }
+    }
 
     // Check for keyword matches
     for (const keyword of weatherKeywords) {
       if (lowerQuery.includes(keyword)) {
         return 0.7; // 70% confidence
-      }
-    }
-
-    // Check for regex patterns
-    for (const regex of weatherRegexes) {
-      if (regex.test(lowerQuery)) {
-        return 0.9; // 90% confidence
       }
     }
 

@@ -6,10 +6,11 @@
 
 import type { BaseAgent, AgentExecuteProps, AgentExecuteResult, AgentDomain } from '../core/types';
 import { AgentDomains } from '../core/types';
+import { config } from '../../../config';
 
 export class TranslationAgent implements BaseAgent {
   name = 'TranslationAgent';
-  description = 'Translates content between languages with contextual and cultural adaptation';
+  description = 'Provides text translation between languages with contextual and cultural adaptation';
   version = '1.0.0';
   domain: AgentDomain = AgentDomains.PRODUCTIVITY;
   capabilities = [
@@ -78,7 +79,7 @@ export class TranslationAgent implements BaseAgent {
 
     // Try to use Gemini API for translation
     try {
-      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+      const apiKey = 'geminiApiKey' in (config as any) ? (config as any).geminiApiKey : import.meta.env.VITE_GEMINI_API_KEY;
       if (apiKey) {
         const { GoogleGenerativeAI } = await import('@google/generative-ai');
         const genAI = new GoogleGenerativeAI(apiKey);
@@ -159,7 +160,7 @@ export class TranslationAgent implements BaseAgent {
   private async batchTranslate(params: any): Promise<AgentExecuteResult> {
     const { texts, sourceLang, targetLang } = params;
 
-    if (!texts || !Array.isArray(texts) || !targetLang) {
+    if (!texts || !Array.isArray(texts) || texts.length === 0 || !targetLang) {
       return {
         success: false,
         output: null,

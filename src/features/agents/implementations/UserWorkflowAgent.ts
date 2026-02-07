@@ -62,42 +62,68 @@ export class UserWorkflowAgent implements BaseAgent {
    * Exécute une action demandée en fonction de l'intention
    */
   async execute(props: UserWorkflowAction): Promise<AgentExecuteResult> {
+    const startTime = Date.now();
     const { intent, parameters = {} } = props;
 
     try {
+      let result: AgentExecuteResult;
       switch (intent) {
         case 'create_workflow':
-          return await this.createWorkflow(parameters as { definition: WorkflowDefinition });
-        
+        case 'createWorkflow':
+          result = await this.createWorkflow(parameters as { definition: WorkflowDefinition });
+          break;
         case 'execute_workflow':
-          return await this.executeWorkflow(parameters as { workflowId: string, args?: Record<string, any> });
-
+        case 'executeWorkflow':
+          result = await this.executeWorkflow(parameters as { workflowId: string, args?: Record<string, any> });
+          break;
         case 'get_workflows':
-          return await this.getWorkflows();
-
+        case 'getWorkflows':
+        case 'getWorkflow':
+        case 'listWorkflows':
+          result = await this.getWorkflows();
+          break;
         case 'delete_workflow':
-          return await this.deleteWorkflow(parameters as { workflowId: string });
-
+        case 'deleteWorkflow':
+          result = await this.deleteWorkflow(parameters as { workflowId: string });
+          break;
         case 'update_workflow':
-          return await this.updateWorkflow(parameters as { workflowId: string, updates: Partial<WorkflowDefinition> });
-
+        case 'updateWorkflow':
+          result = await this.updateWorkflow(parameters as { workflowId: string, updates: Partial<WorkflowDefinition> });
+          break;
         case 'parse_natural_language_workflow':
-          return await this.parseNaturalLanguageWorkflow(parameters as { instruction: string });
-          
+        case 'parseNaturalLanguageWorkflow':
+          result = await this.parseNaturalLanguageWorkflow(parameters as { instruction: string });
+          break;
         case 'check_trigger_match':
-          return await this.checkTriggerMatch(parameters as { phrase: string });
-
+        case 'checkTriggerMatch':
+          result = await this.checkTriggerMatch(parameters as { phrase: string });
+          break;
+        case 'validate_workflow':
+        case 'validateWorkflow':
+          result = await this.validateWorkflow(parameters as { definition: WorkflowDefinition });
+          break;
         default:
           return {
             success: false,
-            error: `Intent "${intent}" non pris en charge par l'UserWorkflowAgent`
+            output: null,
+            error: `Unknown intent "${intent}" for UserWorkflowAgent`,
+            metadata: { executionTime: Date.now() - startTime, timestamp: Date.now() }
           };
       }
+      // Ensure metadata with executionTime
+      result.metadata = {
+        ...result.metadata,
+        executionTime: Date.now() - startTime,
+        timestamp: Date.now()
+      };
+      return result;
     } catch (error) {
       console.error('Erreur dans UserWorkflowAgent:', error);
       return {
         success: false,
-        error: error instanceof Error ? error.message : String(error)
+        output: null,
+        error: error instanceof Error ? error.message : String(error),
+        metadata: { executionTime: Date.now() - startTime, timestamp: Date.now() }
       };
     }
   }
@@ -231,7 +257,7 @@ export class UserWorkflowAgent implements BaseAgent {
   /**
    * Récupère la liste des workflows définis par l'utilisateur
    */
-  private async getWorkflows(): Promise<IntentResult> {
+  private async getWorkflows(): Promise<AgentExecuteResult> {
     try {
       const workflows = Array.from(this.userWorkflows.entries()).map(([id, def]) => ({
         id,
@@ -256,7 +282,7 @@ export class UserWorkflowAgent implements BaseAgent {
   /**
    * Supprime un workflow existant
    */
-  private async deleteWorkflow(params: { workflowId: string }): Promise<IntentResult> {
+  private async deleteWorkflow(params: { workflowId: string }): Promise<AgentExecuteResult> {
     try {
       const { workflowId } = params;
       
@@ -432,7 +458,7 @@ export class UserWorkflowAgent implements BaseAgent {
   /**
    * Vérifie si une phrase correspond à un déclencheur de workflow
    */
-  private async checkTriggerMatch(params: { phrase: string }): Promise<IntentResult> {
+  private async checkTriggerMatch(params: { phrase: string }): Promise<AgentExecuteResult> {
     try {
       const { phrase } = params;
       const lowercasePhrase = phrase.toLowerCase();
@@ -502,6 +528,55 @@ export class UserWorkflowAgent implements BaseAgent {
     } catch (error) {
       return {
         success: false,
+        error: error instanceof Error ? error.message : String(error)
+      };
+    }
+  }
+
+  /**
+   * Validates a workflow definition and returns validation results
+   */
+  private async validateWorkflow(params: any): Promise<AgentExecuteResult> {
+    try {
+      const definition = params.definition || params.workflow;
+      const errors: string[] = [];
+
+      if (!definition) {
+        return {
+          success: true,
+          output: {
+            valid: false,
+            errors: ['Aucune définition de workflow fournie']
+          }
+        };
+      }
+
+      if (!definition.name || definition.name.trim() === '') {
+        errors.push('Le workflow doit avoir un nom');
+      }
+      if (!definition.trigger || definition.trigger.trim() === '') {
+        errors.push('Le workflow doit avoir une phrase déclencheur');
+      }
+      if (!definition.steps || definition.steps.length === 0) {
+        errors.push('Le workflow doit avoir au moins une étape');
+      } else {
+        definition.steps.forEach((step, index) => {
+          if (!step.agent) errors.push(`L'étape ${index + 1} doit spécifier un agent`);
+          if (!step.command) errors.push(`L'étape ${index + 1} doit spécifier une commande`);
+        });
+      }
+
+      return {
+        success: true,
+        output: {
+          valid: errors.length === 0,
+          errors: errors.length > 0 ? errors : undefined,
+        }
+      };
+    } catch (error) {
+      return {
+        success: false,
+        output: null,
         error: error instanceof Error ? error.message : String(error)
       };
     }

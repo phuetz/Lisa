@@ -18,7 +18,8 @@ export class DelayAgent implements BaseAgent {
     const { delayMs, input } = parameters;
 
     try {
-      const delay = parseInt(delayMs) || 1000;
+      const parsed = parseInt(delayMs);
+      const delay = isNaN(parsed) ? 1000 : parsed;
       await new Promise(resolve => setTimeout(resolve, Math.min(delay, 5000)));
 
       return {

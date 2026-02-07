@@ -9,7 +9,11 @@ vi.mock('roslib', () => ({
   Ros: vi.fn(function(options) {
     this.url = options.url;
     this.isConnected = true;
-    this.on = vi.fn();
+    this.on = vi.fn((event: string, cb: Function) => {
+      if (event === 'connection') {
+        Promise.resolve().then(() => cb());
+      }
+    });
     this.close = vi.fn();
   }),
   Topic: vi.fn(function(options) {

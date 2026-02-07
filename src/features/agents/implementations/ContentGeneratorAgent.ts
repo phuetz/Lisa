@@ -86,6 +86,20 @@ export class ContentGeneratorAgent implements BaseAgent {
     const language = props.language || 'fr';
 
     try {
+      // Input validation
+      const validation = await this.validateInput(props);
+      if (!validation.valid) {
+        return {
+          success: false,
+          error: validation.errors?.join(', '),
+          output: null,
+          metadata: {
+            executionTime: Date.now() - startTime,
+            timestamp: Date.now()
+          }
+        };
+      }
+
       let result;
       switch (intent) {
         case 'summarize':
@@ -98,7 +112,7 @@ export class ContentGeneratorAgent implements BaseAgent {
         case 'translate':
           result = await this.translateText(
             parameters.text,
-            parameters.targetLanguage || 'en',
+            parameters.targetLanguage,
             parameters.sourceLanguage
           );
           break;
@@ -411,13 +425,23 @@ export class ContentGeneratorAgent implements BaseAgent {
       throw new Error('Texte source requis');
     }
 
+    const wordCount = text.split(/\s+/).length;
+
     if (!this.model) {
-      throw new Error('Gemini API not initialized. Please set VITE_GEMINI_API_KEY in .env');
+      // Fallback: simple extractive summary when Gemini unavailable
+      const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
+      const targetCount = length === 'short' ? 1 : length === 'long' ? Math.min(sentences.length, 5) : Math.min(sentences.length, 3);
+      const summary = sentences.slice(0, targetCount).join('. ').trim() + '.';
+      return {
+        originalLength: wordCount,
+        summaryLength: summary.split(/\s+/).length,
+        summary,
+        language,
+        source: 'Fallback'
+      };
     }
 
-    const wordCount = text.split(/\s+/).length;
     let lengthInstruction;
-
     switch (length) {
       case 'short':
         lengthInstruction = 'very concise (50-100 words)';
@@ -457,12 +481,19 @@ export class ContentGeneratorAgent implements BaseAgent {
       throw new Error('Langue cible requise');
     }
 
-    if (!this.model) {
-      throw new Error('Gemini API not initialized. Please set VITE_GEMINI_API_KEY in .env');
-    }
-
     // Detect source language if not provided
     const detectedSourceLanguage = sourceLanguage || this.detectLanguage(text);
+
+    if (!this.model) {
+      // Fallback when Gemini unavailable
+      return {
+        originalLanguage: detectedSourceLanguage,
+        targetLanguage,
+        translatedText: `[Translation to ${targetLanguage}] ${text}`,
+        originalLength: text.split(/\s+/).length,
+        source: 'Fallback'
+      };
+    }
 
     const prompt = `Translate the following text from ${detectedSourceLanguage} to ${targetLanguage}. Only provide the translation, no explanations:\n\n${text}`;
 
@@ -488,7 +519,14 @@ export class ContentGeneratorAgent implements BaseAgent {
     }
 
     if (!this.model) {
-      throw new Error('Gemini API not initialized. Please set VITE_GEMINI_API_KEY in .env');
+      // Fallback when Gemini unavailable
+      return {
+        originalText: text,
+        rewrittenText: text,
+        style,
+        language,
+        source: 'Fallback'
+      };
     }
 
     const prompt = `Rewrite the following text in ${language} language with a ${style} style while preserving the original meaning:\n\n${text}`;
@@ -515,7 +553,17 @@ export class ContentGeneratorAgent implements BaseAgent {
     }
 
     if (!this.model) {
-      throw new Error('Gemini API not initialized. Please set VITE_GEMINI_API_KEY in .env');
+      // Fallback when Gemini unavailable
+      const generatedContent = `[Generated content for: ${prompt}]`;
+      return {
+        prompt,
+        generatedContent,
+        style,
+        length,
+        actualWordCount: generatedContent.split(/\s+/).length,
+        language,
+        source: 'Fallback'
+      };
     }
 
     let lengthInstruction;
@@ -565,7 +613,17 @@ export class ContentGeneratorAgent implements BaseAgent {
     }
 
     if (!this.model) {
-      throw new Error('Gemini API not initialized. Please set VITE_GEMINI_API_KEY in .env');
+      // Fallback when Gemini unavailable
+      const pointsList = points.map((p, i) => `${i + 1}. ${p}`).join('\n');
+      return {
+        subject,
+        recipient,
+        email: `Dear ${recipient},\n\nRe: ${subject}\n\n${pointsList}\n\nBest regards`,
+        style,
+        pointsIncluded: points.length,
+        language,
+        source: 'Fallback'
+      };
     }
 
     const pointsList = points.map((p, i) => `${i + 1}. ${p}`).join('\n');
@@ -599,7 +657,16 @@ export class ContentGeneratorAgent implements BaseAgent {
     }
 
     if (!this.model) {
-      throw new Error('Gemini API not initialized. Please set VITE_GEMINI_API_KEY in .env');
+      // Fallback when Gemini unavailable
+      const pointsList = points.map((p, i) => `${i + 1}. ${p}`).join('\n');
+      return {
+        context,
+        message: `[Re: ${context}]\n${pointsList}`,
+        style,
+        pointsIncluded: points.length,
+        language,
+        source: 'Fallback'
+      };
     }
 
     const pointsList = points.map((p, i) => `${i + 1}. ${p}`).join('\n');

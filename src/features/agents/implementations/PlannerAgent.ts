@@ -20,7 +20,6 @@ import type { BaseAgent, AgentExecuteResult } from '../core/types';
 import type { WorkflowStep, PlannerAgentExecuteProps, PlannerResult } from '../../../types/Planner';
 
 // Constants
-const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
 const MAX_REVISIONS = 3;
 const PLANNER_TEMPLATES_KEY = 'planner_templates';
 const PLANNER_CHECKPOINTS_KEY = 'planner_checkpoints';
@@ -33,7 +32,7 @@ export class PlannerAgent implements BaseAgent {
   description = 'Generates and executes complex, resilient, and efficient multi-step workflows.';
   capabilities = ['planning', 'orchestration', 'workflow'];
   version = '2.0.0';
-  domain = 'workflow';
+  domain = 'planning';
 
   private workflowTemplates: Map<string, WorkflowStep[]>;
   private workflowCheckpoints: Map<string, WorkflowStep[]>;
@@ -51,7 +50,8 @@ export class PlannerAgent implements BaseAgent {
    * Main execution method - generates and runs a plan to fulfill a request
    */
   async execute(props: PlannerAgentExecuteProps): Promise<AgentExecuteResult> {
-    if (!OPENAI_API_KEY) {
+    const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
+    if (!apiKey) {
       return { success: false, error: 'OpenAI API key is not configured.', output: null };
     }
 
@@ -248,7 +248,7 @@ export class PlannerAgent implements BaseAgent {
       
       // Préparer les options pour la révision
       const revisionOptions: Parameters<typeof revisePlan>[4] = {
-        apiKey: OPENAI_API_KEY,
+        apiKey: import.meta.env.VITE_OPENAI_API_KEY,
         traceId,
         onExplanation: (explanation) => {
           // Journal pour l'explication (sera utilisé pour l'interface utilisateur)
@@ -269,6 +269,7 @@ export class PlannerAgent implements BaseAgent {
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       logEvent('plan_revision_failed', { error: message }, `Plan revision failed: ${message}`);
+      return failedPlan;
     }
   }
 
@@ -339,7 +340,7 @@ export class PlannerAgent implements BaseAgent {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${OPENAI_API_KEY}`
+        'Authorization': `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`
       },
       body: JSON.stringify({
         model: 'gpt-4-turbo', // ou un autre modèle puissant

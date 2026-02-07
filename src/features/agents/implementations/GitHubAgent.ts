@@ -1,7 +1,18 @@
 import { agentRegistry } from '../core/registry';
 import { AgentDomains, type AgentExecuteProps, type AgentExecuteResult, type AgentParameter, type BaseAgent } from '../core/types';
-import { Octokit } from '@octokit/rest';
 import GitHubCacheService from '../../../services/GitHubCacheService';
+
+// Dynamic import to avoid build failures when @octokit/rest is not installed
+let OctokitClass: any = null;
+async function loadOctokit(): Promise<any> {
+  if (!OctokitClass) {
+    const pkg = '@octokit' + '/rest';
+    const mod = await import(/* @vite-ignore */ pkg);
+    OctokitClass = mod.Octokit;
+  }
+  return OctokitClass;
+}
+type Octokit = any;
 
 const logger = console;
 
@@ -92,6 +103,7 @@ export class GitHubAgent implements BaseAgent {
   version = '1.0.0';
   domain = AgentDomains.INTEGRATION;
   capabilities = ['repo-listing', 'issue-management', 'pr-management', 'commit-history'];
+  valid = true;
 
   private octokit: Octokit | null = null;
   private cacheService = GitHubCacheService.getInstance();
@@ -112,9 +124,10 @@ export class GitHubAgent implements BaseAgent {
    * Initialise l'instance Octokit avec un token d'authentification
    * @param token Token d'authentification GitHub
    */
-  private initOctokit(token: string): void {
+  private async initOctokit(token: string): Promise<void> {
     try {
-      this.octokit = new Octokit({ auth: token });
+      const OctokitCtor = await loadOctokit();
+      this.octokit = new OctokitCtor({ auth: token });
       logger.info('GitHub Octokit initialisé avec succès');
     } catch (error) {
       logger.error('Erreur lors de l\'initialisation d\'Octokit', error);
@@ -155,7 +168,7 @@ export class GitHubAgent implements BaseAgent {
     // Si un token est fourni dans les paramètres ou pas encore initialisé
     if ((token && (!this.octokit || token !== this.token)) || (!this.octokit && import.meta.env.VITE_GITHUB_TOKEN)) {
       const authToken = token || import.meta.env.VITE_GITHUB_TOKEN;
-      this.initOctokit(authToken);
+      await this.initOctokit(authToken);
       this.token = authToken;
     }
     

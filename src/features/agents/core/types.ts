@@ -69,6 +69,23 @@ export interface AgentExecuteResult {
   };
 }
 
+/**
+ * Legacy agent interface for agents that haven't migrated to BaseAgent yet (e.g., RosAgent)
+ */
+export interface Agent<P = any, R = any> {
+  readonly id: string;
+  readonly name: string;
+  readonly description: string;
+  execute(params: P, context: AgentContext): Promise<R>;
+}
+
+/**
+ * Context passed to legacy Agent.execute
+ */
+export interface AgentContext {
+  [key: string]: any;
+}
+
 import { z } from 'zod';
 
 export interface NodeInputOutput {

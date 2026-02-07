@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeAll, beforeEach } from 'vitest';
-import { render } from '@testing-library/react';
+import { describe, it, expect, vi, beforeAll, beforeEach, afterEach } from 'vitest';
+import { render, act } from '@testing-library/react';
 import React from 'react';
 import { useHandLandmarker } from '../hooks/useHandLandmarker';
 import { usePoseLandmarker } from '../hooks/usePoseLandmarker';
@@ -7,73 +7,33 @@ import { useObjectDetector } from '../hooks/useObjectDetector';
 import { useAudioClassifier } from '../hooks/useAudioClassifier';
 import { useVisionAudioStore } from '../store/visionAudioStore';
 
-// Helpers to create dummy elements / contexts
+// Create a video element with valid dimensions for MediaPipe processing
 const video = document.createElement('video');
+Object.defineProperty(video, 'videoWidth', { value: 640, writable: true });
+Object.defineProperty(video, 'videoHeight', { value: 480, writable: true });
+Object.defineProperty(video, 'readyState', { value: 4, writable: true }); // HAVE_ENOUGH_DATA
 
-// Patch RAF to run immediately
+// Collect RAF callbacks (don't invoke immediately to avoid infinite recursion)
+let rafCallbacks: FrameRequestCallback[] = [];
 beforeAll(() => {
   vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => {
-    cb(0);
-    return 1;
+    rafCallbacks.push(cb);
+    return rafCallbacks.length;
   });
   vi.stubGlobal('cancelAnimationFrame', () => {});
   vi.stubGlobal('MediaStream', vi.fn(() => ({
-  getTracks: vi.fn(() => []),
-})));
+    getTracks: vi.fn(() => []),
+  })));
 });
 
 beforeEach(() => {
+  rafCallbacks = [];
   useVisionAudioStore.setState(useVisionAudioStore.getInitialState());
 });
 
-/***************************************************
- * Mock loadTask to provide stubbed model per hook *
- ***************************************************/
-vi.mock('../utils/loadTask', () => ({
-  loadTask: vi.fn().mockImplementation(async (Ctor: any) => {
-    // Return object whose method name depends on ctor name
-    if (Ctor.name.includes('Hand')) {
-      return {
-        detectForVideo: vi.fn().mockReturnValue({
-          handLandmarks: [new Float32Array([0, 0, 0])],
-          handedness: [{ score: 0.8 }],
-          worldLandmarks: [],
-        }),
-      };
-    }
-    if (Ctor.name.includes('Pose')) {
-      return {
-        detectForVideo: vi.fn().mockReturnValue({
-          poseLandmarks: [new Float32Array([0, 0, 0])],
-        }),
-      };
-    }
-    if (Ctor.name.includes('Object')) {
-      return {
-        detectForVideo: vi.fn().mockReturnValue({
-          detections: [
-            {
-              boundingBox: { originX: 0, originY: 0, width: 5, height: 5 },
-              categories: [{ categoryName: 'cup', score: 0.9 }],
-            },
-          ],
-        }),
-      };
-    }
-    if (Ctor.name.includes('Audio')) {
-      return {
-        classify: vi.fn().mockReturnValue({
-          classifications: [
-            {
-              categories: [{ categoryName: 'Speech', score: 0.95 }],
-            },
-          ],
-        }),
-      };
-    }
-    return {};
-  }),
-}));
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 // Silence actual mediapipe imports
 vi.mock('@mediapipe/tasks-vision', () => ({
@@ -83,59 +43,115 @@ vi.mock('@mediapipe/tasks-vision', () => ({
 }));
 vi.mock('@mediapipe/tasks-audio', () => ({ AudioClassifier: vi.fn() }));
 
+// Mock models that the hooks expect as second parameter
+const mockHandLandmarker = {
+  detectForVideo: vi.fn().mockReturnValue({
+    landmarks: [[{ x: 0.1, y: 0.2, z: 0 }, { x: 0.3, y: 0.4, z: 0 }]],
+    handedness: [[{ categoryName: 'Right', score: 0.95 }]],
+    worldLandmarks: [],
+  }),
+  close: vi.fn(),
+};
+
+const mockPoseLandmarker = {
+  detectForVideo: vi.fn().mockReturnValue({
+    landmarks: [[{ x: 0.5, y: 0.5, z: 0 }]],
+    worldLandmarks: [[{ x: 0.5, y: 0.5, z: 0 }]],
+  }),
+  close: vi.fn(),
+};
+
+const mockObjectDetector = {
+  detectForVideo: vi.fn().mockReturnValue({
+    detections: [{
+      boundingBox: { originX: 10, originY: 10, width: 50, height: 50 },
+      categories: [{ categoryName: 'cup', score: 0.9 }],
+    }],
+  }),
+  close: vi.fn(),
+};
+
+const mockAudioClassifier = {
+  classify: vi.fn().mockReturnValue([{
+    classifications: [{
+      categories: [{ categoryName: 'Speech', score: 0.95 }],
+    }],
+  }]),
+};
+
+// Test components that pass mock models to hooks
 function HandTest() {
-  useHandLandmarker(video);
+  useHandLandmarker(video, mockHandLandmarker as any);
   return null;
 }
 function PoseTest() {
-  usePoseLandmarker(video);
+  usePoseLandmarker(video, mockPoseLandmarker as any);
   return null;
 }
 function ObjectTest() {
-  useObjectDetector(video);
+  useObjectDetector(video, mockObjectDetector as any);
   return null;
 }
+
+// For audio, capture the processor to manually trigger onaudioprocess
+let lastProcessor: any = null;
 function AudioTest() {
-  // basic stub AudioContext
   const audioCtx = {
-    createMediaStreamSource: () => ({ connect: () => {} }),
-    createScriptProcessor: () => ({
-      connect: () => {},
-      onaudioprocess: () => {},
-    }),
+    createMediaStreamSource: () => ({ connect: () => {}, disconnect: () => {} }),
+    createScriptProcessor: () => {
+      const proc: any = { connect: () => {}, disconnect: () => {}, onaudioprocess: null };
+      lastProcessor = proc;
+      return proc;
+    },
     destination: {},
   } as any;
   const stream = new MediaStream();
-  useAudioClassifier(audioCtx, stream);
+  useAudioClassifier(audioCtx, stream, mockAudioClassifier as any);
   return null;
 }
 
 describe('Remaining hooks update store', () => {
   it('hand landmarker pushes hand data', async () => {
     render(<HandTest />);
-    await Promise.resolve();
+    // The hook's useEffect runs loop() which processes frame 0 synchronously
+    // and pushes percepts to the store via setState
     const st = useVisionAudioStore.getState();
-    expect(st.hands?.length ?? 0).toBeGreaterThan(0);
+    expect((st.percepts?.length ?? 0)).toBeGreaterThan(0);
   });
 
   it('pose landmarker pushes pose data', async () => {
     render(<PoseTest />);
-    await Promise.resolve();
     const st = useVisionAudioStore.getState();
-    expect(st.poses?.length ?? 0).toBeGreaterThan(0);
+    expect((st.percepts?.length ?? 0)).toBeGreaterThan(0);
   });
 
   it('object detector pushes detection', async () => {
     render(<ObjectTest />);
-    await Promise.resolve();
     const st = useVisionAudioStore.getState();
-    expect(st.objects?.length ?? 0).toBeGreaterThan(0);
+    expect((st.percepts?.length ?? 0)).toBeGreaterThan(0);
   });
 
   it('audio classifier sets speechDetected', async () => {
-    render(<AudioTest />);
-    // simulate audio processing tick
-    await Promise.resolve();
+    lastProcessor = null;
+    mockAudioClassifier.classify.mockReturnValue([{
+      classifications: [{
+        categories: [{ categoryName: 'Speech', score: 0.95 }],
+      }],
+    }]);
+    await act(async () => {
+      render(<AudioTest />);
+    });
+    // After render + effects, processor should be set up
+    expect(lastProcessor).not.toBeNull();
+    expect(lastProcessor.onaudioprocess).toBeTypeOf('function');
+    // Manually trigger audio processing handler
+    act(() => {
+      lastProcessor.onaudioprocess({
+        inputBuffer: { getChannelData: () => new Float32Array(4096) },
+      });
+    });
+    // Check classify was actually called
+    expect(mockAudioClassifier.classify).toHaveBeenCalled();
     const st = useVisionAudioStore.getState();
     expect(st.speechDetected).toBe(true);
   });

@@ -12,16 +12,13 @@ const mockTodos = [
   { id: 'todo-2', text: 'Call doctor' },
 ];
 
-vi.mock('../../store/uiStore', () => ({
-  useUiStore: vi.fn((selector) => selector({ todos: mockTodos })),
-  uiSelectors: {
-    todos: (state: { todos: typeof mockTodos }) => state.todos,
-  },
+vi.mock('../../store/visionAudioStore', () => ({
+  useVisionAudioStore: vi.fn((selector) => selector({ todos: mockTodos })),
 }));
 
 // Mock agent registry
 const mockExecute = vi.fn().mockResolvedValue({ success: true });
-vi.mock('../../features/agents/core/registry', () => ({
+vi.mock('../../agents/registry', () => ({
   agentRegistry: {
     getAgent: vi.fn(() => ({
       execute: mockExecute,
@@ -44,13 +41,13 @@ vi.mock('react-i18next', () => ({
 }));
 
 import TodoPanel from '../TodoPanel';
-import { useUiStore } from '../../store/uiStore';
+import { useVisionAudioStore } from '../../store/visionAudioStore';
 
 describe('TodoPanel', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Reset mock to return todos
-    vi.mocked(useUiStore).mockImplementation((selector) =>
+    vi.mocked(useVisionAudioStore).mockImplementation((selector) =>
       selector({ todos: mockTodos })
     );
   });
@@ -97,7 +94,7 @@ describe('TodoPanel', () => {
 
   describe('Empty State', () => {
     it('should return null when no todos', () => {
-      vi.mocked(useUiStore).mockImplementation((selector) =>
+      vi.mocked(useVisionAudioStore).mockImplementation((selector) =>
         selector({ todos: [] })
       );
 

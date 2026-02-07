@@ -58,20 +58,19 @@ export function useSilenceTriggers(options: Partial<SilenceTriggerOptions> = {})
     // Si le seuil de silence est dépassé et qu'on n'est pas déjà en état de silence
     if (elapsed >= config.silenceThreshold && !isSilent) {
       setIsSilent(true);
-      
+
       // Exécute le callback si défini
       if (config.onSilenceDetected) {
         config.onSilenceDetected();
       }
-      
+
       // Réinitialise le compteur si configuré ainsi
       if (config.resetAfterTrigger) {
         setState({ lastSilenceMs: now });
       }
-    } else if (elapsed < config.silenceThreshold && isSilent) {
-      // L'utilisateur a interagi, on n'est plus en état de silence
-      setIsSilent(false);
     }
+    // Note: isSilent is reset to false via speechDetected useEffect,
+    // stopSilenceDetection, or resetSilenceTimer — not by elapsed time.
   }, [config, isSilent, isActive, lastSilenceMs, setState]);
   
   /**

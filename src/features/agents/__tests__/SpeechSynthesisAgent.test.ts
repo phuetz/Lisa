@@ -32,24 +32,34 @@ const mockSpeechSynthesis = {
   paused: false
 };
 
-Object.defineProperty(global, 'window', {
-  value: {
-    speechSynthesis: mockSpeechSynthesis,
-    SpeechSynthesisUtterance: class {
-      text = '';
-      voice = null;
-      rate = 1.0;
-      pitch = 1.0;
-      volume = 1.0;
-      lang = 'fr-FR';
-      onstart = null;
-      onend = null;
-      onerror = null;
-      onpause = null;
-      onresume = null;
-    }
-  },
-  writable: true
+// Set up mocks on the existing jsdom window (don't replace the whole window)
+Object.defineProperty(window, 'speechSynthesis', {
+  value: mockSpeechSynthesis,
+  writable: true,
+  configurable: true
+});
+
+class MockSpeechSynthesisUtterance {
+  text: string;
+  voice: any = null;
+  rate = 1.0;
+  pitch = 1.0;
+  volume = 1.0;
+  lang = 'fr-FR';
+  onstart: any = null;
+  onend: any = null;
+  onerror: any = null;
+  onpause: any = null;
+  onresume: any = null;
+  constructor(text?: string) {
+    this.text = text || '';
+  }
+}
+
+Object.defineProperty(window, 'SpeechSynthesisUtterance', {
+  value: MockSpeechSynthesisUtterance,
+  writable: true,
+  configurable: true
 });
 
 describe('SpeechSynthesisAgent', () => {

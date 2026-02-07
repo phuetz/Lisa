@@ -9,24 +9,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 
-// Store state
-const mockSetState = vi.fn();
-
-// Mock appStore
-vi.mock('../../store/appStore', () => ({
-  useAppStore: vi.fn((selector) => {
-    const state = {
-      featureFlags: { advancedVision: false },
-      setState: mockSetState,
-    };
-    return selector(state);
-  }),
-}));
-
 // Mock agent registry
-vi.mock('../../features/agents/core/registry', () => ({
+vi.mock('../../agents/registry', () => ({
   agentRegistry: {
-    getAgentAsync: vi.fn().mockResolvedValue({
+    getAgent: vi.fn().mockReturnValue({
       execute: vi.fn().mockResolvedValue({
         success: true,
         output: { description: 'A test image' },
@@ -35,9 +21,15 @@ vi.mock('../../features/agents/core/registry', () => ({
   },
 }));
 
+// Mock VisionAgent module (file doesn't exist yet)
+vi.mock('../../agents/VisionAgent', () => ({
+  VisionAgent: class {},
+}));
+
 // Mock media permissions
 vi.mock('../../hooks/useMediaPermissions', () => ({
   useMediaPermissions: () => ({
+    permissions: {},
     requestCamera: vi.fn().mockResolvedValue(null),
   }),
 }));
@@ -76,10 +68,10 @@ describe('VisionPanel', () => {
       // Click the header to expand
       fireEvent.click(screen.getByText('Vision par Ordinateur'));
 
-      // Wait for agent to load and panel to expand
+      // Wait for panel to expand and show content
       await waitFor(
         () => {
-          expect(screen.getByText(/Activer la Vision Avancée/)).toBeInTheDocument();
+          expect(screen.getByText(/vision par ordinateur permet/i)).toBeInTheDocument();
         },
         { timeout: 2000 }
       );
@@ -90,7 +82,7 @@ describe('VisionPanel', () => {
 
       await waitFor(
         () => {
-          expect(screen.getByText(/Activer la Vision Avancée/)).toBeInTheDocument();
+          expect(screen.getByText(/vision par ordinateur permet/i)).toBeInTheDocument();
         },
         { timeout: 2000 }
       );

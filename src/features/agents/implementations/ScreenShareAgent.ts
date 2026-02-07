@@ -74,16 +74,21 @@ export class ScreenShareAgent implements BaseAgent {
    * @returns Résultat de l'action
    */
   async execute(params: any): Promise<any> {
-    const { action, ...actionParams } = params;
-    
+    const action = params.intent || params.action;
+    const actionParams = params.parameters || params;
+
     try {
       switch (action) {
+        case 'start_sharing':
         case 'startScreenShare':
           return await this.startScreenShare(actionParams);
+        case 'stop_sharing':
         case 'stopScreenShare':
           return await this.stopScreenShare();
+        case 'get_status':
         case 'getScreenShareState':
-          return this.getScreenShareState();
+          return { success: true, output: this.getScreenShareState() };
+        case 'update_options':
         case 'updateScreenShareOptions':
           return await this.updateScreenShareOptions(actionParams);
         case 'checkCapabilities':
@@ -180,17 +185,23 @@ export class ScreenShareAgent implements BaseAgent {
       };
 
       // Écouter l'événement de fin de partage (quand l'utilisateur arrête manuellement)
-      stream.getVideoTracks()[0].addEventListener('ended', () => {
-        this.logger.info('Utilisateur a arrêté le partage d\'écran');
-        this.stopScreenShare();
-      });
+      const videoTracks = stream.getVideoTracks?.();
+      if (videoTracks && videoTracks.length > 0) {
+        videoTracks[0].addEventListener('ended', () => {
+          this.logger.info('Utilisateur a arrêté le partage d\'écran');
+          this.stopScreenShare();
+        });
+      }
 
       this.logger.info('Session de partage d\'écran démarrée avec succès');
       
       return {
         success: true,
-        message: 'Session de partage d\'écran démarrée avec succès',
-        state: this.getScreenShareState(),
+        output: {
+          message: 'Session de partage d\'écran démarrée avec succès',
+          sessionId: this.state.sessionId,
+          ...this.getScreenShareState()
+        },
         streamId: this.state.sessionId
       };
     } catch (error) {
@@ -295,10 +306,10 @@ export class ScreenShareAgent implements BaseAgent {
       error: this.state.error,
       duration: this.state.startTime ? Math.floor((Date.now() - this.state.startTime) / 1000) : 0,
       trackInfo: this.state.stream ? {
-        videoTracks: this.state.stream.getVideoTracks().length,
-        audioTracks: this.state.stream.getAudioTracks().length,
-        videoEnabled: this.state.stream.getVideoTracks().length > 0 ? 
-                     this.state.stream.getVideoTracks()[0].enabled : false
+        videoTracks: this.state.stream.getVideoTracks?.()?.length ?? 0,
+        audioTracks: this.state.stream.getAudioTracks?.()?.length ?? 0,
+        videoEnabled: (this.state.stream.getVideoTracks?.()?.length ?? 0) > 0 ?
+                     this.state.stream.getVideoTracks!()[0].enabled : false
       } : null
     };
     

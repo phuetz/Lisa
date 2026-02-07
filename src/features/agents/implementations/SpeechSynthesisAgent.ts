@@ -214,7 +214,7 @@ export class SpeechSynthesisAgent implements BaseAgent {
     
     // Keywords related to speech synthesis
     const speechKeywords = [
-      'parle', 'parler', 'dire', 'prononcer', 'lire', 'voix',
+      'parle', 'parler', 'dire', 'dis', 'prononcer', 'lire', 'lis', 'voix',
       'synthèse vocale', 'text-to-speech', 'tts', 'audio',
       'à voix haute', 'alexa', 'gemini'
     ];

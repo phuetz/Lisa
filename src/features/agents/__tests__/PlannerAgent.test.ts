@@ -7,8 +7,7 @@ import { PlannerAgent } from '../implementations/PlannerAgent';
 // Mock dependencies using vi.hoisted
 const mocks = vi.hoisted(() => ({
   execute: vi.fn(),
-  callOpenAI: vi.fn(),
-  executeWithRetry: vi.fn(),
+  mockFetch: vi.fn(),
   saveToStorage: vi.fn(),
   loadFromStorage: vi.fn(),
   runWorkflowPlan: vi.fn(),
@@ -26,20 +25,7 @@ vi.mock('../core/registry', () => ({
   agentRegistry: {
     register: vi.fn(),
     execute: mocks.execute,
-  },
-}));
-
-// Mock secureAI
-vi.mock('../../../services/SecureAIService', () => ({
-  secureAI: {
-    callOpenAI: mocks.callOpenAI,
-  },
-}));
-
-// Mock resilientExecutor
-vi.mock('../../../utils/resilience/ResilientExecutor', () => ({
-  resilientExecutor: {
-    executeWithRetry: mocks.executeWithRetry,
+    getStore: vi.fn(() => null),
   },
 }));
 
@@ -89,8 +75,11 @@ describe('PlannerAgent', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    import.meta.env.VITE_OPENAI_API_KEY = 'test-key';
     mocks.loadFromStorage.mockReturnValue(null);
     mocks.startTrace.mockReturnValue('trace-123');
+    // Mock fetch globally for callLLM
+    global.fetch = mocks.mockFetch as any;
     agent = new PlannerAgent();
   });
 
@@ -126,8 +115,10 @@ describe('PlannerAgent', () => {
       ];
 
       mocks.buildPlannerPrompt.mockReturnValue('Generate a plan');
-      mocks.executeWithRetry.mockResolvedValue({
-        choices: [{ message: { content: JSON.stringify(mockPlan) } }],
+      mocks.mockFetch.mockResolvedValue({
+        ok: true,
+        json: async () => ({ choices: [{ message: { content: JSON.stringify(mockPlan) } }] }),
+        text: async () => '',
       });
       mocks.buildPlanExplanationPrompt.mockReturnValue('Explain the plan');
       mocks.runWorkflowPlan.mockResolvedValue({
@@ -147,8 +138,10 @@ describe('PlannerAgent', () => {
 
     it('should handle plan generation failure', async () => {
       mocks.buildPlannerPrompt.mockReturnValue('Generate a plan');
-      mocks.executeWithRetry.mockResolvedValue({
-        choices: [{ message: { content: 'invalid json' } }],
+      mocks.mockFetch.mockResolvedValue({
+        ok: true,
+        json: async () => ({ choices: [{ message: { content: 'invalid json' } }] }),
+        text: async () => '',
       });
 
       const result = await agent.execute({
@@ -161,7 +154,11 @@ describe('PlannerAgent', () => {
 
     it('should handle execution errors gracefully', async () => {
       mocks.buildPlannerPrompt.mockReturnValue('Generate a plan');
-      mocks.executeWithRetry.mockRejectedValue(new Error('LLM unavailable'));
+      mocks.mockFetch.mockResolvedValue({
+        ok: false,
+        status: 500,
+        text: async () => 'LLM unavailable',
+      });
 
       const result = await agent.execute({
         request: 'Do something',
@@ -178,8 +175,10 @@ describe('PlannerAgent', () => {
       const onPlanUpdate = vi.fn();
 
       mocks.buildPlannerPrompt.mockReturnValue('Generate a plan');
-      mocks.executeWithRetry.mockResolvedValue({
-        choices: [{ message: { content: JSON.stringify(mockPlan) } }],
+      mocks.mockFetch.mockResolvedValue({
+        ok: true,
+        json: async () => ({ choices: [{ message: { content: JSON.stringify(mockPlan) } }] }),
+        text: async () => '',
       });
       mocks.runWorkflowPlan.mockResolvedValue({
         success: true,
@@ -198,8 +197,10 @@ describe('PlannerAgent', () => {
       const mockPlan = [{ id: '1', action: 'step1', status: 'pending', dependencies: [], args: {} }];
 
       mocks.buildPlannerPrompt.mockReturnValue('Generate a plan');
-      mocks.executeWithRetry.mockResolvedValue({
-        choices: [{ message: { content: JSON.stringify(mockPlan) } }],
+      mocks.mockFetch.mockResolvedValue({
+        ok: true,
+        json: async () => ({ choices: [{ message: { content: JSON.stringify(mockPlan) } }] }),
+        text: async () => '',
       });
       mocks.runWorkflowPlan.mockResolvedValue({ success: true, output: 'Done' });
 
@@ -215,8 +216,10 @@ describe('PlannerAgent', () => {
       const revisedPlan = [{ id: '1', action: 'revised_step1', status: 'pending', dependencies: [], args: {} }];
 
       mocks.buildPlannerPrompt.mockReturnValue('Generate a plan');
-      mocks.executeWithRetry.mockResolvedValue({
-        choices: [{ message: { content: JSON.stringify(mockPlan) } }],
+      mocks.mockFetch.mockResolvedValue({
+        ok: true,
+        json: async () => ({ choices: [{ message: { content: JSON.stringify(mockPlan) } }] }),
+        text: async () => '',
       });
 
       // First execution fails, revision succeeds
@@ -352,8 +355,10 @@ describe('PlannerAgent', () => {
       const mockPlan = [{ id: '1', action: 'step1', status: 'pending', dependencies: [], args: {} }];
 
       mocks.buildPlannerPrompt.mockReturnValue('Generate a plan');
-      mocks.executeWithRetry.mockResolvedValue({
-        choices: [{ message: { content: JSON.stringify(mockPlan) } }],
+      mocks.mockFetch.mockResolvedValue({
+        ok: true,
+        json: async () => ({ choices: [{ message: { content: JSON.stringify(mockPlan) } }] }),
+        text: async () => '',
       });
       mocks.runWorkflowPlan.mockResolvedValue({ success: true, output: 'Done' });
 

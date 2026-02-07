@@ -19,34 +19,42 @@ import { agentRegistry } from '../core/registry';
 /**
  * Supported calendar intents
  */
-export const CreateEventParamsSchema = z.object({
-  summary: z.string().min(1, 'Event summary/title is required'),
+// Base schemas (ZodObject) for .extend() in configSchema, plus refined exports for direct validation
+const CreateEventParamsBase = z.object({
+  summary: z.string({ required_error: 'Event summary/title is required' }).min(1, 'Event summary/title is required'),
   start: z.object({
     dateTime: z.string().datetime(),
     timeZone: z.string().optional(),
-  }).refine(data => new Date(data.dateTime).toString() !== 'Invalid Date', { message: 'Invalid start date/time' }),
+  }),
   end: z.object({
     dateTime: z.string().datetime(),
     timeZone: z.string().optional(),
-  }).refine(data => new Date(data.dateTime).toString() !== 'Invalid Date', { message: 'Invalid end date/time' }),
+  }),
   description: z.string().optional(),
   location: z.string().optional(),
   attendees: z.array(z.object({ email: z.string().email(), name: z.string().optional() })).optional(),
-}).refine(data => new Date(data.end.dateTime) > new Date(data.start.dateTime), { message: 'Event end time must be after start time' });
+});
 
-export const ListEventsParamsSchema = z.object({
+export const CreateEventParamsSchema = CreateEventParamsBase.refine(
+  data => new Date(data.end.dateTime) > new Date(data.start.dateTime),
+  { message: 'Event end time must be after start time' }
+);
+
+const ListEventsParamsBase = z.object({
   period: z.enum(['today', 'tomorrow', 'week', 'month', 'custom']).default('today'),
   startDate: z.string().datetime().optional(),
   endDate: z.string().datetime().optional(),
-}).refine(data => {
+});
+
+export const ListEventsParamsSchema = ListEventsParamsBase.refine(data => {
   if (data.period === 'custom' && (!data.startDate || !data.endDate)) {
-    return false; // Custom period requires both start and end dates
+    return false;
   }
   return true;
 }, { message: 'Custom period requires both startDate and endDate' });
 
 export const DeleteEventParamsSchema = z.object({
-  eventId: z.string().min(1, 'Event ID is required'),
+  eventId: z.string({ required_error: 'Event ID is required' }).min(1, 'Event ID is required'),
 });
 
 export const UpdateEventParamsSchema = z.object({
@@ -144,8 +152,8 @@ export class CalendarAgent implements BaseAgent {
 
   // Define a combined config schema for all intents
   configSchema = z.discriminatedUnion('intent', [
-    CreateEventParamsSchema.extend({ intent: z.literal('create_event') }),
-    ListEventsParamsSchema.extend({ intent: z.literal('list_events') }),
+    CreateEventParamsBase.extend({ intent: z.literal('create_event') }),
+    ListEventsParamsBase.extend({ intent: z.literal('list_events') }),
     DeleteEventParamsSchema.extend({ intent: z.literal('delete_event') }),
     UpdateEventParamsSchema.extend({ intent: z.literal('update_event') }),
     FindAvailableTimeParamsSchema.extend({ intent: z.literal('find_available_time') }),
@@ -268,32 +276,32 @@ export class CalendarAgent implements BaseAgent {
     
     const calendarKeywords = [
       'calendar', 'calendrier', 'agenda', 'schedule', 'planifier',
-      'event', 'événement', 'meeting', 'réunion', 'appointment', 'rendez-vous',
-      'reminder', 'rappel', 'schedule', 'planifier',
-      'booking', 'réservation',
+      'event', 'événement', 'evenement', 'meeting', 'réunion', 'reunion',
+      'appointment', 'rendez-vous', 'reminder', 'rappel',
+      'booking', 'réservation', 'reservation',
       'available', 'availability', 'disponible', 'disponibilité'
     ];
-    
+
     const calendarRegexes = [
       /add (an? )?event|create (an? )?event|schedule (an? )?meeting/i,
-      /ajouter (un )?événement|créer (un )?événement|planifier (une )?réunion/i,
+      /ajouter (un )?(événement|evenement)|créer (un )?(événement|evenement)|planifier (une )?(réunion|reunion)/i,
       /what('s| is) on my calendar|what do i have scheduled/i,
       /qu('| )est-ce qu('| )il y a dans mon (calendrier|agenda)/i,
       /find (an? )?(available|free) (time|slot)/i,
       /trouver (un )?créneau (disponible|libre)/i
     ];
-    
+
+    // Check for regex patterns first (higher confidence)
+    for (const regex of calendarRegexes) {
+      if (regex.test(lowerQuery)) {
+        return 0.85; // 85% confidence
+      }
+    }
+
     // Check for keyword matches
     for (const keyword of calendarKeywords) {
       if (lowerQuery.includes(keyword)) {
         return 0.6; // 60% confidence
-      }
-    }
-    
-    // Check for regex patterns
-    for (const regex of calendarRegexes) {
-      if (regex.test(lowerQuery)) {
-        return 0.85; // 85% confidence
       }
     }
     
@@ -305,12 +313,13 @@ export class CalendarAgent implements BaseAgent {
    */
   async getRequiredParameters(task: string): Promise<AgentParameter[]> {
     let schema: z.ZodObject<any> | undefined;
+    // Use base schemas (before .refine()) since ZodEffects don't have .shape
     switch (task) {
       case 'create_event':
-        schema = CreateEventParamsSchema;
+        schema = CreateEventParamsBase;
         break;
       case 'list_events':
-        schema = ListEventsParamsSchema;
+        schema = ListEventsParamsBase;
         break;
       case 'delete_event':
         schema = DeleteEventParamsSchema;

@@ -26,19 +26,26 @@ export class ImageAnalysisAgent implements BaseAgent {
     const { intent, parameters } = props;
 
     try {
+      let result: AgentExecuteResult;
       switch (intent) {
         case 'recognize_objects':
-          return await this.recognizeObjects(parameters);
+          result = await this.recognizeObjects(parameters);
+          break;
         case 'analyze_scene':
-          return await this.analyzeScene(parameters);
+          result = await this.analyzeScene(parameters);
+          break;
         case 'extract_text':
-          return await this.extractText(parameters);
+          result = await this.extractText(parameters);
+          break;
         case 'detect_faces':
-          return await this.detectFaces(parameters);
+          result = await this.detectFaces(parameters);
+          break;
         case 'analyze_colors':
-          return await this.analyzeColors(parameters);
+          result = await this.analyzeColors(parameters);
+          break;
         case 'classify_image':
-          return await this.classifyImage(parameters);
+          result = await this.classifyImage(parameters);
+          break;
         default:
           return {
             success: false,
@@ -47,6 +54,13 @@ export class ImageAnalysisAgent implements BaseAgent {
             metadata: { executionTime: Date.now() - startTime, timestamp: Date.now() }
           };
       }
+      // Ensure executionTime in metadata
+      result.metadata = {
+        ...result.metadata,
+        executionTime: Date.now() - startTime,
+        timestamp: Date.now(),
+      };
+      return result;
     } catch (error) {
       return {
         success: false,

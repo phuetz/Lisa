@@ -16,7 +16,24 @@ vi.mock('@octokit/rest', () => ({
 }));
 
 vi.mock('../../../services/GitHubCacheService', () => ({
-  default: { get: vi.fn(), set: vi.fn() }
+  default: {
+    getInstance: vi.fn(() => ({
+      getRepository: vi.fn().mockResolvedValue(null),
+      cacheRepository: vi.fn().mockResolvedValue(undefined),
+      getRepositories: vi.fn().mockResolvedValue(null),
+      cacheRepositories: vi.fn().mockResolvedValue(undefined),
+      getIssues: vi.fn().mockResolvedValue(null),
+      cacheIssues: vi.fn().mockResolvedValue(undefined),
+      getPullRequests: vi.fn().mockResolvedValue(null),
+      cachePullRequests: vi.fn().mockResolvedValue(undefined),
+      getCommits: vi.fn().mockResolvedValue(null),
+      cacheCommits: vi.fn().mockResolvedValue(undefined),
+      getReadme: vi.fn().mockResolvedValue(null),
+      cacheReadme: vi.fn().mockResolvedValue(undefined),
+      clearStaleCache: vi.fn().mockResolvedValue(undefined),
+      clearAllCache: vi.fn().mockResolvedValue(undefined),
+    })),
+  }
 }));
 
 describe('GitHubAgent', () => {

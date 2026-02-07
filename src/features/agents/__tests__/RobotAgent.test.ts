@@ -5,8 +5,8 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { RobotAgent } from '../implementations/RobotAgent';
 import { AgentDomains } from '../core/types';
 
-// Mock RosService
-vi.mock('../services/RosService', () => ({
+// Mock RosService - path relative to test file must resolve to src/services/RosService
+vi.mock('../../../services/RosService', () => ({
   RosService: vi.fn(function(url: string) {
     this.url = url;
     this.ensureConnection = vi.fn().mockResolvedValue(undefined);

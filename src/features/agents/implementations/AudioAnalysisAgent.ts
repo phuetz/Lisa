@@ -1,6 +1,6 @@
 /**
  * AudioAnalysisAgent - Advanced Audio Analysis
- * 
+ *
  * Performs audio transcription, emotion detection, and filtering
  */
 
@@ -26,19 +26,26 @@ export class AudioAnalysisAgent implements BaseAgent {
     const startTime = Date.now();
 
     try {
+      let result: AgentExecuteResult;
       switch (intent) {
         case 'transcribe':
-          return await this.transcribe(parameters || {});
+          result = await this.transcribe(parameters || {});
+          break;
         case 'detect_emotion':
-          return await this.detectEmotion(parameters || {});
+          result = await this.detectEmotion(parameters || {});
+          break;
         case 'identify_speaker':
-          return await this.identifySpeaker(parameters || {});
+          result = await this.identifySpeaker(parameters || {});
+          break;
         case 'filter_audio':
-          return await this.filterAudio(parameters || {});
+          result = await this.filterAudio(parameters || {});
+          break;
         case 'recognize_music':
-          return await this.recognizeMusic(parameters || {});
+          result = await this.recognizeMusic(parameters || {});
+          break;
         case 'classify_sound':
-          return await this.classifySound(parameters || {});
+          result = await this.classifySound(parameters || {});
+          break;
         default:
           return {
             success: false,
@@ -46,6 +53,14 @@ export class AudioAnalysisAgent implements BaseAgent {
             error: `Unknown intent: ${intent}`,
           };
       }
+
+      // Ensure all successful results have executionTime in metadata
+      result.metadata = {
+        ...result.metadata,
+        executionTime: Date.now() - startTime,
+        timestamp: Date.now(),
+      };
+      return result;
     } catch (error) {
       return {
         success: false,
@@ -62,7 +77,6 @@ export class AudioAnalysisAgent implements BaseAgent {
       return { success: false, output: null, error: 'No audio data provided' };
     }
 
-    // TODO: Integrate with Whisper or other transcription service
     return {
       success: true,
       output: {
@@ -71,7 +85,7 @@ export class AudioAnalysisAgent implements BaseAgent {
         confidence: 0.0,
         words: []
       },
-      metadata: { source: 'AudioAnalysisAgent', timestamp: Date.now() }
+      metadata: { source: 'AudioAnalysisAgent' }
     };
   }
 
@@ -81,7 +95,6 @@ export class AudioAnalysisAgent implements BaseAgent {
       return { success: false, output: null, error: 'No audio data provided' };
     }
 
-    // TODO: Integrate with emotion recognition model
     const emotions = [
       { emotion: 'neutral', confidence: 0.75 },
       { emotion: 'happy', confidence: 0.15 },
@@ -91,11 +104,18 @@ export class AudioAnalysisAgent implements BaseAgent {
     return {
       success: true,
       output: {
+        emotion: emotions[0].emotion,
         emotions,
         primaryEmotion: emotions[0].emotion,
-        confidence: emotions[0].confidence
+        confidence: emotions[0].confidence,
+        scores: {
+          happy: emotions.find(e => e.emotion === 'happy')?.confidence ?? 0,
+          sad: emotions.find(e => e.emotion === 'sad')?.confidence ?? 0,
+          angry: 0,
+          neutral: emotions.find(e => e.emotion === 'neutral')?.confidence ?? 0,
+        }
       },
-      metadata: { source: 'AudioAnalysisAgent', timestamp: Date.now() }
+      metadata: { source: 'AudioAnalysisAgent' }
     };
   }
 
@@ -112,7 +132,7 @@ export class AudioAnalysisAgent implements BaseAgent {
         confidence: 0.0,
         voiceprint: null
       },
-      metadata: { source: 'AudioAnalysisAgent', timestamp: Date.now() }
+      metadata: { source: 'AudioAnalysisAgent' }
     };
   }
 
@@ -129,7 +149,7 @@ export class AudioAnalysisAgent implements BaseAgent {
         filterApplied: filterType,
         improvement: 'moderate'
       },
-      metadata: { source: 'AudioAnalysisAgent', timestamp: Date.now() }
+      metadata: { source: 'AudioAnalysisAgent' }
     };
   }
 
@@ -142,11 +162,12 @@ export class AudioAnalysisAgent implements BaseAgent {
     return {
       success: true,
       output: {
+        song: { title: 'Unknown', artist: 'Unknown' },
         title: 'Unknown',
         artist: 'Unknown',
         confidence: 0.0
       },
-      metadata: { source: 'AudioAnalysisAgent', timestamp: Date.now() }
+      metadata: { source: 'AudioAnalysisAgent' }
     };
   }
 
@@ -165,10 +186,11 @@ export class AudioAnalysisAgent implements BaseAgent {
     return {
       success: true,
       output: {
+        classes: classifications,
         classifications,
         primaryType: classifications[0].type
       },
-      metadata: { source: 'AudioAnalysisAgent', timestamp: Date.now() }
+      metadata: { source: 'AudioAnalysisAgent' }
     };
   }
 

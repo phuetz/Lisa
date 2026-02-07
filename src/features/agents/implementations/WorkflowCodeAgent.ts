@@ -410,22 +410,11 @@ export class WorkflowCodeAgent implements BaseAgent {
         // Préparation du code avec des protections
         const safeCode = `
           "use strict";
-          // Enregistrer les variables globales que nous voulons protéger
-          const _protectedGlobals = Object.keys(globalThis);
-          
-          // Fonction principale qui sera exécutée
-          const _userFunction = async function(input) {
+          return (function(input) {
             ${code}
-          };
-          
-          // Vérifier qu'aucune variable globale n'a été modifiée
-          const _currentGlobals = Object.keys(globalThis);
-          const _newGlobals = _currentGlobals.filter(k => !_protectedGlobals.includes(k));
-          
-          // Exécuter la fonction et retourner le résultat
-          return await _userFunction(input);
+          })(input);
         `;
-        
+
         // Exécuter le code
         const result = new Function('input', safeCode)(input);
         

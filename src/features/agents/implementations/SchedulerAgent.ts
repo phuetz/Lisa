@@ -40,25 +40,32 @@ export class SchedulerAgent implements BaseAgent {
     const { intent, parameters } = props;
 
     try {
+      let result: AgentExecuteResult;
       switch (intent) {
         case 'find_availability':
-          return await this.findAvailability(parameters);
-        
+          result = await this.findAvailability(parameters);
+          break;
+
         case 'suggest_time':
-          return await this.suggestTime(parameters);
-        
+          result = await this.suggestTime(parameters);
+          break;
+
         case 'detect_conflicts':
-          return await this.detectConflicts(parameters);
-        
+          result = await this.detectConflicts(parameters);
+          break;
+
         case 'optimize_schedule':
-          return await this.optimizeSchedule(parameters);
-        
+          result = await this.optimizeSchedule(parameters);
+          break;
+
         case 'analyze_workload':
-          return await this.analyzeWorkload(parameters);
-        
+          result = await this.analyzeWorkload(parameters);
+          break;
+
         case 'schedule_meeting':
-          return await this.scheduleMeeting(parameters);
-        
+          result = await this.scheduleMeeting(parameters);
+          break;
+
         default:
           return {
             success: false,
@@ -70,6 +77,13 @@ export class SchedulerAgent implements BaseAgent {
             }
           };
       }
+      // Ensure executionTime in metadata
+      result.metadata = {
+        ...result.metadata,
+        executionTime: Date.now() - startTime,
+        timestamp: Date.now(),
+      };
+      return result;
     } catch (error) {
       return {
         success: false,
@@ -91,6 +105,17 @@ export class SchedulerAgent implements BaseAgent {
         success: false,
         output: null,
         error: 'Start and end dates are required'
+      };
+    }
+
+    // Validate date formats
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+      return {
+        success: false,
+        output: null,
+        error: 'Invalid date format provided'
       };
     }
 
@@ -269,7 +294,9 @@ export class SchedulerAgent implements BaseAgent {
     }, 0);
 
     const hours = totalMinutes / 60;
-    const avgPerDay = period === 'week' ? hours / 5 : hours / 30;
+    // Calculate average based on unique event days (not fixed period length)
+    const uniqueDays = new Set(events.map((e: any) => new Date(e.start).toDateString())).size || 1;
+    const avgPerDay = hours / uniqueDays;
 
     let status: 'light' | 'moderate' | 'heavy' | 'overloaded';
     if (avgPerDay < 4) status = 'light';
