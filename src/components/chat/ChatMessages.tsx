@@ -58,13 +58,14 @@ const MessageActions = ({ content, messageId, role, onEdit, onRegenerate, onDele
         <textarea
           value={editContent}
           onChange={(e) => setEditContent(e.target.value)}
+          aria-label="Modifier le message"
           style={{
             width: '100%',
             padding: '12px',
-            backgroundColor: '#1a1a1a',
-            border: '1px solid #404040',
-            borderRadius: '8px',
-            color: '#fff',
+            backgroundColor: 'var(--bg-tertiary)',
+            border: '1px solid var(--border-primary)',
+            borderRadius: 'var(--radius-md)',
+            color: 'var(--text-primary)',
             fontSize: '14px',
             lineHeight: 1.6,
             resize: 'vertical',
@@ -106,30 +107,24 @@ const MessageActions = ({ content, messageId, role, onEdit, onRegenerate, onDele
   }
 
   return (
-    <div style={{ 
-      display: 'flex', 
-      alignItems: 'center', 
-      gap: '8px', 
-      marginTop: '12px',
-      opacity: 0.6,
-      transition: 'opacity 0.2s'
-    }}
-    className="message-actions"
+    <div
+      className="message-actions"
+      role="toolbar"
+      aria-label={`Actions pour le message de ${role === 'assistant' ? 'Lisa' : 'vous'}`}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+        marginTop: '12px',
+        opacity: 0,
+        transition: 'opacity var(--transition-normal)',
+      }}
     >
       <button
         onClick={handleCopy}
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '4px',
-          padding: '4px 8px',
-          backgroundColor: 'transparent',
-          border: '1px solid #404040',
-          borderRadius: '4px',
-          color: copied ? '#10b981' : '#888',
-          cursor: 'pointer',
-          fontSize: '11px'
-        }}
+        className="msg-action-btn"
+        aria-label={copied ? 'Copié' : 'Copier le message'}
+        style={copied ? { color: '#10b981', borderColor: '#10b981' } : undefined}
       >
         {copied ? <Check size={12} /> : <Copy size={12} />}
         {copied ? 'Copié !' : 'Copier'}
@@ -138,18 +133,8 @@ const MessageActions = ({ content, messageId, role, onEdit, onRegenerate, onDele
       {role === 'user' && onEdit && (
         <button
           onClick={() => setIsEditing(true)}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '4px',
-            padding: '4px 8px',
-            backgroundColor: 'transparent',
-            border: '1px solid #404040',
-            borderRadius: '4px',
-            color: '#888',
-            cursor: 'pointer',
-            fontSize: '11px'
-          }}
+          className="msg-action-btn"
+          aria-label="Modifier le message"
         >
           <Edit2 size={12} />
           Modifier
@@ -159,18 +144,8 @@ const MessageActions = ({ content, messageId, role, onEdit, onRegenerate, onDele
       {role === 'assistant' && onRegenerate && (
         <button
           onClick={() => onRegenerate(messageId)}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '4px',
-            padding: '4px 8px',
-            backgroundColor: 'transparent',
-            border: '1px solid #404040',
-            borderRadius: '4px',
-            color: '#888',
-            cursor: 'pointer',
-            fontSize: '11px'
-          }}
+          className="msg-action-btn"
+          aria-label="Régénérer la réponse"
         >
           <RefreshCw size={12} />
           Régénérer
@@ -180,18 +155,8 @@ const MessageActions = ({ content, messageId, role, onEdit, onRegenerate, onDele
       {onDelete && (
         <button
           onClick={() => onDelete(messageId)}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '4px',
-            padding: '4px 8px',
-            backgroundColor: 'transparent',
-            border: '1px solid #ef444440',
-            borderRadius: '4px',
-            color: '#ef4444',
-            cursor: 'pointer',
-            fontSize: '11px'
-          }}
+          className="msg-action-btn danger"
+          aria-label="Supprimer le message"
         >
           <Trash2 size={12} />
         </button>
@@ -265,7 +230,16 @@ const MessageContent = ({ content, role }: MessageContentProps) => {
           >
             {/* Header cliquable */}
             <div
+              role="button"
+              tabIndex={0}
+              aria-label={`Ouvrir l'artefact ${artifact.title}`}
               onClick={() => openArtifact(artifact)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  openArtifact(artifact);
+                }
+              }}
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -273,7 +247,7 @@ const MessageContent = ({ content, role }: MessageContentProps) => {
                 padding: '12px 16px',
                 backgroundColor: '#1a1a2e',
                 cursor: 'pointer',
-                transition: 'background-color 0.2s',
+                transition: 'background-color var(--transition-normal)',
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.backgroundColor = '#252540';
@@ -566,10 +540,10 @@ export const ChatMessages = () => {
             <Sparkles size={48} color="#fff" />
           </div>
           
-          <h2 style={{ fontSize: '28px', fontWeight: 700, marginBottom: '12px', color: '#fff' }}>
+          <h2 style={{ fontSize: '28px', fontWeight: 700, marginBottom: '12px', color: 'var(--text-primary)' }}>
             Bonjour ! Je suis Lisa
           </h2>
-          <p style={{ color: '#888', fontSize: '16px', lineHeight: 1.6, marginBottom: '40px' }}>
+          <p style={{ color: 'var(--text-tertiary)', fontSize: '16px', lineHeight: 1.6, marginBottom: '40px' }}>
             Votre assistante IA intelligente. Je peux vous aider à coder, analyser, créer et bien plus encore.
           </p>
           
@@ -585,40 +559,27 @@ export const ChatMessages = () => {
               <button
                 key={index}
                 onClick={() => handleSuggestionClick(suggestion.text)}
+                className="suggestion-chip"
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
                   gap: '12px',
                   padding: '16px',
-                  backgroundColor: '#2d2d2d',
-                  border: '1px solid #404040',
-                  borderRadius: '12px',
-                  color: '#fff',
-                  cursor: 'pointer',
+                  borderRadius: 'var(--radius-lg)',
                   textAlign: 'left',
-                  transition: 'all 0.2s ease',
                   fontSize: '14px'
                 }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = suggestion.color;
-                  e.currentTarget.style.backgroundColor = '#333';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = '#404040';
-                  e.currentTarget.style.backgroundColor = '#2d2d2d';
-                }}
+                aria-label={`Suggestion : ${suggestion.text}`}
               >
                 <div style={{
                   width: '36px',
                   height: '36px',
-                  borderRadius: '8px',
+                  borderRadius: 'var(--radius-md)',
                   backgroundColor: `${suggestion.color}20`,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   flexShrink: 0
                 }}>
-                  <suggestion.icon size={18} color={suggestion.color} />
+                  <suggestion.icon size={18} color={suggestion.color} aria-hidden="true" />
                 </div>
                 <span>{suggestion.text}</span>
               </button>
@@ -626,16 +587,16 @@ export const ChatMessages = () => {
           </div>
           
           {/* Raccourcis clavier */}
-          <div style={{ 
-            marginTop: '40px', 
-            fontSize: '13px', 
-            color: '#666',
+          <div style={{
+            marginTop: '40px',
+            fontSize: '13px',
+            color: 'var(--text-muted)',
             display: 'flex',
             justifyContent: 'center',
             gap: '24px'
           }}>
-            <span><kbd style={{ padding: '2px 6px', backgroundColor: '#333', borderRadius: '4px', marginRight: '4px' }}>Enter</kbd> Envoyer</span>
-            <span><kbd style={{ padding: '2px 6px', backgroundColor: '#333', borderRadius: '4px', marginRight: '4px' }}>Shift+Enter</kbd> Nouvelle ligne</span>
+            <span><kbd style={{ padding: '2px 6px', backgroundColor: 'var(--border-secondary)', borderRadius: 'var(--radius-sm)', marginRight: '4px', color: 'var(--text-secondary)' }}>Enter</kbd> Envoyer</span>
+            <span><kbd style={{ padding: '2px 6px', backgroundColor: 'var(--border-secondary)', borderRadius: 'var(--radius-sm)', marginRight: '4px', color: 'var(--text-secondary)' }}>Shift+Enter</kbd> Nouvelle ligne</span>
           </div>
         </div>
         
@@ -660,9 +621,12 @@ export const ChatMessages = () => {
       {messages.map((message) => (
         <div
           key={message.id}
+          className="message-row"
+          role="article"
+          aria-label={`Message de ${message.role === 'assistant' ? 'Lisa' : 'vous'}`}
           style={{
             padding: '24px 0',
-            backgroundColor: message.role === 'assistant' ? '#2d2d2d' : 'transparent'
+            backgroundColor: message.role === 'assistant' ? 'var(--bg-secondary)' : 'transparent'
           }}
         >
           <div style={{
@@ -676,20 +640,20 @@ export const ChatMessages = () => {
             <div style={{
               width: '32px',
               height: '32px',
-              borderRadius: '4px',
-              backgroundColor: message.role === 'assistant' ? '#10a37f' : '#5436DA',
+              borderRadius: 'var(--radius-sm)',
+              backgroundColor: message.role === 'assistant' ? 'var(--color-brand)' : 'var(--color-user)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               flexShrink: 0
             }}>
               {message.role === 'assistant' ? (
-                <Bot size={18} color="#fff" />
+                <Bot size={18} color="#fff" aria-hidden="true" />
               ) : (
-                <User size={18} color="#fff" />
+                <User size={18} color="#fff" aria-hidden="true" />
               )}
             </div>
-            
+
             {/* Content */}
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{
@@ -698,13 +662,13 @@ export const ChatMessages = () => {
                 justifyContent: 'space-between',
                 marginBottom: '8px'
               }}>
-                <span style={{ fontWeight: 600, fontSize: '14px', color: '#fff' }}>
+                <span style={{ fontWeight: 600, fontSize: '14px', color: 'var(--text-primary)' }}>
                   {message.role === 'assistant' ? 'Lisa' : 'Vous'}
                 </span>
-                
+
                 {/* Metadata for assistant messages */}
                 {message.role === 'assistant' && message.metadata && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '11px', color: '#666' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '11px', color: 'var(--text-muted)' }}>
                     {(message.metadata as { model?: string }).model && (
                       <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                         <Bot size={10} />
@@ -744,7 +708,7 @@ export const ChatMessages = () => {
       
       {/* Streaming message */}
       {streamingMessage && (
-        <div style={{ padding: '24px 0', backgroundColor: '#2d2d2d' }}>
+        <div style={{ padding: '24px 0', backgroundColor: 'var(--bg-secondary)' }} role="status" aria-label="Lisa est en train de répondre">
           <div style={{
             maxWidth: '1100px',
             margin: '0 auto',
@@ -755,17 +719,17 @@ export const ChatMessages = () => {
             <div style={{
               width: '32px',
               height: '32px',
-              borderRadius: '4px',
-              backgroundColor: '#10a37f',
+              borderRadius: 'var(--radius-sm)',
+              backgroundColor: 'var(--color-brand)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               flexShrink: 0
             }}>
-              <Bot size={18} color="#fff" />
+              <Bot size={18} color="#fff" aria-hidden="true" />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontWeight: 600, fontSize: '14px', marginBottom: '8px', color: '#fff' }}>
+              <div style={{ fontWeight: 600, fontSize: '14px', marginBottom: '8px', color: 'var(--text-primary)' }}>
                 Lisa
               </div>
               <div style={{
@@ -775,14 +739,17 @@ export const ChatMessages = () => {
                 wordBreak: 'break-word'
               }}>
                 <MarkdownRenderer content={streamingMessage} />
-                <span style={{ 
-                  display: 'inline-block',
-                  width: '8px',
-                  height: '16px',
-                  backgroundColor: '#10a37f',
-                  marginLeft: '2px',
-                  animation: 'blink 1s infinite'
-                }} />
+                <span
+                  aria-hidden="true"
+                  style={{
+                    display: 'inline-block',
+                    width: '8px',
+                    height: '16px',
+                    backgroundColor: 'var(--color-brand)',
+                    marginLeft: '2px',
+                    animation: 'blink 1s infinite'
+                  }}
+                />
               </div>
             </div>
           </div>
@@ -791,7 +758,7 @@ export const ChatMessages = () => {
 
       {/* Enhanced Typing/Thinking indicator */}
       {isTyping && !streamingMessage && (
-        <div style={{ padding: '24px 0', backgroundColor: '#2d2d2d' }}>
+        <div style={{ padding: '24px 0', backgroundColor: 'var(--bg-secondary)' }} role="status" aria-label="Lisa réfléchit">
           <div style={{
             maxWidth: '1100px',
             margin: '0 auto',
@@ -802,21 +769,21 @@ export const ChatMessages = () => {
             <div style={{
               width: '32px',
               height: '32px',
-              borderRadius: '4px',
-              backgroundColor: '#8b5cf6',
+              borderRadius: 'var(--radius-sm)',
+              backgroundColor: 'var(--color-purple)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               flexShrink: 0,
               animation: 'pulse 2s infinite'
             }}>
-              <Brain size={18} color="#fff" />
+              <Brain size={18} color="#fff" aria-hidden="true" />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontWeight: 600, fontSize: '14px', marginBottom: '8px', color: '#fff', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ fontWeight: 600, fontSize: '14px', marginBottom: '8px', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 Lisa
-                <span style={{ fontSize: '12px', color: '#8b5cf6', fontWeight: 400 }}>
-                  is thinking...
+                <span style={{ fontSize: '12px', color: 'var(--color-purple)', fontWeight: 400 }}>
+                  réfléchit...
                 </span>
               </div>
 
@@ -826,60 +793,46 @@ export const ChatMessages = () => {
                 alignItems: 'center',
                 gap: '16px',
                 padding: '12px 16px',
-                backgroundColor: '#1a1a1a',
-                borderRadius: '8px',
-                border: '1px solid #333'
+                backgroundColor: 'var(--bg-tertiary)',
+                borderRadius: 'var(--radius-md)',
+                border: '1px solid var(--border-secondary)'
               }}>
                 {/* Stage 1: Thinking */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <div style={{
+                  <div aria-hidden="true" style={{
                     width: '8px',
                     height: '8px',
                     borderRadius: '50%',
-                    backgroundColor: '#8b5cf6',
+                    backgroundColor: 'var(--color-purple)',
                     animation: 'pulse 1s infinite'
                   }} />
-                  <span style={{ fontSize: '12px', color: '#8b5cf6' }}>Thinking</span>
+                  <span style={{ fontSize: '12px', color: 'var(--color-purple)' }}>Réflexion</span>
                 </div>
 
                 {/* Stage 2: Searching */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', opacity: 0.5 }}>
-                  <Search size={12} color="#3b82f6" />
-                  <span style={{ fontSize: '12px', color: '#888' }}>Memory</span>
+                  <Search size={12} color="var(--color-info)" aria-hidden="true" />
+                  <span style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>Mémoire</span>
                 </div>
 
                 {/* Stage 3: Generating */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', opacity: 0.5 }}>
-                  <Sparkles size={12} color="#10b981" />
-                  <span style={{ fontSize: '12px', color: '#888' }}>Generating</span>
+                  <Sparkles size={12} color="var(--color-brand)" aria-hidden="true" />
+                  <span style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>Génération</span>
                 </div>
 
                 {/* Animated dots */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginLeft: 'auto' }}>
-                  <div style={{
-                    width: '6px',
-                    height: '6px',
-                    borderRadius: '50%',
-                    backgroundColor: '#8b5cf6',
-                    animation: 'bounce 1.4s infinite ease-in-out',
-                    animationDelay: '0s'
-                  }} />
-                  <div style={{
-                    width: '6px',
-                    height: '6px',
-                    borderRadius: '50%',
-                    backgroundColor: '#8b5cf6',
-                    animation: 'bounce 1.4s infinite ease-in-out',
-                    animationDelay: '0.2s'
-                  }} />
-                  <div style={{
-                    width: '6px',
-                    height: '6px',
-                    borderRadius: '50%',
-                    backgroundColor: '#8b5cf6',
-                    animation: 'bounce 1.4s infinite ease-in-out',
-                    animationDelay: '0.4s'
-                  }} />
+                <div aria-hidden="true" style={{ display: 'flex', alignItems: 'center', gap: '4px', marginLeft: 'auto' }}>
+                  {[0, 0.2, 0.4].map((delay, i) => (
+                    <div key={i} style={{
+                      width: '6px',
+                      height: '6px',
+                      borderRadius: '50%',
+                      backgroundColor: 'var(--color-purple)',
+                      animation: 'bounce 1.4s infinite ease-in-out',
+                      animationDelay: `${delay}s`
+                    }} />
+                  ))}
                 </div>
               </div>
             </div>

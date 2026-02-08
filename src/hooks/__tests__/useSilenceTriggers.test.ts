@@ -6,23 +6,23 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 
 // Create a real Zustand store mock that triggers React re-renders properly
-vi.mock('../../store/visionAudioStore', async () => {
+vi.mock('../../store/appStore', async () => {
   const { create } = await import('zustand');
   const store = create<any>()((set: any) => ({
     lastSilenceMs: Date.now() - 10000,
     speechDetected: false,
     setState: (updater: any) => set(typeof updater === 'function' ? updater : updater),
   }));
-  return { useVisionAudioStore: store };
+  return { useAppStore: store };
 });
 
 import { useSilenceTriggers } from '../useSilenceTriggers';
-import { useVisionAudioStore } from '../../store/visionAudioStore';
+import { useAppStore } from '../../store/appStore';
 
 describe('useSilenceTriggers', () => {
   beforeEach(() => {
     vi.useFakeTimers();
-    useVisionAudioStore.setState({
+    useAppStore.setState({
       lastSilenceMs: Date.now() - 10000,
       speechDetected: false,
     });
@@ -55,7 +55,7 @@ describe('useSilenceTriggers', () => {
     const onSilenceDetected = vi.fn();
 
     // Simuler un silence plus ancien que le seuil
-    useVisionAudioStore.setState({ lastSilenceMs: Date.now() - 35000 });
+    useAppStore.setState({ lastSilenceMs: Date.now() - 35000 });
 
     const { result } = renderHook(() => useSilenceTriggers({
       onSilenceDetected,
@@ -75,7 +75,7 @@ describe('useSilenceTriggers', () => {
     const onSilenceDetected = vi.fn();
 
     // Simuler un silence plus récent que le seuil
-    useVisionAudioStore.setState({ lastSilenceMs: Date.now() - 15000 });
+    useAppStore.setState({ lastSilenceMs: Date.now() - 15000 });
 
     const { result } = renderHook(() => useSilenceTriggers({
       onSilenceDetected,
@@ -95,7 +95,7 @@ describe('useSilenceTriggers', () => {
     const onSilenceDetected = vi.fn();
 
     // Simuler un silence plus ancien que le seuil
-    useVisionAudioStore.setState({ lastSilenceMs: Date.now() - 35000 });
+    useAppStore.setState({ lastSilenceMs: Date.now() - 35000 });
 
     const { result } = renderHook(() => useSilenceTriggers({
       onSilenceDetected,
@@ -110,7 +110,7 @@ describe('useSilenceTriggers', () => {
 
     // Simuler que l'utilisateur commence à parler via store update
     act(() => {
-      useVisionAudioStore.setState({ speechDetected: true });
+      useAppStore.setState({ speechDetected: true });
     });
 
     // Le silence devrait être réinitialisé
@@ -121,7 +121,7 @@ describe('useSilenceTriggers', () => {
     const onSilenceDetected = vi.fn();
 
     // Start with recent silence (NOT triggering) to avoid initial detection
-    useVisionAudioStore.setState({ lastSilenceMs: Date.now() - 5000 });
+    useAppStore.setState({ lastSilenceMs: Date.now() - 5000 });
 
     const { result } = renderHook(() => useSilenceTriggers({
       onSilenceDetected,
@@ -134,7 +134,7 @@ describe('useSilenceTriggers', () => {
 
     // Set triggering silence while detection is disabled
     act(() => {
-      useVisionAudioStore.setState({ lastSilenceMs: Date.now() - 35000 });
+      useAppStore.setState({ lastSilenceMs: Date.now() - 35000 });
     });
 
     // Avance le temps pour déclencher les vérifications

@@ -27,10 +27,10 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onSwitchToRegis
 
   return (
     <div className="login-form-container">
-      <div className="login-form">
-        <h2>🤖 Connexion à Lisa</h2>
-        
-        <form onSubmit={handleSubmit}>
+      <div className="login-form" role="dialog" aria-modal="true" aria-labelledby="login-title">
+        <h2 id="login-title">Connexion à Lisa</h2>
+
+        <form onSubmit={handleSubmit} noValidate>
           <div className="form-group">
             <label htmlFor="email">Email</label>
             <input
@@ -41,6 +41,8 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onSwitchToRegis
               required
               disabled={isLoading}
               placeholder="votre@email.com"
+              autoComplete="email"
+              aria-invalid={error ? 'true' : undefined}
             />
           </div>
 
@@ -54,12 +56,14 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onSwitchToRegis
               required
               disabled={isLoading}
               placeholder="••••••••"
+              autoComplete="current-password"
+              aria-invalid={error ? 'true' : undefined}
             />
           </div>
 
           {error && (
-            <div className="error-message">
-              ⚠️ {error}
+            <div className="error-message" role="alert">
+              {error}
             </div>
           )}
 
@@ -93,7 +97,8 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onSwitchToRegis
           left: 0;
           right: 0;
           bottom: 0;
-          background: rgba(0, 0, 0, 0.8);
+          background: rgba(0, 0, 0, 0.7);
+          backdrop-filter: blur(8px);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -101,10 +106,11 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onSwitchToRegis
         }
 
         .login-form {
-          background: white;
+          background: var(--bg-elevated, #2f2f2f);
           padding: 2rem;
-          border-radius: 12px;
-          box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+          border-radius: var(--radius-xl, 16px);
+          border: 1px solid var(--border-primary, #333);
+          box-shadow: var(--shadow-modal, 0 25px 50px -12px rgba(0, 0, 0, 0.8));
           width: 100%;
           max-width: 400px;
           margin: 1rem;
@@ -113,7 +119,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onSwitchToRegis
         .login-form h2 {
           text-align: center;
           margin-bottom: 1.5rem;
-          color: #333;
+          color: var(--text-primary, #ececec);
           font-size: 1.5rem;
         }
 
@@ -125,85 +131,105 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onSwitchToRegis
           display: block;
           margin-bottom: 0.5rem;
           font-weight: 600;
-          color: #555;
+          color: var(--text-secondary, #b4b4b4);
+          font-size: 0.9rem;
         }
 
         .form-group input {
           width: 100%;
           padding: 0.75rem;
-          border: 2px solid #e1e5e9;
-          border-radius: 6px;
+          background: var(--bg-primary, #212121);
+          color: var(--text-primary, #ececec);
+          border: 1px solid var(--border-primary, #333);
+          border-radius: var(--radius-md, 8px);
           font-size: 1rem;
-          transition: border-color 0.2s;
+          transition: border-color var(--transition-fast, 0.15s ease), box-shadow var(--transition-fast, 0.15s ease);
           box-sizing: border-box;
         }
 
         .form-group input:focus {
           outline: none;
-          border-color: #007bff;
-          box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+          border-color: var(--color-brand, #10a37f);
+          box-shadow: 0 0 0 2px var(--color-brand-subtle, rgba(16, 163, 127, 0.12));
         }
 
         .form-group input:disabled {
-          background-color: #f8f9fa;
+          background-color: var(--bg-tertiary, #1a1a1a);
+          color: var(--text-disabled, #555);
           cursor: not-allowed;
         }
 
+        .form-group input::placeholder {
+          color: var(--text-muted, #666);
+        }
+
         .error-message {
-          background: #f8d7da;
-          color: #721c24;
+          background: rgba(239, 68, 68, 0.1);
+          color: var(--color-error, #ef4444);
           padding: 0.75rem;
-          border-radius: 6px;
+          border-radius: var(--radius-md, 8px);
           margin-bottom: 1rem;
-          border: 1px solid #f5c6cb;
+          border: 1px solid rgba(239, 68, 68, 0.3);
           font-size: 0.9rem;
         }
 
         .submit-button {
           width: 100%;
           padding: 0.875rem;
-          background: #007bff;
-          color: white;
+          background: var(--color-brand, #10a37f);
+          color: #fff;
           border: none;
-          border-radius: 6px;
+          border-radius: var(--radius-md, 8px);
           font-size: 1rem;
           font-weight: 600;
           cursor: pointer;
-          transition: background-color 0.2s;
+          transition: background-color var(--transition-fast, 0.15s ease);
         }
 
         .submit-button:hover:not(:disabled) {
-          background: #0056b3;
+          background: var(--color-brand-hover, #0d8c6d);
+        }
+
+        .submit-button:focus-visible {
+          outline: none;
+          box-shadow: var(--focus-ring, 0 0 0 2px var(--color-brand));
         }
 
         .submit-button:disabled {
-          background: #6c757d;
+          background: var(--text-disabled, #555);
           cursor: not-allowed;
+          opacity: 0.6;
         }
 
         .form-footer {
           text-align: center;
           margin-top: 1.5rem;
           padding-top: 1rem;
-          border-top: 1px solid #e1e5e9;
+          border-top: 1px solid var(--border-primary, #333);
         }
 
         .form-footer p {
           margin: 0;
-          color: #666;
+          color: var(--text-muted, #666);
         }
 
         .link-button {
           background: none;
           border: none;
-          color: #007bff;
+          color: var(--color-brand, #10a37f);
           cursor: pointer;
           text-decoration: underline;
           font-size: inherit;
         }
 
         .link-button:hover {
-          color: #0056b3;
+          color: var(--color-brand-hover, #0d8c6d);
+        }
+
+        .link-button:focus-visible {
+          outline: none;
+          box-shadow: var(--focus-ring, 0 0 0 2px var(--color-brand));
+          border-radius: 2px;
         }
       `}</style>
     </div>

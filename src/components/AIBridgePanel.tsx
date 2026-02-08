@@ -24,23 +24,23 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
   };
 
   const sourceColors: Record<string, string> = {
-    user: 'bg-blue-600',
-    lisa: 'bg-purple-600',
-    chatgpt: 'bg-green-600',
-    claude: 'bg-orange-600'
+    user: 'bg-[var(--color-brand,#10a37f)]',
+    lisa: 'bg-[var(--color-purple,#8b5cf6)]',
+    chatgpt: 'bg-[var(--color-brand,#10a37f)]',
+    claude: 'bg-[var(--color-warning,#f59e0b)]'
   };
 
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-4`}>
       <div className={`max-w-[80%] ${isUser ? 'order-2' : 'order-1'}`}>
-        <div className={`text-xs mb-1 ${isUser ? 'text-right' : 'text-left'} text-slate-400`}>
+        <div className={`text-xs mb-1 ${isUser ? 'text-right' : 'text-left'} text-[var(--text-muted,#666)]`}>
           {sourceLabels[message.source] || message.source}
         </div>
         <div
           className={`rounded-2xl px-4 py-3 ${
             isUser
-              ? 'bg-blue-600 text-white rounded-br-md'
-              : `${sourceColors[message.source] || 'bg-slate-700'} text-white rounded-bl-md`
+              ? 'bg-[var(--color-brand,#10a37f)] text-white rounded-br-md'
+              : `${sourceColors[message.source] || 'bg-[var(--bg-tertiary,#1a1a1a)]'} text-white rounded-bl-md`
           }`}
         >
           <p className="whitespace-pre-wrap">{message.content}</p>
@@ -51,7 +51,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
             </div>
           )}
         </div>
-        <div className="text-xs mt-1 text-slate-500">
+        <div className="text-xs mt-1 text-[var(--text-muted,#666)]">
           {new Date(message.timestamp).toLocaleTimeString()}
         </div>
       </div>
@@ -147,24 +147,24 @@ export const AIBridgePanel: React.FC = () => {
   }, [clearMessages, createSession, target]);
 
   return (
-    <div className="flex flex-col h-full bg-slate-900 text-white">
+    <div className="flex flex-col h-full bg-[var(--bg-primary,#212121)] text-white">
       {/* Header */}
-      <div className="flex-none p-4 border-b border-slate-700">
+      <div className="flex-none p-4 border-b border-[var(--border-primary,#424242)]">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-xl font-bold">AI Bridge</h2>
-            <p className="text-sm text-slate-400">
+            <p className="text-sm text-[var(--text-muted,#666)]">
               Lisa ↔ ChatGPT ↔ Claude
             </p>
           </div>
           <div className="flex items-center gap-4">
             {/* Target selector */}
             <div className="flex items-center gap-2">
-              <span className="text-sm text-slate-400">Cible:</span>
+              <span className="text-sm text-[var(--text-muted,#666)]">Cible:</span>
               <select
                 value={target}
                 onChange={(e) => setTarget(e.target.value as AITarget)}
-                className="bg-slate-800 border border-slate-600 rounded px-3 py-1.5 text-sm"
+                className="bg-[var(--bg-secondary,#2d2d2d)] border border-[var(--border-secondary,#555)] rounded px-3 py-1.5 text-sm"
               >
                 <option value="lisa">Lisa</option>
                 <option value="chatgpt">ChatGPT</option>
@@ -186,7 +186,9 @@ export const AIBridgePanel: React.FC = () => {
             {/* Tools button */}
             <button
               onClick={() => setShowTools(!showTools)}
-              className="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 rounded text-sm"
+              aria-expanded={showTools}
+              aria-label={`Outils (${tools.length})`}
+              className="px-3 py-1.5 bg-[var(--bg-tertiary,#1a1a1a)] hover:bg-[var(--bg-hover,rgba(255,255,255,0.06))] rounded text-sm"
             >
               🔧 Outils ({tools.length})
             </button>
@@ -194,7 +196,7 @@ export const AIBridgePanel: React.FC = () => {
             {/* New session button */}
             <button
               onClick={handleNewSession}
-              className="px-3 py-1.5 bg-purple-600 hover:bg-purple-500 rounded text-sm"
+              className="px-3 py-1.5 bg-[var(--color-purple,#8b5cf6)] hover:opacity-90 rounded text-sm"
             >
               Nouvelle session
             </button>
@@ -203,7 +205,7 @@ export const AIBridgePanel: React.FC = () => {
 
         {/* Session info */}
         {session && (
-          <div className="mt-2 text-xs text-slate-500">
+          <div className="mt-2 text-xs text-[var(--text-muted,#666)]">
             Session: {session.id.slice(0, 8)}... | 
             Participants: {session.participants.join(', ')} |
             Messages: {messages.length}
@@ -212,27 +214,27 @@ export const AIBridgePanel: React.FC = () => {
 
         {/* Error display */}
         {error && (
-          <div className="mt-2 p-2 bg-red-900/50 border border-red-700 rounded text-sm text-red-300 flex justify-between items-center">
+          <div className="mt-2 p-2 bg-[var(--color-error-subtle,rgba(239,68,68,0.12))] border border-[var(--color-error,#ef4444)]/30 rounded text-sm text-[var(--color-error,#ef4444)] flex justify-between items-center">
             <span>⚠️ {error}</span>
-            <button onClick={clearError} className="text-red-400 hover:text-red-300 p-1"><X size={14} /></button>
+            <button onClick={clearError} className="text-[var(--color-error,#ef4444)] hover:text-[var(--color-error,#ef4444)] p-1"><X size={14} /></button>
           </div>
         )}
       </div>
 
       {/* Tools panel */}
       {showTools && (
-        <div className="flex-none p-4 border-b border-slate-700 bg-slate-800/50 max-h-48 overflow-y-auto">
+        <div className="flex-none p-4 border-b border-[var(--border-primary,#424242)] bg-[var(--bg-secondary,#2d2d2d)]/50 max-h-48 overflow-y-auto">
           <h3 className="text-sm font-semibold mb-2">Outils disponibles:</h3>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
             {tools.map((tool) => (
               <button
                 key={tool.name}
                 onClick={() => handleToolInvoke(tool.name)}
-                className="p-2 bg-slate-700 hover:bg-slate-600 rounded text-left text-xs"
+                className="p-2 bg-[var(--bg-tertiary,#1a1a1a)] hover:bg-[var(--bg-hover,rgba(255,255,255,0.06))] rounded text-left text-xs"
                 title={tool.description}
               >
-                <div className="font-mono text-purple-400">{tool.name.replace('lisa_', '')}</div>
-                <div className="text-slate-400 truncate">{tool.description}</div>
+                <div className="font-mono text-[var(--color-purple,#8b5cf6)]">{tool.name.replace('lisa_', '')}</div>
+                <div className="text-[var(--text-muted,#666)] truncate">{tool.description}</div>
               </button>
             ))}
           </div>
@@ -243,7 +245,7 @@ export const AIBridgePanel: React.FC = () => {
       <div className="flex-1 overflow-y-auto p-4">
         {messages.length === 0 && !streamingContent && (
           <div className="h-full flex items-center justify-center">
-            <div className="text-center text-slate-500">
+            <div className="text-center text-[var(--text-muted,#666)]">
               <div className="text-6xl mb-4">🌉</div>
               <h3 className="text-xl font-semibold mb-2">AI Bridge</h3>
               <p className="max-w-md">
@@ -262,10 +264,10 @@ export const AIBridgePanel: React.FC = () => {
         {isStreaming && streamingContent && (
           <div className="flex justify-start mb-4">
             <div className="max-w-[80%]">
-              <div className="text-xs mb-1 text-slate-400">
+              <div className="text-xs mb-1 text-[var(--text-muted,#666)]">
                 {target === 'chatgpt' ? 'ChatGPT' : target === 'claude' ? 'Claude' : 'Lisa'}
               </div>
-              <div className="rounded-2xl px-4 py-3 bg-slate-700 text-white rounded-bl-md">
+              <div className="rounded-2xl px-4 py-3 bg-[var(--bg-tertiary,#1a1a1a)] text-white rounded-bl-md">
                 <p className="whitespace-pre-wrap">{streamingContent}</p>
                 <span className="inline-block w-2 h-4 bg-white/50 animate-pulse ml-1" />
               </div>
@@ -277,14 +279,14 @@ export const AIBridgePanel: React.FC = () => {
       </div>
 
       {/* Input area */}
-      <form onSubmit={handleSubmit} className="flex-none p-4 border-t border-slate-700">
+      <form onSubmit={handleSubmit} className="flex-none p-4 border-t border-[var(--border-primary,#424242)]">
         <div className="flex gap-2">
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder={`Message à ${target === 'chatgpt' ? 'ChatGPT' : target === 'claude' ? 'Claude' : 'Lisa'}...`}
-            className="flex-1 bg-slate-800 border border-slate-600 rounded-lg px-4 py-3 focus:outline-none focus:border-purple-500"
+            className="flex-1 bg-[var(--bg-secondary,#2d2d2d)] border border-[var(--border-secondary,#555)] rounded-lg px-4 py-3 focus:outline-none focus:border-[var(--color-brand,#10a37f)]"
             disabled={isLoading || isStreaming}
           />
           
@@ -292,7 +294,7 @@ export const AIBridgePanel: React.FC = () => {
             <button
               type="button"
               onClick={cancelStream}
-              className="px-6 py-3 bg-red-600 hover:bg-red-500 rounded-lg font-medium"
+              className="px-6 py-3 bg-[var(--color-error,#ef4444)] hover:opacity-90 rounded-lg font-medium"
             >
               Annuler
             </button>
@@ -300,7 +302,7 @@ export const AIBridgePanel: React.FC = () => {
             <button
               type="submit"
               disabled={isLoading || !input.trim()}
-              className="px-6 py-3 bg-purple-600 hover:bg-purple-500 disabled:bg-slate-700 disabled:cursor-not-allowed rounded-lg font-medium"
+              className="px-6 py-3 bg-[var(--color-purple,#8b5cf6)] hover:opacity-90 disabled:bg-[var(--bg-tertiary,#1a1a1a)] disabled:cursor-not-allowed rounded-lg font-medium"
             >
               {isLoading ? '...' : 'Envoyer'}
             </button>

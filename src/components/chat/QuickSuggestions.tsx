@@ -132,32 +132,37 @@ export const QuickSuggestions = ({ onSelect, lastMessage, isVisible = true }: Qu
   if (!isVisible) return null;
 
   return (
-    <div style={{
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '8px',
-      padding: '8px 0',
-    }}>
-      {/* Category filters */}
-      <div style={{
+    <div
+      role="region"
+      aria-label="Suggestions rapides"
+      style={{
         display: 'flex',
-        gap: '6px',
-        paddingLeft: '4px',
-        overflowX: 'auto',
-      }}>
+        flexDirection: 'column',
+        gap: '8px',
+        padding: '8px 0',
+      }}
+    >
+      {/* Category filters */}
+      <div
+        role="tablist"
+        aria-label="Catégories de suggestions"
+        style={{
+          display: 'flex',
+          gap: '6px',
+          paddingLeft: '4px',
+          overflowX: 'auto',
+        }}
+      >
         {(['all', 'tools', 'actions', 'questions'] as const).map(cat => (
           <button
             key={cat}
+            role="tab"
+            aria-selected={selectedCategory === cat}
             onClick={() => setSelectedCategory(cat)}
+            className="category-pill"
             style={{
-              padding: '4px 10px',
-              borderRadius: '12px',
-              border: 'none',
-              fontSize: '11px',
-              backgroundColor: selectedCategory === cat ? '#10b981' : '#2d2d2d',
-              color: selectedCategory === cat ? '#fff' : '#8e8ea0',
-              cursor: 'pointer',
-              whiteSpace: 'nowrap',
+              backgroundColor: selectedCategory === cat ? 'var(--color-brand)' : 'var(--bg-secondary)',
+              color: selectedCategory === cat ? '#fff' : 'var(--text-secondary)',
             }}
           >
             {cat === 'all' ? 'Tout' : cat === 'tools' ? 'Outils' : cat === 'actions' ? 'Actions' : 'Questions'}
@@ -176,27 +181,8 @@ export const QuickSuggestions = ({ onSelect, lastMessage, isVisible = true }: Qu
           <button
             key={suggestion.id}
             onClick={() => onSelect(suggestion.prompt)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '8px 12px',
-              borderRadius: '16px',
-              border: '1px solid #3d3d3d',
-              backgroundColor: '#1a1a1a',
-              color: '#e0e0e0',
-              fontSize: '13px',
-              cursor: 'pointer',
-              transition: 'all 0.2s',
-            }}
-            onMouseOver={(e) => {
-              e.currentTarget.style.backgroundColor = '#2d2d2d';
-              e.currentTarget.style.borderColor = '#10b981';
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.backgroundColor = '#1a1a1a';
-              e.currentTarget.style.borderColor = '#3d3d3d';
-            }}
+            className="suggestion-chip"
+            aria-label={`Suggestion : ${suggestion.label}`}
           >
             {suggestion.icon}
             {suggestion.label}

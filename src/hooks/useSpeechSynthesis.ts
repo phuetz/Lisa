@@ -1,12 +1,9 @@
 /**
  * useSpeechSynthesis - Hook pour la synthèse vocale
- * 
- * Ce hook permet d'accéder facilement aux fonctionnalités de synthèse vocale
- * pour communiquer verbalement avec l'utilisateur et d'autres assistants.
  */
 
-import { useState, useCallback, useEffect } from 'react';
-import { useVisionAudioStore } from '../store/visionAudioStore';
+import { useState, useCallback, useEffect, useRef } from 'react';
+import { useAppStore } from '../store/appStore';
 import { agentRegistry } from '../features/agents/core/registry';
 import type { VoiceSettings, SpeechSynthesisIntent, SpeechFormat } from '../features/agents/implementations/SpeechSynthesisAgent';
 import { useMetaHumanStore } from '../store/metaHumanStore';
@@ -23,6 +20,18 @@ export interface SpeechSynthesisOptions {
 
 export type SpeechState = 'idle' | 'speaking' | 'paused' | 'error';
 
+interface SpeakResult {
+  success: boolean;
+  output?: any;
+  error?: unknown;
+  reason?: string;
+}
+
+/** Resolve agent once and cache the reference. */
+function getSpeechAgent() {
+  return agentRegistry.getAgent('SpeechSynthesisAgent');
+}
+
 export const useSpeechSynthesis = (options: SpeechSynthesisOptions = {}) => {
   const [state, setState] = useState<SpeechState>('idle');
   const [error, setError] = useState<Error | null>(null);
@@ -35,36 +44,36 @@ export const useSpeechSynthesis = (options: SpeechSynthesisOptions = {}) => {
     lang: options.language || 'fr-FR'
   });
 
-  const audioEnabled = useVisionAudioStore((state) => state.audioEnabled);
-  const setLastSpokenText = useVisionAudioStore((state) => state.setLastSpokenText);
+  const audioEnabled = useAppStore((s) => s.audioEnabled);
+  const setLastSpokenText = useAppStore((s) => s.setLastSpokenText);
+
+  // Track whether voice init has already run
+  const voiceInitRef = useRef(false);
 
   /**
-   * Initialise la synthèse vocale et charge les voix disponibles
+   * Initialize voices once on mount (not on every currentSettings change)
    */
   useEffect(() => {
+    if (voiceInitRef.current) return;
+    voiceInitRef.current = true;
+
     const initVoices = async () => {
       try {
-        const registry = agentRegistry;
-        const agent = registry.getAgent('SpeechSynthesisAgent');
-        
-        if (agent) {
-          const result = await agent.execute({
-            intent: 'get_voices' as SpeechSynthesisIntent,
-            parameters: {}
-          });
-          
-          if (result.success && result.output.voices) {
-            setAvailableVoices(result.output.voices);
-            
-            // Mettre à jour la voix courante si ce n'est pas déjà fait
-            if (!currentSettings.voice && result.output.currentVoice) {
-              setCurrentSettings(prev => ({
-                ...prev,
-                voice: result.output.currentVoice
-              }));
-            }
-          } else {
-            console.warn('Failed to get voices:', result.error);
+        const agent = getSpeechAgent();
+        if (!agent) return;
+
+        const result = await agent.execute({
+          intent: 'get_voices' as SpeechSynthesisIntent,
+          parameters: {}
+        });
+
+        if (result.success && result.output.voices) {
+          setAvailableVoices(result.output.voices);
+          if (!currentSettings.voice && result.output.currentVoice) {
+            setCurrentSettings(prev => ({
+              ...prev,
+              voice: result.output.currentVoice
+            }));
           }
         }
       } catch (err) {
@@ -74,19 +83,16 @@ export const useSpeechSynthesis = (options: SpeechSynthesisOptions = {}) => {
     };
 
     initVoices();
-  }, [currentSettings]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- only run once on mount
+  }, []);
 
-  /**
-   * Convertit le texte en parole
-   */
   const speak = useCallback(async (
     text: string,
     speakOptions: {
       settings?: Partial<VoiceSettings>;
       format?: SpeechFormat;
     } = {}
-  ) => {
-    // Ne rien faire si l'audio est désactivé
+  ): Promise<SpeakResult> => {
     if (!audioEnabled) return { success: false, reason: 'audio_disabled' };
 
     try {
@@ -94,41 +100,29 @@ export const useSpeechSynthesis = (options: SpeechSynthesisOptions = {}) => {
       setError(null);
       setLastSpokenText(text);
 
-      // Trigger MetaHuman speech animation
+      // Trigger MetaHuman speech animation (fire-and-forget)
       const metaHumanAgent = agentRegistry.getAgent('MetaHumanAgent') as MetaHumanAgent | undefined;
-      if (metaHumanAgent) {
-        metaHumanAgent.execute({
-          intent: 'animate_speech',
-          parameters: { text: text, duration: text.length * 0.08 } // Estimate duration for animation
-        });
-      }
-      
-      const registry = agentRegistry;
-      const agent = registry.getAgent('SpeechSynthesisAgent');
-      
-      if (!agent) {
-        throw new Error('SpeechSynthesisAgent not registered');
-      }
-      
-      const mergedSettings = {
-        ...currentSettings,
-        ...speakOptions.settings
-      };
-      
+      metaHumanAgent?.execute({
+        intent: 'animate_speech',
+        parameters: { text, duration: text.length * 0.08 }
+      });
+
+      const agent = getSpeechAgent();
+      if (!agent) throw new Error('SpeechSynthesisAgent not registered');
+
       const result = await agent.execute({
         intent: 'speak' as SpeechSynthesisIntent,
         parameters: {
           text,
-          settings: mergedSettings,
+          settings: { ...currentSettings, ...speakOptions.settings },
           format: speakOptions.format || 'text'
         }
       });
-      
-      if (!result.success) {
-        throw result.error || new Error('Failed to speak');
-      }
-      
-      return result;
+
+      if (!result.success) throw result.error || new Error('Failed to speak');
+
+      setState('idle');
+      return { success: true, output: result.output };
     } catch (err) {
       console.error('Speech synthesis error:', err);
       setState('error');
@@ -137,26 +131,20 @@ export const useSpeechSynthesis = (options: SpeechSynthesisOptions = {}) => {
     }
   }, [audioEnabled, currentSettings, setLastSpokenText]);
 
-  /**
-   * Arrête la parole en cours
-   */
   const stop = useCallback(async () => {
     try {
-      const registry = agentRegistry;
-      const agent = registry.getAgent('SpeechSynthesisAgent');
-      
-      if (agent) {
-        const result = await agent.execute({
-          intent: 'stop_speaking' as SpeechSynthesisIntent,
-          parameters: {}
-        });
-        
-        if (result.success) {
-          setState('idle');
-          return true;
-        }
+      const agent = getSpeechAgent();
+      if (!agent) return false;
+
+      const result = await agent.execute({
+        intent: 'stop_speaking' as SpeechSynthesisIntent,
+        parameters: {}
+      });
+
+      if (result.success) {
+        setState('idle');
+        return true;
       }
-      
       return false;
     } catch (err) {
       console.error('Failed to stop speaking:', err);
@@ -164,26 +152,20 @@ export const useSpeechSynthesis = (options: SpeechSynthesisOptions = {}) => {
     }
   }, []);
 
-  /**
-   * Vérifie si la synthèse vocale est en cours
-   */
   const checkSpeaking = useCallback(async () => {
     try {
-      const registry = agentRegistry;
-      const agent = registry.getAgent('SpeechSynthesisAgent');
-      
-      if (agent) {
-        const result = await agent.execute({
-          intent: 'is_speaking' as SpeechSynthesisIntent,
-          parameters: {}
-        });
-        
-        if (result.success) {
-          setState(result.output.speaking ? 'speaking' : 'idle');
-          return result.output.speaking;
-        }
+      const agent = getSpeechAgent();
+      if (!agent) return false;
+
+      const result = await agent.execute({
+        intent: 'is_speaking' as SpeechSynthesisIntent,
+        parameters: {}
+      });
+
+      if (result.success) {
+        setState(result.output.speaking ? 'speaking' : 'idle');
+        return result.output.speaking;
       }
-      
       return false;
     } catch (err) {
       console.error('Failed to check speaking status:', err);
@@ -191,28 +173,20 @@ export const useSpeechSynthesis = (options: SpeechSynthesisOptions = {}) => {
     }
   }, []);
 
-  /**
-   * Met à jour les paramètres de voix
-   */
   const updateSettings = useCallback(async (settings: Partial<VoiceSettings>) => {
     try {
-      const registry = agentRegistry;
-      const agent = registry.getAgent('SpeechSynthesisAgent');
-      
-      if (agent) {
-        const result = await agent.execute({
-          intent: 'update_settings' as SpeechSynthesisIntent,
-          parameters: {
-            settings
-          }
-        });
-        
-        if (result.success) {
-          setCurrentSettings(result.output.settings);
-          return true;
-        }
+      const agent = getSpeechAgent();
+      if (!agent) return false;
+
+      const result = await agent.execute({
+        intent: 'update_settings' as SpeechSynthesisIntent,
+        parameters: { settings }
+      });
+
+      if (result.success) {
+        setCurrentSettings(result.output.settings);
+        return true;
       }
-      
       return false;
     } catch (err) {
       console.error('Failed to update voice settings:', err);
@@ -221,28 +195,20 @@ export const useSpeechSynthesis = (options: SpeechSynthesisOptions = {}) => {
     }
   }, []);
 
-  /**
-   * Récupère les voix disponibles pour une langue spécifique
-   */
   const getVoices = useCallback(async (lang?: string) => {
     try {
-      const registry = agentRegistry;
-      const agent = registry.getAgent('SpeechSynthesisAgent');
-      
-      if (agent) {
-        const result = await agent.execute({
-          intent: 'get_voices' as SpeechSynthesisIntent,
-          parameters: {
-            lang
-          }
-        });
-        
-        if (result.success) {
-          setAvailableVoices(result.output.voices);
-          return result.output.voices;
-        }
+      const agent = getSpeechAgent();
+      if (!agent) return [];
+
+      const result = await agent.execute({
+        intent: 'get_voices' as SpeechSynthesisIntent,
+        parameters: { lang }
+      });
+
+      if (result.success) {
+        setAvailableVoices(result.output.voices);
+        return result.output.voices;
       }
-      
       return [];
     } catch (err) {
       console.error('Failed to get voices:', err);

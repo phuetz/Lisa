@@ -8,9 +8,9 @@ function visionStatePlugin() {
     name: 'vision-state-api',
     configureServer(server: any) {
       server.middlewares.use('/api/vision/state', async (_req: any, res: any) => {
-        const { useVisionAudioStore } = await import(path.resolve(__dirname, 'src/store/visionAudioStore'));
+        const { useAppStore } = await import(path.resolve(__dirname, 'src/store/appStore'));
         res.setHeader('Content-Type', 'application/json');
-        res.end(JSON.stringify(useVisionAudioStore.getState()));
+        res.end(JSON.stringify(useAppStore.getState()));
       });
     },
   };
@@ -82,30 +82,7 @@ export default defineConfig({
         }
       }
     },
-    chunkSizeWarningLimit: 600, // Slightly above 500KB to reduce noise
+    chunkSizeWarningLimit: 600,
   },
-  test: {
-    globals: true,
-    environment: 'jsdom',
-    include: ['src/**/*.test.{ts,tsx}'],
-    setupFiles: './src/test/setup.ts',
-    coverage: {
-      provider: 'v8',
-      reporter: ['text', 'json', 'html'],
-      exclude: [
-        'node_modules/',
-        'src/test/',
-        '**/*.d.ts',
-        '**/*.test.{ts,tsx}',
-        '**/types.ts',
-        'dist/',
-      ],
-      thresholds: {
-        statements: 30,
-        branches: 30,
-        functions: 30,
-        lines: 30,
-      },
-    },
-  },
+  // Test config lives in vitest.config.ts — do not duplicate here
 });

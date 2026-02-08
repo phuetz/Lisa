@@ -1,9 +1,9 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useShallow } from 'zustand/react/shallow';
 
 import DrawWorker from '../workers/drawWorker.ts?worker';
-import { useVisionAudioStore } from '../store/visionAudioStore';
+import { useAppStore } from '../store/appStore';
 
 interface Props {
   video?: HTMLVideoElement | null;
@@ -16,7 +16,7 @@ export default function LisaCanvas({ video }: Props) {
   const { t } = useTranslation();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { faces, hands, objects, poses, lastSilenceMs, audio, smileDetected, speechDetected } =
-    useVisionAudioStore(useShallow((s) => ({
+    useAppStore(useShallow((s) => ({
       faces: s.faces,
       hands: s.hands,
       objects: s.objects,
@@ -31,21 +31,26 @@ export default function LisaCanvas({ video }: Props) {
   const transferredRef = useRef<boolean>(false);
   const cheerUntilRef = useRef<number>(0);
 
-  // Init worker & offscreen if supported
+  // Init worker & offscreen if supported — cleanup on unmount
   useEffect(() => {
     if (!canvasRef.current || transferredRef.current) return;
     if ('transferControlToOffscreen' in canvasRef.current) {
       try {
-        const off = (canvasRef.current as any).transferControlToOffscreen();
+        const off = (canvasRef.current as HTMLCanvasElement & { transferControlToOffscreen(): OffscreenCanvas }).transferControlToOffscreen();
         workerRef.current = new DrawWorker();
         workerRef.current.postMessage({ canvas: off }, [off]);
         useWorker.current = true;
         transferredRef.current = true;
-      } catch (e) {
-        // Canvas already transferred (React Strict Mode double-mount)
+      } catch {
         console.warn('[LisaCanvas] OffscreenCanvas already transferred');
       }
     }
+    return () => {
+      if (workerRef.current) {
+        workerRef.current.terminate();
+        workerRef.current = null;
+      }
+    };
   }, []);
 
   // Resize canvas to match video size on mount / resize
@@ -86,7 +91,8 @@ export default function LisaCanvas({ video }: Props) {
       });
       return;
     }
-    const ctx = canvasRef.current.getContext('2d')!;
+    const ctx = canvasRef.current.getContext('2d');
+    if (!ctx) return;
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
     // Face boxes
@@ -143,7 +149,8 @@ export default function LisaCanvas({ video }: Props) {
       ctx.fillStyle = '#0f0';
       ctx.fillText(t('greeting_overlay'), ctx.canvas.width - 100, 30);
     }
-  }, [faces, hands, objects, poses, lastSilenceMs, audio, video]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally skip array/object refs to avoid excessive re-draws; store pushes updates via shallow equality
+  }, [faces, hands, objects, poses, lastSilenceMs, audio, video, smileDetected, speechDetected, t]);
 
   return <canvas ref={canvasRef} style={{ position: 'absolute', top: 0, left: 0 }} />;
 }

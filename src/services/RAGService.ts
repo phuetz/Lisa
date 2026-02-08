@@ -56,6 +56,12 @@ class RAGServiceImpl {
     this.loadEmbeddingsFromStorage();
     this.loadConfigFromStorage();
     this.initializeVectorIndex();
+
+    // Auto-cleanup embeddings older than 30 days on startup
+    const removed = this.cleanupOldEmbeddings(30);
+    if (removed > 0) {
+      console.log(`[RAG] Auto-cleaned ${removed} stale embeddings`);
+    }
   }
 
   /**
@@ -252,23 +258,65 @@ class RAGServiceImpl {
   }
 
   /**
-   * Linear O(n) search fallback
+   * Linear O(n) search fallback — uses cached embeddings when available
    */
   private async searchSimilarLinear(queryEmbedding: number[], maxResults: number): Promise<Array<Memory & { similarity: number }>> {
-    // Récupérer tous les souvenirs
     const context = memoryService.getContext();
     const allMemories = [...context.shortTerm, ...context.longTerm];
 
-    // Scorer les souvenirs par similarité
-    const scored = await Promise.all(
-      allMemories.map(async (memory) => {
-        const memoryEmbedding = await this.generateEmbedding(memory.content);
-        const similarity = embeddingService.cosineSimilarity(queryEmbedding, memoryEmbedding);
-        return { ...memory, similarity };
-      })
-    );
+    // Separate memories with/without cached embeddings
+    const uncachedTexts: string[] = [];
+    const uncachedIndices: number[] = [];
 
-    // Filtrer par seuil de similarité et trier
+    for (let i = 0; i < allMemories.length; i++) {
+      if (!this.embeddings.has(allMemories[i].content)) {
+        uncachedTexts.push(allMemories[i].content);
+        uncachedIndices.push(i);
+      }
+    }
+
+    // Batch-generate missing embeddings
+    if (uncachedTexts.length > 0) {
+      const batchResults = await embeddingService.generateBatchEmbeddings(uncachedTexts);
+      for (let j = 0; j < batchResults.length; j++) {
+        const text = uncachedTexts[j];
+        const timestamp = new Date().toISOString();
+        this.embeddings.set(text, {
+          text,
+          vector: batchResults[j].vector,
+          timestamp,
+          model: batchResults[j].model
+        });
+
+        // Sync to HNSW vector index for fast search on next call
+        if (this.config.useVectorIndex && this.vectorIndexInitialized) {
+          const id = this.textToId(text);
+          if (!this.indexedMemoryIds.has(id)) {
+            try {
+              await vectorStore.add({
+                id,
+                vector: batchResults[j].vector,
+                metadata: { text, timestamp, model: batchResults[j].model }
+              });
+              this.indexedMemoryIds.add(id);
+            } catch {
+              // Non-critical, linear search still works
+            }
+          }
+        }
+      }
+      this.saveEmbeddingsToStorage();
+    }
+
+    // Score all memories using cached embeddings
+    const scored = allMemories.map((memory) => {
+      const cached = this.embeddings.get(memory.content);
+      const similarity = cached
+        ? embeddingService.cosineSimilarity(queryEmbedding, cached.vector)
+        : 0;
+      return { ...memory, similarity };
+    });
+
     return scored
       .filter(item => item.similarity >= this.config.similarityThreshold)
       .sort((a, b) => b.similarity - a.similarity)
@@ -479,6 +527,60 @@ class RAGServiceImpl {
    */
   setApiKey(apiKey: string): void {
     embeddingService.updateConfig({ apiKey });
+  }
+
+  /**
+   * Index a document by chunking its text and storing embeddings.
+   * Each chunk is stored as a separate embedding for fine-grained retrieval.
+   */
+  async indexDocument(text: string, metadata: { filename: string; keywords?: string[] }): Promise<number> {
+    if (!this.config.enabled || !text.trim()) return 0;
+
+    const chunks = this.chunkText(text);
+    let indexed = 0;
+
+    for (const chunk of chunks) {
+      try {
+        await this.generateEmbedding(chunk);
+        indexed++;
+      } catch {
+        // Skip individual chunk failures
+      }
+    }
+
+    console.log(`[RAG] Indexed document "${metadata.filename}": ${indexed}/${chunks.length} chunks`);
+    return indexed;
+  }
+
+  /**
+   * Split text into overlapping chunks for embedding.
+   * Uses ~1000 char chunks with ~200 char overlap, splitting on sentence boundaries.
+   */
+  private chunkText(text: string, chunkSize = 1000, overlap = 200): string[] {
+    if (text.length <= chunkSize) return [text];
+
+    const chunks: string[] = [];
+    let start = 0;
+
+    while (start < text.length) {
+      let end = Math.min(start + chunkSize, text.length);
+
+      // Try to break at a sentence boundary
+      if (end < text.length) {
+        const lastSentenceEnd = text.lastIndexOf('.', end);
+        const lastNewline = text.lastIndexOf('\n', end);
+        const breakPoint = Math.max(lastSentenceEnd, lastNewline);
+        if (breakPoint > start + chunkSize * 0.5) {
+          end = breakPoint + 1;
+        }
+      }
+
+      chunks.push(text.slice(start, end).trim());
+      start = end - overlap;
+      if (start >= text.length) break;
+    }
+
+    return chunks.filter(c => c.length > 50); // Skip tiny fragments
   }
 }
 

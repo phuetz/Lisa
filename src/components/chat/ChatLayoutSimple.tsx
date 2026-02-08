@@ -18,7 +18,7 @@ const ExportPDF = lazy(() => import('./ExportPDF').then(m => ({ default: m.Expor
 // Loading fallback for lazy components
 const LazyFallback = () => (
   <div className="flex items-center justify-center p-8">
-    <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
+    <Loader2 className="w-6 h-6 animate-spin" style={{ color: 'var(--color-info, #3b82f6)' }} />
   </div>
 );
 
@@ -136,119 +136,97 @@ export const ChatLayoutSimple = () => {
       bottom: 0,
       display: 'flex',
       flexDirection: 'column',
-      backgroundColor: '#212121',
-      color: '#fff'
+      backgroundColor: 'var(--bg-primary, #212121)',
+      color: 'var(--text-primary, #ececec)'
     }}>
       {/* Header - hauteur fixe */}
-      <header style={{
-        height: '56px',
-        minHeight: '56px',
-        padding: '0 16px',
-        borderBottom: '1px solid #2d2d2d',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '12px',
-        backgroundColor: '#212121'
-      }}>
+      <header
+        role="banner"
+        style={{
+          height: '56px',
+          minHeight: '56px',
+          padding: '0 16px',
+          borderBottom: '1px solid var(--border-subtle)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          backgroundColor: 'var(--bg-primary)'
+        }}
+      >
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
-          style={{
-            padding: '8px',
-            backgroundColor: 'transparent',
-            border: 'none',
-            color: '#888',
-            cursor: 'pointer'
-          }}
+          className="chat-icon-btn"
+          aria-label="Ouvrir le menu"
+          aria-expanded={sidebarOpen}
         >
           <Menu size={20} />
         </button>
-        
-        <h1 style={{ 
-          fontSize: '16px', 
+
+        <h1 style={{
+          fontSize: '16px',
           fontWeight: 500,
-          color: '#fff',
+          color: 'var(--text-primary)',
           margin: 0,
           flex: 1
         }}>
           {currentConversation?.title || 'Lisa AI'}
         </h1>
-        
+
         <ConnectionStatus />
-        
+
         <button
           onClick={handleNewChat}
-          style={{
-            padding: '8px',
-            backgroundColor: 'transparent',
-            border: 'none',
-            color: '#888',
-            cursor: 'pointer'
-          }}
-          title="Nouvelle conversation"
+          className="chat-icon-btn"
+          aria-label="Nouvelle conversation"
         >
           <Plus size={20} />
         </button>
-        
+
         <button
           onClick={() => setExportOpen(true)}
           disabled={!currentConversation || currentConversation.messages.length === 0}
-          style={{
-            padding: '8px',
-            backgroundColor: 'transparent',
-            border: 'none',
-            color: currentConversation?.messages.length ? '#888' : '#444',
-            cursor: currentConversation?.messages.length ? 'pointer' : 'not-allowed'
-          }}
-          title="Exporter en PDF"
+          className="chat-icon-btn"
+          aria-label="Exporter en PDF"
         >
           <FileDown size={20} />
         </button>
-        
+
         <button
           onClick={() => setShowShortcuts(true)}
-          style={{
-            padding: '8px',
-            backgroundColor: 'transparent',
-            border: 'none',
-            color: '#888',
-            cursor: 'pointer'
-          }}
-          title="Raccourcis clavier"
+          className="chat-icon-btn"
+          aria-label="Raccourcis clavier"
         >
           <Keyboard size={20} />
         </button>
-        
+
         <button
           onClick={() => setSettingsOpen(true)}
-          style={{
-            padding: '8px',
-            backgroundColor: 'transparent',
-            border: 'none',
-            color: '#888',
-            cursor: 'pointer'
-          }}
-          title="Paramètres"
+          className="chat-icon-btn"
+          aria-label="Paramètres"
         >
           <Settings size={20} />
         </button>
       </header>
 
       {/* Messages Area - prend tout l'espace restant */}
-      <div style={{
-        flex: 1,
-        overflow: 'auto',
-        minHeight: 0
-      }}>
+      <main
+        role="main"
+        aria-label="Messages de conversation"
+        style={{
+          flex: 1,
+          overflow: 'auto',
+          minHeight: 0
+        }}
+      >
         <ChatMessages />
-      </div>
+      </main>
 
-      {/* Input Area - hauteur auto */}
+      {/* Input Area */}
       <div style={{
-        padding: '16px',
-        borderTop: '1px solid #2d2d2d',
-        backgroundColor: '#212121'
+        padding: '8px 16px 20px',
+        backgroundColor: 'var(--bg-primary, #212121)',
       }}>
-        <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+        <div style={{ maxWidth: '768px', margin: '0 auto' }}>
           <ChatInput />
         </div>
       </div>
@@ -256,8 +234,9 @@ export const ChatLayoutSimple = () => {
       {/* Sidebar overlay */}
       {sidebarOpen && (
         <>
-          <div 
+          <div
             onClick={() => setSidebarOpen(false)}
+            aria-hidden="true"
             style={{
               position: 'fixed',
               top: 0,
@@ -268,22 +247,26 @@ export const ChatLayoutSimple = () => {
               zIndex: 40
             }}
           />
-          <aside style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            bottom: 0,
-            width: '280px',
-            backgroundColor: '#171717',
-            borderRight: '1px solid #2d2d2d',
-            zIndex: 50,
-            display: 'flex',
-            flexDirection: 'column'
-          }}>
+          <aside
+            role="navigation"
+            aria-label="Menu principal"
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              bottom: 0,
+              width: '280px',
+              backgroundColor: 'var(--bg-sidebar)',
+              borderRight: '1px solid var(--border-subtle)',
+              zIndex: 50,
+              display: 'flex',
+              flexDirection: 'column'
+            }}
+          >
             {/* Sidebar Header */}
             <div style={{
               padding: '12px 16px',
-              borderBottom: '1px solid #2d2d2d',
+              borderBottom: '1px solid var(--border-subtle)',
               display: 'flex',
               flexDirection: 'column',
               gap: '8px'
@@ -291,32 +274,25 @@ export const ChatLayoutSimple = () => {
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <button
                   onClick={handleNewChat}
+                  className="sidebar-nav-item"
                   style={{
-                    display: 'flex',
-                    alignItems: 'center',
                     gap: '8px',
                     padding: '10px 16px',
-                    backgroundColor: '#2d2d2d',
-                    border: 'none',
-                    borderRadius: '8px',
-                    color: '#fff',
-                    cursor: 'pointer',
+                    backgroundColor: 'var(--bg-secondary)',
+                    borderRadius: 'var(--radius-md)',
+                    color: 'var(--text-primary)',
                     fontSize: '14px',
                     flex: 1
                   }}
+                  aria-label="Nouvelle conversation"
                 >
                   <Plus size={16} />
                   Nouvelle conversation
                 </button>
                 <button
                   onClick={() => setSidebarOpen(false)}
-                  style={{
-                    padding: '8px',
-                    backgroundColor: 'transparent',
-                    border: 'none',
-                    color: '#888',
-                    cursor: 'pointer'
-                  }}
+                  className="chat-icon-btn"
+                  aria-label="Fermer le menu"
                 >
                   <X size={18} />
                 </button>
@@ -324,21 +300,22 @@ export const ChatLayoutSimple = () => {
               
               {/* Search */}
               <div style={{ position: 'relative' }}>
-                <Search size={16} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#666' }} />
+                <Search size={16} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} aria-hidden="true" />
                 <input
-                  type="text"
+                  type="search"
                   placeholder="Rechercher..."
+                  aria-label="Rechercher dans les conversations"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   style={{
                     width: '100%',
                     padding: '8px 8px 8px 34px',
-                    backgroundColor: '#2d2d2d',
-                    border: '1px solid #3d3d3d',
+                    backgroundColor: 'var(--bg-secondary)',
+                    border: '1px solid var(--border-primary)',
                     borderRadius: '6px',
-                    color: '#fff',
+                    color: 'var(--text-primary)',
                     fontSize: '13px',
-                    outline: 'none'
+                    outline: 'none',
                   }}
                 />
               </div>
@@ -347,42 +324,18 @@ export const ChatLayoutSimple = () => {
               <div style={{ display: 'flex', gap: '8px' }}>
                 <button
                   onClick={handleExportJSON}
-                  style={{
-                    flex: 1,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '6px',
-                    padding: '8px',
-                    backgroundColor: 'transparent',
-                    border: '1px solid #3d3d3d',
-                    borderRadius: '6px',
-                    color: '#888',
-                    cursor: 'pointer',
-                    fontSize: '12px'
-                  }}
-                  title="Exporter les conversations"
+                  className="msg-action-btn"
+                  style={{ flex: 1, justifyContent: 'center', fontSize: '12px' }}
+                  aria-label="Exporter les conversations en JSON"
                 >
                   <Download size={14} />
                   Export
                 </button>
                 <button
                   onClick={handleImportJSON}
-                  style={{
-                    flex: 1,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '6px',
-                    padding: '8px',
-                    backgroundColor: 'transparent',
-                    border: '1px solid #3d3d3d',
-                    borderRadius: '6px',
-                    color: '#888',
-                    cursor: 'pointer',
-                    fontSize: '12px'
-                  }}
-                  title="Importer des conversations"
+                  className="msg-action-btn"
+                  style={{ flex: 1, justifyContent: 'center', fontSize: '12px' }}
+                  aria-label="Importer des conversations depuis un fichier JSON"
                 >
                   <Upload size={14} />
                   Import
@@ -392,14 +345,14 @@ export const ChatLayoutSimple = () => {
             
             {/* Conversations List */}
             <div style={{ overflowY: 'auto', padding: '8px', maxHeight: '200px' }}>
-              <div style={{ fontSize: '11px', color: '#666', padding: '4px 8px', marginBottom: '4px' }}>
+              <div style={{ fontSize: '11px', color: 'var(--text-muted)', padding: '4px 8px', marginBottom: '4px' }}>
                 Conversations récentes
               </div>
               {filteredConversations.length === 0 ? (
                 <div style={{ 
                   padding: '12px', 
                   textAlign: 'center', 
-                  color: '#666',
+                  color: 'var(--text-muted)',
                   fontSize: '13px'
                 }}>
                   Aucune conversation
@@ -408,25 +361,26 @@ export const ChatLayoutSimple = () => {
                 filteredConversations.slice(0, 5).map(conv => (
                   <div
                     key={conv.id}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      padding: '8px 10px',
-                      borderRadius: '6px',
-                      marginBottom: '2px',
-                      cursor: 'pointer',
-                      backgroundColor: conv.id === currentConversationId ? '#2d2d2d' : 'transparent',
-                      transition: 'background-color 0.15s'
-                    }}
+                    className={`conv-item${conv.id === currentConversationId ? ' active' : ''}`}
+                    role="button"
+                    tabIndex={0}
+                    aria-current={conv.id === currentConversationId ? 'true' : undefined}
                     onClick={() => {
                       setCurrentConversation(conv.id);
                       setSidebarOpen(false);
                     }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setCurrentConversation(conv.id);
+                        setSidebarOpen(false);
+                      }
+                    }}
                   >
-                    <MessageSquare size={14} style={{ color: '#666', marginRight: '8px', flexShrink: 0 }} />
+                    <MessageSquare size={14} style={{ color: 'var(--text-muted)', marginRight: '8px', flexShrink: 0 }} aria-hidden="true" />
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{
-                        color: '#fff',
+                        color: 'var(--text-primary)',
                         fontSize: '13px',
                         whiteSpace: 'nowrap',
                         overflow: 'hidden',
@@ -442,16 +396,9 @@ export const ChatLayoutSimple = () => {
                           deleteConversation(conv.id);
                         }
                       }}
-                      style={{
-                        padding: '4px',
-                        backgroundColor: 'transparent',
-                        border: 'none',
-                        color: '#666',
-                        cursor: 'pointer',
-                        opacity: 0.6,
-                        borderRadius: '4px'
-                      }}
-                      title="Supprimer"
+                      className="chat-icon-btn"
+                      style={{ padding: '4px', opacity: 0.6 }}
+                      aria-label={`Supprimer la conversation ${conv.title}`}
                     >
                       <Trash2 size={12} />
                     </button>
@@ -465,33 +412,31 @@ export const ChatLayoutSimple = () => {
               flex: 1, 
               overflowY: 'auto', 
               padding: '8px',
-              borderTop: '1px solid #2d2d2d'
+              borderTop: '1px solid var(--border-subtle)'
             }}>
-              <div style={{ fontSize: '11px', color: '#666', padding: '4px 8px', marginBottom: '4px' }}>
+              <div style={{ fontSize: '11px', color: 'var(--text-muted)', padding: '4px 8px', marginBottom: '4px' }}>
                 Navigation
               </div>
               {navigationItems.map((item) => (
                 <div
                   key={item.path}
+                  className={`sidebar-nav-item${isActive(item.path) ? ' active' : ''}`}
+                  role="link"
+                  tabIndex={0}
+                  aria-current={isActive(item.path) ? 'page' : undefined}
                   onClick={() => {
                     navigate(item.path);
                     setSidebarOpen(false);
                   }}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '10px',
-                    padding: '10px 12px',
-                    borderRadius: '8px',
-                    marginBottom: '2px',
-                    cursor: 'pointer',
-                    backgroundColor: isActive(item.path) ? '#10a37f20' : 'transparent',
-                    color: isActive(item.path) ? '#10a37f' : '#888',
-                    transition: 'all 0.15s',
-                    fontSize: '13px',
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      navigate(item.path);
+                      setSidebarOpen(false);
+                    }
                   }}
                 >
-                  <item.icon size={16} />
+                  <item.icon size={16} aria-hidden="true" />
                   {item.label}
                 </div>
               ))}
@@ -500,28 +445,17 @@ export const ChatLayoutSimple = () => {
             {/* Settings Button */}
             <div style={{ 
               padding: '8px 12px', 
-              borderTop: '1px solid #2d2d2d' 
+              borderTop: '1px solid var(--border-subtle)' 
             }}>
               <button
                 onClick={() => {
                   navigate('/settings');
                   setSidebarOpen(false);
                 }}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '10px',
-                  width: '100%',
-                  padding: '10px 12px',
-                  backgroundColor: 'transparent',
-                  border: 'none',
-                  borderRadius: '8px',
-                  color: '#888',
-                  cursor: 'pointer',
-                  fontSize: '13px',
-                }}
+                className="sidebar-nav-item"
+                aria-label="Paramètres"
               >
-                <Settings size={16} />
+                <Settings size={16} aria-hidden="true" />
                 Paramètres
               </button>
             </div>
@@ -546,8 +480,9 @@ export const ChatLayoutSimple = () => {
       {/* Keyboard Shortcuts Modal */}
       {showShortcuts && (
         <>
-          <div 
+          <div
             onClick={() => setShowShortcuts(false)}
+            aria-hidden="true"
             style={{
               position: 'fixed',
               top: 0,
@@ -558,23 +493,30 @@ export const ChatLayoutSimple = () => {
               zIndex: 60
             }}
           />
-          <div style={{
-            position: 'fixed',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            backgroundColor: '#1a1a1a',
-            borderRadius: '16px',
-            padding: '24px',
-            zIndex: 61,
-            minWidth: '320px',
-            border: '1px solid #333'
-          }}>
+          <div
+            role="dialog"
+            aria-label="Raccourcis clavier"
+            aria-modal="true"
+            style={{
+              position: 'fixed',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              backgroundColor: 'var(--bg-tertiary)',
+              borderRadius: 'var(--radius-xl)',
+              padding: '24px',
+              zIndex: 61,
+              minWidth: '320px',
+              border: '1px solid var(--border-secondary)',
+              boxShadow: 'var(--shadow-modal)'
+            }}
+          >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <h3 style={{ margin: 0, color: '#fff', fontSize: '18px' }}>Raccourcis clavier</h3>
+              <h3 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '18px' }}>Raccourcis clavier</h3>
               <button
                 onClick={() => setShowShortcuts(false)}
-                style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer' }}
+                className="chat-icon-btn"
+                aria-label="Fermer les raccourcis clavier"
               >
                 <X size={20} />
               </button>
@@ -589,14 +531,14 @@ export const ChatLayoutSimple = () => {
                 { keys: 'Escape', action: 'Annuler / Effacer' },
               ].map(({ keys, action }) => (
                 <div key={keys} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ color: '#888', fontSize: '14px' }}>{action}</span>
+                  <span style={{ color: 'var(--text-tertiary)', fontSize: '14px' }}>{action}</span>
                   <kbd style={{
-                    backgroundColor: '#2d2d2d',
+                    backgroundColor: 'var(--bg-secondary)',
                     padding: '4px 8px',
-                    borderRadius: '4px',
+                    borderRadius: 'var(--radius-sm)',
                     fontSize: '12px',
-                    color: '#fff',
-                    border: '1px solid #444'
+                    color: 'var(--text-primary)',
+                    border: '1px solid var(--border-primary)'
                   }}>{keys}</kbd>
                 </div>
               ))}

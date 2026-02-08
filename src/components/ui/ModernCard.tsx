@@ -26,9 +26,9 @@ export const ModernCard: React.FC<ModernCardProps> = ({
   return (
     <div
       className={`
-        bg-slate-800/50 backdrop-blur-xl border border-slate-700/50 rounded-xl p-6
-        ${hover ? 'hover:bg-slate-800/70 hover:border-slate-600/50 transition-all duration-300' : ''}
-        ${gradient ? 'bg-gradient-to-br from-slate-800/50 to-slate-900/50' : ''}
+        bg-[var(--bg-elevated,#2f2f2f)]/80 backdrop-blur-xl border border-[var(--border-primary,#424242)]/60 rounded-xl p-6
+        ${hover ? 'hover:bg-[var(--bg-hover,rgba(255,255,255,0.06))] hover:border-[var(--border-secondary,#555)] transition-all duration-300' : ''}
+        ${gradient ? 'bg-gradient-to-br from-[var(--bg-elevated,#2f2f2f)]/60 to-[var(--bg-surface,#0d0d0d)]/60' : ''}
         ${className}
       `}
       {...props}
@@ -57,10 +57,10 @@ export const ModernCardHeader: React.FC<ModernCardHeaderProps> = ({
   return (
     <div className="flex items-start justify-between mb-4">
       <div className="flex items-start gap-3 flex-1">
-        {icon && <div className="text-blue-400 mt-1">{icon}</div>}
+        {icon && <div className="text-[var(--color-brand,#10a37f)] mt-1">{icon}</div>}
         <div>
-          <h3 className="text-lg font-semibold text-white">{title}</h3>
-          {subtitle && <p className="text-sm text-slate-400 mt-1">{subtitle}</p>}
+          <h3 className="text-lg font-semibold text-[var(--text-primary,#ececec)]">{title}</h3>
+          {subtitle && <p className="text-sm text-[var(--text-muted,#666)] mt-1">{subtitle}</p>}
         </div>
       </div>
       {action && <div>{action}</div>}
@@ -80,7 +80,7 @@ export const ModernCardBody: React.FC<ModernCardBodyProps> = ({
   children,
   className = '',
 }) => {
-  return <div className={`text-slate-300 ${className}`}>{children}</div>;
+  return <div className={`text-[var(--text-secondary,#b4b4b4)] ${className}`}>{children}</div>;
 };
 
 interface ModernCardFooterProps {
@@ -96,7 +96,7 @@ export const ModernCardFooter: React.FC<ModernCardFooterProps> = ({
   className = '',
 }) => {
   return (
-    <div className={`pt-4 border-t border-slate-700/50 flex items-center justify-between ${className}`}>
+    <div className={`pt-4 border-t border-[var(--border-primary,#424242)]/60 flex items-center justify-between ${className}`}>
       {children}
     </div>
   );
@@ -121,13 +121,13 @@ export const StatCard: React.FC<StatCardProps> = ({
   color = 'blue',
 }) => {
   const colorClasses = {
-    blue: 'from-blue-500/20 to-blue-600/20 border-blue-500/30',
+    blue: 'from-[var(--color-brand,#10a37f)]/20 to-[var(--color-brand,#10a37f)]/20 border-[var(--color-brand,#10a37f)]/30',
     green: 'from-green-500/20 to-green-600/20 border-green-500/30',
     purple: 'from-purple-500/20 to-purple-600/20 border-purple-500/30',
     red: 'from-red-500/20 to-red-600/20 border-red-500/30',
   };
 
-  const changeColor = change && change > 0 ? 'text-green-400' : 'text-red-400';
+  const changeColor = change && change > 0 ? 'text-[var(--color-brand,#10a37f)]' : 'text-[var(--color-error,#ef4444)]';
 
   return (
     <div
@@ -138,8 +138,8 @@ export const StatCard: React.FC<StatCardProps> = ({
     >
       <div className="flex items-start justify-between mb-4">
         <div>
-          <p className="text-sm text-slate-400">{label}</p>
-          <p className="text-3xl font-bold text-white mt-2">{value}</p>
+          <p className="text-sm text-[var(--text-muted,#666)]">{label}</p>
+          <p className="text-3xl font-bold text-[var(--text-primary,#ececec)] mt-2">{value}</p>
         </div>
         {icon && <div className="text-2xl opacity-50">{icon}</div>}
       </div>
@@ -180,13 +180,13 @@ export const FeatureCard: React.FC<FeatureCardProps> = ({
       onClick={onClick}
       onKeyDown={handleKeyDown}
       aria-label={title}
-      className="w-full text-left bg-slate-800/50 backdrop-blur-xl border border-slate-700/50 rounded-xl p-6 hover:bg-slate-800/70 hover:border-blue-500/50 transition-all duration-300 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
+      className="w-full text-left bg-[var(--bg-elevated,#2f2f2f)]/80 backdrop-blur-xl border border-[var(--border-primary,#424242)]/60 rounded-xl p-6 hover:bg-[var(--bg-hover,rgba(255,255,255,0.06))] hover:border-[var(--color-brand,#10a37f)]/50 transition-all duration-300 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand,#10a37f)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-surface,#0d0d0d)]"
     >
       <div className="text-3xl mb-3 group-hover:scale-110 transition-transform duration-300" aria-hidden="true">
         {icon}
       </div>
-      <h3 className="text-lg font-semibold text-white mb-2">{title}</h3>
-      <p className="text-sm text-slate-300">{description}</p>
+      <h3 className="text-lg font-semibold text-[var(--text-primary,#ececec)] mb-2">{title}</h3>
+      <p className="text-sm text-[var(--text-secondary,#b4b4b4)]">{description}</p>
     </button>
   );
 };

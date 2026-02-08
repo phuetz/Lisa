@@ -23,36 +23,36 @@ export const ModernInput = React.forwardRef<HTMLInputElement, ModernInputProps>(
     return (
       <div className="w-full">
         {label && (
-          <label className="block text-sm font-medium text-slate-300 mb-2">
+          <label className="block text-sm font-medium text-[var(--text-secondary,#b4b4b4)] mb-2">
             {label}
-            {props.required && <span className="text-red-400 ml-1">*</span>}
+            {props.required && <span className="text-[var(--color-error,#ef4444)] ml-1">*</span>}
           </label>
         )}
         <div className="relative">
-          {icon && <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400">{icon}</div>}
+          {icon && <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[var(--text-muted,#666)]">{icon}</div>}
           <input
             ref={ref}
             className={`
               w-full px-4 py-2.5 ${icon ? 'pl-10' : ''}
-              bg-slate-700/50 border rounded-lg
-              text-white placeholder-slate-500
+              bg-[var(--bg-secondary,#2d2d2d)] border rounded-lg
+              text-white placeholder-[var(--text-disabled,#555)]
               transition-all duration-200
-              focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
-              ${error ? 'border-red-500/50 focus:ring-red-500' : 'border-slate-600/50'}
-              ${success ? 'border-green-500/50 focus:ring-green-500' : ''}
+              focus:outline-none focus:ring-2 focus:ring-[var(--color-brand,#10a37f)] focus:border-transparent
+              ${error ? 'border-[var(--color-error,#ef4444)]/50 focus:ring-[var(--color-error,#ef4444)]' : 'border-[var(--border-primary,#424242)]'}
+              ${success ? 'border-[var(--color-brand,#10a37f)]/50 focus:ring-[var(--color-brand,#10a37f)]' : ''}
               ${className}
             `}
             {...props}
           />
           {error && (
-            <AlertCircle className="absolute right-3 top-1/2 transform -translate-y-1/2 text-red-400 w-5 h-5" />
+            <AlertCircle className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[var(--color-error,#ef4444)] w-5 h-5" />
           )}
           {success && (
-            <CheckCircle className="absolute right-3 top-1/2 transform -translate-y-1/2 text-green-400 w-5 h-5" />
+            <CheckCircle className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[var(--color-brand,#10a37f)] w-5 h-5" />
           )}
         </div>
-        {error && <p className="text-red-400 text-sm mt-2">{error}</p>}
-        {helperText && !error && <p className="text-slate-400 text-sm mt-2">{helperText}</p>}
+        {error && <p className="text-[var(--color-error,#ef4444)] text-sm mt-2">{error}</p>}
+        {helperText && !error && <p className="text-[var(--text-muted,#666)] text-sm mt-2">{helperText}</p>}
       </div>
     );
   }
@@ -74,25 +74,25 @@ export const ModernTextarea = React.forwardRef<HTMLTextAreaElement, ModernTextar
     return (
       <div className="w-full">
         {label && (
-          <label className="block text-sm font-medium text-slate-300 mb-2">
+          <label className="block text-sm font-medium text-[var(--text-secondary,#b4b4b4)] mb-2">
             {label}
-            {props.required && <span className="text-red-400 ml-1">*</span>}
+            {props.required && <span className="text-[var(--color-error,#ef4444)] ml-1">*</span>}
           </label>
         )}
         <textarea
           ref={ref}
           className={`
-            w-full px-4 py-2.5 bg-slate-700/50 border rounded-lg
-            text-white placeholder-slate-500 resize-none
+            w-full px-4 py-2.5 bg-[var(--bg-secondary,#2d2d2d)] border rounded-lg
+            text-white placeholder-[var(--text-disabled,#555)] resize-none
             transition-all duration-200
-            focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
-            ${error ? 'border-red-500/50 focus:ring-red-500' : 'border-slate-600/50'}
+            focus:outline-none focus:ring-2 focus:ring-[var(--color-brand,#10a37f)] focus:border-transparent
+            ${error ? 'border-[var(--color-error,#ef4444)]/50 focus:ring-[var(--color-error,#ef4444)]' : 'border-[var(--border-primary,#424242)]'}
             ${className}
           `}
           {...props}
         />
-        {error && <p className="text-red-400 text-sm mt-2">{error}</p>}
-        {helperText && !error && <p className="text-slate-400 text-sm mt-2">{helperText}</p>}
+        {error && <p className="text-[var(--color-error,#ef4444)] text-sm mt-2">{error}</p>}
+        {helperText && !error && <p className="text-[var(--text-muted,#666)] text-sm mt-2">{helperText}</p>}
       </div>
     );
   }
@@ -114,18 +114,18 @@ export const ModernSelect = React.forwardRef<HTMLSelectElement, ModernSelectProp
     return (
       <div className="w-full">
         {label && (
-          <label className="block text-sm font-medium text-slate-300 mb-2">
+          <label className="block text-sm font-medium text-[var(--text-secondary,#b4b4b4)] mb-2">
             {label}
-            {props.required && <span className="text-red-400 ml-1">*</span>}
+            {props.required && <span className="text-[var(--color-error,#ef4444)] ml-1">*</span>}
           </label>
         )}
         <select
           ref={ref}
           className={`
-            w-full px-4 py-2.5 bg-slate-700/50 border rounded-lg
+            w-full px-4 py-2.5 bg-[var(--bg-secondary,#2d2d2d)] border rounded-lg
             text-white transition-all duration-200
-            focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
-            ${error ? 'border-red-500/50 focus:ring-red-500' : 'border-slate-600/50'}
+            focus:outline-none focus:ring-2 focus:ring-[var(--color-brand,#10a37f)] focus:border-transparent
+            ${error ? 'border-[var(--color-error,#ef4444)]/50 focus:ring-[var(--color-error,#ef4444)]' : 'border-[var(--border-primary,#424242)]'}
             ${className}
           `}
           {...props}
@@ -137,7 +137,7 @@ export const ModernSelect = React.forwardRef<HTMLSelectElement, ModernSelectProp
             </option>
           ))}
         </select>
-        {error && <p className="text-red-400 text-sm mt-2">{error}</p>}
+        {error && <p className="text-[var(--color-error,#ef4444)] text-sm mt-2">{error}</p>}
       </div>
     );
   }
@@ -160,16 +160,16 @@ export const ModernCheckbox = React.forwardRef<HTMLInputElement, ModernCheckboxP
           ref={ref}
           type="checkbox"
           className={`
-            w-5 h-5 rounded border-2 border-slate-600
-            bg-slate-700 cursor-pointer
+            w-5 h-5 rounded border-2 border-[var(--border-primary,#424242)]
+            bg-[var(--bg-secondary,#2d2d2d)] cursor-pointer
             transition-all duration-200
-            focus:outline-none focus:ring-2 focus:ring-blue-500
-            accent-blue-500
+            focus:outline-none focus:ring-2 focus:ring-[var(--color-brand,#10a37f)]
+            accent-[var(--color-brand,#10a37f)]
             ${className}
           `}
           {...props}
         />
-        {label && <span className="text-slate-300">{label}</span>}
+        {label && <span className="text-[var(--text-secondary,#b4b4b4)]">{label}</span>}
       </label>
     );
   }

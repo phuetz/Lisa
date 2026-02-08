@@ -57,14 +57,17 @@ export function ModernModal({
       onClick={closeOnBackdrop ? onClose : undefined}
     >
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" />
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" aria-hidden="true" />
 
       {/* Modal */}
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={title ? 'modal-title' : undefined}
         className={`
           relative w-full ${sizeClasses[size]}
-          bg-slate-800/90 backdrop-blur-xl
-          border border-slate-700/50
+          bg-[var(--bg-elevated,#2f2f2f)]/95 backdrop-blur-xl
+          border border-[var(--border-primary,#424242)]
           rounded-xl shadow-2xl
           animate-in zoom-in-95 duration-200
         `}
@@ -72,9 +75,9 @@ export function ModernModal({
       >
         {/* Header */}
         {(title || showCloseButton) && (
-          <div className="flex items-center justify-between p-6 border-b border-slate-700/50">
+          <div className="flex items-center justify-between p-6 border-b border-[var(--border-primary,#424242)]">
             {title && (
-              <h2 className="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+              <h2 id="modal-title" className="text-xl font-bold text-[var(--text-primary,#ececec)]">
                 {title}
               </h2>
             )}
@@ -83,7 +86,7 @@ export function ModernModal({
                 icon={<X />}
                 variant="ghost"
                 onClick={onClose}
-                aria-label="Close modal"
+                aria-label="Fermer"
               />
             )}
           </div>
@@ -96,7 +99,7 @@ export function ModernModal({
 
         {/* Footer */}
         {footer && (
-          <div className="flex items-center justify-end gap-3 p-6 border-t border-slate-700/50">
+          <div className="flex items-center justify-end gap-3 p-6 border-t border-[var(--border-primary,#424242)]">
             {footer}
           </div>
         )}
@@ -155,7 +158,7 @@ export function ConfirmModal({
         </>
       }
     >
-      <p className="text-slate-300">{message}</p>
+      <p className="text-[var(--text-secondary,#b4b4b4)]">{message}</p>
     </ModernModal>
   );
 }

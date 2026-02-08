@@ -19,23 +19,23 @@ export function ModernBadge({
 }: ModernBadgeProps) {
   const variants = {
     default: outline
-      ? 'border-slate-500 text-slate-300'
-      : 'bg-slate-500/20 text-slate-300',
+      ? 'border-[var(--border-secondary,#555)] text-[var(--text-secondary,#b4b4b4)]'
+      : 'bg-[var(--bg-secondary,#2d2d2d)] text-[var(--text-secondary,#b4b4b4)]',
     primary: outline
-      ? 'border-blue-500 text-blue-400'
-      : 'bg-blue-500/20 text-blue-400',
+      ? 'border-[var(--color-brand,#10a37f)] text-[var(--color-brand,#10a37f)]'
+      : 'bg-[var(--color-brand,#10a37f)]/20 text-[var(--color-brand,#10a37f)]',
     success: outline
-      ? 'border-green-500 text-green-400'
+      ? 'border-green-600 text-green-400'
       : 'bg-green-500/20 text-green-400',
     warning: outline
-      ? 'border-yellow-500 text-yellow-400'
-      : 'bg-yellow-500/20 text-yellow-400',
+      ? 'border-[var(--color-warning,#f59e0b)] text-[var(--color-warning,#f59e0b)]'
+      : 'bg-[var(--color-warning,#f59e0b)]/20 text-[var(--color-warning,#f59e0b)]',
     danger: outline
-      ? 'border-red-500 text-red-400'
-      : 'bg-red-500/20 text-red-400',
+      ? 'border-[var(--color-error,#ef4444)] text-[var(--color-error,#ef4444)]'
+      : 'bg-[var(--color-error,#ef4444)]/20 text-[var(--color-error,#ef4444)]',
     info: outline
-      ? 'border-cyan-500 text-cyan-400'
-      : 'bg-cyan-500/20 text-cyan-400',
+      ? 'border-[var(--color-info,#3b82f6)] text-[var(--color-info,#3b82f6)]'
+      : 'bg-[var(--color-info,#3b82f6)]/20 text-[var(--color-info,#3b82f6)]',
   };
 
   const sizes = {
@@ -90,11 +90,11 @@ export function StatusBadge({ status, showDot = true }: StatusBadgeProps) {
         <span
           className={`
             w-1.5 h-1.5 rounded-full mr-1.5
-            ${status === 'active' ? 'bg-green-400 animate-pulse' : ''}
-            ${status === 'error' ? 'bg-red-400 animate-pulse' : ''}
-            ${status === 'pending' ? 'bg-yellow-400 animate-pulse' : ''}
-            ${status === 'inactive' ? 'bg-slate-400' : ''}
-            ${status === 'success' ? 'bg-green-400' : ''}
+            ${status === 'active' ? 'bg-[var(--color-brand,#10a37f)] animate-pulse' : ''}
+            ${status === 'error' ? 'bg-[var(--color-error,#ef4444)] animate-pulse' : ''}
+            ${status === 'pending' ? 'bg-[var(--color-warning,#f59e0b)] animate-pulse' : ''}
+            ${status === 'inactive' ? 'bg-[var(--text-muted,#666)]' : ''}
+            ${status === 'success' ? 'bg-[var(--color-brand,#10a37f)]' : ''}
           `}
         />
       )}

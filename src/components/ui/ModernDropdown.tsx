@@ -61,16 +61,22 @@ export function ModernDropdown({
 
   return (
     <div className="relative inline-block" ref={dropdownRef}>
-      <div onClick={() => setIsOpen(!isOpen)}>
+      <div
+        onClick={() => setIsOpen(!isOpen)}
+        role="button"
+        aria-haspopup="menu"
+        aria-expanded={isOpen}
+      >
         {trigger}
       </div>
 
       {isOpen && (
         <div
+          role="menu"
           className={`
             absolute z-50 mt-2 ${width}
-            bg-slate-800 backdrop-blur-xl
-            border border-slate-700/50
+            bg-[var(--bg-elevated,#2f2f2f)] backdrop-blur-xl
+            border border-[var(--border-primary,#424242)]
             rounded-lg shadow-2xl
             overflow-hidden
             animate-in fade-in zoom-in-95 duration-200
@@ -80,9 +86,10 @@ export function ModernDropdown({
           {items.map((item, index) => (
             <div key={item.id || index}>
               {item.divider ? (
-                <div className="my-1 border-t border-slate-700/50" />
+                <div role="separator" className="my-1 border-t border-[var(--border-primary,#424242)]" />
               ) : (
                 <button
+                  role="menuitem"
                   onClick={() => handleItemClick(item)}
                   disabled={item.disabled}
                   className={`
@@ -92,8 +99,8 @@ export function ModernDropdown({
                     ${item.disabled
                       ? 'opacity-50 cursor-not-allowed'
                       : item.danger
-                        ? 'text-red-400 hover:bg-red-500/10'
-                        : 'text-slate-300 hover:bg-slate-700/50'
+                        ? 'text-[var(--color-error,#ef4444)] hover:bg-[var(--color-error-subtle,rgba(239,68,68,0.15))]'
+                        : 'text-[var(--text-secondary,#b4b4b4)] hover:bg-[var(--bg-hover,rgba(255,255,255,0.06))]'
                     }
                   `}
                 >
@@ -140,7 +147,7 @@ export function ModernSelectDropdown({
   return (
     <div className="w-full">
       {label && (
-        <label className="block text-sm font-medium text-slate-300 mb-2">
+        <label className="block text-sm font-medium text-[var(--text-secondary,#b4b4b4)] mb-2">
           {label}
         </label>
       )}
@@ -150,22 +157,22 @@ export function ModernSelectDropdown({
             disabled={disabled}
             className={`
               w-full px-4 py-2.5 rounded-lg
-              bg-slate-700/50 backdrop-blur-sm
+              bg-[var(--bg-secondary,#2d2d2d)] backdrop-blur-sm
               border transition-all duration-200
               flex items-center justify-between
               ${error
-                ? 'border-red-500 focus:ring-2 focus:ring-red-500/50'
-                : 'border-slate-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50'
+                ? 'border-[var(--color-error,#ef4444)] focus:ring-2 focus:ring-[var(--color-error,#ef4444)]/50'
+                : 'border-[var(--border-primary,#424242)] focus:border-[var(--color-brand,#10a37f)] focus:ring-2 focus:ring-[var(--color-brand,#10a37f)]/50'
               }
               ${disabled
                 ? 'opacity-50 cursor-not-allowed'
-                : 'hover:bg-slate-700 cursor-pointer'
+                : 'hover:bg-[var(--bg-hover,rgba(255,255,255,0.06))] cursor-pointer'
               }
             `}
           >
             <div className="flex items-center gap-2">
               {selectedOption?.icon}
-              <span className={selectedOption ? 'text-slate-200' : 'text-slate-400'}>
+              <span className={selectedOption ? 'text-[var(--text-primary,#ececec)]' : 'text-[var(--text-muted,#666)]'}>
                 {selectedOption?.label || placeholder}
               </span>
             </div>
@@ -178,7 +185,7 @@ export function ModernSelectDropdown({
         items={items}
         width="w-full"
       />
-      {error && <p className="mt-1 text-sm text-red-400">{error}</p>}
+      {error && <p className="mt-1 text-sm text-[var(--color-error,#ef4444)]">{error}</p>}
     </div>
   );
 }

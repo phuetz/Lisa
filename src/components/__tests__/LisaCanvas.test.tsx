@@ -9,9 +9,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render } from '@testing-library/react';
 
-// Mock visionAudioStore (unified store)
-vi.mock('../../store/visionAudioStore', () => ({
-  useVisionAudioStore: vi.fn((selector) => {
+// Mock appStore (unified store)
+vi.mock('../../store/appStore', () => ({
+  useAppStore: vi.fn((selector) => {
     const state = {
       faces: [],
       hands: [],
@@ -22,7 +22,7 @@ vi.mock('../../store/visionAudioStore', () => ({
       smileDetected: false,
       speechDetected: false,
     };
-    return selector(state);
+    return typeof selector === 'function' ? selector(state) : state;
   }),
 }));
 

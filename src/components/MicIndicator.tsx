@@ -1,13 +1,13 @@
-import { useVisionAudioStore } from '../store/visionAudioStore';
+import { useAppStore } from '../store/appStore';
 import { useTranslation } from 'react-i18next';
 import { Fade } from '@mui/material';
-import { Mic, MicOff } from '@mui/icons-material';
+import { Mic } from '@mui/icons-material';
 
 /**
  * Displays a microphone icon when Lisa is actively listening after the wake-word.
  */
 export default function MicIndicator() {
-  const listeningActive = useVisionAudioStore((s) => s.listeningActive);
+  const listeningActive = useAppStore((s) => s.listeningActive);
   const { t } = useTranslation();
 
   return (
@@ -23,15 +23,15 @@ export default function MicIndicator() {
           width: 48,
           height: 48,
           borderRadius: '50%',
-          background: '#1976d2',
-          color: 'white',
+          background: 'var(--color-brand, #10a37f)',
+          color: '#fff',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          boxShadow: '0 0 10px rgba(0,0,0,0.3)',
+          boxShadow: 'var(--shadow-elevated, 0 4px 20px rgba(0,0,0,0.4))',
         }}
       >
-        {listeningActive ? <Mic /> : <MicOff />}
+        <Mic />
       </div>
     </Fade>
   );

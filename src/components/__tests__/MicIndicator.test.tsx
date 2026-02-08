@@ -10,9 +10,9 @@ import { render, screen, waitFor } from '@testing-library/react';
 let mockListeningActive = false;
 let mockSpeechDetected = false;
 
-// Mock visionAudioStore (unified store)
-vi.mock('../../store/visionAudioStore', () => ({
-  useVisionAudioStore: vi.fn((selector) => {
+// Mock appStore (unified store)
+vi.mock('../../store/appStore', () => ({
+  useAppStore: vi.fn((selector) => {
     const state = {
       listeningActive: mockListeningActive,
       speechDetected: mockSpeechDetected,
@@ -34,8 +34,14 @@ vi.mock('@mui/material', () => ({
   }) => (show || !unmountOnExit ? <div data-fade-in={show}>{children}</div> : null),
 }));
 
+// Mock MUI icons to prevent EMFILE on Windows
+vi.mock('@mui/icons-material', () => ({
+  Mic: () => <span data-testid="mic-icon">Mic</span>,
+  MicOff: () => <span data-testid="micoff-icon">MicOff</span>,
+}));
+
 import MicIndicator from '../MicIndicator';
-import { useVisionAudioStore } from '../../store/visionAudioStore';
+import { useAppStore } from '../../store/appStore';
 
 describe('MicIndicator', () => {
   beforeEach(() => {
@@ -47,7 +53,7 @@ describe('MicIndicator', () => {
   describe('Visibility', () => {
     it('should not render when not listening', () => {
       mockListeningActive = false;
-      vi.mocked(useVisionAudioStore).mockImplementation((selector) =>
+      vi.mocked(useAppStore).mockImplementation((selector) =>
         selector({ listeningActive: false, speechDetected: false })
       );
 
@@ -59,7 +65,7 @@ describe('MicIndicator', () => {
 
     it('should render when listening is active', async () => {
       mockListeningActive = true;
-      vi.mocked(useVisionAudioStore).mockImplementation((selector) =>
+      vi.mocked(useAppStore).mockImplementation((selector) =>
         selector({ listeningActive: true, speechDetected: false })
       );
 
@@ -74,7 +80,7 @@ describe('MicIndicator', () => {
   describe('State Props', () => {
     it('should render indicator when listening', async () => {
       mockListeningActive = true;
-      vi.mocked(useVisionAudioStore).mockImplementation((selector) =>
+      vi.mocked(useAppStore).mockImplementation((selector) =>
         selector({ listeningActive: true, speechDetected: false })
       );
 
@@ -88,7 +94,7 @@ describe('MicIndicator', () => {
     it('should handle speech detected state', async () => {
       mockListeningActive = true;
       mockSpeechDetected = true;
-      vi.mocked(useVisionAudioStore).mockImplementation((selector) =>
+      vi.mocked(useAppStore).mockImplementation((selector) =>
         selector({ listeningActive: true, speechDetected: true })
       );
 
@@ -102,7 +108,7 @@ describe('MicIndicator', () => {
     it('should handle no speech detected', async () => {
       mockListeningActive = true;
       mockSpeechDetected = false;
-      vi.mocked(useVisionAudioStore).mockImplementation((selector) =>
+      vi.mocked(useAppStore).mockImplementation((selector) =>
         selector({ listeningActive: true, speechDetected: false })
       );
 

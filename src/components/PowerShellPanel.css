@@ -1,12 +1,12 @@
 .powershell-panel {
-  background-color: #0c0c0c;
-  color: #cccccc;
-  border-radius: 8px;
+  background-color: var(--bg-surface, #0d0d0d);
+  color: var(--text-secondary, #b4b4b4);
+  border-radius: var(--radius-md, 8px);
   padding: 15px;
   margin: 10px 0;
   width: 100%;
   max-width: 800px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--shadow-elevated, 0 4px 12px rgba(0, 0, 0, 0.5));
   font-family: 'Cascadia Code', 'Consolas', monospace;
   display: flex;
   flex-direction: column;
@@ -19,11 +19,11 @@
   align-items: center;
   margin-bottom: 10px;
   padding-bottom: 10px;
-  border-bottom: 1px solid #383838;
+  border-bottom: 1px solid var(--border-primary, #424242);
 }
 
 .powershell-header h2 {
-  color: #0078d4;
+  color: var(--color-info, #3b82f6);
   margin: 0;
   font-size: 1.5rem;
   font-weight: 500;
@@ -39,7 +39,7 @@
   display: flex;
   align-items: center;
   gap: 5px;
-  color: #cccccc;
+  color: var(--text-secondary, #b4b4b4);
   font-size: 0.9rem;
   cursor: pointer;
 }
@@ -49,32 +49,32 @@
 }
 
 .clear-history-button {
-  background-color: #2b2b2b;
+  background-color: var(--bg-secondary, #2d2d2d);
   border: none;
-  color: #cccccc;
+  color: var(--text-secondary, #b4b4b4);
   padding: 5px 10px;
-  border-radius: 4px;
+  border-radius: var(--radius-sm, 4px);
   font-size: 0.9rem;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: background-color var(--transition-fast, 0.15s ease);
 }
 
 .clear-history-button:hover {
-  background-color: #3b3b3b;
+  background-color: var(--bg-hover, rgba(255, 255, 255, 0.06));
 }
 
 .close-button {
   background-color: transparent;
   border: none;
-  color: #cccccc;
+  color: var(--text-secondary, #b4b4b4);
   font-size: 1.5rem;
   cursor: pointer;
   padding: 0 5px;
-  transition: color 0.2s;
+  transition: color var(--transition-fast, 0.15s ease);
 }
 
 .close-button:hover {
-  color: #ff6060;
+  color: var(--color-error, #ef4444);
 }
 
 .terminal-info {
@@ -82,10 +82,10 @@
 }
 
 .learning-mode-info {
-  background-color: #052742;
-  color: #86d9ff;
+  background-color: rgba(59, 130, 246, 0.1);
+  color: var(--color-info, #3b82f6);
   padding: 8px;
-  border-radius: 4px;
+  border-radius: var(--radius-sm, 4px);
   font-size: 0.9rem;
   display: flex;
   align-items: center;
@@ -100,9 +100,9 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  background-color: #0c0c0c;
-  border: 1px solid #383838;
-  border-radius: 4px;
+  background-color: var(--bg-surface, #0d0d0d);
+  border: 1px solid var(--border-primary, #424242);
+  border-radius: var(--radius-sm, 4px);
   overflow: hidden;
   position: relative;
 }
@@ -121,34 +121,34 @@
 }
 
 .terminal-output::-webkit-scrollbar-track {
-  background: #0c0c0c;
+  background: var(--bg-surface, #0d0d0d);
 }
 
 .terminal-output::-webkit-scrollbar-thumb {
-  background-color: #383838;
+  background-color: var(--border-primary, #424242);
   border-radius: 4px;
 }
 
 .terminal-output::-webkit-scrollbar-thumb:hover {
-  background-color: #0078d4;
+  background-color: var(--color-info, #3b82f6);
 }
 
 .terminal-welcome {
-  color: #0078d4;
+  color: var(--color-info, #3b82f6);
   margin-bottom: 15px;
   padding: 15px;
-  background-color: rgba(0, 120, 212, 0.1);
-  border-radius: 4px;
-  border-left: 4px solid #0078d4;
+  background-color: rgba(59, 130, 246, 0.1);
+  border-radius: var(--radius-sm, 4px);
+  border-left: 4px solid var(--color-info, #3b82f6);
 }
 
 .terminal-error {
-  color: #ff6060;
+  color: var(--color-error, #ef4444);
   margin-bottom: 10px;
   padding: 8px;
-  background-color: rgba(255, 96, 96, 0.1);
-  border-radius: 4px;
-  border-left: 4px solid #ff6060;
+  background-color: var(--color-error-subtle, rgba(239, 68, 68, 0.1));
+  border-radius: var(--radius-sm, 4px);
+  border-left: 4px solid var(--color-error, #ef4444);
   font-size: 0.9rem;
 }
 
@@ -164,26 +164,26 @@
 }
 
 .command-prompt {
-  color: #0078d4;
+  color: var(--color-info, #3b82f6);
   font-weight: bold;
 }
 
 .command-text {
-  color: #ffffff;
+  color: var(--text-primary, #ececec);
   font-weight: 500;
   word-break: break-all;
 }
 
 .command-time {
-  color: #666666;
+  color: var(--text-muted, #666);
   font-size: 0.8rem;
   margin-left: auto;
 }
 
 .command-output {
-  background-color: #1c1c1c;
+  background-color: var(--bg-primary, #212121);
   padding: 10px;
-  border-radius: 4px;
+  border-radius: var(--radius-sm, 4px);
   margin-top: 5px;
   white-space: pre-wrap;
   word-break: break-all;
@@ -193,15 +193,15 @@
 }
 
 .command-output.success {
-  border-left: 4px solid #13a10e;
+  border-left: 4px solid var(--color-brand, #10a37f);
 }
 
 .command-output.error {
-  border-left: 4px solid #ff6060;
+  border-left: 4px solid var(--color-error, #ef4444);
 }
 
 .command-output.running {
-  border-left: 4px solid #ffa500;
+  border-left: 4px solid var(--color-warning, #f59e0b);
 }
 
 .command-output pre {
@@ -214,8 +214,8 @@
   display: flex;
   gap: 10px;
   padding: 10px;
-  background-color: #1c1c1c;
-  border-top: 1px solid #383838;
+  background-color: var(--bg-primary, #212121);
+  border-top: 1px solid var(--border-primary, #424242);
   position: relative;
 }
 
@@ -223,14 +223,14 @@
   flex: 1;
   display: flex;
   align-items: center;
-  background-color: #0c0c0c;
-  border: 1px solid #383838;
-  border-radius: 4px;
+  background-color: var(--bg-surface, #0d0d0d);
+  border: 1px solid var(--border-primary, #424242);
+  border-radius: var(--radius-sm, 4px);
   padding: 0 10px;
 }
 
 .input-prompt {
-  color: #0078d4;
+  color: var(--color-info, #3b82f6);
   font-weight: bold;
   margin-right: 5px;
 }
@@ -240,30 +240,30 @@
   background: transparent;
   border: none;
   outline: none;
-  color: #ffffff;
+  color: var(--text-primary, #ececec);
   font-family: 'Cascadia Code', 'Consolas', monospace;
   font-size: 0.9rem;
   padding: 8px 0;
 }
 
 .execute-button {
-  background-color: #0078d4;
+  background-color: var(--color-info, #3b82f6);
   border: none;
-  color: #ffffff;
+  color: var(--text-primary, #ececec);
   padding: 8px 15px;
-  border-radius: 4px;
+  border-radius: var(--radius-sm, 4px);
   font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: background-color var(--transition-fast, 0.15s ease);
 }
 
 .execute-button:hover:not(:disabled) {
-  background-color: #106ebe;
+  background-color: #2563eb;
 }
 
 .execute-button:disabled {
-  background-color: #383838;
-  color: #666666;
+  background-color: var(--border-primary, #424242);
+  color: var(--text-muted, #666);
   cursor: not-allowed;
 }
 
@@ -272,9 +272,9 @@
   bottom: 100%;
   left: 10px;
   right: 10px;
-  background-color: #1c1c1c;
-  border: 1px solid #383838;
-  border-radius: 4px;
+  background-color: var(--bg-primary, #212121);
+  border: 1px solid var(--border-primary, #424242);
+  border-radius: var(--radius-sm, 4px);
   max-height: 200px;
   overflow-y: auto;
   z-index: 10;
@@ -283,8 +283,8 @@
 .suggestion-item {
   padding: 8px 12px;
   cursor: pointer;
-  border-bottom: 1px solid #2b2b2b;
-  transition: background-color 0.2s;
+  border-bottom: 1px solid var(--bg-secondary, #2d2d2d);
+  transition: background-color var(--transition-fast, 0.15s ease);
 }
 
 .suggestion-item:last-child {
@@ -292,23 +292,23 @@
 }
 
 .suggestion-item:hover {
-  background-color: #2b2b2b;
+  background-color: var(--bg-hover, rgba(255, 255, 255, 0.06));
 }
 
 .suggestion-command {
-  color: #0078d4;
+  color: var(--color-info, #3b82f6);
   font-weight: 500;
   font-size: 0.9rem;
 }
 
 .suggestion-description {
-  color: #999999;
+  color: var(--text-tertiary, #888);
   font-size: 0.8rem;
   margin-top: 2px;
 }
 
 .loading-indicator {
-  color: #ffa500;
+  color: var(--color-warning, #f59e0b);
   font-style: italic;
   display: flex;
   align-items: center;
@@ -320,7 +320,7 @@
   display: inline-block;
   width: 12px;
   height: 12px;
-  border: 2px solid #ffa500;
+  border: 2px solid var(--color-warning, #f59e0b);
   border-radius: 50%;
   border-top-color: transparent;
   animation: spin 1s linear infinite;
@@ -333,20 +333,20 @@
 }
 
 .no-output {
-  color: #666666;
+  color: var(--text-muted, #666);
   font-style: italic;
 }
 
 .powershell-footer {
   margin-top: 10px;
   padding-top: 10px;
-  border-top: 1px solid #383838;
+  border-top: 1px solid var(--border-primary, #424242);
 }
 
 .security-notice {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #999999;
+  color: var(--text-tertiary, #888);
   font-size: 0.8rem;
 }

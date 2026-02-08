@@ -6,6 +6,7 @@
 
 import { agentRegistry } from '../features/agents/core/registry';
 import { memoryService } from './MemoryService';
+import { ragService } from './RAGService';
 
 // Dynamic imports for PDF and DOCX parsing
 let pdfjsLib: typeof import('pdfjs-dist') | null = null;
@@ -110,6 +111,16 @@ class DocumentAnalysisServiceImpl {
         'DocumentAnalysisService',
         analysis.keywords || []
       );
+
+      // Auto-index document content in RAG vector store for semantic search
+      if (text.length > 0) {
+        ragService.indexDocument(text, {
+          filename,
+          keywords: analysis.keywords,
+        }).catch(err => {
+          console.warn(`[DocumentAnalysis] RAG indexing failed for ${filename}:`, err);
+        });
+      }
 
       analysis.status = 'completed';
     } catch (error) {

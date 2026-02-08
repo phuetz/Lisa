@@ -1,23 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { logComponent, startupLogger } from './utils/startupLogger';
 import { Outlet } from 'react-router-dom';
 import './App.css';
 import './styles/fluentAnimations.css';
-import {
-  useFaceLandmarker,
-  useHandLandmarker,
-  useObjectDetector,
-  usePoseLandmarker,
-  useAudioClassifier,
-  useImageClassifier,
-  useGestureRecognizer,
-  useImageSegmenter,
-  useImageEmbedder,
-  useSpeechResponder,
-  useVoiceIntent,
-  useMediaPipeModels,
-} from './hooks';
-import { useAppStore } from './store/appStore';
 import config from './config';
 
 import useAlarmTimerScheduler from './hooks/useAlarmTimerScheduler';
@@ -31,6 +16,9 @@ import { SkipLink } from './components/ui/SkipLink';
 import { useIsMobile } from './hooks/useIsMobile';
 import { AppOverlays, AppFooter, AppVideo } from './components/layout';
 
+// Lazy-load MediaPipe hooks to reduce main bundle (~180KB savings)
+const MediaPipeManager = lazy(() => import('./components/MediaPipeManager'));
+
 function App() {
   // Log only once on mount, not on every render
   useEffect(() => {
@@ -42,10 +30,6 @@ function App() {
   const [audioCtx] = useState(() => new AudioContext());
   const isMobile = useIsMobile();
 
-  // Disable heavy features by default on mobile unless explicitly enabled in config
-  const [advancedVision] = useState(config.features.advancedVision && !isMobile);
-  const [advancedHearing] = useState(config.features.advancedHearing); // Hearing is less resource intensive
-
   const { isAuthenticated, isLoading, logout } = useAuth();
 
   // Fall detector integration
@@ -56,38 +40,11 @@ function App() {
     },
   });
 
-  // Note: Media stream setup, vision processing loop, and audio processing
-  // are now handled by SenseProvider in src/providers/SenseProvider.tsx
-
-  // Load MediaPipe models
-  const { models } = useMediaPipeModels();
-
-  // Activate hooks - must be called unconditionally at top level
-  // MediaPipe Vision Tasks - Only run if advanced vision is NOT taking over these specific tasks
-  useFaceLandmarker(videoRef.current ?? undefined, models.faceLandmarker);
-  useHandLandmarker(videoRef.current ?? undefined, models.handLandmarker);
-  
-  // These are handled by visionSense when advancedVision is true
-  useObjectDetector(advancedVision ? undefined : (videoRef.current ?? undefined), models.objectDetector);
-  usePoseLandmarker(advancedVision ? undefined : (videoRef.current ?? undefined), models.poseLandmarker);
-  
-  useImageClassifier(videoRef.current, models.imageClassifier);
-  useGestureRecognizer(videoRef.current, models.gestureRecognizer);
-  useImageSegmenter(videoRef.current, models.imageSegmenter);
-  useImageEmbedder(models.imageEmbedder);
-
-  // MediaPipe Audio Tasks
-  // Note: micStream is now managed by SenseProvider
-  useAudioClassifier(audioCtx, undefined, models.audioClassifier);
+  // Lightweight hooks that stay in the main bundle
   useWakeWord(audioCtx, undefined);
-  useSpeechResponder();
-  useVoiceIntent();
   useAlarmTimerScheduler();
   useWorkflowManager();
-  useSpeechSynthesis(); // Initialiser le hook de synthèse vocale
-
-  // Note: Service initialization (proactiveSuggestionsService, healthMonitoringService, pyodideService)
-  // is now handled by ServiceProvider in src/providers/ServiceProvider.tsx
+  useSpeechSynthesis();
 
   // Afficher le loading pendant la vérification de l'authentification
   if (isLoading) {
@@ -123,6 +80,11 @@ function App() {
 
         {/* Video feed for MediaPipe */}
         <AppVideo isMobile={isMobile} videoRef={videoRef} />
+
+        {/* Lazy-loaded MediaPipe hooks - code-split into separate chunk */}
+        <Suspense fallback={null}>
+          <MediaPipeManager videoRef={videoRef} />
+        </Suspense>
 
         {/* Auth footer buttons */}
         <AppFooter isAuthenticated={isAuthenticated} onLogout={logout} />

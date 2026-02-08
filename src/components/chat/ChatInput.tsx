@@ -1,17 +1,16 @@
 /**
- * Chat Input Component
- * Zone de saisie avec intégration LM Studio (Devstral) et reconnaissance vocale
+ * Chat Input Component — ChatGPT-style prompt area
+ * Clean, centered, minimal design with collapsible action menu
  */
 
 import { useState, useRef, useEffect, useCallback, type KeyboardEvent, type DragEvent, type ClipboardEvent } from 'react';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
-import { Send, Mic, MicOff, Volume2, VolumeX, Settings2, Paperclip, Image, X, StopCircle, Camera, Wand2, Edit3 } from 'lucide-react';
+import { Send, Mic, MicOff, Volume2, VolumeX, Paperclip, X, Square, Camera, Wand2, Edit3, Plus, Globe } from 'lucide-react';
 import { useChatHistoryStore } from '../../store/chatHistoryStore';
 import { useChatSettingsStore } from '../../store/chatSettingsStore';
 import { aiService, type AIMessage, type AIProvider } from '../../services/aiService';
 import { aiWithToolsService } from '../../services/AIWithToolsService';
-// LMStudioService importé via aiService
 import { agentRouterService } from '../../services/AgentRouterService';
 import { DEFAULT_MODELS } from '../../store/chatSettingsStore';
 import { useVoiceChat } from '../../hooks/useVoiceChat';
@@ -21,32 +20,38 @@ import { ArtifactCreator } from './ArtifactCreator';
 import type { ArtifactData } from './Artifact';
 import { AudioRecordButton } from './AudioRecordButton';
 import { ImageEditor } from './ImageEditor';
+import { documentAnalysisService } from '../../services/DocumentAnalysisService';
+
+/** Convert a DataURL (base64) string to a Blob */
+function dataURLtoBlob(dataURL: string): Blob {
+  const [header, base64] = dataURL.split(',');
+  const mime = header.match(/:(.*?);/)?.[1] || 'application/octet-stream';
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return new Blob([bytes], { type: mime });
+}
 
 export const ChatInput = () => {
-  // ... (previous state and hooks)
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  
+
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [showVoiceSettings, setShowVoiceSettings] = useState(false);
   const [showArtifactCreator, setShowArtifactCreator] = useState(false);
-  const [lastResponse] = useState<string | null>(null);
   const [attachments, setAttachments] = useState<{ type: 'image' | 'file'; data: string; name: string }[]>([]);
   const [abortController, setAbortController] = useState<AbortController | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [editingImageIndex, setEditingImageIndex] = useState<number | null>(null);
+  const [showActions, setShowActions] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dropZoneRef = useRef<HTMLDivElement>(null);
-  
-  // Settings store
+  const actionsRef = useRef<HTMLDivElement>(null);
+
   const { streamingEnabled, autoSpeakEnabled, toggleAutoSpeak, incognitoMode, longTermMemoryEnabled, selectedModelId, temperature, maxTokens } = useChatSettingsStore();
-  
-  // Get current model config
   const currentModel = DEFAULT_MODELS.find(m => m.id === selectedModelId) || DEFAULT_MODELS[0];
 
-  // Voice Chat Hook
   const {
     isListening,
     transcript,
@@ -63,19 +68,25 @@ export const ChatInput = () => {
     isSupported: voiceSupported,
   } = useVoiceChat({ language: 'fr-FR' });
 
-  // French voices for TTS
-  const frenchVoices = voices.filter(v => v.lang.startsWith('fr'));
-  const displayVoices = frenchVoices.length > 0 ? frenchVoices : voices.slice(0, 5);
-  
   const { currentConversationId, addMessage, getCurrentConversation, setStreamingMessage, setTyping, createConversation } = useChatHistoryStore();
+
+  // Close actions popup on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (actionsRef.current && !actionsRef.current.contains(e.target as Node)) {
+        setShowActions(false);
+      }
+    };
+    if (showActions) document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [showActions]);
 
   const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setMessage(e.target.value);
     e.target.style.height = 'auto';
-    e.target.style.height = `${Math.min(e.target.scrollHeight, 150)}px`;
+    e.target.style.height = `${Math.min(e.target.scrollHeight, 200)}px`;
   };
 
-  // Stop streaming
   const stopStreaming = useCallback(() => {
     if (abortController) {
       abortController.abort();
@@ -83,64 +94,48 @@ export const ChatInput = () => {
     }
   }, [abortController]);
 
-  // Handle file attachment
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
-    
     Array.from(files).forEach((file) => {
       const reader = new FileReader();
       reader.onload = () => {
-        const isImage = file.type.startsWith('image/');
-        setAttachments((prev) => [
-          ...prev,
-          {
-            type: isImage ? 'image' : 'file',
-            data: reader.result as string,
-            name: file.name,
-          },
-        ]);
+        setAttachments((prev) => [...prev, {
+          type: file.type.startsWith('image/') ? 'image' : 'file',
+          data: reader.result as string,
+          name: file.name,
+        }]);
       };
       reader.readAsDataURL(file);
     });
-    
-    // Reset input
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const removeAttachment = (index: number) => {
     setAttachments((prev) => prev.filter((_, i) => i !== index));
   };
 
-  // Handle screen capture
   const handleScreenCapture = async () => {
     if (!screenCaptureService.isSupported()) {
       alert('La capture d\'écran n\'est pas supportée dans ce navigateur.');
       return;
     }
-
     try {
       const capture = await screenCaptureService.captureScreen({ maxWidth: 1920, maxHeight: 1080 });
-      setAttachments((prev) => [
-        ...prev,
-        {
-          type: 'image',
-          data: capture.imageData,
-          name: `capture-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.png`,
-        },
-      ]);
+      setAttachments((prev) => [...prev, {
+        type: 'image',
+        data: capture.imageData,
+        name: `capture-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.png`,
+      }]);
     } catch (error) {
       console.error('[ChatInput] Screen capture failed:', error);
     }
+    setShowActions(false);
   };
 
-  // Handle paste for images
   const handlePaste = useCallback((e: ClipboardEvent<HTMLTextAreaElement>) => {
     const items = e.clipboardData?.items;
     if (!items) return;
-
     for (const item of items) {
       if (item.type.startsWith('image/')) {
         e.preventDefault();
@@ -148,14 +143,11 @@ export const ChatInput = () => {
         if (file) {
           const reader = new FileReader();
           reader.onload = () => {
-            setAttachments((prev) => [
-              ...prev,
-              {
-                type: 'image',
-                data: reader.result as string,
-                name: `pasted-image-${Date.now()}.png`,
-              },
-            ]);
+            setAttachments((prev) => [...prev, {
+              type: 'image',
+              data: reader.result as string,
+              name: `pasted-image-${Date.now()}.png`,
+            }]);
           };
           reader.readAsDataURL(file);
         }
@@ -164,111 +156,73 @@ export const ChatInput = () => {
     }
   }, []);
 
-  // Handle drag events
   const handleDragEnter = useCallback((e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(true);
+    e.preventDefault(); e.stopPropagation(); setIsDragging(true);
   }, []);
-
   const handleDragLeave = useCallback((e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    // Only set to false if leaving the drop zone entirely
-    if (dropZoneRef.current && !dropZoneRef.current.contains(e.relatedTarget as Node)) {
-      setIsDragging(false);
-    }
+    e.preventDefault(); e.stopPropagation();
+    if (dropZoneRef.current && !dropZoneRef.current.contains(e.relatedTarget as Node)) setIsDragging(false);
   }, []);
-
   const handleDragOver = useCallback((e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
+    e.preventDefault(); e.stopPropagation();
   }, []);
-
   const handleDrop = useCallback((e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-
+    e.preventDefault(); e.stopPropagation(); setIsDragging(false);
     const files = e.dataTransfer?.files;
     if (!files || files.length === 0) return;
-
     Array.from(files).forEach((file) => {
       if (file.type.startsWith('image/') || file.type === 'application/pdf' || file.type.startsWith('text/')) {
         const reader = new FileReader();
         reader.onload = () => {
-          const isImage = file.type.startsWith('image/');
-          setAttachments((prev) => [
-            ...prev,
-            {
-              type: isImage ? 'image' : 'file',
-              data: reader.result as string,
-              name: file.name,
-            },
-          ]);
+          setAttachments((prev) => [...prev, {
+            type: file.type.startsWith('image/') ? 'image' : 'file',
+            data: reader.result as string,
+            name: file.name,
+          }]);
         };
         reader.readAsDataURL(file);
       }
     });
   }, []);
 
-  // Handle audio recording
-  const handleAudioReady = useCallback((audioBlob: Blob, base64: string) => {
-    setAttachments((prev) => [
-      ...prev,
-      {
-        type: 'file',
-        data: base64,
-        name: `audio-${Date.now()}.webm`,
-      },
-    ]);
-    // Optionally, add a placeholder message about the audio
+  const handleAudioReady = useCallback((_audioBlob: Blob, base64: string) => {
+    setAttachments((prev) => [...prev, {
+      type: 'file', data: base64, name: `audio-${Date.now()}.webm`,
+    }]);
     setMessage((prev) => prev + (prev ? ' ' : '') + '[Message vocal joint]');
-  }, []);
-
-  // Handle image editing
-  const handleEditImage = useCallback((index: number) => {
-    setEditingImageIndex(index);
   }, []);
 
   const handleSaveEditedImage = useCallback((editedImageBase64: string) => {
     if (editingImageIndex !== null) {
       setAttachments((prev) => prev.map((att, idx) =>
-        idx === editingImageIndex
-          ? { ...att, data: editedImageBase64, name: `edited-${att.name}` }
-          : att
+        idx === editingImageIndex ? { ...att, data: editedImageBase64, name: `edited-${att.name}` } : att
       ));
     }
     setEditingImageIndex(null);
   }, [editingImageIndex]);
 
   const handleSend = async () => {
-    if (!message.trim() || isLoading) return;
-    
-    // Create conversation if none exists
+    const hasText = message.trim().length > 0;
+    const hasAttachments = attachments.length > 0;
+    if ((!hasText && !hasAttachments) || isLoading) return;
+
     let convId = currentConversationId;
-    if (!convId) {
-      convId = createConversation();
-    }
+    if (!convId) convId = createConversation();
 
     const userMessage = message.trim();
     const currentAttachments = [...attachments];
     setMessage('');
     setAttachments([]);
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
-    }
+    if (textareaRef.current) textareaRef.current.style.height = 'auto';
 
-    // Build message content with attachments
     let messageContent = userMessage;
     if (currentAttachments.length > 0) {
       const attachmentInfo = currentAttachments
-        .map((a) => `[${a.type === 'image' ? '🖼️ Image' : '📎 Fichier'}: ${a.name}]`)
+        .map((a) => `[${a.type === 'image' ? 'Image' : 'Fichier'}: ${a.name}]`)
         .join(' ');
-      messageContent = `${userMessage}\n\n${attachmentInfo}`;
+      messageContent = hasText ? `${userMessage}\n\n${attachmentInfo}` : attachmentInfo;
     }
 
-    // Add user message
     if (!incognitoMode) {
       addMessage({
         role: 'user',
@@ -285,7 +239,6 @@ export const ChatInput = () => {
     setAbortController(controller);
 
     try {
-      // Get conversation history for context
       const conversation = getCurrentConversation();
       const history: AIMessage[] = (conversation?.messages || [])
         .slice(-10)
@@ -295,8 +248,6 @@ export const ChatInput = () => {
           image: m.image
         }));
 
-      // Add system prompt for tool calling
-      // This is critical - tells the LLM to use tools for web searches
       const toolCallingSystemPrompt = `Tu es Lisa, une assistante IA avec accès à des outils.
 
 ## OUTILS DISPONIBLES
@@ -329,12 +280,8 @@ Exemples:
 
 Réponds en français, sois concis.`;
 
-      history.unshift({
-        role: 'system',
-        content: toolCallingSystemPrompt,
-      });
+      history.unshift({ role: 'system', content: toolCallingSystemPrompt });
 
-      // Add long-term memory context if enabled
       if (longTermMemoryEnabled) {
         try {
           const memoryContext = await longTermMemoryService.buildContextForPrompt();
@@ -349,17 +296,33 @@ Réponds en français, sois concis.`;
         }
       }
 
-      // Add current message
-      const imageAttachment = currentAttachments.find(a => a.type === 'image');
-      history.push({ 
-        role: 'user', 
-        content: userMessage,
-        image: imageAttachment?.data
-      });
+      // Extract text from non-image file attachments (PDF, DOCX, TXT, etc.)
+      let fileContentForAI = '';
+      const fileAttachments = currentAttachments.filter(a => a.type === 'file');
+      if (fileAttachments.length > 0) {
+        for (const att of fileAttachments) {
+          try {
+            const blob = dataURLtoBlob(att.data);
+            const analysis = await documentAnalysisService.analyzeDocument(blob, att.name, {
+              extractEntities: false,
+              generateSummary: false,
+            });
+            if (analysis.content?.text) {
+              const text = analysis.content.text.substring(0, 15000);
+              fileContentForAI += `\n\n[Contenu du fichier: ${att.name}]\n${text}\n[Fin du fichier]`;
+            }
+          } catch (err) {
+            console.warn(`[ChatInput] Extraction échouée pour ${att.name}:`, err);
+            fileContentForAI += `\n\n[Fichier: ${att.name} — Impossible d'extraire le texte]`;
+          }
+        }
+      }
 
-      // First, try to route to specialized agents (weather, calendar, etc.)
+      const imageAttachment = currentAttachments.find(a => a.type === 'image');
+      const aiUserContent = fileContentForAI ? userMessage + fileContentForAI : userMessage;
+      history.push({ role: 'user', content: aiUserContent, image: imageAttachment?.data });
+
       const routeResult = await agentRouterService.route(userMessage);
-      
       if (routeResult.handled && routeResult.response) {
         const duration = Math.round(performance.now() - startTime);
         if (!incognitoMode) {
@@ -376,16 +339,11 @@ Réponds en français, sois concis.`;
         return;
       }
 
-      // Configure Unified AI Service
-      // Determine if we should use native tool calling
       const TOOL_CALLING_PROVIDERS = ['gemini', 'openai', 'anthropic'];
       let effectiveProvider = currentModel.provider as AIProvider;
       let effectiveModel = currentModel.id;
 
-      // If provider doesn't support tool calling, switch to Gemini for web search capabilities
-      const providerSupportsTools = TOOL_CALLING_PROVIDERS.includes(effectiveProvider);
-      if (!providerSupportsTools) {
-        console.log('[ChatInput] Provider', effectiveProvider, 'does not support tool calling. Switching to Gemini.');
+      if (!TOOL_CALLING_PROVIDERS.includes(effectiveProvider)) {
         effectiveProvider = 'gemini' as AIProvider;
         effectiveModel = 'gemini-2.0-flash';
       }
@@ -398,78 +356,44 @@ Réponds en français, sois concis.`;
         baseURL: currentModel.provider === 'lmstudio' ? '/lmstudio/v1' : undefined
       });
 
-      // Configure tool calling service
-      aiWithToolsService.setConfig({
-        enableTools: true,
-        showToolUsage: true,
-        maxIterations: 5
-      });
-
-      console.log('[ChatInput] Using provider:', effectiveProvider, 'model:', effectiveModel, 'useNativeTools:', true);
+      aiWithToolsService.setConfig({ enableTools: true, showToolUsage: true, maxIterations: 5 });
 
       if (streamingEnabled) {
         let fullResponse = '';
-
-        // Show streaming message while receiving
-        // Use aiWithToolsService for native tool calling
         try {
           for await (const chunk of aiWithToolsService.streamMessage(history)) {
             if (controller.signal.aborted) break;
-
-            // Check for API errors
-            if (chunk.error) {
-              console.error('[ChatInput] Stream error:', chunk.error);
-              throw new Error(chunk.error);
-            }
-
+            if (chunk.error) throw new Error(chunk.error);
             if (chunk.content) {
               fullResponse += chunk.content;
               setStreamingMessage(fullResponse);
             }
-
             if (chunk.done) break;
           }
         } catch (error) {
-          // Save partial response on error before rethrowing
           if (fullResponse && !incognitoMode) {
             setStreamingMessage(null);
             addMessage({
               role: 'assistant',
-              content: fullResponse + '\n\n⚠️ *(Réponse interrompue)*',
+              content: fullResponse + '\n\n*(Réponse interrompue)*',
               conversationId: convId,
             });
           }
           if (!controller.signal.aborted) throw error;
-          return; // Exit early on abort
-        }
-
-        // Clear streaming and add final message
-        setStreamingMessage(null);
-
-        if (!fullResponse) {
-          addMessage({
-            role: 'assistant',
-            content: 'Désolé, je n\'ai pas pu générer de réponse.',
-            conversationId: convId,
-          });
           return;
         }
 
-        addMessage({
-          role: 'assistant',
-          content: fullResponse,
-          conversationId: convId,
-        });
-
-        const duration = Math.round(performance.now() - startTime);
+        setStreamingMessage(null);
+        if (!fullResponse) {
+          addMessage({ role: 'assistant', content: 'Désolé, je n\'ai pas pu générer de réponse.', conversationId: convId });
+          return;
+        }
+        addMessage({ role: 'assistant', content: fullResponse, conversationId: convId });
         if (!incognitoMode) {
-          if (longTermMemoryEnabled) {
-            longTermMemoryService.extractAndRemember(userMessage, fullResponse).catch(console.warn);
-          }
+          if (longTermMemoryEnabled) longTermMemoryService.extractAndRemember(userMessage, fullResponse).catch(console.warn);
           if (autoSpeakEnabled) speak(fullResponse.replace(/[*#_`]/g, ''));
         }
       } else {
-        // Non-streaming mode also uses tool calling
         const result = await aiWithToolsService.sendMessage(history);
         const fullResponse = result.content;
         const duration = Math.round(performance.now() - startTime);
@@ -480,9 +404,7 @@ Réponds en français, sois concis.`;
             conversationId: convId,
             metadata: { model: effectiveModel, duration, tokens: Math.round(fullResponse.length / 4), toolsUsed: result.toolsUsed.length },
           });
-          if (longTermMemoryEnabled && fullResponse) {
-            longTermMemoryService.extractAndRemember(userMessage, fullResponse).catch(console.warn);
-          }
+          if (longTermMemoryEnabled && fullResponse) longTermMemoryService.extractAndRemember(userMessage, fullResponse).catch(console.warn);
           if (autoSpeakEnabled && fullResponse) speak(fullResponse.replace(/[*#_`]/g, ''));
         }
       }
@@ -491,7 +413,7 @@ Réponds en français, sois concis.`;
       if (!incognitoMode) {
         addMessage({
           role: 'assistant',
-          content: `❌ Erreur: ${error instanceof Error ? error.message : 'Inconnue'}\n\nVérifiez que votre moteur IA (LM Studio, Ollama ou API) est bien configuré.`,
+          content: `Erreur: ${error instanceof Error ? error.message : 'Inconnue'}\n\nVérifiez que votre moteur IA est bien configuré.`,
           conversationId: convId,
         });
       }
@@ -504,81 +426,54 @@ Réponds en français, sois concis.`;
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-      e.preventDefault();
-      handleSend();
-      return;
-    }
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
-      return;
-    }
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); handleSend(); return; }
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); return; }
     if (e.key === 'Escape') {
-      if (isLoading) {
-        stopStreaming();
-      } else {
-        setMessage('');
-        setAttachments([]);
-      }
-      return;
+      if (isLoading) stopStreaming();
+      else { setMessage(''); setAttachments([]); }
     }
   };
 
   useEffect(() => {
     const handleGlobalKeyDown = (e: globalThis.KeyboardEvent) => {
-      if (e.ctrlKey && e.key === 'n') {
-        e.preventDefault();
-        createConversation();
-        textareaRef.current?.focus();
-      }
-      if (e.ctrlKey && e.key === '/') {
-        e.preventDefault();
-        textareaRef.current?.focus();
-      }
+      if (e.ctrlKey && e.key === 'n') { e.preventDefault(); createConversation(); textareaRef.current?.focus(); }
+      if (e.ctrlKey && e.key === '/') { e.preventDefault(); textareaRef.current?.focus(); }
     };
     window.addEventListener('keydown', handleGlobalKeyDown);
     return () => window.removeEventListener('keydown', handleGlobalKeyDown);
   }, [createConversation]);
 
   useEffect(() => {
-    if (transcript) {
-      setMessage(prev => prev + (prev ? ' ' : '') + transcript);
-    }
+    if (transcript) setMessage(prev => prev + (prev ? ' ' : '') + transcript);
   }, [transcript]);
 
   const displayText = message + (interimTranscript ? (message ? ' ' : '') + interimTranscript : '');
+  const hasContent = message.trim().length > 0 || attachments.length > 0;
 
   return (
     <div
       ref={dropZoneRef}
-      style={{ position: 'relative' }}
       onDragEnter={handleDragEnter}
       onDragLeave={handleDragLeave}
       onDragOver={handleDragOver}
       onDrop={handleDrop}
+      style={{ position: 'relative' }}
     >
       {/* Drag overlay */}
       {isDragging && (
         <div style={{
-          position: 'absolute',
-          inset: 0,
-          backgroundColor: 'rgba(16, 163, 127, 0.1)',
-          border: '2px dashed #10a37f',
-          borderRadius: '24px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 20,
-          pointerEvents: 'none',
+          position: 'absolute', inset: 0,
+          backgroundColor: 'rgba(255,255,255,0.05)',
+          border: '2px dashed #666',
+          borderRadius: '28px',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 20, pointerEvents: 'none',
         }}>
-          <span style={{ color: '#10a37f', fontSize: '14px', fontWeight: 500 }}>
-            Déposez vos fichiers ici
-          </span>
+          <span style={{ color: '#aaa', fontSize: '14px' }}>Déposez vos fichiers ici</span>
         </div>
       )}
 
-      {/* Image Editor Modal */}
+      {/* Image Editor */}
       {editingImageIndex !== null && attachments[editingImageIndex]?.type === 'image' && (
         <ImageEditor
           imageUrl={attachments[editingImageIndex].data}
@@ -586,441 +481,236 @@ Réponds en français, sois concis.`;
           onCancel={() => setEditingImageIndex(null)}
         />
       )}
-      {showVoiceSettings && (
-        <div style={{
-          position: 'absolute',
-          bottom: '100%',
-          left: 0,
-          right: 0,
-          marginBottom: '8px',
-          padding: '16px',
-          backgroundColor: '#1a1a1a',
-          borderRadius: '16px',
-          border: '1px solid #404040',
-          zIndex: 10
-        }}>
-          <div style={{ marginBottom: '12px' }}>
-            <label style={{ fontSize: '12px', color: '#888', display: 'block', marginBottom: '6px' }}>Voix</label>
-            <select
-              value={selectedVoice?.name || ''}
-              onChange={(e) => {
-                const voice = voices.find(v => v.name === e.target.value);
-                if (voice) setSelectedVoice(voice);
-              }}
-              style={{
-                width: '100%',
-                padding: '8px 12px',
-                backgroundColor: '#2d2d2d',
-                border: '1px solid #404040',
-                borderRadius: '8px',
-                color: '#fff',
-                fontSize: '13px'
-              }}
-            >
-              {displayVoices.map(voice => (
-                <option key={voice.name} value={voice.name}>{voice.name}</option>
-              ))}
-            </select>
-          </div>
-          <div style={{ marginBottom: '12px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-              <label style={{ fontSize: '12px', color: '#888' }}>Vitesse</label>
-              <span style={{ fontSize: '12px', color: '#fff' }}>{speechRate.toFixed(1)}x</span>
-            </div>
-            <input
-              type="range"
-              min="0.5"
-              max="2"
-              step="0.1"
-              value={speechRate}
-              onChange={(e) => setSpeechRate(parseFloat(e.target.value))}
-              style={{ width: '100%' }}
-            />
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '12px', color: '#888' }}>Lecture auto des réponses</span>
-            <button
-              onClick={toggleAutoSpeak}
-              style={{
-                width: '40px',
-                height: '22px',
-                borderRadius: '11px',
-                backgroundColor: autoSpeakEnabled ? '#10a37f' : '#404040',
-                border: 'none',
-                cursor: 'pointer',
-                position: 'relative'
-              }}
-            >
-              <div style={{
-                width: '18px',
-                height: '18px',
-                borderRadius: '50%',
-                backgroundColor: '#fff',
-                position: 'absolute',
-                top: '2px',
-                left: autoSpeakEnabled ? '20px' : '2px',
-                transition: 'left 0.2s'
-              }} />
-            </button>
-          </div>
-        </div>
-      )}
 
+      {/* Listening indicator */}
       {isListening && (
         <div style={{
-          position: 'absolute',
-          bottom: '100%',
-          left: 0,
-          right: 0,
-          marginBottom: '8px',
-          padding: '8px 16px',
-          backgroundColor: '#10a37f20',
-          borderRadius: '12px',
-          border: '1px solid #10a37f40',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px'
+          position: 'absolute', bottom: '100%', left: 0, right: 0,
+          marginBottom: '8px', padding: '8px 16px',
+          backgroundColor: 'rgba(255,255,255,0.05)',
+          borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)',
+          display: 'flex', alignItems: 'center', gap: '8px',
         }}>
           <div style={{
-            width: '8px',
-            height: '8px',
-            borderRadius: '50%',
-            backgroundColor: '#10a37f',
-            animation: 'pulse 1s infinite'
+            width: '8px', height: '8px', borderRadius: '50%',
+            backgroundColor: '#ef4444', animation: 'chatinput-pulse 1s infinite',
           }} />
-          <span style={{ fontSize: '13px', color: '#10a37f' }}>
+          <span style={{ fontSize: '13px', color: '#aaa' }}>
             Écoute en cours... Parlez maintenant
           </span>
         </div>
       )}
 
+      {/* Main input container — ChatGPT style */}
       <div style={{
-        display: 'flex',
-        alignItems: 'flex-end',
-        gap: isMobile ? '8px' : '8px',
-        padding: isMobile ? '10px 14px' : '12px 16px',
-        backgroundColor: '#2d2d2d',
-        borderRadius: '24px',
-        border: isListening ? '1px solid #10a37f' : '1px solid #404040',
-        transition: 'border-color 0.2s'
+        backgroundColor: '#2f2f2f',
+        borderRadius: '26px',
+        border: isListening ? '1px solid #ef4444' : '1px solid #424242',
+        transition: 'border-color 0.2s',
       }}>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*,.pdf,.txt,.md,.json,.csv"
-          multiple
-          onChange={handleFileSelect}
-          style={{ display: 'none' }}
-        />
-
-        {!isMobile && (
-          <>
-            {voiceSupported && (
-              <button
-                onClick={() => setShowVoiceSettings(!showVoiceSettings)}
-                style={{
-                  padding: '8px',
-                  backgroundColor: showVoiceSettings ? '#10a37f20' : 'transparent',
-                  border: 'none',
-                  color: showVoiceSettings ? '#10a37f' : '#888',
-                  cursor: 'pointer',
-                  borderRadius: '8px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}
-                title="Paramètres vocaux"
-              >
-                <Settings2 size={18} />
-              </button>
-            )}
-
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              style={{
-                padding: '8px',
-                backgroundColor: 'transparent',
-                border: 'none',
-                color: '#888',
-                cursor: 'pointer',
-                borderRadius: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                transition: 'all 0.2s'
-              }}
-              title="Joindre un fichier"
-            >
-              <Paperclip size={18} />
-            </button>
-
-            <button
-              onClick={handleScreenCapture}
-              style={{
-                padding: '8px',
-                backgroundColor: 'transparent',
-                border: 'none',
-                color: '#888',
-                cursor: 'pointer',
-                borderRadius: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                transition: 'all 0.2s'
-              }}
-              title="Capturer l'écran"
-            >
-              <Camera size={18} />
-            </button>
-
-            <button
-              onClick={() => setShowArtifactCreator(true)}
-              style={{
-                padding: '8px',
-                backgroundColor: 'transparent',
-                border: 'none',
-                color: '#10a37f',
-                cursor: 'pointer',
-                borderRadius: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                transition: 'all 0.2s'
-              }}
-              title="Créer un artefact (code exécutable)"
-            >
-              <Wand2 size={18} />
-            </button>
-
-            {voiceSupported && (
-              <button
-                onClick={toggleAutoSpeak}
-                style={{
-                  padding: '8px',
-                  backgroundColor: autoSpeakEnabled ? '#8b5cf620' : 'transparent',
-                  border: 'none',
-                  color: autoSpeakEnabled ? '#8b5cf6' : '#555',
-                  cursor: 'pointer',
-                  borderRadius: '8px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  transition: 'all 0.2s'
-                }}
-                title={autoSpeakEnabled ? 'Désactiver la synthèse vocale' : 'Activer la synthèse vocale'}
-              >
-                {autoSpeakEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
-              </button>
-            )}
-
-            {voiceSupported && (
-              <button
-                onClick={toggleListening}
-                style={{
-                  padding: '8px',
-                  backgroundColor: isListening ? '#ef4444' : 'transparent',
-                  border: 'none',
-                  color: isListening ? '#fff' : '#888',
-                  cursor: 'pointer',
-                  borderRadius: '8px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  transition: 'all 0.2s'
-                }}
-                title={isListening ? 'Arrêter la dictée' : 'Dicter un message'}
-              >
-                {isListening ? <MicOff size={18} /> : <Mic size={18} />}
-              </button>
-            )}
-
-            {/* Audio Recording Button */}
-            <AudioRecordButton
-              onAudioReady={handleAudioReady}
-              disabled={isLoading}
-            />
-          </>
+        {/* Attachment previews */}
+        {attachments.length > 0 && (
+          <div style={{
+            display: 'flex', flexWrap: 'wrap', gap: '8px',
+            padding: '12px 16px 0',
+          }}>
+            {attachments.map((att, idx) => (
+              <div key={idx} style={{
+                position: 'relative', display: 'flex', alignItems: 'center', gap: '6px',
+                padding: '6px 10px', backgroundColor: '#424242', borderRadius: '10px',
+                fontSize: '12px', color: '#d1d1d1',
+              }}>
+                {att.type === 'image' ? (
+                  <img src={att.data} alt={att.name} style={{
+                    width: '32px', height: '32px', borderRadius: '6px', objectFit: 'cover',
+                  }} />
+                ) : (
+                  <Paperclip size={14} style={{ color: '#888' }} />
+                )}
+                <span style={{ maxWidth: '80px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {att.name}
+                </span>
+                {att.type === 'image' && (
+                  <button onClick={() => setEditingImageIndex(idx)} style={iconBtnStyle} title="Annoter">
+                    <Edit3 size={12} />
+                  </button>
+                )}
+                <button onClick={() => removeAttachment(idx)} style={iconBtnStyle} title="Retirer">
+                  <X size={12} />
+                </button>
+              </div>
+            ))}
+          </div>
         )}
 
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          {attachments.length > 0 && (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-              {attachments.map((att, idx) => (
-                <div
-                  key={idx}
-                  style={{
-                    position: 'relative',
-                    padding: '4px 8px',
-                    backgroundColor: '#404040',
-                    borderRadius: '8px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    fontSize: '12px',
-                    color: '#fff'
-                  }}
-                >
-                  {att.type === 'image' ? <Image size={14} /> : <Paperclip size={14} />}
-                  <span style={{ maxWidth: '100px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {att.name}
-                  </span>
-                  {att.type === 'image' && (
-                    <button
-                      onClick={() => handleEditImage(idx)}
-                      style={{
-                        padding: '2px',
-                        backgroundColor: 'transparent',
-                        border: 'none',
-                        color: '#3b82f6',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center'
-                      }}
-                      title="Annoter l'image"
-                    >
-                      <Edit3 size={12} />
-                    </button>
-                  )}
-                  <button
-                    onClick={() => removeAttachment(idx)}
-                    style={{
-                      padding: '2px',
-                      backgroundColor: 'transparent',
-                      border: 'none',
-                      color: '#888',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center'
-                    }}
-                  >
-                    <X size={12} />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
+        {/* Textarea */}
+        <div style={{ padding: isMobile ? '12px 16px 0' : '14px 20px 0' }}>
           <textarea
             ref={textareaRef}
             value={displayText}
             onChange={handleInput}
             onKeyDown={handleKeyDown}
             onPaste={handlePaste}
-            placeholder={isListening ? 'Parlez...' : (isMobile ? 'Message' : (incognitoMode ? '🕶️ Mode incognito - Envoyer un message...' : 'Envoyer un message à Lisa...'))}
+            placeholder={isListening ? 'Parlez...' : (incognitoMode ? 'Mode incognito...' : 'Envoyer un message...')}
             disabled={isLoading}
+            aria-label="Message à envoyer"
+            aria-describedby="chat-input-hint"
             rows={1}
             style={{
-              flex: 1,
-              padding: isMobile ? '4px 0' : '8px 0',
+              width: '100%',
+              padding: 0,
               backgroundColor: 'transparent',
-              border: 'none',
-              outline: 'none',
-              color: '#fff',
+              border: 'none', outline: 'none',
+              color: 'var(--text-primary)',
               fontSize: isMobile ? '16px' : '15px',
-              lineHeight: '1.5',
+              lineHeight: '1.6',
               resize: 'none',
-              minHeight: isMobile ? '20px' : '24px',
-              maxHeight: '150px'
+              minHeight: '24px',
+              maxHeight: '200px',
+              fontFamily: 'inherit',
             }}
           />
+          <span id="chat-input-hint" className="sr-only">
+            Appuyez sur Entrée pour envoyer, Shift+Entrée pour une nouvelle ligne
+          </span>
         </div>
 
-        {isMobile && voiceSupported && (
-          <button
-            onClick={toggleListening}
-            style={{
-              padding: '8px',
-              backgroundColor: isListening ? '#ef4444' : 'transparent',
-              border: 'none',
-              color: isListening ? '#fff' : '#888',
-              cursor: 'pointer',
-              borderRadius: '50%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              minWidth: '36px',
-              minHeight: '36px'
-            }}
-            title={isListening ? 'Arrêter' : 'Micro'}
-          >
-            {isListening ? <MicOff size={20} /> : <Mic size={20} />}
-          </button>
-        )}
+        {/* Bottom toolbar */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: isMobile ? '8px 10px' : '8px 14px',
+        }}>
+          {/* Left actions */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '2px', position: 'relative' }} ref={actionsRef}>
+            <button
+              onClick={() => setShowActions(!showActions)}
+              style={{
+                ...toolBtnStyle,
+                backgroundColor: showActions ? 'var(--border-primary)' : 'transparent',
+                borderRadius: '50%',
+                width: '32px', height: '32px',
+                transition: 'background-color var(--transition-fast), transform var(--transition-normal)',
+                transform: showActions ? 'rotate(45deg)' : 'none',
+              }}
+              aria-label={showActions ? 'Fermer le menu d\'options' : 'Plus d\'options'}
+              aria-expanded={showActions}
+              aria-haspopup="true"
+            >
+              <Plus size={18} />
+            </button>
 
-        {voiceSupported && !isMobile && (
-          <button
-            onClick={() => isSpeaking ? stopSpeaking() : (lastResponse && speak(lastResponse))}
-            disabled={!lastResponse && !isSpeaking}
-            style={{
-              padding: '8px',
-              backgroundColor: isSpeaking ? '#8b5cf620' : 'transparent',
-              border: 'none',
-              color: isSpeaking ? '#8b5cf6' : (lastResponse ? '#888' : '#555'),
-              cursor: (lastResponse || isSpeaking) ? 'pointer' : 'not-allowed',
-              borderRadius: '8px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
-            title={isSpeaking ? 'Arrêter la lecture' : 'Relire la dernière réponse'}
-          >
-            {isSpeaking ? <VolumeX size={18} /> : <Volume2 size={18} />}
-          </button>
-        )}
-        
-        {isLoading ? (
-          <button
-            onClick={stopStreaming}
-            style={{
-              padding: '8px 16px',
-              backgroundColor: '#ef4444',
-              border: 'none',
-              borderRadius: '12px',
-              color: '#fff',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '6px',
-              fontSize: '14px',
-              fontWeight: 500
-            }}
-            title="Arrêter la génération (Escape)"
-          >
-            <StopCircle size={16} />
-          </button>
-        ) : (
-          <button
-            onClick={handleSend}
-            disabled={!message.trim()}
-            style={{
-              padding: '8px 16px',
-              backgroundColor: message.trim() ? '#10a37f' : '#404040',
-              border: 'none',
-              borderRadius: '12px',
-              color: '#fff',
-              cursor: message.trim() ? 'pointer' : 'not-allowed',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '6px',
-              fontSize: '14px',
-              fontWeight: 500,
-              opacity: message.trim() ? 1 : 0.5
-            }}
-            title="Envoyer (Enter)"
-          >
-            <Send size={16} />
-          </button>
-        )}
+            {/* Actions popup */}
+            {showActions && (
+              <div
+                role="menu"
+                aria-label="Options supplémentaires"
+                style={{
+                  position: 'absolute', bottom: '100%', left: 0,
+                  marginBottom: '6px', padding: '6px',
+                  backgroundColor: '#2a2a2a', borderRadius: '14px',
+                  border: '1px solid #3a3a3a',
+                  display: 'flex', flexDirection: 'column', gap: '2px',
+                  minWidth: '180px', zIndex: 30,
+                  boxShadow: 'var(--shadow-elevated)',
+                }}
+              >
+                <ActionItem icon={<Paperclip size={16} />} label="Joindre un fichier" onClick={() => { fileInputRef.current?.click(); setShowActions(false); }} />
+                <ActionItem icon={<Camera size={16} />} label="Capturer l'écran" onClick={handleScreenCapture} />
+                <ActionItem icon={<Wand2 size={16} />} label="Créer un artefact" onClick={() => { setShowArtifactCreator(true); setShowActions(false); }} />
+                {!isMobile && (
+                  <div style={{ padding: '0 4px' }}><AudioRecordButton onAudioReady={handleAudioReady} disabled={isLoading} /></div>
+                )}
+                {voiceSupported && (
+                  <ActionItem
+                    icon={autoSpeakEnabled ? <Volume2 size={16} /> : <VolumeX size={16} />}
+                    label={autoSpeakEnabled ? 'Désactiver la voix' : 'Activer la voix'}
+                    onClick={() => { toggleAutoSpeak(); setShowActions(false); }}
+                    active={autoSpeakEnabled}
+                  />
+                )}
+              </div>
+            )}
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*,.pdf,.txt,.md,.json,.csv"
+              multiple
+              onChange={handleFileSelect}
+              style={{ display: 'none' }}
+            />
+
+            {!isMobile && (
+              <button onClick={() => fileInputRef.current?.click()} style={toolBtnStyle} aria-label="Joindre un fichier">
+                <Paperclip size={16} />
+              </button>
+            )}
+
+            <button style={{ ...toolBtnStyle, cursor: 'default', opacity: 0.5 }} aria-label="Recherche web activée" aria-disabled="true">
+              <Globe size={16} />
+            </button>
+          </div>
+
+          {/* Right actions */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            {voiceSupported && (
+              <button
+                onClick={toggleListening}
+                style={{
+                  ...toolBtnStyle,
+                  backgroundColor: isListening ? 'var(--color-error)' : 'transparent',
+                  color: isListening ? '#fff' : 'var(--text-secondary)',
+                  borderRadius: '50%',
+                }}
+                aria-label={isListening ? 'Arrêter la dictée' : 'Dicter un message'}
+                aria-pressed={isListening}
+              >
+                {isListening ? <MicOff size={18} /> : <Mic size={18} />}
+              </button>
+            )}
+
+            {isLoading ? (
+              <button
+                onClick={stopStreaming}
+                style={{
+                  width: '36px', height: '36px',
+                  borderRadius: '50%',
+                  backgroundColor: '#fff',
+                  border: 'none', color: '#000',
+                  cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}
+                aria-label="Arrêter la génération (Escape)"
+              >
+                <Square size={14} fill="#000" />
+              </button>
+            ) : (
+              <button
+                onClick={hasContent ? handleSend : undefined}
+                disabled={!hasContent}
+                style={{
+                  width: '36px', height: '36px',
+                  borderRadius: '50%',
+                  backgroundColor: hasContent ? '#fff' : 'transparent',
+                  border: 'none',
+                  color: hasContent ? '#000' : '#676767',
+                  cursor: hasContent ? 'pointer' : 'default',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  transition: 'background-color var(--transition-normal), color var(--transition-normal)',
+                }}
+                aria-label="Envoyer le message (Enter)"
+              >
+                <Send size={16} />
+              </button>
+            )}
+          </div>
+        </div>
       </div>
 
       <style>{`
-        @keyframes pulse {
+        @keyframes chatinput-pulse {
           0%, 100% { opacity: 1; }
-          50% { opacity: 0.5; }
-        }
-        @keyframes spin {
-          to { transform: rotate(360deg); }
+          50% { opacity: 0.4; }
         }
       `}</style>
 
@@ -1038,5 +728,60 @@ Réponds en français, sois concis.`;
     </div>
   );
 };
+
+/* ── Shared styles ─────────────────────────────────── */
+
+const toolBtnStyle: React.CSSProperties = {
+  padding: 0,
+  width: '32px', height: '32px',
+  backgroundColor: 'transparent',
+  border: 'none',
+  color: '#b4b4b4',
+  cursor: 'pointer',
+  borderRadius: '8px',
+  display: 'flex', alignItems: 'center', justifyContent: 'center',
+  transition: 'background-color 0.15s, color 0.15s',
+};
+
+const iconBtnStyle: React.CSSProperties = {
+  padding: '2px', backgroundColor: 'transparent',
+  border: 'none', color: '#888', cursor: 'pointer',
+  display: 'flex', alignItems: 'center', borderRadius: '4px',
+};
+
+/* ── Action menu item ──────────────────────────────── */
+
+function ActionItem({ icon, label, onClick, active }: {
+  icon: React.ReactNode;
+  label: string;
+  onClick: () => void;
+  active?: boolean;
+}) {
+  return (
+    <button
+      role="menuitem"
+      onClick={onClick}
+      aria-label={label}
+      style={{
+        display: 'flex', alignItems: 'center', gap: '10px',
+        padding: '8px 12px',
+        backgroundColor: 'transparent',
+        border: 'none',
+        color: active ? 'var(--color-brand)' : 'var(--text-primary)',
+        cursor: 'pointer',
+        borderRadius: '10px',
+        fontSize: '13px',
+        width: '100%',
+        textAlign: 'left',
+        transition: 'background-color var(--transition-fast)',
+      }}
+      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#363636')}
+      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+    >
+      {icon}
+      {label}
+    </button>
+  );
+}
 
 export default ChatInput;

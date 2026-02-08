@@ -3,20 +3,22 @@
  */
 
 .suggestions-panel {
-  background-color: #f9f9f9;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  background-color: var(--bg-elevated, #2f2f2f);
+  border-radius: var(--radius-md, 8px);
+  border: 1px solid var(--border-primary, #424242);
+  box-shadow: var(--shadow-elevated, 0 4px 20px rgba(0, 0, 0, 0.4));
   margin-bottom: 12px;
   overflow: hidden;
 }
 
 .suggestions-panel .panel-header {
-  background-color: #4a6fa5;
-  color: white;
+  background-color: var(--bg-tertiary, #1a1a1a);
+  color: var(--text-primary, #ececec);
   padding: 8px 12px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  border-bottom: 1px solid var(--border-primary, #424242);
 }
 
 .suggestions-panel .panel-header h3 {
@@ -36,16 +38,22 @@
 .suggestions-panel button {
   background: none;
   border: none;
-  color: white;
+  color: var(--text-secondary, #b4b4b4);
   cursor: pointer;
   font-size: 14px;
-  border-radius: 4px;
+  border-radius: var(--radius-sm, 4px);
   padding: 2px 6px;
-  transition: background-color 0.2s;
+  transition: background-color var(--transition-fast, 0.15s ease), color var(--transition-fast, 0.15s ease);
 }
 
 .suggestions-panel button:hover {
-  background-color: rgba(255, 255, 255, 0.2);
+  background-color: var(--bg-hover, rgba(255, 255, 255, 0.06));
+  color: var(--text-primary, #ececec);
+}
+
+.suggestions-panel button:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring, 0 0 0 2px var(--color-brand));
 }
 
 .suggestions-panel button:disabled {
@@ -64,7 +72,7 @@
   justify-content: center;
   align-items: center;
   height: 100px;
-  color: #888;
+  color: var(--text-muted, #666);
   font-style: italic;
 }
 
@@ -76,39 +84,45 @@
 
 .suggestion-item {
   margin-bottom: 8px;
-  border-radius: 6px;
+  border-radius: var(--radius-md, 8px);
   overflow: hidden;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: transform var(--transition-fast, 0.15s ease), box-shadow var(--transition-fast, 0.15s ease);
+  animation: fadeIn 0.3s ease-out forwards;
 }
 
 .suggestion-item:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .suggestion-content {
   display: flex;
   padding: 10px;
-  background-color: white;
-  border-left: 4px solid #ddd;
+  background-color: var(--bg-secondary, #2d2d2d);
+  border-left: 4px solid var(--border-primary, #424242);
   cursor: pointer;
   position: relative;
+  transition: background-color var(--transition-fast, 0.15s ease);
+}
+
+.suggestion-content:hover {
+  background-color: var(--bg-hover, rgba(255, 255, 255, 0.06));
 }
 
 .suggestion-item.task .suggestion-content {
-  border-left-color: #4caf50;
+  border-left-color: var(--color-brand, #10a37f);
 }
 
 .suggestion-item.reminder .suggestion-content {
-  border-left-color: #ff9800;
+  border-left-color: var(--color-warning, #f59e0b);
 }
 
 .suggestion-item.info .suggestion-content {
-  border-left-color: #2196f3;
+  border-left-color: var(--color-info, #3b82f6);
 }
 
 .suggestion-item.action .suggestion-content {
-  border-left-color: #9c27b0;
+  border-left-color: var(--color-purple, #8b5cf6);
 }
 
 .suggestion-icon {
@@ -117,7 +131,7 @@
   align-items: center;
   justify-content: center;
   font-size: 18px;
-  color: #555;
+  color: var(--text-tertiary, #888);
 }
 
 .suggestion-text {
@@ -129,18 +143,18 @@
   margin: 0 0 4px 0;
   font-size: 14px;
   font-weight: 500;
-  color: #333;
+  color: var(--text-primary, #ececec);
 }
 
 .suggestion-text p {
   margin: 0 0 6px 0;
   font-size: 12px;
-  color: #666;
+  color: var(--text-secondary, #b4b4b4);
 }
 
 .suggestion-timestamp {
   font-size: 11px;
-  color: #999;
+  color: var(--text-muted, #666);
 }
 
 .dismiss-button {
@@ -149,7 +163,7 @@
   right: 8px;
   background: none;
   border: none;
-  color: #bbb;
+  color: var(--text-muted, #666);
   cursor: pointer;
   font-size: 14px;
   padding: 2px;
@@ -160,7 +174,7 @@
   align-items: center;
   justify-content: center;
   opacity: 0;
-  transition: opacity 0.2s, color 0.2s, background-color 0.2s;
+  transition: opacity var(--transition-fast, 0.15s ease), color var(--transition-fast, 0.15s ease), background-color var(--transition-fast, 0.15s ease);
 }
 
 .suggestion-content:hover .dismiss-button {
@@ -168,24 +182,24 @@
 }
 
 .dismiss-button:hover {
-  background-color: #f0f0f0;
-  color: #666;
+  background-color: var(--bg-hover, rgba(255, 255, 255, 0.06));
+  color: var(--text-primary, #ececec);
 }
 
 /* Indicateurs de silence et de déclenchement */
 .silence-indicator {
   font-size: 14px;
   padding: 2px 6px;
-  border-radius: 4px;
-  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-sm, 4px);
+  background-color: var(--color-brand-subtle, rgba(16, 163, 127, 0.12));
   animation: pulse 2s infinite;
 }
 
 .triggered-indicator {
   font-size: 14px;
   padding: 2px 6px;
-  border-radius: 4px;
-  background-color: rgba(255, 255, 0, 0.3);
+  border-radius: var(--radius-sm, 4px);
+  background-color: rgba(245, 158, 11, 0.2);
   animation: flash 1s ease-out;
 }
 
@@ -228,8 +242,4 @@
     opacity: 1;
     transform: translateY(0);
   }
-}
-
-.suggestion-item {
-  animation: fadeIn 0.3s ease-out forwards;
 }

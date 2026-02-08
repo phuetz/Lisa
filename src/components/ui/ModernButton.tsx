@@ -38,11 +38,11 @@ export const ModernButton = React.forwardRef<HTMLButtonElement, ModernButtonProp
     ref
   ) => {
     const variantClasses = {
-      primary: 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white',
-      secondary: 'bg-slate-700 hover:bg-slate-600 text-white border border-slate-600',
-      danger: 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white',
-      success: 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white',
-      ghost: 'bg-transparent hover:bg-slate-700 text-slate-300 border border-slate-600',
+      primary: 'bg-[var(--color-brand,#10a37f)] hover:bg-[var(--color-brand-hover,#0d8c6d)] text-white',
+      secondary: 'bg-[var(--bg-secondary,#2d2d2d)] hover:bg-[var(--bg-hover,rgba(255,255,255,0.06))] text-white border border-[var(--border-primary,#424242)]',
+      danger: 'bg-[var(--color-error,#ef4444)] hover:bg-red-600 text-white',
+      success: 'bg-[var(--color-brand,#10a37f)] hover:bg-[var(--color-brand-hover,#0d8c6d)] text-white',
+      ghost: 'bg-transparent hover:bg-[var(--bg-hover,rgba(255,255,255,0.06))] text-[var(--text-secondary,#b4b4b4)] border border-[var(--border-primary,#424242)]',
     };
 
     const sizeClasses = {
@@ -62,9 +62,9 @@ export const ModernButton = React.forwardRef<HTMLButtonElement, ModernButtonProp
           flex items-center justify-center gap-2
           font-medium transition-all duration-200
           disabled:opacity-50 disabled:cursor-not-allowed
-          hover:shadow-lg hover:shadow-blue-500/25
-          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 
-          focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900
+          hover:shadow-lg hover:shadow-[var(--color-brand,#10a37f)]/25
+          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand,#10a37f)]
+          focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-surface,#0d0d0d)]
           ${className}
         `}
         {...props}
@@ -100,10 +100,10 @@ export const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>(
     };
 
     const variantClasses = {
-      primary: 'bg-blue-500 hover:bg-blue-600 text-white',
-      secondary: 'bg-slate-700 hover:bg-slate-600 text-slate-300',
-      danger: 'bg-red-500 hover:bg-red-600 text-white',
-      ghost: 'bg-transparent hover:bg-slate-700 text-slate-300 border border-slate-600',
+      primary: 'bg-[var(--color-brand,#10a37f)] hover:bg-[var(--color-brand-hover,#0d8c6d)] text-white',
+      secondary: 'bg-[var(--bg-secondary,#2d2d2d)] hover:bg-[var(--bg-hover,rgba(255,255,255,0.06))] text-[var(--text-secondary,#b4b4b4)]',
+      danger: 'bg-[var(--color-error,#ef4444)] hover:bg-red-600 text-white',
+      ghost: 'bg-transparent hover:bg-[var(--bg-hover,rgba(255,255,255,0.06))] text-[var(--text-secondary,#b4b4b4)] border border-[var(--border-primary,#424242)]',
     };
 
     return (
@@ -114,8 +114,8 @@ export const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>(
           ${variantClasses[variant]}
           rounded-lg transition-all duration-200
           hover:shadow-lg
-          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500
-          focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900
+          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand,#10a37f)]
+          focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-surface,#0d0d0d)]
           ${className}
         `}
         {...props}
@@ -161,12 +161,12 @@ export const FloatingActionButton = React.forwardRef<
       ref={ref}
       className={`
         fixed bottom-8 right-8 w-14 h-14 rounded-full
-        bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700
+        bg-[var(--color-brand,#10a37f)] hover:bg-[var(--color-brand-hover,#0d8c6d)]
         text-white shadow-lg hover:shadow-xl
         flex items-center justify-center
         transition-all duration-200 hover:scale-110
-        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500
-        focus-visible:ring-offset-4 focus-visible:ring-offset-slate-900
+        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand,#10a37f)]
+        focus-visible:ring-offset-4 focus-visible:ring-offset-[var(--bg-surface,#0d0d0d)]
         ${className}
       `}
       title={label}

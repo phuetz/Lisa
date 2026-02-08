@@ -35,10 +35,10 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
 
   return (
     <div className="register-form-container">
-      <div className="register-form">
-        <h2>🤖 Inscription à Lisa</h2>
-        
-        <form onSubmit={handleSubmit}>
+      <div className="register-form" role="dialog" aria-modal="true" aria-labelledby="register-title">
+        <h2 id="register-title">Inscription à Lisa</h2>
+
+        <form onSubmit={handleSubmit} noValidate>
           <div className="form-group">
             <label htmlFor="name">Nom (optionnel)</label>
             <input
@@ -48,33 +48,37 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
               onChange={(e) => setName(e.target.value)}
               disabled={isLoading}
               placeholder="Votre nom"
+              autoComplete="name"
             />
           </div>
 
           <div className="form-group">
-            <label htmlFor="email">Email</label>
+            <label htmlFor="reg-email">Email</label>
             <input
               type="email"
-              id="email"
+              id="reg-email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
               disabled={isLoading}
               placeholder="votre@email.com"
+              autoComplete="email"
+              aria-invalid={error ? 'true' : undefined}
             />
           </div>
 
           <div className="form-group">
-            <label htmlFor="password">Mot de passe</label>
+            <label htmlFor="reg-password">Mot de passe</label>
             <input
               type="password"
-              id="password"
+              id="reg-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
               disabled={isLoading}
               placeholder="••••••••"
               minLength={6}
+              autoComplete="new-password"
             />
           </div>
 
@@ -88,18 +92,21 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
               required
               disabled={isLoading}
               placeholder="••••••••"
+              autoComplete="new-password"
               className={!passwordsMatch ? 'error' : ''}
+              aria-invalid={!passwordsMatch && confirmPassword ? 'true' : undefined}
+              aria-describedby={!passwordsMatch && confirmPassword ? 'password-mismatch' : undefined}
             />
             {!passwordsMatch && confirmPassword && (
-              <div className="field-error">
+              <div className="field-error" id="password-mismatch" role="alert">
                 Les mots de passe ne correspondent pas
               </div>
             )}
           </div>
 
           {error && (
-            <div className="error-message">
-              ⚠️ {error}
+            <div className="error-message" role="alert">
+              {error}
             </div>
           )}
 
@@ -133,7 +140,8 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
           left: 0;
           right: 0;
           bottom: 0;
-          background: rgba(0, 0, 0, 0.8);
+          background: rgba(0, 0, 0, 0.7);
+          backdrop-filter: blur(8px);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -141,10 +149,11 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
         }
 
         .register-form {
-          background: white;
+          background: var(--bg-elevated, #2f2f2f);
           padding: 2rem;
-          border-radius: 12px;
-          box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+          border-radius: var(--radius-xl, 16px);
+          border: 1px solid var(--border-primary, #333);
+          box-shadow: var(--shadow-modal, 0 25px 50px -12px rgba(0, 0, 0, 0.8));
           width: 100%;
           max-width: 400px;
           margin: 1rem;
@@ -155,7 +164,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
         .register-form h2 {
           text-align: center;
           margin-bottom: 1.5rem;
-          color: #333;
+          color: var(--text-primary, #ececec);
           font-size: 1.5rem;
         }
 
@@ -167,95 +176,115 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
           display: block;
           margin-bottom: 0.5rem;
           font-weight: 600;
-          color: #555;
+          color: var(--text-secondary, #b4b4b4);
+          font-size: 0.9rem;
         }
 
         .form-group input {
           width: 100%;
           padding: 0.75rem;
-          border: 2px solid #e1e5e9;
-          border-radius: 6px;
+          background: var(--bg-primary, #212121);
+          color: var(--text-primary, #ececec);
+          border: 1px solid var(--border-primary, #333);
+          border-radius: var(--radius-md, 8px);
           font-size: 1rem;
-          transition: border-color 0.2s;
+          transition: border-color var(--transition-fast, 0.15s ease), box-shadow var(--transition-fast, 0.15s ease);
           box-sizing: border-box;
         }
 
         .form-group input:focus {
           outline: none;
-          border-color: #007bff;
-          box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+          border-color: var(--color-brand, #10a37f);
+          box-shadow: 0 0 0 2px var(--color-brand-subtle, rgba(16, 163, 127, 0.12));
         }
 
         .form-group input.error {
-          border-color: #dc3545;
+          border-color: var(--color-error, #ef4444);
         }
 
         .form-group input:disabled {
-          background-color: #f8f9fa;
+          background-color: var(--bg-tertiary, #1a1a1a);
+          color: var(--text-disabled, #555);
           cursor: not-allowed;
         }
 
+        .form-group input::placeholder {
+          color: var(--text-muted, #666);
+        }
+
         .field-error {
-          color: #dc3545;
+          color: var(--color-error, #ef4444);
           font-size: 0.875rem;
           margin-top: 0.25rem;
         }
 
         .error-message {
-          background: #f8d7da;
-          color: #721c24;
+          background: rgba(239, 68, 68, 0.1);
+          color: var(--color-error, #ef4444);
           padding: 0.75rem;
-          border-radius: 6px;
+          border-radius: var(--radius-md, 8px);
           margin-bottom: 1rem;
-          border: 1px solid #f5c6cb;
+          border: 1px solid rgba(239, 68, 68, 0.3);
           font-size: 0.9rem;
         }
 
         .submit-button {
           width: 100%;
           padding: 0.875rem;
-          background: #28a745;
-          color: white;
+          background: var(--color-brand, #10a37f);
+          color: #fff;
           border: none;
-          border-radius: 6px;
+          border-radius: var(--radius-md, 8px);
           font-size: 1rem;
           font-weight: 600;
           cursor: pointer;
-          transition: background-color 0.2s;
+          transition: background-color var(--transition-fast, 0.15s ease);
         }
 
         .submit-button:hover:not(:disabled) {
-          background: #218838;
+          background: var(--color-brand-hover, #0d8c6d);
+        }
+
+        .submit-button:focus-visible {
+          outline: none;
+          box-shadow: var(--focus-ring, 0 0 0 2px var(--color-brand));
         }
 
         .submit-button:disabled {
-          background: #6c757d;
+          background: var(--text-disabled, #555);
           cursor: not-allowed;
+          opacity: 0.6;
         }
 
         .form-footer {
           text-align: center;
           margin-top: 1.5rem;
           padding-top: 1rem;
-          border-top: 1px solid #e1e5e9;
+          border-top: 1px solid var(--border-primary, #333);
         }
 
         .form-footer p {
           margin: 0;
-          color: #666;
+          color: var(--text-muted, #666);
         }
 
         .link-button {
           background: none;
           border: none;
-          color: #007bff;
+          color: var(--color-brand, #10a37f);
           cursor: pointer;
           text-decoration: underline;
           font-size: inherit;
         }
 
         .link-button:hover {
-          color: #0056b3;
+          color: var(--color-brand-hover, #0d8c6d);
+        }
+
+        .link-button:focus-visible {
+          outline: none;
+          box-shadow: var(--focus-ring, 0 0 0 2px var(--color-brand));
+          border-radius: 2px;
         }
       `}</style>
     </div>

@@ -32,6 +32,7 @@ const DEFAULT_CONFIG: EmbeddingConfig = {
 class EmbeddingServiceImpl {
   private config: EmbeddingConfig = DEFAULT_CONFIG;
   private cache: Map<string, number[]> = new Map();
+  private readonly MAX_CACHE_SIZE = 500;
 
   /**
    * Update the embedding configuration
@@ -51,10 +52,13 @@ class EmbeddingServiceImpl {
    * Generate embeddings for text
    */
   async generateEmbedding(text: string): Promise<EmbeddingResult> {
-    // Check cache first
+    // Check cache first (LRU: move to end on access)
     const cacheKey = `${this.config.provider}:${text}`;
     const cached = this.cache.get(cacheKey);
     if (cached) {
+      // Move to end for LRU ordering
+      this.cache.delete(cacheKey);
+      this.cache.set(cacheKey, cached);
       return {
         vector: cached,
         model: this.config.model || 'cached'
@@ -77,8 +81,12 @@ class EmbeddingServiceImpl {
           break;
       }
 
-      // Cache the result
+      // Cache the result and evict oldest if over limit
       this.cache.set(cacheKey, result.vector);
+      if (this.cache.size > this.MAX_CACHE_SIZE) {
+        const oldestKey = this.cache.keys().next().value;
+        if (oldestKey !== undefined) this.cache.delete(oldestKey);
+      }
 
       return result;
     } catch (error) {

@@ -1,15 +1,12 @@
 /**
  * SenseProvider - Initializes and manages all 5 senses
  *
- * Extracts sense initialization logic from App.tsx
+ * Uses dynamic imports for heavy senses (vision, hearing, touch, environment)
+ * to reduce the main bundle size. Only proprioception is loaded eagerly (lightweight).
  */
 
 import { useEffect, useRef, useState } from 'react';
-import { hearingSense } from '../features/hearing/api';
-import { visionSense, processVideoFrame } from '../features/vision/api';
 import { proprioceptionSense } from '../senses/proprioception';
-import { touchSense } from '../senses/touch';
-import { environmentSense } from '../senses/environment';
 import { useAppStore } from '../store/appStore';
 import type { Percept } from '../types';
 import config from '../config';
@@ -40,22 +37,30 @@ export function SenseProvider({ children }: SenseProviderProps) {
       }));
     };
 
-    // Proprioception
+    // Proprioception (lightweight, eagerly loaded)
     proprioceptionSense.setOnPerceptCallback(updateStore);
     proprioceptionSense.initialize();
 
-    // Touch
-    touchSense.setOnPerceptCallback(updateStore);
-    touchSense.initialize();
+    // Touch & Environment (dynamically loaded — pulls in mqtt package)
+    let touchCleanup: (() => void) | undefined;
+    let envCleanup: (() => void) | undefined;
 
-    // Environment
-    environmentSense.setOnPerceptCallback(updateStore);
-    environmentSense.initialize();
+    import('../senses/touch').then(({ touchSense }) => {
+      touchSense.setOnPerceptCallback(updateStore);
+      touchSense.initialize();
+      touchCleanup = () => touchSense.terminate();
+    }).catch(err => console.warn('[SenseProvider] Touch sense failed to load:', err));
+
+    import('../senses/environment').then(({ environmentSense }) => {
+      environmentSense.setOnPerceptCallback(updateStore);
+      environmentSense.initialize();
+      envCleanup = () => environmentSense.terminate();
+    }).catch(err => console.warn('[SenseProvider] Environment sense failed to load:', err));
 
     return () => {
       proprioceptionSense.terminate();
-      touchSense.terminate();
-      environmentSense.terminate();
+      touchCleanup?.();
+      envCleanup?.();
     };
   }, []);
 
@@ -75,42 +80,55 @@ export function SenseProvider({ children }: SenseProviderProps) {
       });
   }, [advancedVision]);
 
-  // Advanced Vision processing loop
+  // Advanced Vision processing loop (dynamically loaded)
   useEffect(() => {
     if (!advancedVision) return;
 
-    visionSense.start();
-
     let rafId: number;
-    const processLoop = () => {
-      // Pause processing if document is hidden to save resources
-      if (document.visibilityState === 'hidden') {
-        rafId = requestAnimationFrame(processLoop);
-        return;
-      }
+    let stopped = false;
 
-      if (videoRef.current && videoRef.current.readyState >= 2) {
-        processVideoFrame(videoRef.current);
-      }
+    import('../features/vision/api').then(({ visionSense, processVideoFrame }) => {
+      if (stopped) return;
+      visionSense.start();
+
+      const processLoop = () => {
+        if (stopped) return;
+        // Pause processing if document is hidden to save resources
+        if (document.visibilityState === 'hidden') {
+          rafId = requestAnimationFrame(processLoop);
+          return;
+        }
+        if (videoRef.current && videoRef.current.readyState >= 2) {
+          processVideoFrame(videoRef.current);
+        }
+        rafId = requestAnimationFrame(processLoop);
+      };
       rafId = requestAnimationFrame(processLoop);
-    };
-    rafId = requestAnimationFrame(processLoop);
+    });
 
     return () => {
-      visionSense.stop();
+      stopped = true;
       cancelAnimationFrame(rafId);
+      import('../features/vision/api').then(({ visionSense }) => visionSense.stop());
     };
   }, [advancedVision]);
 
-  // Advanced Hearing processing
+  // Advanced Hearing processing (dynamically loaded)
   useEffect(() => {
     let audioWorkletNode: AudioWorkletNode | null = null;
     let source: MediaStreamAudioSourceNode | null = null;
+    let stopped = false;
 
     const startAudioProcessing = async () => {
       if (micStream && audioCtx) {
         try {
-          const { getAudioProcessorUrl } = await import('../senses/runtime/hearing.factory');
+          const [{ hearingSense }, { getAudioProcessorUrl }] = await Promise.all([
+            import('../features/hearing/api'),
+            import('../senses/runtime/hearing.factory'),
+          ]);
+
+          if (stopped) return;
+
           await audioCtx.audioWorklet.addModule(getAudioProcessorUrl());
           source = audioCtx.createMediaStreamSource(micStream);
           audioWorkletNode = new AudioWorkletNode(audioCtx, 'audio-processor');
@@ -131,14 +149,15 @@ export function SenseProvider({ children }: SenseProviderProps) {
     };
 
     if (advancedHearing) {
-      hearingSense.start();
+      import('../features/hearing/api').then(({ hearingSense }) => {
+        if (!stopped) hearingSense.start();
+      });
       startAudioProcessing();
-    } else {
-      hearingSense.stop();
     }
 
     return () => {
-      hearingSense.stop();
+      stopped = true;
+      import('../features/hearing/api').then(({ hearingSense }) => hearingSense.stop());
       source?.disconnect();
       audioWorkletNode?.disconnect();
     };

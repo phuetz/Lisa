@@ -43,17 +43,17 @@ export function NotificationPermissionPrompt({ onClose }: NotificationPermission
   if (!visible) return null;
 
   return (
-    <div className="notification-permission-prompt">
+    <div className="notification-permission-prompt" role="dialog" aria-labelledby="notif-title">
       <div className="prompt-content">
         <div className="prompt-header">
-          <i className="fas fa-bell"></i>
-          <h3>{t('Enable Notifications')}</h3>
+          <span aria-hidden="true" style={{ fontSize: '1.2rem', marginRight: 12, color: 'var(--color-brand, #10a37f)' }}>&#128276;</span>
+          <h3 id="notif-title">{t('Enable Notifications')}</h3>
         </div>
-        
+
         <p>
           {t('Lisa can send you notifications for alarms and timers, even when the tab is closed. Would you like to enable notifications?')}
         </p>
-        
+
         <div className="prompt-actions">
           <button className="dismiss-btn" onClick={handleDismiss}>
             {t('Not Now')}
@@ -86,75 +86,81 @@ export function NotificationPermissionPrompt({ onClose }: NotificationPermission
         }
         
         .prompt-content {
-          background: rgba(30, 30, 40, 0.85);
+          background: var(--bg-elevated, #2f2f2f);
           backdrop-filter: blur(8px);
-          border-radius: 12px;
+          border-radius: var(--radius-lg, 12px);
           padding: 16px;
-          box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
-          border: 1px solid rgba(255, 255, 255, 0.1);
+          box-shadow: var(--shadow-elevated, 0 4px 20px rgba(0, 0, 0, 0.4));
+          border: 1px solid var(--border-primary, #424242);
+          color: var(--text-primary, #ececec);
         }
-        
+
         .prompt-header {
           display: flex;
           align-items: center;
           margin-bottom: 12px;
         }
-        
-        .prompt-header i {
-          font-size: 1.2rem;
-          margin-right: 12px;
-          color: #6e8efb;
-        }
-        
+
         .prompt-header h3 {
           margin: 0;
           font-size: 1.1rem;
           font-weight: 600;
+          color: var(--text-primary, #ececec);
         }
-        
+
         .prompt-content p {
           margin: 0 0 16px 0;
           line-height: 1.5;
           font-size: 0.9rem;
-          opacity: 0.9;
+          color: var(--text-secondary, #b4b4b4);
         }
-        
+
         .prompt-actions {
           display: flex;
           justify-content: flex-end;
           gap: 12px;
         }
-        
+
         .dismiss-btn {
           background: transparent;
-          border: 1px solid rgba(255, 255, 255, 0.2);
-          color: rgba(255, 255, 255, 0.8);
+          border: 1px solid var(--border-primary, #424242);
+          color: var(--text-secondary, #b4b4b4);
           padding: 8px 16px;
-          border-radius: 6px;
+          border-radius: var(--radius-md, 8px);
           font-size: 0.9rem;
           cursor: pointer;
-          transition: all 0.2s;
+          transition: all var(--transition-fast, 0.15s ease);
         }
-        
+
         .dismiss-btn:hover {
-          background: rgba(255, 255, 255, 0.1);
+          background: var(--bg-hover, rgba(255, 255, 255, 0.06));
         }
-        
+
+        .dismiss-btn:focus-visible {
+          outline: none;
+          box-shadow: var(--focus-ring, 0 0 0 2px var(--color-brand));
+        }
+
         .enable-btn {
-          background: linear-gradient(135deg, #6e8efb, #a777e3);
+          background: var(--color-brand, #10a37f);
           border: none;
-          color: white;
+          color: #fff;
           padding: 8px 16px;
-          border-radius: 6px;
+          border-radius: var(--radius-md, 8px);
           font-size: 0.9rem;
           font-weight: 500;
           cursor: pointer;
-          transition: all 0.2s;
+          transition: all var(--transition-fast, 0.15s ease);
         }
-        
+
         .enable-btn:hover {
+          background: var(--color-brand-hover, #0d8c6d);
           transform: translateY(-1px);
-          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .enable-btn:focus-visible {
+          outline: none;
+          box-shadow: var(--focus-ring, 0 0 0 2px var(--color-brand));
         }
       `}</style>
     </div>

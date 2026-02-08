@@ -106,6 +106,7 @@ interface UiSlice {
   fallDetected: boolean;
   fallEventTimestamp: number | null;
   setLastPlanExplanation: (explanation: string | null, traceId?: string) => void;
+  setLastSpokenText: (text: string) => void;
   addTodo: (todo: Todo) => void;
   removeTodo: (id: string) => void;
   toggleTodo: (id: string) => void;
@@ -172,6 +173,10 @@ const createUiSlice = (set: any, get: any): UiSlice => ({
   fallEventTimestamp: null,
   setLastPlanExplanation: (explanation, traceId) =>
     set({ lastPlanExplanation: explanation, lastPlanTraceId: traceId }),
+  setLastSpokenText: (text) =>
+    set((state: AppState) => ({
+      conversationContext: { ...state.conversationContext, lastSpokenText: text, timestamp: Date.now() },
+    })),
   addTodo: (todo) =>
     set((state: AppState) => ({ todos: [...state.todos, todo as Todo] })),
   removeTodo: (id) =>

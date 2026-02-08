@@ -1,12 +1,12 @@
 .screenshare-panel {
-  background-color: #1e1e1e;
-  color: #e0e0e0;
-  border-radius: 8px;
+  background-color: var(--bg-primary, #212121);
+  color: var(--text-primary, #ececec);
+  border-radius: var(--radius-md, 8px);
   padding: 20px;
   margin: 10px 0;
   width: 100%;
   max-width: 800px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-elevated, 0 4px 12px rgba(0, 0, 0, 0.15));
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
     Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
 }
@@ -20,22 +20,22 @@
 
 .screenshare-header h2 {
   margin: 0;
-  color: #64b5f6;
+  color: var(--color-info, #3b82f6);
   font-size: 1.5rem;
 }
 
 .close-button {
   background: transparent;
   border: none;
-  color: #999;
+  color: var(--text-tertiary, #888);
   font-size: 1.5rem;
   cursor: pointer;
   padding: 0 5px;
-  transition: color 0.2s;
+  transition: color var(--transition-fast, 0.15s ease);
 }
 
 .close-button:hover {
-  color: #f44336;
+  color: var(--color-error, #ef4444);
 }
 
 .notification {
@@ -46,18 +46,18 @@
 }
 
 .notification.success {
-  background-color: #4caf50;
-  color: white;
+  background-color: var(--color-brand, #10a37f);
+  color: var(--text-primary, #ececec);
 }
 
 .notification.error {
-  background-color: #f44336;
-  color: white;
+  background-color: var(--color-error, #ef4444);
+  color: var(--text-primary, #ececec);
 }
 
 .notification.info {
-  background-color: #2196f3;
-  color: white;
+  background-color: var(--color-info, #3b82f6);
+  color: var(--text-primary, #ececec);
 }
 
 @keyframes fadeIn {
@@ -71,12 +71,12 @@
 }
 
 .error-message {
-  background-color: rgba(244, 67, 54, 0.1);
-  color: #f44336;
+  background-color: var(--color-error-subtle, rgba(239, 68, 68, 0.1));
+  color: var(--color-error, #ef4444);
   padding: 12px;
   border-radius: 6px;
   margin-bottom: 15px;
-  border-left: 4px solid #f44336;
+  border-left: 4px solid var(--color-error, #ef4444);
 }
 
 .screenshare-content {
@@ -87,7 +87,7 @@
 
 .screenshare-controls {
   flex: 1;
-  background-color: #2d2d2d;
+  background-color: var(--bg-secondary, #2d2d2d);
   border-radius: 6px;
   padding: 15px;
 }
@@ -95,7 +95,7 @@
 .screenshare-controls h3 {
   margin-top: 0;
   margin-bottom: 15px;
-  color: #64b5f6;
+  color: var(--color-info, #3b82f6);
   font-size: 1.2rem;
 }
 
@@ -106,7 +106,7 @@
 .option-group label {
   display: block;
   margin-bottom: 8px;
-  color: #e0e0e0;
+  color: var(--text-primary, #ececec);
 }
 
 .radio-options {
@@ -125,7 +125,7 @@
 
 .radio-options input[type="radio"],
 .option-group input[type="checkbox"] {
-  accent-color: #64b5f6;
+  accent-color: var(--color-info, #3b82f6);
 }
 
 .start-button, .stop-button {
@@ -136,29 +136,29 @@
   font-weight: 500;
   font-size: 1rem;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: background-color var(--transition-fast, 0.15s ease);
 }
 
 .start-button {
-  background-color: #4caf50;
-  color: white;
+  background-color: var(--color-brand, #10a37f);
+  color: var(--text-primary, #ececec);
 }
 
 .start-button:hover {
-  background-color: #43a047;
+  background-color: var(--color-brand-hover, #0d8c6d);
 }
 
 .stop-button {
-  background-color: #f44336;
-  color: white;
+  background-color: var(--color-error, #ef4444);
+  color: var(--text-primary, #ececec);
 }
 
 .stop-button:hover {
-  background-color: #e53935;
+  background-color: #dc2626;
 }
 
 .active-session {
-  background-color: rgba(100, 181, 246, 0.1);
+  background-color: rgba(59, 130, 246, 0.1);
   border-radius: 6px;
   padding: 15px;
   margin-bottom: 15px;
@@ -173,12 +173,12 @@
 }
 
 .session-info strong {
-  color: #64b5f6;
+  color: var(--color-info, #3b82f6);
 }
 
 .preview-container {
   flex: 2;
-  background-color: #2d2d2d;
+  background-color: var(--bg-secondary, #2d2d2d);
   border-radius: 6px;
   padding: 15px;
   display: flex;
@@ -190,9 +190,9 @@
 .video-preview {
   width: 100%;
   max-height: 220px;
-  border-radius: 4px;
+  border-radius: var(--radius-sm, 4px);
   object-fit: contain;
-  background-color: #000;
+  background-color: var(--bg-surface, #0d0d0d);
 }
 
 .preview-placeholder {
@@ -201,15 +201,15 @@
   justify-content: center;
   width: 100%;
   height: 100%;
-  color: #999;
+  color: var(--text-muted, #666);
   text-align: center;
   font-style: italic;
-  background-color: #1a1a1a;
-  border-radius: 4px;
+  background-color: var(--bg-tertiary, #1a1a1a);
+  border-radius: var(--radius-sm, 4px);
 }
 
 .screenshare-history {
-  background-color: #2d2d2d;
+  background-color: var(--bg-secondary, #2d2d2d);
   border-radius: 6px;
   padding: 15px;
 }
@@ -223,23 +223,23 @@
 
 .history-header h3 {
   margin: 0;
-  color: #64b5f6;
+  color: var(--color-info, #3b82f6);
   font-size: 1.2rem;
 }
 
 .clear-history-button {
-  background-color: #666;
-  color: white;
+  background-color: var(--text-muted, #666);
+  color: var(--text-primary, #ececec);
   border: none;
-  border-radius: 4px;
+  border-radius: var(--radius-sm, 4px);
   padding: 5px 10px;
   cursor: pointer;
   font-size: 0.9rem;
-  transition: background-color 0.2s;
+  transition: background-color var(--transition-fast, 0.15s ease);
 }
 
 .clear-history-button:hover {
-  background-color: #888;
+  background-color: var(--text-tertiary, #888);
 }
 
 .history-list {
@@ -249,8 +249,8 @@
 
 .history-item {
   padding: 12px;
-  background-color: #3d3d3d;
-  border-radius: 4px;
+  background-color: var(--bg-elevated, #2f2f2f);
+  border-radius: var(--radius-sm, 4px);
   margin-bottom: 10px;
 }
 
@@ -268,11 +268,11 @@
 
 .history-time {
   font-size: 0.9rem;
-  color: #bbb;
+  color: var(--text-tertiary, #888);
 }
 
 .no-history {
-  color: #999;
+  color: var(--text-muted, #666);
   text-align: center;
   font-style: italic;
 }
@@ -280,14 +280,14 @@
 .screenshare-footer {
   margin-top: 20px;
   padding-top: 15px;
-  border-top: 1px solid #444;
+  border-top: 1px solid var(--border-primary, #424242);
 }
 
 .privacy-notice {
   display: flex;
   align-items: center;
   gap: 10px;
-  color: #999;
+  color: var(--text-muted, #666);
   font-size: 0.9rem;
 }
 
@@ -296,7 +296,7 @@
   .screenshare-content {
     flex-direction: column;
   }
-  
+
   .preview-container {
     min-height: 200px;
   }

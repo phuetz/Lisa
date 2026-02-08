@@ -1,25 +1,25 @@
 .github-panel {
-  background-color: #0d1117;
-  color: #c9d1d9;
-  border-radius: 8px;
+  background-color: var(--bg-surface, #0d0d0d);
+  color: var(--text-secondary, #b4b4b4);
+  border-radius: var(--radius-md, 8px);
   padding: 20px;
   margin: 10px 0;
   width: 100%;
   max-width: 800px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-elevated, 0 4px 12px rgba(0, 0, 0, 0.15));
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
 }
 
 .github-panel h2 {
-  color: #58a6ff;
+  color: var(--color-info, #3b82f6);
   margin-top: 0;
   margin-bottom: 20px;
-  border-bottom: 1px solid #30363d;
+  border-bottom: 1px solid var(--border-primary, #424242);
   padding-bottom: 10px;
 }
 
 .github-panel h3 {
-  color: #58a6ff;
+  color: var(--color-info, #3b82f6);
   margin-top: 20px;
   margin-bottom: 15px;
 }
@@ -27,9 +27,9 @@
 .auth-section {
   margin-bottom: 20px;
   padding: 15px;
-  background-color: #161b22;
+  background-color: var(--bg-primary, #212121);
   border-radius: 6px;
-  border: 1px solid #30363d;
+  border: 1px solid var(--border-primary, #424242);
 }
 
 .input-group {
@@ -41,43 +41,43 @@
   flex: 1;
   padding: 10px;
   border-radius: 6px 0 0 6px;
-  border: 1px solid #30363d;
-  background-color: #0d1117;
-  color: #c9d1d9;
+  border: 1px solid var(--border-primary, #424242);
+  background-color: var(--bg-surface, #0d0d0d);
+  color: var(--text-secondary, #b4b4b4);
 }
 
 .input-group button {
   padding: 10px 15px;
   border-radius: 0 6px 6px 0;
-  border: 1px solid #30363d;
-  background-color: #238636;
-  color: #ffffff;
+  border: 1px solid var(--border-primary, #424242);
+  background-color: var(--color-brand, #10a37f);
+  color: var(--text-primary, #ececec);
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: background-color var(--transition-fast, 0.15s ease);
 }
 
 .input-group button:hover {
-  background-color: #2ea043;
+  background-color: var(--color-brand-hover, #0d8c6d);
 }
 
 .load-button {
   width: 100%;
   padding: 10px 15px;
   border-radius: 6px;
-  border: 1px solid #30363d;
-  background-color: #1f6feb;
-  color: #ffffff;
+  border: 1px solid var(--border-primary, #424242);
+  background-color: var(--color-info, #3b82f6);
+  color: var(--text-primary, #ececec);
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: background-color var(--transition-fast, 0.15s ease);
 }
 
 .load-button:hover {
-  background-color: #388bfd;
+  background-color: #2563eb;
 }
 
 .error-message {
-  background-color: #5a1d20;
-  color: #ff7b72;
+  background-color: var(--color-error-subtle, rgba(239, 68, 68, 0.12));
+  color: var(--color-error, #ef4444);
   padding: 10px;
   border-radius: 6px;
   margin-bottom: 15px;
@@ -91,18 +91,18 @@
 }
 
 .notification.success {
-  background-color: #238636;
-  color: #ffffff;
+  background-color: var(--color-brand, #10a37f);
+  color: var(--text-primary, #ececec);
 }
 
 .notification.error {
-  background-color: #da3633;
-  color: #ffffff;
+  background-color: var(--color-error, #ef4444);
+  color: var(--text-primary, #ececec);
 }
 
 .notification.info {
-  background-color: #1f6feb;
-  color: #ffffff;
+  background-color: var(--color-info, #3b82f6);
+  color: var(--text-primary, #ececec);
 }
 
 @keyframes fadeIn {
@@ -119,7 +119,7 @@
   text-align: center;
   padding: 20px;
   font-style: italic;
-  color: #8b949e;
+  color: var(--text-muted, #666);
 }
 
 .content-area {
@@ -134,17 +134,17 @@
 }
 
 .content-area::-webkit-scrollbar-track {
-  background: #161b22;
+  background: var(--bg-primary, #212121);
   border-radius: 4px;
 }
 
 .content-area::-webkit-scrollbar-thumb {
-  background-color: #30363d;
+  background-color: var(--border-primary, #424242);
   border-radius: 4px;
 }
 
 .content-area::-webkit-scrollbar-thumb:hover {
-  background-color: #58a6ff;
+  background-color: var(--color-info, #3b82f6);
 }
 
 .repos-list ul, .issues-list ul, .pulls-list ul, .commits-list ul {
@@ -153,8 +153,8 @@
 }
 
 .repo-item, .issue-item, .pr-item, .commit-item {
-  background-color: #161b22;
-  border: 1px solid #30363d;
+  background-color: var(--bg-primary, #212121);
+  border: 1px solid var(--border-primary, #424242);
   border-radius: 6px;
   padding: 15px;
   margin-bottom: 10px;
@@ -163,7 +163,7 @@
 
 .repo-item:hover, .issue-item:hover, .pr-item:hover, .commit-item:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--shadow-elevated, 0 4px 8px rgba(0, 0, 0, 0.2));
 }
 
 .repo-header, .issue-header, .pr-header, .commit-header {
@@ -174,12 +174,12 @@
 }
 
 .repo-stats {
-  color: #8b949e;
+  color: var(--text-muted, #666);
   font-size: 0.9rem;
 }
 
 .repo-desc {
-  color: #8b949e;
+  color: var(--text-muted, #666);
   margin: 8px 0;
   font-size: 0.95rem;
   line-height: 1.4;
@@ -194,7 +194,7 @@
 }
 
 .repo-lang {
-  color: #58a6ff;
+  color: var(--color-info, #3b82f6);
   font-weight: 500;
 }
 
@@ -204,28 +204,28 @@
 }
 
 .repo-actions a, .issue-footer a, .pr-footer a, .commit-footer a, .readme-footer a {
-  color: #58a6ff;
+  color: var(--color-info, #3b82f6);
   text-decoration: none;
-  transition: color 0.2s;
+  transition: color var(--transition-fast, 0.15s ease);
 }
 
 .repo-actions a:hover, .issue-footer a:hover, .pr-footer a:hover, .commit-footer a:hover, .readme-footer a:hover {
-  color: #79c0ff;
+  color: var(--color-brand, #10a37f);
   text-decoration: underline;
 }
 
 .repo-actions button {
   padding: 5px 10px;
-  background-color: #238636;
-  color: white;
+  background-color: var(--color-brand, #10a37f);
+  color: var(--text-primary, #ececec);
   border: none;
-  border-radius: 4px;
+  border-radius: var(--radius-sm, 4px);
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: background-color var(--transition-fast, 0.15s ease);
 }
 
 .repo-actions button:hover {
-  background-color: #2ea043;
+  background-color: var(--color-brand-hover, #0d8c6d);
 }
 
 .issue-state, .pr-state {
@@ -236,11 +236,11 @@
 }
 
 .issue-state.open, .pr-state.open {
-  color: #3fb950;
+  color: var(--color-brand, #10a37f);
 }
 
 .issue-state.closed, .pr-state.closed {
-  color: #f85149;
+  color: var(--color-error, #ef4444);
 }
 
 .issue-labels {
@@ -254,16 +254,16 @@
   padding: 2px 8px;
   border-radius: 12px;
   font-size: 0.8rem;
-  background-color: #388bfd;
-  color: #000000;
+  background-color: var(--color-info, #3b82f6);
+  color: var(--bg-surface, #0d0d0d);
 }
 
 .issue-author, .pr-author, .commit-author {
-  color: #8b949e;
+  color: var(--text-muted, #666);
 }
 
 .pr-branches {
-  color: #8b949e;
+  color: var(--text-muted, #666);
   font-size: 0.9rem;
   margin: 8px 0;
   font-family: monospace;
@@ -271,12 +271,12 @@
 
 .commit-sha {
   font-family: monospace;
-  color: #79c0ff;
+  color: var(--color-info, #3b82f6);
   margin: 0;
 }
 
 .commit-date {
-  color: #8b949e;
+  color: var(--text-muted, #666);
   font-size: 0.9rem;
 }
 
@@ -287,7 +287,7 @@
 }
 
 .markdown-content {
-  background-color: #161b22;
+  background-color: var(--bg-primary, #212121);
   border-radius: 6px;
   padding: 15px;
   overflow-x: auto;
@@ -297,8 +297,8 @@
 }
 
 .create-issue {
-  background-color: #161b22;
-  border: 1px solid #30363d;
+  background-color: var(--bg-primary, #212121);
+  border: 1px solid var(--border-primary, #424242);
   border-radius: 6px;
   padding: 15px;
   margin-bottom: 20px;
@@ -309,9 +309,9 @@
   padding: 10px;
   margin-bottom: 10px;
   border-radius: 6px;
-  border: 1px solid #30363d;
-  background-color: #0d1117;
-  color: #c9d1d9;
+  border: 1px solid var(--border-primary, #424242);
+  background-color: var(--bg-surface, #0d0d0d);
+  color: var(--text-secondary, #b4b4b4);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
 }
 
@@ -322,21 +322,21 @@
 
 .create-issue button {
   padding: 10px 15px;
-  background-color: #238636;
-  color: white;
+  background-color: var(--color-brand, #10a37f);
+  color: var(--text-primary, #ececec);
   border: none;
   border-radius: 6px;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: background-color var(--transition-fast, 0.15s ease);
   width: 100%;
 }
 
 .create-issue button:hover {
-  background-color: #2ea043;
+  background-color: var(--color-brand-hover, #0d8c6d);
 }
 
 .repo-context {
-  background-color: #161b22;
+  background-color: var(--bg-primary, #212121);
   border-radius: 6px;
   padding: 15px;
   margin-bottom: 15px;
@@ -350,22 +350,22 @@
 
 .nav-buttons button {
   padding: 8px 15px;
-  background-color: #21262d;
-  color: #c9d1d9;
-  border: 1px solid #30363d;
+  background-color: var(--bg-secondary, #2d2d2d);
+  color: var(--text-secondary, #b4b4b4);
+  border: 1px solid var(--border-primary, #424242);
   border-radius: 6px;
   cursor: pointer;
-  transition: background-color 0.2s, color 0.2s;
+  transition: background-color var(--transition-fast, 0.15s ease), color var(--transition-fast, 0.15s ease);
 }
 
 .nav-buttons button:hover {
-  background-color: #30363d;
+  background-color: var(--bg-hover, rgba(255, 255, 255, 0.06));
 }
 
 .nav-buttons button.active {
-  background-color: #1f6feb;
-  color: white;
-  border-color: #1f6feb;
+  background-color: var(--color-info, #3b82f6);
+  color: var(--text-primary, #ececec);
+  border-color: var(--color-info, #3b82f6);
 }
 
 .close-button-container {
@@ -375,14 +375,14 @@
 
 .close-button {
   padding: 8px 20px;
-  background-color: #21262d;
-  color: #c9d1d9;
-  border: 1px solid #30363d;
+  background-color: var(--bg-secondary, #2d2d2d);
+  color: var(--text-secondary, #b4b4b4);
+  border: 1px solid var(--border-primary, #424242);
   border-radius: 6px;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: background-color var(--transition-fast, 0.15s ease);
 }
 
 .close-button:hover {
-  background-color: #30363d;
+  background-color: var(--bg-hover, rgba(255, 255, 255, 0.06));
 }

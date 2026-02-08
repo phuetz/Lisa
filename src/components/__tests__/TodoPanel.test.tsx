@@ -12,18 +12,12 @@ const mockTodos = [
   { id: 'todo-2', text: 'Call doctor' },
 ];
 
-vi.mock('../../store/visionAudioStore', () => ({
-  useVisionAudioStore: vi.fn((selector) => selector({ todos: mockTodos })),
-}));
+const mockRemoveTodo = vi.fn();
 
-// Mock agent registry
-const mockExecute = vi.fn().mockResolvedValue({ success: true });
-vi.mock('../../agents/registry', () => ({
-  agentRegistry: {
-    getAgent: vi.fn(() => ({
-      execute: mockExecute,
-    })),
-  },
+vi.mock('../../store/appStore', () => ({
+  useAppStore: vi.fn((selector) =>
+    selector({ todos: mockTodos, removeTodo: mockRemoveTodo })
+  ),
 }));
 
 // Mock i18n
@@ -41,14 +35,13 @@ vi.mock('react-i18next', () => ({
 }));
 
 import TodoPanel from '../TodoPanel';
-import { useVisionAudioStore } from '../../store/visionAudioStore';
+import { useAppStore } from '../../store/appStore';
 
 describe('TodoPanel', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    // Reset mock to return todos
-    vi.mocked(useVisionAudioStore).mockImplementation((selector) =>
-      selector({ todos: mockTodos })
+    vi.mocked(useAppStore).mockImplementation((selector) =>
+      selector({ todos: mockTodos, removeTodo: mockRemoveTodo } as any)
     );
   });
 
@@ -94,8 +87,8 @@ describe('TodoPanel', () => {
 
   describe('Empty State', () => {
     it('should return null when no todos', () => {
-      vi.mocked(useVisionAudioStore).mockImplementation((selector) =>
-        selector({ todos: [] })
+      vi.mocked(useAppStore).mockImplementation((selector) =>
+        selector({ todos: [], removeTodo: mockRemoveTodo } as any)
       );
 
       const { container } = render(<TodoPanel />);
@@ -104,16 +97,13 @@ describe('TodoPanel', () => {
   });
 
   describe('Todo Actions', () => {
-    it('should call TodoAgent.execute when delete button is clicked', () => {
+    it('should call removeTodo from store when delete button is clicked', () => {
       render(<TodoPanel />);
 
       const deleteButtons = screen.getAllByRole('button', { name: 'Delete' });
       fireEvent.click(deleteButtons[0]);
 
-      expect(mockExecute).toHaveBeenCalledWith({
-        command: 'remove_item',
-        id: 'todo-1',
-      });
+      expect(mockRemoveTodo).toHaveBeenCalledWith('todo-1');
     });
   });
 });

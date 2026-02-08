@@ -47,16 +47,19 @@ export const Tooltip = ({
   };
 
   return (
-    <div 
+    <div
       className="relative inline-block"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
+      onFocus={handleMouseEnter}
+      onBlur={handleMouseLeave}
     >
       {children}
       {visible && (
-        <div 
+        <div
+          role="tooltip"
           className={cn(
-            'absolute z-50 px-2 py-1 text-xs text-white bg-[#1a1a1a] border border-[#404040] rounded shadow-lg whitespace-nowrap pointer-events-none',
+            'absolute z-50 px-2 py-1 text-xs text-[var(--text-primary,#ececec)] bg-[var(--bg-elevated,#2f2f2f)] border border-[var(--border-primary,#424242)] rounded shadow-lg whitespace-nowrap pointer-events-none',
             positions[position],
             className
           )}

@@ -1,5 +1,5 @@
 /**
- * 🔒 Privacy Center - Centre de Confidentialité
+ * Privacy Center - Centre de Confidentialité
  * Gère la transparence sur les données stockées et leur suppression
  */
 
@@ -69,7 +69,6 @@ export const PrivacyCenter: React.FC<Props> = ({ onForget }) => {
     setIsDeleting(true);
     try {
       if (scope === 'all') {
-        // Supprimer toutes les conversations
         const keys = [];
         for (let i = 0; i < localStorage.length; i++) {
           const key = localStorage.key(i);
@@ -79,7 +78,6 @@ export const PrivacyCenter: React.FC<Props> = ({ onForget }) => {
         }
         keys.forEach(key => localStorage.removeItem(key));
       } else if (scope === 'conversation') {
-        // Supprimer les conversations
         const keys = [];
         for (let i = 0; i < localStorage.length; i++) {
           const key = localStorage.key(i);
@@ -89,7 +87,6 @@ export const PrivacyCenter: React.FC<Props> = ({ onForget }) => {
         }
         keys.forEach(key => localStorage.removeItem(key));
       } else if (scope === 'document') {
-        // Supprimer les documents
         const keys = [];
         for (let i = 0; i < localStorage.length; i++) {
           const key = localStorage.key(i);
@@ -175,42 +172,43 @@ export const PrivacyCenter: React.FC<Props> = ({ onForget }) => {
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+    <div className="rounded-lg p-6" style={{ background: 'var(--bg-elevated, #2f2f2f)', color: 'var(--text-primary, #ececec)', border: '1px solid var(--border-primary, #424242)', boxShadow: 'var(--shadow-elevated, 0 4px 20px rgba(0,0,0,0.4))' }}>
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-bold flex items-center gap-2">
-          <Lock className="text-blue-500" />
+          <Lock style={{ color: 'var(--color-brand, #10a37f)' }} />
           Centre de Confidentialité
         </h2>
         <button
           onClick={exportPrivacyReport}
-          className="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors flex items-center gap-2"
+          className="px-3 py-1 text-sm text-white rounded flex items-center gap-2"
+          style={{ background: 'var(--color-brand, #10a37f)', transition: 'opacity var(--transition-fast, 0.15s ease)' }}
         >
-          <Download className="w-4 h-4" />
+          <Download className="w-4 h-4" aria-hidden="true" />
           Rapport
         </button>
       </div>
 
       {/* Stockage */}
-      <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-        <h3 className="font-semibold mb-3">📊 Stockage Utilisé</h3>
+      <div className="mb-6 p-4 rounded-lg" style={{ background: 'var(--color-brand-subtle, rgba(16,163,127,0.12))', border: '1px solid rgba(16,163,127,0.3)' }}>
+        <h3 className="font-semibold mb-3">Stockage Utilisé</h3>
         <div className="space-y-2 text-sm">
           <div className="flex justify-between">
-            <span>Conversations:</span>
+            <span style={{ color: 'var(--text-secondary, #b4b4b4)' }}>Conversations:</span>
             <span className="font-mono">{(storageInfo.conversations / 1024).toFixed(2)} KB</span>
           </div>
           <div className="flex justify-between">
-            <span>Documents:</span>
+            <span style={{ color: 'var(--text-secondary, #b4b4b4)' }}>Documents:</span>
             <span className="font-mono">{(storageInfo.documents / 1024).toFixed(2)} KB</span>
           </div>
           <div className="flex justify-between">
-            <span>Paramètres:</span>
+            <span style={{ color: 'var(--text-secondary, #b4b4b4)' }}>Paramètres:</span>
             <span className="font-mono">{(storageInfo.settings / 1024).toFixed(2)} KB</span>
           </div>
           <div className="flex justify-between">
-            <span>Cache:</span>
+            <span style={{ color: 'var(--text-secondary, #b4b4b4)' }}>Cache:</span>
             <span className="font-mono">{(storageInfo.cache / 1024).toFixed(2)} KB</span>
           </div>
-          <div className="border-t border-blue-200 dark:border-blue-700 pt-2 mt-2 flex justify-between font-bold">
+          <div className="pt-2 mt-2 flex justify-between font-bold" style={{ borderTop: '1px solid rgba(16,163,127,0.3)' }}>
             <span>Total:</span>
             <span className="font-mono">{storageInfo.totalMB.toFixed(2)} MB</span>
           </div>
@@ -218,61 +216,64 @@ export const PrivacyCenter: React.FC<Props> = ({ onForget }) => {
       </div>
 
       {/* Politique de Confidentialité */}
-      <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+      <div className="mb-6 p-4 rounded-lg" style={{ background: 'rgba(16,163,127,0.08)', border: '1px solid rgba(16,163,127,0.2)' }}>
         <h3 className="font-semibold mb-3 flex items-center gap-2">
-          <CheckCircle className="w-5 h-5 text-green-600" />
+          <CheckCircle className="w-5 h-5" style={{ color: 'var(--color-brand, #10a37f)' }} />
           Politique de Confidentialité
         </h3>
-        <ul className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
-          <li>✅ <strong>Stockage Local:</strong> Toutes les données sont stockées localement dans votre navigateur</li>
-          <li>✅ <strong>Aucune Synchronisation:</strong> Pas de synchronisation avec des serveurs cloud</li>
-          <li>✅ <strong>Aucun Partage:</strong> Vos données ne sont jamais partagées avec des tiers</li>
-          <li>✅ <strong>Contrôle Total:</strong> Vous pouvez supprimer vos données à tout moment</li>
-          <li>✅ <strong>Pas de Tracking:</strong> Aucun suivi comportemental ou analytique</li>
+        <ul className="space-y-2 text-sm" style={{ color: 'var(--text-secondary, #b4b4b4)' }}>
+          <li><strong>Stockage Local:</strong> Toutes les données sont stockées localement dans votre navigateur</li>
+          <li><strong>Aucune Synchronisation:</strong> Pas de synchronisation avec des serveurs cloud</li>
+          <li><strong>Aucun Partage:</strong> Vos données ne sont jamais partagées avec des tiers</li>
+          <li><strong>Contrôle Total:</strong> Vous pouvez supprimer vos données à tout moment</li>
+          <li><strong>Pas de Tracking:</strong> Aucun suivi comportemental ou analytique</li>
         </ul>
       </div>
 
       {/* Actions de Suppression */}
       <div className="mb-6">
         <h3 className="font-semibold mb-3 flex items-center gap-2">
-          <Trash2 className="w-5 h-5 text-red-500" />
+          <Trash2 className="w-5 h-5" style={{ color: 'var(--color-error, #ef4444)' }} />
           Supprimer les Données
         </h3>
         <div className="space-y-2">
           <button
             onClick={() => setShowConfirm('conversation')}
             disabled={isDeleting}
-            className="w-full px-4 py-2 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 rounded hover:bg-yellow-200 dark:hover:bg-yellow-900/50 transition-colors disabled:opacity-50"
+            className="w-full px-4 py-2 rounded disabled:opacity-50 text-left"
+            style={{ background: 'rgba(245,158,11,0.12)', color: 'var(--color-warning, #f59e0b)', border: '1px solid rgba(245,158,11,0.25)', transition: 'opacity var(--transition-fast, 0.15s ease)' }}
           >
-            🗑️ Supprimer les Conversations
+            Supprimer les Conversations
           </button>
           <button
             onClick={() => setShowConfirm('document')}
             disabled={isDeleting}
-            className="w-full px-4 py-2 bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-200 rounded hover:bg-orange-200 dark:hover:bg-orange-900/50 transition-colors disabled:opacity-50"
+            className="w-full px-4 py-2 rounded disabled:opacity-50 text-left"
+            style={{ background: 'rgba(249,115,22,0.12)', color: '#f97316', border: '1px solid rgba(249,115,22,0.25)', transition: 'opacity var(--transition-fast, 0.15s ease)' }}
           >
-            🗑️ Supprimer les Documents
+            Supprimer les Documents
           </button>
           <button
             onClick={() => setShowConfirm('all')}
             disabled={isDeleting}
-            className="w-full px-4 py-2 bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200 rounded hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors disabled:opacity-50"
+            className="w-full px-4 py-2 rounded disabled:opacity-50 text-left"
+            style={{ background: 'var(--color-error-subtle, rgba(239,68,68,0.12))', color: 'var(--color-error, #ef4444)', border: '1px solid rgba(239,68,68,0.25)', transition: 'opacity var(--transition-fast, 0.15s ease)' }}
           >
-            🗑️ Supprimer TOUT
+            Supprimer TOUT
           </button>
         </div>
       </div>
 
       {/* Confirmation */}
       {showConfirm && (
-        <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+        <div className="p-4 rounded-lg" role="alertdialog" aria-labelledby="confirm-title" style={{ background: 'var(--color-error-subtle, rgba(239,68,68,0.12))', border: '1px solid rgba(239,68,68,0.3)' }}>
           <div className="flex items-start gap-3 mb-3">
-            <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+            <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: 'var(--color-error, #ef4444)' }} aria-hidden="true" />
             <div>
-              <p className="font-semibold text-red-800 dark:text-red-200">
+              <p id="confirm-title" className="font-semibold" style={{ color: 'var(--color-error, #ef4444)' }}>
                 Êtes-vous sûr?
               </p>
-              <p className="text-sm text-red-700 dark:text-red-300 mt-1">
+              <p className="text-sm mt-1" style={{ color: 'var(--text-secondary, #b4b4b4)' }}>
                 Cette action est irréversible. Les données supprimées ne peuvent pas être récupérées.
               </p>
             </div>
@@ -281,14 +282,16 @@ export const PrivacyCenter: React.FC<Props> = ({ onForget }) => {
             <button
               onClick={() => handleForget(showConfirm)}
               disabled={isDeleting}
-              className="flex-1 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors disabled:opacity-50"
+              className="flex-1 px-4 py-2 text-white rounded disabled:opacity-50"
+              style={{ background: 'var(--color-error, #ef4444)', transition: 'opacity var(--transition-fast, 0.15s ease)' }}
             >
-              {isDeleting ? '⏳ Suppression...' : '🗑️ Confirmer la Suppression'}
+              {isDeleting ? 'Suppression...' : 'Confirmer la Suppression'}
             </button>
             <button
               onClick={() => setShowConfirm(null)}
               disabled={isDeleting}
-              className="flex-1 px-4 py-2 bg-gray-300 dark:bg-gray-600 text-gray-800 dark:text-gray-200 rounded hover:bg-gray-400 transition-colors disabled:opacity-50"
+              className="flex-1 px-4 py-2 rounded disabled:opacity-50"
+              style={{ background: 'var(--bg-secondary, #2d2d2d)', color: 'var(--text-secondary, #b4b4b4)', border: '1px solid var(--border-primary, #424242)', transition: 'opacity var(--transition-fast, 0.15s ease)' }}
             >
               Annuler
             </button>
@@ -297,8 +300,8 @@ export const PrivacyCenter: React.FC<Props> = ({ onForget }) => {
       )}
 
       {/* Info */}
-      <div className="mt-6 p-3 bg-gray-100 dark:bg-gray-700 rounded text-xs text-gray-600 dark:text-gray-400">
-        <p>💡 <strong>Conseil:</strong> Exportez régulièrement vos données importantes avant de les supprimer.</p>
+      <div className="mt-6 p-3 rounded text-xs" style={{ background: 'var(--bg-secondary, #2d2d2d)', color: 'var(--text-muted, #666)' }}>
+        <p><strong>Conseil:</strong> Exportez régulièrement vos données importantes avant de les supprimer.</p>
       </div>
     </div>
   );

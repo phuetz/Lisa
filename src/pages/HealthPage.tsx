@@ -242,7 +242,7 @@ export default function HealthPage() {
           label="Score Activite"
           value={summary?.activityScore || 0}
           icon={Activity}
-          color="#10a37f"
+          color="var(--color-brand, #10a37f)"
           suffix="%"
           colors={colors}
         />
@@ -250,7 +250,7 @@ export default function HealthPage() {
           label="Risque Chute"
           value={summary?.fallRiskScore || 0}
           icon={Shield}
-          color={summary?.fallRiskScore && summary.fallRiskScore > 50 ? '#ef4444' : '#10a37f'}
+          color={summary?.fallRiskScore && summary.fallRiskScore > 50 ? 'var(--color-error, #ef4444)' : 'var(--color-brand, #10a37f)'}
           suffix="%"
           colors={colors}
         />
@@ -258,7 +258,7 @@ export default function HealthPage() {
           label="Hydratation"
           value={summary?.hydrationLevel || 0}
           icon={Droplets}
-          color="#3b82f6"
+          color="var(--color-info, #3b82f6)"
           suffix="%"
           colors={colors}
         />
@@ -266,7 +266,7 @@ export default function HealthPage() {
           label="Alertes Aujourd'hui"
           value={summary?.alerts || 0}
           icon={Bell}
-          color="#f59e0b"
+          color="var(--color-warning, #f59e0b)"
           colors={colors}
         />
       </div>
@@ -291,14 +291,14 @@ export default function HealthPage() {
             gap: '10px',
             marginBottom: '16px',
           }}>
-            <AlertTriangle size={20} color="#f59e0b" />
+            <AlertTriangle size={20} color="var(--color-warning, #f59e0b)" />
             <h3 style={{ fontSize: '16px', fontWeight: 600, color: colors.editorText, margin: 0 }}>
               Alertes Actives
             </h3>
             {alerts.length > 0 && (
               <span style={{
                 padding: '2px 8px',
-                backgroundColor: '#ef4444',
+                backgroundColor: 'var(--color-error, #ef4444)',
                 color: '#fff',
                 borderRadius: '10px',
                 fontSize: '12px',
@@ -323,7 +323,7 @@ export default function HealthPage() {
               padding: '40px 20px',
               color: colors.editorSecondary,
             }}>
-              <Check size={48} style={{ marginBottom: '12px', color: '#10a37f' }} />
+              <Check size={48} style={{ marginBottom: '12px', color: 'var(--color-brand, #10a37f)' }} />
               <p style={{ fontSize: '15px', margin: 0 }}>Aucune alerte active</p>
               <p style={{ fontSize: '13px', marginTop: '4px' }}>Tout va bien !</p>
             </div>
@@ -353,34 +353,35 @@ export default function HealthPage() {
               icon={Activity}
               label="Je suis actif"
               onClick={handleRecordActivity}
-              color="#10a37f"
+              color="var(--color-brand, #10a37f)"
               colors={colors}
             />
             <QuickAction
               icon={Droplets}
               label="Rappel eau"
               onClick={handleHydrationReminder}
-              color="#3b82f6"
+              color="var(--color-info, #3b82f6)"
               colors={colors}
             />
             <QuickAction
               icon={Pill}
               label="Medicament"
               onClick={handleMedicationReminder}
-              color="#8b5cf6"
+              color="var(--color-purple, #8b5cf6)"
               colors={colors}
             />
             <QuickAction
               icon={Clock}
               label="Historique"
               onClick={() => {}}
-              color="#f59e0b"
+              color="var(--color-warning, #f59e0b)"
               colors={colors}
             />
           </div>
 
           {/* Emergency Button */}
           <button
+            aria-label="Appel d'urgence"
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -389,16 +390,17 @@ export default function HealthPage() {
               width: '100%',
               padding: '14px',
               marginTop: '16px',
-              backgroundColor: '#ef4444',
+              backgroundColor: 'var(--color-error, #ef4444)',
               color: '#fff',
               border: 'none',
               borderRadius: '10px',
               fontSize: '15px',
               fontWeight: 600,
               cursor: 'pointer',
+              transition: 'opacity var(--transition-fast, 0.15s ease)',
             }}
           >
-            <AlertTriangle size={20} />
+            <AlertTriangle size={20} aria-hidden="true" />
             Appel d'Urgence
           </button>
         </div>
@@ -420,7 +422,7 @@ export default function HealthPage() {
           gap: '10px',
           marginBottom: '16px',
         }}>
-          <TrendingUp size={20} color="#10a37f" />
+          <TrendingUp size={20} color="var(--color-brand, #10a37f)" />
           <h3 style={{ fontSize: '16px', fontWeight: 600, color: colors.editorText, margin: 0 }}>
             Resume du Jour
           </h3>
@@ -432,25 +434,25 @@ export default function HealthPage() {
           gap: '16px',
         }}>
           <div style={{ textAlign: 'center', padding: '16px', backgroundColor: colors.sidebar, borderRadius: '10px' }}>
-            <p style={{ fontSize: '24px', fontWeight: 600, color: '#10a37f', margin: 0 }}>
+            <p style={{ fontSize: '24px', fontWeight: 600, color: 'var(--color-brand, #10a37f)', margin: 0 }}>
               {summary?.activityScore || 0}%
             </p>
             <p style={{ fontSize: '12px', color: colors.editorSecondary, marginTop: '4px' }}>Activite</p>
           </div>
           <div style={{ textAlign: 'center', padding: '16px', backgroundColor: colors.sidebar, borderRadius: '10px' }}>
-            <p style={{ fontSize: '24px', fontWeight: 600, color: '#3b82f6', margin: 0 }}>
+            <p style={{ fontSize: '24px', fontWeight: 600, color: 'var(--color-info, #3b82f6)', margin: 0 }}>
               {summary?.hydrationLevel || 0}%
             </p>
             <p style={{ fontSize: '12px', color: colors.editorSecondary, marginTop: '4px' }}>Hydratation</p>
           </div>
           <div style={{ textAlign: 'center', padding: '16px', backgroundColor: colors.sidebar, borderRadius: '10px' }}>
-            <p style={{ fontSize: '24px', fontWeight: 600, color: '#8b5cf6', margin: 0 }}>
+            <p style={{ fontSize: '24px', fontWeight: 600, color: 'var(--color-purple, #8b5cf6)', margin: 0 }}>
               {summary?.medicationAdherence || 0}%
             </p>
             <p style={{ fontSize: '12px', color: colors.editorSecondary, marginTop: '4px' }}>Medicaments</p>
           </div>
           <div style={{ textAlign: 'center', padding: '16px', backgroundColor: colors.sidebar, borderRadius: '10px' }}>
-            <p style={{ fontSize: '24px', fontWeight: 600, color: '#f59e0b', margin: 0 }}>
+            <p style={{ fontSize: '24px', fontWeight: 600, color: 'var(--color-warning, #f59e0b)', margin: 0 }}>
               {summary?.alerts || 0}
             </p>
             <p style={{ fontSize: '12px', color: colors.editorSecondary, marginTop: '4px' }}>Alertes</p>

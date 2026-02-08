@@ -271,7 +271,7 @@ ${consoleCapture}
         position: 'fixed',
         inset: 0,
         zIndex: 9999,
-        backgroundColor: '#0d0d0d',
+        backgroundColor: 'var(--bg-surface)',
         display: 'flex',
         flexDirection: 'column',
       }}>
@@ -281,12 +281,12 @@ ${consoleCapture}
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '8px 16px',
-          backgroundColor: '#1a1a1a',
-          borderBottom: '1px solid #333',
+          backgroundColor: 'var(--bg-tertiary)',
+          borderBottom: '1px solid var(--border-secondary)',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div style={{ color: config.color }}>{config.icon}</div>
-            <span style={{ color: '#fff', fontWeight: 600 }}>{artifact.title}</span>
+            <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{artifact.title}</span>
             <span style={{
               padding: '2px 8px',
               backgroundColor: `${config.color}30`,
@@ -298,14 +298,14 @@ ${consoleCapture}
               {config.label}
             </span>
           </div>
-          <button onClick={() => setIsFullscreen(false)} style={iconButtonStyle}>
+          <button onClick={() => setIsFullscreen(false)} className="artifact-icon-btn" aria-label="Quitter le plein écran">
             <Minimize2 size={18} />
           </button>
         </div>
 
         {/* Fullscreen Content - Split View */}
         <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
-          <div style={{ flex: 1, borderRight: '1px solid #333' }}>
+          <div style={{ flex: 1, borderRight: '1px solid var(--border-primary)' }}>
             <Editor
               height="100%"
               language={config.monacoLang}
@@ -343,6 +343,7 @@ ${consoleCapture}
       {/* Backdrop */}
       <div
         onClick={closePanel}
+        aria-hidden="true"
         style={{
           position: 'fixed',
           inset: 0,
@@ -352,31 +353,36 @@ ${consoleCapture}
       />
 
       {/* Panel - Playground Style */}
-      <div style={{
-        position: 'fixed',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        width: '95vw',
-        maxWidth: '1400px',
-        height: '90vh',
-        backgroundColor: '#0d0d0d',
-        borderRadius: '16px',
-        border: '1px solid #333',
-        zIndex: 999,
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden',
-        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.8)',
-      }}>
+      <div
+        role="dialog"
+        aria-label={`Éditeur d'artefact : ${artifact.title}`}
+        aria-modal="true"
+        style={{
+          position: 'fixed',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: '95vw',
+          maxWidth: '1400px',
+          height: '90vh',
+          backgroundColor: 'var(--bg-surface)',
+          borderRadius: 'var(--radius-xl)',
+          border: '1px solid var(--border-secondary)',
+          zIndex: 999,
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          boxShadow: 'var(--shadow-modal)',
+        }}
+      >
         {/* Header */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '12px 16px',
-          backgroundColor: '#1a1a1a',
-          borderBottom: '1px solid #333',
+          backgroundColor: 'var(--bg-tertiary)',
+          borderBottom: '1px solid var(--border-secondary)',
         }}>
           {/* Left - Title & Type */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -393,10 +399,10 @@ ${consoleCapture}
               {config.icon}
             </div>
             <div>
-              <div style={{ color: '#fff', fontWeight: 600, fontSize: '15px' }}>
+              <div style={{ color: 'var(--text-primary)', fontWeight: 600, fontSize: '15px' }}>
                 {artifact.title}
               </div>
-              <div style={{ color: '#888', fontSize: '12px' }}>
+              <div style={{ color: 'var(--text-tertiary)', fontSize: '12px' }}>
                 {config.label} - Live Editor
               </div>
             </div>
@@ -407,18 +413,21 @@ ${consoleCapture}
             {/* Auto Toggle */}
             <button
               onClick={() => setAutoRun(!autoRun)}
+              aria-label={autoRun ? 'Désactiver l\'exécution automatique' : 'Activer l\'exécution automatique'}
+              aria-pressed={autoRun}
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: '6px',
                 padding: '6px 12px',
-                backgroundColor: autoRun ? '#10a37f20' : '#252525',
-                border: `1px solid ${autoRun ? '#10a37f' : '#404040'}`,
-                borderRadius: '8px',
-                color: autoRun ? '#10a37f' : '#888',
+                backgroundColor: autoRun ? 'var(--color-brand-subtle)' : '#252525',
+                border: `1px solid ${autoRun ? 'var(--color-brand)' : 'var(--border-primary)'}`,
+                borderRadius: 'var(--radius-md)',
+                color: autoRun ? 'var(--color-brand)' : 'var(--text-tertiary)',
                 fontSize: '12px',
                 fontWeight: 500,
                 cursor: 'pointer',
+                transition: 'all var(--transition-fast)',
               }}
             >
               {autoRun ? <ToggleRight size={16} /> : <ToggleLeft size={16} />}
@@ -428,19 +437,23 @@ ${consoleCapture}
             {/* Run Button */}
             <button
               onClick={handleRun}
+              aria-label="Exécuter le code"
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: '6px',
                 padding: '8px 16px',
-                backgroundColor: '#10a37f',
+                backgroundColor: 'var(--color-brand)',
                 border: 'none',
-                borderRadius: '8px',
+                borderRadius: 'var(--radius-md)',
                 color: '#fff',
                 fontSize: '13px',
                 fontWeight: 600,
                 cursor: 'pointer',
+                transition: 'background-color var(--transition-fast)',
               }}
+              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--color-brand-hover)')}
+              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'var(--color-brand)')}
             >
               <Play size={16} fill="#fff" />
               Run
@@ -449,8 +462,8 @@ ${consoleCapture}
             {/* View Mode Toggle */}
             <div style={{
               display: 'flex',
-              backgroundColor: '#252525',
-              borderRadius: '8px',
+              backgroundColor: 'var(--bg-secondary)',
+              borderRadius: 'var(--radius-md)',
               overflow: 'hidden',
             }}>
               {[
@@ -464,9 +477,9 @@ ${consoleCapture}
                   title={title}
                   style={{
                     padding: '8px 10px',
-                    backgroundColor: viewMode === mode ? '#10a37f' : 'transparent',
+                    backgroundColor: viewMode === mode ? 'var(--color-brand)' : 'transparent',
                     border: 'none',
-                    color: viewMode === mode ? '#fff' : '#888',
+                    color: viewMode === mode ? '#fff' : 'var(--text-tertiary)',
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
@@ -478,19 +491,19 @@ ${consoleCapture}
             </div>
 
             {/* Action Buttons */}
-            <button onClick={handleCopy} style={iconButtonStyle} title="Copier">
-              {copied ? <Check size={16} color="#10a37f" /> : <Copy size={16} />}
+            <button onClick={handleCopy} className="artifact-icon-btn" aria-label={copied ? 'Copié' : 'Copier le code'}>
+              {copied ? <Check size={16} color="var(--color-brand)" /> : <Copy size={16} />}
             </button>
-            <button onClick={handleDownload} style={iconButtonStyle} title="Télécharger">
+            <button onClick={handleDownload} className="artifact-icon-btn" aria-label="Télécharger le fichier">
               <Download size={16} />
             </button>
-            <button onClick={handleOpenExternal} style={iconButtonStyle} title="Nouvel onglet">
+            <button onClick={handleOpenExternal} className="artifact-icon-btn" aria-label="Ouvrir dans un nouvel onglet">
               <ExternalLink size={16} />
             </button>
-            <button onClick={() => setIsFullscreen(true)} style={iconButtonStyle} title="Plein écran">
+            <button onClick={() => setIsFullscreen(true)} className="artifact-icon-btn" aria-label="Plein écran">
               <Maximize2 size={16} />
             </button>
-            <button onClick={closePanel} style={iconButtonStyle} title="Fermer">
+            <button onClick={closePanel} className="artifact-icon-btn" aria-label="Fermer l'éditeur">
               <X size={16} />
             </button>
           </div>
@@ -502,8 +515,8 @@ ${consoleCapture}
             display: 'flex',
             alignItems: 'center',
             padding: '8px 16px',
-            backgroundColor: '#151515',
-            borderBottom: '1px solid #333',
+            backgroundColor: 'var(--bg-surface)',
+            borderBottom: '1px solid var(--border-primary)',
             gap: '4px',
             overflowX: 'auto',
           }}>
@@ -516,10 +529,10 @@ ${consoleCapture}
                   alignItems: 'center',
                   gap: '6px',
                   padding: '8px 14px',
-                  backgroundColor: selectedFileIndex === index ? '#252525' : 'transparent',
-                  border: selectedFileIndex === index ? '1px solid #404040' : '1px solid transparent',
+                  backgroundColor: selectedFileIndex === index ? 'var(--bg-secondary)' : 'transparent',
+                  border: selectedFileIndex === index ? '1px solid var(--border-secondary)' : '1px solid transparent',
                   borderRadius: '6px',
-                  color: selectedFileIndex === index ? '#fff' : '#888',
+                  color: selectedFileIndex === index ? 'var(--text-primary)' : 'var(--text-tertiary)',
                   cursor: 'pointer',
                   fontSize: '12px',
                   fontWeight: 500,
@@ -546,9 +559,9 @@ ${consoleCapture}
                 width: '32px',
                 height: '32px',
                 backgroundColor: 'transparent',
-                border: '1px dashed #404040',
+                border: '1px dashed var(--border-secondary)',
                 borderRadius: '6px',
-                color: '#666',
+                color: 'var(--text-muted)',
                 cursor: 'pointer',
               }}
               title="Ajouter un fichier"
@@ -566,7 +579,7 @@ ${consoleCapture}
               flex: 1,
               display: 'flex',
               flexDirection: 'column',
-              borderRight: viewMode === 'split' ? '1px solid #333' : 'none',
+              borderRight: viewMode === 'split' ? '1px solid var(--border-primary)' : 'none',
               backgroundColor: '#1e1e1e',
             }}>
               {/* File Tab */}
@@ -575,8 +588,8 @@ ${consoleCapture}
                 alignItems: 'center',
                 padding: '0 12px',
                 height: '36px',
-                backgroundColor: '#252525',
-                borderBottom: '1px solid #333',
+                backgroundColor: 'var(--bg-secondary)',
+                borderBottom: '1px solid var(--border-primary)',
               }}>
                 <div style={{
                   display: 'flex',
@@ -590,7 +603,7 @@ ${consoleCapture}
                   color: config.color,
                 }}>
                   {config.icon}
-                  <span style={{ color: '#fff', fontSize: '12px' }}>
+                  <span style={{ color: 'var(--text-primary)', fontSize: '12px' }}>
                     {currentFile?.name || artifact.title}.{artifact.type === 'react' ? 'jsx' : artifact.type}
                   </span>
                 </div>
@@ -625,10 +638,10 @@ ${consoleCapture}
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 padding: '6px 12px',
-                backgroundColor: '#1a1a1a',
-                borderTop: '1px solid #333',
+                backgroundColor: 'var(--bg-tertiary)',
+                borderTop: '1px solid var(--border-primary)',
                 fontSize: '11px',
-                color: '#666',
+                color: 'var(--text-muted)',
               }}>
                 <span>Ln {artifact.code.split('\n').length}</span>
                 <span>{artifact.code.length} chars</span>
@@ -642,7 +655,7 @@ ${consoleCapture}
               flex: 1,
               display: 'flex',
               flexDirection: 'column',
-              backgroundColor: '#0d0d0d',
+              backgroundColor: 'var(--bg-surface)',
             }}>
               {/* Preview Header */}
               <div style={{
@@ -651,11 +664,11 @@ ${consoleCapture}
                 justifyContent: 'space-between',
                 padding: '0 12px',
                 height: '36px',
-                backgroundColor: '#1a1a1a',
-                borderBottom: '1px solid #333',
+                backgroundColor: 'var(--bg-tertiary)',
+                borderBottom: '1px solid var(--border-primary)',
               }}>
-                <span style={{ color: '#888', fontSize: '12px' }}>Preview</span>
-                <span style={{ color: '#666', fontSize: '11px' }}>
+                <span style={{ color: 'var(--text-tertiary)', fontSize: '12px' }}>Preview</span>
+                <span style={{ color: 'var(--text-muted)', fontSize: '11px' }}>
                   {new Date().toLocaleTimeString('fr-FR')}
                 </span>
               </div>
@@ -680,8 +693,8 @@ ${consoleCapture}
               {showConsole && (
                 <div style={{
                   height: '120px',
-                  backgroundColor: '#0d0d0d',
-                  borderTop: '1px solid #333',
+                  backgroundColor: 'var(--bg-surface)',
+                  borderTop: '1px solid var(--border-primary)',
                   display: 'flex',
                   flexDirection: 'column',
                 }}>
@@ -692,18 +705,18 @@ ${consoleCapture}
                       alignItems: 'center',
                       justifyContent: 'space-between',
                       padding: '6px 12px',
-                      backgroundColor: '#1a1a1a',
+                      backgroundColor: 'var(--bg-tertiary)',
                       cursor: 'pointer',
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <Terminal size={14} color="#888" />
-                      <span style={{ color: '#888', fontSize: '12px', fontWeight: 500 }}>Console</span>
+                      <Terminal size={14} color="var(--text-tertiary)" />
+                      <span style={{ color: 'var(--text-tertiary)', fontSize: '12px', fontWeight: 500 }}>Console</span>
                       {consoleOutput.length > 0 && (
                         <span style={{
                           padding: '2px 6px',
-                          backgroundColor: '#10a37f30',
-                          color: '#10a37f',
+                          backgroundColor: 'var(--color-brand-subtle)',
+                          color: 'var(--color-brand)',
                           borderRadius: '4px',
                           fontSize: '10px',
                         }}>
@@ -713,8 +726,8 @@ ${consoleCapture}
                     </div>
                     <ChevronDown
                       size={14}
-                      color="#666"
-                      style={{ transform: showConsole ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}
+                      color="var(--text-muted)"
+                      style={{ transform: showConsole ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform var(--transition-normal)' }}
                     />
                   </div>
                   <div style={{
@@ -726,13 +739,13 @@ ${consoleCapture}
                     lineHeight: 1.5,
                   }}>
                     {consoleOutput.length === 0 ? (
-                      <span style={{ color: '#555' }}>// Console output will appear here</span>
+                      <span style={{ color: 'var(--text-disabled)' }}>// Console output will appear here</span>
                     ) : (
                       consoleOutput.map((line, i) => (
                         <div
                           key={i}
                           style={{
-                            color: line.startsWith('❌') ? '#ef4444' : line.startsWith('⚠️') ? '#f59e0b' : '#10a37f',
+                            color: line.startsWith('❌') ? 'var(--color-error)' : line.startsWith('⚠️') ? '#f59e0b' : 'var(--color-brand)',
                           }}
                         >
                           {line}
@@ -748,19 +761,6 @@ ${consoleCapture}
       </div>
     </>
   );
-};
-
-const iconButtonStyle: React.CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  width: '32px',
-  height: '32px',
-  backgroundColor: 'transparent',
-  border: '1px solid #404040',
-  borderRadius: '8px',
-  color: '#888',
-  cursor: 'pointer',
 };
 
 export default ArtifactPanel;

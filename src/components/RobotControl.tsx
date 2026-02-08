@@ -38,8 +38,8 @@ export const RobotControl: React.FC = () => {
   };
 
   return (
-    <div className="robot-control-panel">
-      <h3>🤖 Contrôle Robot</h3>
+    <div className="robot-control-panel" role="region" aria-label="Contrôle Robot">
+      <h3>Contrôle Robot</h3>
       
       {/* Status Panel */}
       <div className="status-panel">
@@ -61,8 +61,8 @@ export const RobotControl: React.FC = () => {
         )}
         
         {error && (
-          <div className="error-message">
-            ⚠️ {error}
+          <div className="error-message" role="alert">
+            {error}
           </div>
         )}
       </div>
@@ -103,7 +103,7 @@ export const RobotControl: React.FC = () => {
           placeholder="Texte à dire..."
           disabled={!isConnected}
           className="speech-input"
-          onKeyPress={(e) => e.key === 'Enter' && handleSay()}
+          onKeyDown={(e) => e.key === 'Enter' && handleSay()}
         />
         <button 
           onClick={handleSay}
@@ -116,20 +116,26 @@ export const RobotControl: React.FC = () => {
 
       <style>{`
         .robot-control-panel {
-          background: #f8f9fa;
-          border: 1px solid #dee2e6;
-          border-radius: 8px;
+          background: var(--bg-elevated, #2f2f2f);
+          border: 1px solid var(--border-primary, #424242);
+          border-radius: var(--radius-md, 8px);
           padding: 20px;
           margin: 20px 0;
           max-width: 400px;
+          color: var(--text-primary, #ececec);
+          box-shadow: var(--shadow-elevated, 0 4px 20px rgba(0,0,0,0.4));
+        }
+
+        .robot-control-panel h3 {
+          color: var(--text-primary, #ececec);
         }
 
         .status-panel {
-          background: white;
-          border-radius: 6px;
+          background: var(--bg-secondary, #2d2d2d);
+          border-radius: var(--radius-md, 8px);
           padding: 15px;
           margin-bottom: 15px;
-          border: 1px solid #e9ecef;
+          border: 1px solid var(--border-subtle, #333);
         }
 
         .connection-status {
@@ -138,23 +144,24 @@ export const RobotControl: React.FC = () => {
         }
 
         .connection-status.connected {
-          color: #28a745;
+          color: var(--color-brand, #10a37f);
         }
 
         .connection-status.disconnected {
-          color: #dc3545;
+          color: var(--color-error, #ef4444);
         }
 
         .robot-status p {
           margin: 5px 0;
           font-size: 14px;
+          color: var(--text-secondary, #b4b4b4);
         }
 
         .error-message {
-          color: #dc3545;
-          background: #f8d7da;
-          border: 1px solid #f5c6cb;
-          border-radius: 4px;
+          color: var(--color-error, #ef4444);
+          background: var(--color-error-subtle, rgba(239, 68, 68, 0.12));
+          border: 1px solid rgba(239, 68, 68, 0.3);
+          border-radius: var(--radius-sm, 4px);
           padding: 8px;
           margin-top: 10px;
           font-size: 14px;
@@ -170,42 +177,49 @@ export const RobotControl: React.FC = () => {
         .control-buttons button {
           padding: 10px 15px;
           border: none;
-          border-radius: 6px;
+          border-radius: var(--radius-md, 8px);
           cursor: pointer;
           font-weight: bold;
-          transition: all 0.2s;
+          transition: all var(--transition-fast, 0.15s ease);
         }
 
         .move-button {
-          background: #007bff;
-          color: white;
+          background: var(--color-brand, #10a37f);
+          color: #fff;
         }
 
         .move-button:hover:not(:disabled) {
-          background: #0056b3;
+          background: var(--color-brand-hover, #0d8c6d);
         }
 
         .stop-button.emergency {
-          background: #dc3545;
-          color: white;
+          background: var(--color-error, #ef4444);
+          color: #fff;
         }
 
         .stop-button.emergency:hover:not(:disabled) {
-          background: #c82333;
+          background: #dc2626;
         }
 
         .refresh-button {
-          background: #6c757d;
-          color: white;
+          background: var(--bg-tertiary, #1a1a1a);
+          color: var(--text-secondary, #b4b4b4);
+          border: 1px solid var(--border-primary, #424242);
         }
 
         .refresh-button:hover:not(:disabled) {
-          background: #545b62;
+          background: var(--bg-hover, rgba(255,255,255,0.06));
+          color: var(--text-primary, #ececec);
         }
 
         .control-buttons button:disabled {
-          opacity: 0.6;
+          opacity: 0.5;
           cursor: not-allowed;
+        }
+
+        .control-buttons button:focus-visible {
+          outline: none;
+          box-shadow: var(--focus-ring, 0 0 0 2px var(--color-brand));
         }
 
         .speech-control {
@@ -216,34 +230,46 @@ export const RobotControl: React.FC = () => {
         .speech-input {
           flex: 1;
           padding: 8px 12px;
-          border: 1px solid #ced4da;
-          border-radius: 4px;
+          border: 1px solid var(--border-primary, #424242);
+          border-radius: var(--radius-sm, 4px);
           font-size: 14px;
+          background: var(--bg-secondary, #2d2d2d);
+          color: var(--text-primary, #ececec);
+        }
+
+        .speech-input::placeholder {
+          color: var(--text-muted, #666);
         }
 
         .speech-input:focus {
           outline: none;
-          border-color: #80bdff;
-          box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+          border-color: var(--color-brand, #10a37f);
+          box-shadow: 0 0 0 2px rgba(16, 163, 127, 0.25);
         }
 
         .speak-button {
-          background: #28a745;
-          color: white;
+          background: var(--color-brand, #10a37f);
+          color: #fff;
           border: none;
-          border-radius: 4px;
+          border-radius: var(--radius-sm, 4px);
           padding: 8px 15px;
           cursor: pointer;
           font-weight: bold;
+          transition: all var(--transition-fast, 0.15s ease);
         }
 
         .speak-button:hover:not(:disabled) {
-          background: #218838;
+          background: var(--color-brand-hover, #0d8c6d);
         }
 
         .speak-button:disabled {
-          opacity: 0.6;
+          opacity: 0.5;
           cursor: not-allowed;
+        }
+
+        .speak-button:focus-visible {
+          outline: none;
+          box-shadow: var(--focus-ring, 0 0 0 2px var(--color-brand));
         }
       `}</style>
     </div>
