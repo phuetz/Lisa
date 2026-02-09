@@ -146,11 +146,11 @@ export const ChatMessagesMobile = () => {
             height: '80px',
             margin: '0 auto 32px',
             borderRadius: '20px',
-            background: 'linear-gradient(135deg, #10a37f 0%, #1a7f64 100%)',
+            background: 'linear-gradient(135deg, #f5a623 0%, #e6951a 100%)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '0 20px 40px rgba(16, 163, 127, 0.3)',
+            boxShadow: '0 20px 40px rgba(245, 166, 35, 0.3)',
             animation: 'float 3s ease-in-out infinite'
           }}>
             <Bot size={40} color="#fff" />
@@ -184,7 +184,7 @@ export const ChatMessagesMobile = () => {
                 backgroundColor: 'rgba(52, 53, 65, 0.6)',
                 border: '1px solid rgba(86, 88, 105, 0.3)',
                 borderRadius: '12px',
-                color: '#ececf1',
+                color: '#e8e8f0',
                 cursor: 'pointer',
                 textAlign: 'left',
                 transition: 'all 0.2s ease',
@@ -226,7 +226,7 @@ export const ChatMessagesMobile = () => {
                 backgroundColor: 'rgba(52, 53, 65, 0.6)',
                 border: '1px solid rgba(86, 88, 105, 0.3)',
                 borderRadius: '12px',
-                color: '#ececf1',
+                color: '#e8e8f0',
                 cursor: 'pointer',
                 textAlign: 'left',
                 transition: 'all 0.2s ease',
@@ -268,7 +268,7 @@ export const ChatMessagesMobile = () => {
                 backgroundColor: 'rgba(52, 53, 65, 0.6)',
                 border: '1px solid rgba(86, 88, 105, 0.3)',
                 borderRadius: '12px',
-                color: '#ececf1',
+                color: '#e8e8f0',
                 cursor: 'pointer',
                 textAlign: 'left',
                 transition: 'all 0.2s ease',
@@ -396,7 +396,7 @@ export const ChatMessagesMobile = () => {
               width: '32px',
               height: '32px',
               borderRadius: '8px',
-              backgroundColor: message.role === 'assistant' ? '#10a37f' : '#5436DA',
+              backgroundColor: message.role === 'assistant' ? '#f5a623' : '#5436DA',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -494,7 +494,7 @@ export const ChatMessagesMobile = () => {
                       top: '100%',
                       right: 0,
                       marginTop: '4px',
-                      backgroundColor: '#2d2d2d',
+                      backgroundColor: '#12121a',
                       borderRadius: '8px',
                       padding: '4px',
                       boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
@@ -563,7 +563,7 @@ export const ChatMessagesMobile = () => {
               <div style={{
                 fontSize: '16px',
                 lineHeight: 1.6,
-                color: '#ececf1',
+                color: '#e8e8f0',
                 wordBreak: 'break-word'
               }}>
                 <MarkdownRenderer content={message.content} />
@@ -588,7 +588,7 @@ export const ChatMessagesMobile = () => {
             width: '32px',
             height: '32px',
             borderRadius: '8px',
-            backgroundColor: '#10a37f',
+            backgroundColor: '#f5a623',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -611,7 +611,7 @@ export const ChatMessagesMobile = () => {
             <div style={{
               fontSize: '16px',
               lineHeight: 1.6,
-              color: '#ececf1',
+              color: '#e8e8f0',
               wordBreak: 'break-word'
             }}>
               <MarkdownRenderer content={streamingMessage} />
@@ -619,7 +619,7 @@ export const ChatMessagesMobile = () => {
                 display: 'inline-block',
                 width: '8px',
                 height: '16px',
-                backgroundColor: '#ececf1',
+                backgroundColor: '#e8e8f0',
                 marginLeft: '2px',
                 verticalAlign: 'middle',
                 animation: 'blink 1s step-end infinite'

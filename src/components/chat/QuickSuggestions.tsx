@@ -161,7 +161,7 @@ export const QuickSuggestions = ({ onSelect, lastMessage, isVisible = true }: Qu
             onClick={() => setSelectedCategory(cat)}
             className="category-pill"
             style={{
-              backgroundColor: selectedCategory === cat ? 'var(--color-brand)' : 'var(--bg-secondary)',
+              backgroundColor: selectedCategory === cat ? 'var(--color-accent)' : 'var(--bg-surface)',
               color: selectedCategory === cat ? '#fff' : 'var(--text-secondary)',
             }}
           >

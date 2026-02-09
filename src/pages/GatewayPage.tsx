@@ -1,11 +1,11 @@
 /**
  * Lisa Gateway Page
  * Central control panel for the Gateway system
- * Inspired by OpenClaw's Gateway architecture
+ * Inspired by OpenClaw's Gateway architecture - AudioReader Studio design
  */
 
 import { useState } from 'react';
-import { 
+import {
   GatewayDashboard,
   HealthDashboard,
   ActivityPanel,
@@ -107,39 +107,71 @@ export default function GatewayPage() {
   };
 
   return (
-    <div style={styles.container}>
+    <div style={{ padding: '24px', color: 'var(--text-primary)' }}>
       {/* Header */}
-      <div style={styles.header}>
-        <div style={styles.headerLeft}>
-          <h1 style={styles.title}>🌐 Lisa Gateway</h1>
-          <span style={styles.subtitle}>OpenClaw-Inspired Control Center</span>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '24px',
+          paddingBottom: '16px',
+          borderBottom: '1px solid var(--border-primary)',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: '16px' }}>
+          <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 700 }}>Lisa Gateway</h1>
+          <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
+            OpenClaw-Inspired Control Center
+          </span>
         </div>
-        <div style={styles.headerRight}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <ThemeSwitcher />
         </div>
       </div>
 
       {/* Tabs */}
-      <div style={styles.tabs}>
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            style={{
-              ...styles.tab,
-              ...(activeTab === tab.id ? styles.tabActive : {})
-            }}
-          >
-            <span>{tab.icon}</span>
-            <span>{tab.label}</span>
-          </button>
-        ))}
+      <div
+        style={{
+          display: 'flex',
+          gap: '6px',
+          marginBottom: '24px',
+          overflowX: 'auto',
+          paddingBottom: '8px',
+        }}
+      >
+        {tabs.map((tab) => {
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '8px 16px',
+                backgroundColor: isActive ? 'var(--color-accent)' : 'var(--bg-panel)',
+                border: isActive ? 'none' : '1px solid var(--border-primary)',
+                borderRadius: '8px',
+                color: isActive ? 'var(--bg-deep)' : 'var(--text-muted)',
+                cursor: 'pointer',
+                fontSize: '13px',
+                fontWeight: isActive ? 600 : 400,
+                fontFamily: 'inherit',
+                whiteSpace: 'nowrap',
+                transition: 'all 0.15s',
+              }}
+            >
+              <span>{tab.icon}</span>
+              <span>{tab.label}</span>
+            </button>
+          );
+        })}
       </div>
 
       {/* Content */}
-      <div style={styles.content}>
-        {renderContent()}
-      </div>
+      <div>{renderContent()}</div>
 
       {/* Floating components */}
       <NotificationToast position="top-right" />
@@ -147,67 +179,3 @@ export default function GatewayPage() {
     </div>
   );
 }
-
-const styles: Record<string, React.CSSProperties> = {
-  container: {
-    minHeight: '100vh',
-    backgroundColor: '#0a0a0a',
-    color: '#fff',
-    padding: '24px'
-  },
-  header: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '24px',
-    paddingBottom: '16px',
-    borderBottom: '1px solid #222'
-  },
-  headerLeft: {
-    display: 'flex',
-    alignItems: 'baseline',
-    gap: '16px'
-  },
-  headerRight: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '12px'
-  },
-  title: {
-    margin: 0,
-    fontSize: '28px',
-    fontWeight: 700
-  },
-  subtitle: {
-    fontSize: '14px',
-    color: '#666'
-  },
-  tabs: {
-    display: 'flex',
-    gap: '8px',
-    marginBottom: '24px',
-    overflowX: 'auto',
-    paddingBottom: '8px'
-  },
-  tab: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    padding: '10px 20px',
-    backgroundColor: '#1a1a1a',
-    border: 'none',
-    borderRadius: '8px',
-    color: '#888',
-    cursor: 'pointer',
-    fontSize: '14px',
-    whiteSpace: 'nowrap',
-    transition: 'all 0.15s'
-  },
-  tabActive: {
-    backgroundColor: '#3b82f6',
-    color: '#fff'
-  },
-  content: {
-    flex: 1
-  }
-};

@@ -155,30 +155,30 @@ export function ScreenCapturePanel() {
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  container: { backgroundColor: '#1a1a1a', borderRadius: '12px', padding: '24px', color: '#fff' },
+  container: { backgroundColor: '#1a1a26', borderRadius: '12px', padding: '24px', color: '#fff' },
   header: { marginBottom: '20px' },
   title: { margin: 0, fontSize: '20px', fontWeight: 600 },
   actions: { display: 'flex', gap: '12px', marginBottom: '20px' },
   screenshotButton: { flex: 1, padding: '14px', backgroundColor: '#3b82f6', border: 'none', borderRadius: '8px', color: '#fff', fontSize: '14px', cursor: 'pointer' },
   recordButton: { flex: 1, padding: '14px', backgroundColor: '#ef4444', border: 'none', borderRadius: '8px', color: '#fff', fontSize: '14px', cursor: 'pointer' },
-  stopButton: { flex: 1, padding: '14px', backgroundColor: '#666', border: 'none', borderRadius: '8px', color: '#fff', fontSize: '14px', cursor: 'pointer' },
+  stopButton: { flex: 1, padding: '14px', backgroundColor: '#6a6a82', border: 'none', borderRadius: '8px', color: '#fff', fontSize: '14px', cursor: 'pointer' },
   preview: { marginBottom: '20px', backgroundColor: '#252525', borderRadius: '12px', padding: '16px', textAlign: 'center' },
   previewImage: { maxWidth: '100%', maxHeight: '200px', borderRadius: '8px' },
-  downloadButton: { marginTop: '12px', padding: '8px 16px', backgroundColor: '#333', border: 'none', borderRadius: '6px', color: '#fff', cursor: 'pointer' },
+  downloadButton: { marginTop: '12px', padding: '8px 16px', backgroundColor: '#2d2d44', border: 'none', borderRadius: '6px', color: '#fff', cursor: 'pointer' },
   section: { marginTop: '20px' },
-  sectionTitle: { fontSize: '14px', fontWeight: 600, color: '#888', marginBottom: '12px', textTransform: 'uppercase' },
+  sectionTitle: { fontSize: '14px', fontWeight: 600, color: '#6a6a82', marginBottom: '12px', textTransform: 'uppercase' },
   grid: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' },
   thumbnail: { backgroundColor: '#252525', borderRadius: '8px', overflow: 'hidden', cursor: 'pointer' },
   thumbImage: { width: '100%', height: '60px', objectFit: 'cover' },
-  thumbInfo: { padding: '6px', fontSize: '10px', color: '#888', textAlign: 'center' },
+  thumbInfo: { padding: '6px', fontSize: '10px', color: '#6a6a82', textAlign: 'center' },
   recordingsList: { display: 'flex', flexDirection: 'column', gap: '8px' },
-  emptyState: { padding: '20px', textAlign: 'center', color: '#666' },
+  emptyState: { padding: '20px', textAlign: 'center', color: '#6a6a82' },
   recordingItem: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px', backgroundColor: '#252525', borderRadius: '8px' },
   recordingInfo: { display: 'flex', gap: '16px' },
   recordingDuration: { fontSize: '14px', fontWeight: 500 },
-  recordingSize: { fontSize: '13px', color: '#888' },
-  smallButton: { padding: '6px 12px', backgroundColor: '#333', border: 'none', borderRadius: '6px', color: '#fff', cursor: 'pointer' },
-  stats: { display: 'flex', gap: '8px', marginTop: '20px', paddingTop: '16px', borderTop: '1px solid #333', fontSize: '12px', color: '#666', justifyContent: 'center' }
+  recordingSize: { fontSize: '13px', color: '#6a6a82' },
+  smallButton: { padding: '6px 12px', backgroundColor: '#2d2d44', border: 'none', borderRadius: '6px', color: '#fff', cursor: 'pointer' },
+  stats: { display: 'flex', gap: '8px', marginTop: '20px', paddingTop: '16px', borderTop: '1px solid #2d2d44', fontSize: '12px', color: '#6a6a82', justifyContent: 'center' }
 };
 
 export default ScreenCapturePanel;

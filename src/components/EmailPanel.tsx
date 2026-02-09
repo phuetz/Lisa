@@ -41,7 +41,7 @@ export const EmailPanel = () => {
   };
 
   return (
-    <div className="rounded-lg p-4 max-w-md" style={{ background: 'var(--bg-elevated, #2f2f2f)', color: 'var(--text-primary, #ececec)', border: '1px solid var(--border-primary, #424242)', boxShadow: 'var(--shadow-elevated, 0 4px 20px rgba(0,0,0,0.4))' }}>
+    <div className="rounded-lg p-4 max-w-md" style={{ background: 'var(--bg-panel, #1a1a26)', color: 'var(--text-primary, #e8e8f0)', border: '1px solid var(--border-primary, #2d2d44)', boxShadow: 'var(--shadow-elevated, 0 4px 20px rgba(0,0,0,0.4))' }}>
       <button
         className="flex items-center justify-between w-full cursor-pointer"
         onClick={() => setIsExpanded(!isExpanded)}
@@ -50,7 +50,7 @@ export const EmailPanel = () => {
         style={{ background: 'none', border: 'none', color: 'inherit', padding: 0 }}
       >
         <div className="flex items-center gap-2">
-          <Mail className="w-5 h-5" style={{ color: 'var(--color-brand, #10a37f)' }} />
+          <Mail className="w-5 h-5" style={{ color: 'var(--color-accent, #f5a623)' }} />
           <h3 className="font-semibold">Email Assistant</h3>
         </div>
       </button>
@@ -70,7 +70,7 @@ export const EmailPanel = () => {
               value={emailInput.subject}
               onChange={(e) => setEmailInput({ ...emailInput, subject: e.target.value })}
               className="w-full px-3 py-2 rounded"
-              style={{ background: 'var(--bg-secondary, #2d2d2d)', border: '1px solid var(--border-primary, #424242)', color: 'var(--text-primary, #ececec)' }}
+              style={{ background: 'var(--bg-surface, #12121a)', border: '1px solid var(--border-primary, #2d2d44)', color: 'var(--text-primary, #e8e8f0)' }}
             />
             <textarea
               placeholder="Corps de l'email"
@@ -78,7 +78,7 @@ export const EmailPanel = () => {
               onChange={(e) => setEmailInput({ ...emailInput, body: e.target.value })}
               rows={4}
               className="w-full px-3 py-2 rounded"
-              style={{ background: 'var(--bg-secondary, #2d2d2d)', border: '1px solid var(--border-primary, #424242)', color: 'var(--text-primary, #ececec)' }}
+              style={{ background: 'var(--bg-surface, #12121a)', border: '1px solid var(--border-primary, #2d2d44)', color: 'var(--text-primary, #e8e8f0)' }}
             />
           </div>
 
@@ -87,7 +87,7 @@ export const EmailPanel = () => {
               onClick={handleClassify}
               disabled={loading}
               className="px-3 py-2 text-white rounded disabled:opacity-50 text-sm flex items-center justify-center gap-1"
-              style={{ background: 'var(--color-brand, #10a37f)', transition: 'opacity var(--transition-fast, 0.15s ease)' }}
+              style={{ background: 'var(--color-accent, #f5a623)', transition: 'opacity var(--transition-fast, 0.15s ease)' }}
             >
               <Sparkles className="w-3 h-3" aria-hidden="true" />
               Classifier
@@ -113,13 +113,13 @@ export const EmailPanel = () => {
           </div>
 
           {result && (
-            <div className="p-3 rounded max-h-60 overflow-y-auto" style={{ background: 'var(--bg-secondary, #2d2d2d)' }}>
+            <div className="p-3 rounded max-h-60 overflow-y-auto" style={{ background: 'var(--bg-surface, #12121a)' }}>
               {resultType === 'classify' && (
                 <div>
                   <div className="font-semibold">Catégorie: {result.category}</div>
-                  <div className="text-sm" style={{ color: 'var(--text-secondary, #b4b4b4)' }}>Confiance: {(result.confidence * 100).toFixed(0)}%</div>
+                  <div className="text-sm" style={{ color: 'var(--text-secondary, #9898b0)' }}>Confiance: {(result.confidence * 100).toFixed(0)}%</div>
                   {result.suggestedActions && (
-                    <div className="mt-2 text-xs" style={{ color: 'var(--text-tertiary, #888)' }}>
+                    <div className="mt-2 text-xs" style={{ color: 'var(--text-tertiary, #6a6a82)' }}>
                       <div className="font-semibold">Actions suggérées:</div>
                       {result.suggestedActions.map((action: string, i: number) => (
                         <div key={i}>• {action}</div>
@@ -131,14 +131,14 @@ export const EmailPanel = () => {
               {resultType === 'spam' && (
                 <div>
                   <div className="font-semibold">{result.isSpam ? 'SPAM DÉTECTÉ' : 'Légitime'}</div>
-                  <div className="text-sm" style={{ color: 'var(--text-secondary, #b4b4b4)' }}>Score spam: {result.spamScore}/100</div>
-                  <div className="text-xs mt-1" style={{ color: 'var(--text-tertiary, #888)' }}>{result.recommendation}</div>
+                  <div className="text-sm" style={{ color: 'var(--text-secondary, #9898b0)' }}>Score spam: {result.spamScore}/100</div>
+                  <div className="text-xs mt-1" style={{ color: 'var(--text-tertiary, #6a6a82)' }}>{result.recommendation}</div>
                 </div>
               )}
               {resultType === 'reply' && (
                 <div>
                   <div className="font-semibold">Réponse générée:</div>
-                  <div className="text-sm mt-2 p-2 rounded" style={{ background: 'var(--bg-tertiary, #1a1a1a)', color: 'var(--text-secondary, #b4b4b4)' }}>{result.reply}</div>
+                  <div className="text-sm mt-2 p-2 rounded" style={{ background: 'var(--bg-tertiary, #1a1a26)', color: 'var(--text-secondary, #9898b0)' }}>{result.reply}</div>
                 </div>
               )}
             </div>

@@ -93,18 +93,18 @@ const DEFAULT_OPTIONS: Required<PDFExportOptions> = {
 };
 
 const COLORS = {
-  primary: '#10a37f',
-  primaryLight: '#34d399',
+  primary: '#f5a623',
+  primaryLight: '#f5c563',
   userBg: '#374151',
   userBorder: '#4b5563',
   assistantBg: '#1f2937',
-  assistantBorder: '#10a37f',
+  assistantBorder: '#f5a623',
   codeBg: '#0f172a',
   codeBorder: '#1e293b',
   text: '#ffffff',
   textMuted: '#9ca3af',
   textDark: '#6b7280',
-  border: '#404040',
+  border: '#2d2d44',
   error: '#ef4444',
   errorBg: '#7f1d1d',
   success: '#22c55e',
@@ -208,7 +208,7 @@ class PDFExportService {
     
     // Capture element as canvas
     const canvas = await html2canvas(element, {
-      backgroundColor: '#1a1a1a',
+      backgroundColor: '#1a1a26',
       scale: 2,
       useCORS: true,
       logging: false,

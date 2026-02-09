@@ -127,7 +127,7 @@ export const ChatLayout = () => {
       gridTemplateRows: '1fr',
       height: '100%', 
       width: '100%',
-      backgroundColor: '#212121',
+      backgroundColor: '#12121a',
       color: '#fff',
       overflow: 'hidden'
     }}>
@@ -150,7 +150,7 @@ export const ChatLayout = () => {
         minWidth: sidebarOpen ? (isMobile ? '65vw' : '260px') : '0px',
         maxWidth: isMobile ? '250px' : '260px',
         backgroundColor: '#171717',
-        borderRight: '1px solid #2d2d2d',
+        borderRight: '1px solid #2d2d44',
         display: 'flex',
         flexDirection: 'column',
         transition: 'all 0.3s ease',
@@ -164,7 +164,7 @@ export const ChatLayout = () => {
         {/* Sidebar Header */}
         <div style={{ 
           padding: '12px', 
-          borderBottom: '1px solid #2d2d2d',
+          borderBottom: '1px solid #2d2d44',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between'
@@ -195,7 +195,7 @@ export const ChatLayout = () => {
               padding: '8px',
               backgroundColor: 'transparent',
               border: 'none',
-              color: '#888',
+              color: '#6a6a82',
               cursor: 'pointer',
               borderRadius: '6px'
             }}
@@ -211,11 +211,11 @@ export const ChatLayout = () => {
             alignItems: 'center',
             gap: '8px',
             padding: '8px 12px',
-            backgroundColor: '#2d2d2d',
+            backgroundColor: '#12121a',
             borderRadius: '8px',
             border: '1px solid #404040'
           }}>
-            <Search size={16} color="#888" />
+            <Search size={16} color="#6a6a82" />
             <input
               type="text"
               placeholder="Rechercher..."
@@ -237,7 +237,7 @@ export const ChatLayout = () => {
                   padding: '2px',
                   backgroundColor: 'transparent',
                   border: 'none',
-                  color: '#888',
+                  color: '#6a6a82',
                   cursor: 'pointer'
                 }}
               >
@@ -253,7 +253,7 @@ export const ChatLayout = () => {
           overflowY: 'auto',
           padding: '8px'
         }}>
-          <div style={{ fontSize: '12px', color: '#888', padding: '8px 12px', marginBottom: '4px' }}>
+          <div style={{ fontSize: '12px', color: '#6a6a82', padding: '8px 12px', marginBottom: '4px' }}>
             {searchQuery ? `Résultats (${sortedConversations.length})` : 'Conversations récentes'}
           </div>
           {sortedConversations.slice(0, 30).map((conv) => (
@@ -266,7 +266,7 @@ export const ChatLayout = () => {
                 alignItems: 'center',
                 gap: '10px',
                 padding: '10px 12px',
-                backgroundColor: conv.id === currentConversationId ? '#2d2d2d' : 'transparent',
+                backgroundColor: conv.id === currentConversationId ? '#12121a' : 'transparent',
                 borderRadius: '8px',
                 color: '#fff',
                 cursor: 'pointer',
@@ -275,7 +275,7 @@ export const ChatLayout = () => {
               }}
             >
               {conv.pinned && <Pin size={12} style={{ color: '#f59e0b', flexShrink: 0 }} />}
-              <MessageSquare size={16} style={{ color: '#888', flexShrink: 0 }} />
+              <MessageSquare size={16} style={{ color: '#6a6a82', flexShrink: 0 }} />
               
               {/* Title - editable */}
               {editingId === conv.id ? (
@@ -292,8 +292,8 @@ export const ChatLayout = () => {
                   onClick={(e) => e.stopPropagation()}
                   style={{
                     flex: 1,
-                    backgroundColor: '#1a1a1a',
-                    border: '1px solid #10a37f',
+                    backgroundColor: '#1a1a26',
+                    border: '1px solid #f5a623',
                     borderRadius: '4px',
                     padding: '4px 8px',
                     color: '#fff',
@@ -318,28 +318,28 @@ export const ChatLayout = () => {
                 <div style={{ display: 'flex', gap: '2px' }}>
                   <button
                     onClick={(e) => { e.stopPropagation(); startEditTitle(conv); }}
-                    style={{ padding: '4px', backgroundColor: 'transparent', border: 'none', color: '#888', cursor: 'pointer', borderRadius: '4px' }}
+                    style={{ padding: '4px', backgroundColor: 'transparent', border: 'none', color: '#6a6a82', cursor: 'pointer', borderRadius: '4px' }}
                     title="Renommer"
                   >
                     <Edit2 size={14} />
                   </button>
                   <button
                     onClick={(e) => { e.stopPropagation(); pinConversation(conv.id); }}
-                    style={{ padding: '4px', backgroundColor: 'transparent', border: 'none', color: conv.pinned ? '#f59e0b' : '#888', cursor: 'pointer', borderRadius: '4px' }}
+                    style={{ padding: '4px', backgroundColor: 'transparent', border: 'none', color: conv.pinned ? '#f59e0b' : '#6a6a82', cursor: 'pointer', borderRadius: '4px' }}
                     title={conv.pinned ? 'Désépingler' : 'Épingler'}
                   >
                     <Pin size={14} />
                   </button>
                   <button
                     onClick={(e) => { e.stopPropagation(); handleExport(conv.id); }}
-                    style={{ padding: '4px', backgroundColor: 'transparent', border: 'none', color: '#888', cursor: 'pointer', borderRadius: '4px' }}
+                    style={{ padding: '4px', backgroundColor: 'transparent', border: 'none', color: '#6a6a82', cursor: 'pointer', borderRadius: '4px' }}
                     title="Exporter en Markdown"
                   >
                     <Download size={14} />
                   </button>
                   <button
                     onClick={(e) => { e.stopPropagation(); archiveConversation(conv.id); }}
-                    style={{ padding: '4px', backgroundColor: 'transparent', border: 'none', color: '#888', cursor: 'pointer', borderRadius: '4px' }}
+                    style={{ padding: '4px', backgroundColor: 'transparent', border: 'none', color: '#6a6a82', cursor: 'pointer', borderRadius: '4px' }}
                     title="Archiver"
                   >
                     <Archive size={14} />
@@ -357,7 +357,7 @@ export const ChatLayout = () => {
           ))}
           
           {sortedConversations.length === 0 && (
-            <div style={{ padding: '20px', textAlign: 'center', color: '#666', fontSize: '13px' }}>
+            <div style={{ padding: '20px', textAlign: 'center', color: '#6a6a82', fontSize: '13px' }}>
               {searchQuery ? 'Aucun résultat' : 'Aucune conversation'}
             </div>
           )}
@@ -367,9 +367,9 @@ export const ChatLayout = () => {
         {!isMobile && (
           <div style={{ 
             padding: '8px', 
-            borderTop: '1px solid #2d2d2d'
+            borderTop: '1px solid #2d2d44'
           }}>
-            <div style={{ fontSize: '12px', color: '#888', padding: '8px 12px', marginBottom: '4px' }}>
+            <div style={{ fontSize: '12px', color: '#6a6a82', padding: '8px 12px', marginBottom: '4px' }}>
               Navigation
             </div>
             {[
@@ -398,7 +398,7 @@ export const ChatLayout = () => {
                   gap: '10px',
                   padding: '8px 12px',
                   borderRadius: '8px',
-                  color: '#888',
+                  color: '#6a6a82',
                   cursor: 'pointer',
                   fontSize: '13px',
                   transition: 'background-color 0.2s'
@@ -415,7 +415,7 @@ export const ChatLayout = () => {
         {!isMobile && (
           <div style={{ 
             padding: '12px', 
-            borderTop: '1px solid #2d2d2d'
+            borderTop: '1px solid #2d2d44'
           }}>
             <div
               onClick={() => setSettingsOpen(true)}
@@ -427,7 +427,7 @@ export const ChatLayout = () => {
                 padding: '10px 12px',
                 backgroundColor: 'transparent',
                 borderRadius: '8px',
-                color: '#888',
+                color: '#6a6a82',
                 cursor: 'pointer',
                 fontSize: '14px'
               }}
@@ -444,13 +444,13 @@ export const ChatLayout = () => {
         display: 'grid',
         gridTemplateRows: 'auto 1fr auto',
         height: '100%',
-        backgroundColor: '#212121',
+        backgroundColor: '#12121a',
         overflow: 'hidden'
       }}>
         {/* Header - responsive */}
         <header style={{
           padding: isMobile ? '8px 12px' : '12px 16px',
-          borderBottom: '1px solid #2d2d2d',
+          borderBottom: '1px solid #2d2d44',
           display: 'flex',
           alignItems: 'center',
           gap: isMobile ? '8px' : '12px',
@@ -463,7 +463,7 @@ export const ChatLayout = () => {
                 padding: '8px',
                 backgroundColor: 'transparent',
                 border: 'none',
-                color: '#888',
+                color: '#6a6a82',
                 cursor: 'pointer',
                 borderRadius: '6px'
               }}
@@ -509,7 +509,7 @@ export const ChatLayout = () => {
               padding: '8px',
               backgroundColor: 'transparent',
               border: 'none',
-              color: '#888',
+              color: '#6a6a82',
               cursor: 'pointer',
               borderRadius: '6px'
             }}
@@ -538,8 +538,8 @@ export const ChatLayout = () => {
           maxWidth: '1100px',
           margin: '0 auto',
           width: '100%',
-          backgroundColor: '#212121',
-          borderTop: '1px solid #2d2d2d',
+          backgroundColor: '#12121a',
+          borderTop: '1px solid #2d2d44',
           boxSizing: 'border-box'
         }}>
           <ChatInput />

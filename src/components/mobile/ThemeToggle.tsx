@@ -46,7 +46,7 @@ export const ThemeToggle = ({ showLabel = false, showSystemOption = true }: Them
         }}
       >
         {isDark ? <Moon size={18} /> : <Sun size={18} />}
-        {showLabel && <span style={{ color: '#ececf1', fontSize: '14px' }}>{isDark ? 'Sombre' : 'Clair'}</span>}
+        {showLabel && <span style={{ color: '#e8e8f0', fontSize: '14px' }}>{isDark ? 'Sombre' : 'Clair'}</span>}
       </button>
     );
   }

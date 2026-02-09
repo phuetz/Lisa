@@ -32,7 +32,7 @@ export function BodyPartsPanel({ landmarks, showDetails = true, compact = false 
         const idx = BODY_LANDMARKS[landmarkKey as keyof typeof BODY_LANDMARKS];
         const landmark = landmarks[idx];
         const isVisible = landmark && landmark.visibility > 0.5;
-        
+
         return {
           name: LANDMARK_NAMES[landmarkKey] || landmarkKey,
           key: landmarkKey,
@@ -83,23 +83,19 @@ export function BodyPartsPanel({ landmarks, showDetails = true, compact = false 
 
     if (!leftShoulder || !rightShoulder || !leftHip || !rightHip) return null;
 
-    // Check if standing, sitting, or lying
     const shoulderY = (leftShoulder.y + rightShoulder.y) / 2;
     const hipY = (leftHip.y + rightHip.y) / 2;
     const torsoLength = Math.abs(hipY - shoulderY);
 
-    // Check shoulder alignment (leaning)
     const shoulderDiff = Math.abs(leftShoulder.y - rightShoulder.y);
     const isLeaning = shoulderDiff > 0.05;
     const leanDirection = leftShoulder.y > rightShoulder.y ? 'gauche' : 'droite';
 
-    // Check if arms raised
     const leftWrist = landmarks[BODY_LANDMARKS.leftWrist];
     const rightWrist = landmarks[BODY_LANDMARKS.rightWrist];
     const leftArmRaised = leftWrist && leftShoulder && leftWrist.y < leftShoulder.y;
     const rightArmRaised = rightWrist && rightShoulder && rightWrist.y < rightShoulder.y;
 
-    // Estimate posture
     let posture = 'Debout';
     if (torsoLength < 0.15) {
       posture = 'Assis ou accroupi';
@@ -121,13 +117,14 @@ export function BodyPartsPanel({ landmarks, showDetails = true, compact = false 
   if (!landmarks || landmarks.length === 0) {
     return (
       <div style={{
-        backgroundColor: '#1a1a1a',
+        backgroundColor: 'var(--bg-panel, #1a1a26)',
         borderRadius: '12px',
         padding: '16px',
         textAlign: 'center',
+        border: '1px solid var(--border-primary, #2d2d44)',
       }}>
-        <User size={32} color="#666" style={{ margin: '0 auto 8px' }} />
-        <p style={{ color: '#666', fontSize: '14px', margin: 0 }}>
+        <User size={32} color="var(--text-muted, #6a6a82)" style={{ margin: '0 auto 8px' }} />
+        <p style={{ color: 'var(--text-muted, #6a6a82)', fontSize: '14px', margin: 0 }}>
           Aucune personne détectée
         </p>
       </div>
@@ -136,9 +133,10 @@ export function BodyPartsPanel({ landmarks, showDetails = true, compact = false 
 
   return (
     <div style={{
-      backgroundColor: '#1a1a1a',
+      backgroundColor: 'var(--bg-panel, #1a1a26)',
       borderRadius: '12px',
       padding: compact ? '12px' : '16px',
+      border: '1px solid var(--border-primary, #2d2d44)',
     }}>
       {/* Header with overall status */}
       <div style={{
@@ -147,7 +145,7 @@ export function BodyPartsPanel({ landmarks, showDetails = true, compact = false 
         justifyContent: 'space-between',
         marginBottom: '16px',
         paddingBottom: '12px',
-        borderBottom: '1px solid #333',
+        borderBottom: '1px solid var(--border-primary, #2d2d44)',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <div style={{
@@ -162,27 +160,27 @@ export function BodyPartsPanel({ landmarks, showDetails = true, compact = false 
             <Activity size={20} color="#8b5cf6" />
           </div>
           <div>
-            <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 600, color: '#fff' }}>
+            <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 600, color: 'var(--text-primary, #e8e8f0)' }}>
               Corps Détecté
             </h3>
-            <p style={{ margin: 0, fontSize: '12px', color: '#888' }}>
+            <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-secondary, #9898b0)' }}>
               {Math.round(overallVisibility * 100)}% visible
             </p>
           </div>
         </div>
-        
+
         {/* Visibility indicator */}
         <div style={{
           width: '60px',
           height: '6px',
-          backgroundColor: '#333',
+          backgroundColor: 'var(--border-primary, #2d2d44)',
           borderRadius: '3px',
           overflow: 'hidden',
         }}>
           <div style={{
             width: `${overallVisibility * 100}%`,
             height: '100%',
-            backgroundColor: overallVisibility > 0.7 ? '#10b981' : overallVisibility > 0.4 ? '#f59e0b' : '#ef4444',
+            backgroundColor: overallVisibility > 0.7 ? 'var(--color-green, #22c55e)' : overallVisibility > 0.4 ? 'var(--color-warning, #f59e0b)' : 'var(--color-error, #ef4444)',
             transition: 'width 0.3s ease',
           }} />
         </div>
@@ -191,14 +189,14 @@ export function BodyPartsPanel({ landmarks, showDetails = true, compact = false 
       {/* Pose Analysis */}
       {poseAnalysis && (
         <div style={{
-          backgroundColor: '#252525',
+          backgroundColor: 'var(--bg-tertiary, #1a1a26)',
           borderRadius: '8px',
           padding: '12px',
           marginBottom: '12px',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-            <Zap size={14} color="#f59e0b" />
-            <span style={{ fontSize: '13px', fontWeight: 500, color: '#fff' }}>Analyse Posture</span>
+            <Zap size={14} color="var(--color-warning, #f59e0b)" />
+            <span style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text-primary, #e8e8f0)' }}>Analyse Posture</span>
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
             <span style={{
@@ -224,23 +222,23 @@ export function BodyPartsPanel({ landmarks, showDetails = true, compact = false 
             {poseAnalysis.leftArmRaised && (
               <span style={{
                 padding: '4px 10px',
-                backgroundColor: '#10b98120',
+                backgroundColor: '#22c55e20',
                 borderRadius: '12px',
                 fontSize: '12px',
-                color: '#34d399',
+                color: '#4ade80',
               }}>
-                🤚 Bras G levé
+                Bras G levé
               </span>
             )}
             {poseAnalysis.rightArmRaised && (
               <span style={{
                 padding: '4px 10px',
-                backgroundColor: '#3b82f620',
+                backgroundColor: '#06b6d420',
                 borderRadius: '12px',
                 fontSize: '12px',
-                color: '#60a5fa',
+                color: '#22d3ee',
               }}>
-                ✋ Bras D levé
+                Bras D levé
               </span>
             )}
           </div>
@@ -256,12 +254,12 @@ export function BodyPartsPanel({ landmarks, showDetails = true, compact = false 
         {bodyStatus && Object.entries(bodyStatus).map(([key, group]) => {
           const Icon = group.icon;
           const visibilityPercent = Math.round(group.avgVisibility * 100);
-          
+
           return (
             <div
               key={key}
               style={{
-                backgroundColor: '#252525',
+                backgroundColor: 'var(--bg-tertiary, #1a1a26)',
                 borderRadius: '8px',
                 padding: '10px',
                 borderLeft: `3px solid ${group.color}`,
@@ -269,29 +267,30 @@ export function BodyPartsPanel({ landmarks, showDetails = true, compact = false 
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
                 <Icon size={14} color={group.color} />
-                <span style={{ fontSize: '12px', fontWeight: 500, color: '#fff' }}>
+                <span style={{ fontSize: '12px', fontWeight: 500, color: 'var(--text-primary, #e8e8f0)' }}>
                   {group.name}
                 </span>
               </div>
-              
+
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: '11px', color: '#888' }}>
+                <span style={{ fontSize: '11px', color: 'var(--text-secondary, #9898b0)' }}>
                   {group.visible}/{group.total} pts
                 </span>
                 <span style={{
                   fontSize: '11px',
                   fontWeight: 500,
-                  color: visibilityPercent > 70 ? '#10b981' : visibilityPercent > 40 ? '#f59e0b' : '#ef4444',
+                  fontFamily: 'var(--font-mono)',
+                  color: visibilityPercent > 70 ? 'var(--color-green, #22c55e)' : visibilityPercent > 40 ? 'var(--color-warning, #f59e0b)' : 'var(--color-error, #ef4444)',
                 }}>
                   {visibilityPercent}%
                 </span>
               </div>
-              
+
               {/* Mini visibility bar */}
               <div style={{
                 width: '100%',
                 height: '3px',
-                backgroundColor: '#333',
+                backgroundColor: 'var(--border-primary, #2d2d44)',
                 borderRadius: '2px',
                 marginTop: '6px',
                 overflow: 'hidden',
@@ -317,10 +316,10 @@ export function BodyPartsPanel({ landmarks, showDetails = true, compact = false 
             gap: '8px',
             marginBottom: '12px',
           }}>
-            <CircleDot size={14} color="#888" />
-            <span style={{ fontSize: '13px', color: '#888' }}>Points détaillés</span>
+            <CircleDot size={14} color="var(--text-secondary, #9898b0)" />
+            <span style={{ fontSize: '13px', color: 'var(--text-secondary, #9898b0)' }}>Points détaillés</span>
           </div>
-          
+
           <div style={{
             display: 'flex',
             flexWrap: 'wrap',
@@ -329,7 +328,7 @@ export function BodyPartsPanel({ landmarks, showDetails = true, compact = false 
             overflowY: 'auto',
             padding: '4px',
           }}>
-            {Object.values(bodyStatus).flatMap(group => 
+            {Object.values(bodyStatus).flatMap(group =>
               group.landmarks
                 .filter(l => l.visible)
                 .map(landmark => (

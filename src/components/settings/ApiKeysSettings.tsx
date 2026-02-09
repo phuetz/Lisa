@@ -35,7 +35,7 @@ const ApiKeyInput = ({ label, value, onChange, placeholder, provider }: ApiKeyIn
   return (
     <div style={{
       padding: '16px',
-      backgroundColor: '#2d2d2d',
+      backgroundColor: '#12121a',
       borderRadius: '12px',
       marginBottom: '12px',
     }}>
@@ -62,7 +62,7 @@ const ApiKeyInput = ({ label, value, onChange, placeholder, provider }: ApiKeyIn
             </span>
           )}
         </div>
-        <span style={{ color: '#666', fontSize: '12px' }}>{provider}</span>
+        <span style={{ color: '#6a6a82', fontSize: '12px' }}>{provider}</span>
       </div>
 
       {isEditing ? (
@@ -76,8 +76,8 @@ const ApiKeyInput = ({ label, value, onChange, placeholder, provider }: ApiKeyIn
               style={{
                 width: '100%',
                 padding: '10px 40px 10px 12px',
-                backgroundColor: '#1a1a1a',
-                border: '1px solid #404040',
+                backgroundColor: '#1a1a26',
+                border: '1px solid #2d2d44',
                 borderRadius: '8px',
                 color: '#fff',
                 fontSize: '13px',
@@ -125,7 +125,7 @@ const ApiKeyInput = ({ label, value, onChange, placeholder, provider }: ApiKeyIn
               onClick={handleCancel}
               style={{
                 padding: '8px 16px',
-                backgroundColor: '#404040',
+                backgroundColor: '#2d2d44',
                 border: 'none',
                 borderRadius: '6px',
                 color: '#fff',
@@ -142,7 +142,7 @@ const ApiKeyInput = ({ label, value, onChange, placeholder, provider }: ApiKeyIn
           <div style={{
             flex: 1,
             padding: '10px 12px',
-            backgroundColor: '#1a1a1a',
+            backgroundColor: '#1a1a26',
             borderRadius: '8px',
             color: value ? '#8e8ea0' : '#666',
             fontSize: '13px',
@@ -157,7 +157,7 @@ const ApiKeyInput = ({ label, value, onChange, placeholder, provider }: ApiKeyIn
             }}
             style={{
               padding: '10px 16px',
-              backgroundColor: '#404040',
+              backgroundColor: '#2d2d44',
               border: 'none',
               borderRadius: '8px',
               color: '#fff',
@@ -236,7 +236,7 @@ export const ApiKeysSettings = () => {
 
       <div style={{
         padding: '16px',
-        backgroundColor: '#1a1a1a',
+        backgroundColor: '#1a1a26',
         borderRadius: '12px',
         marginTop: '8px',
       }}>

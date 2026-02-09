@@ -51,50 +51,50 @@ const LIGHT_COLORS: ThemeColors = {
   bgTertiary: '#ececf1',
   bgOverlay: 'rgba(0, 0, 0, 0.5)',
 
-  textPrimary: '#1a1a1a',
+  textPrimary: '#1a1a26',
   textSecondary: '#4a4a4a',
   textMuted: '#8e8ea0',
 
-  accent: '#10b981',
-  accentHover: '#059669',
-  accentMuted: 'rgba(16, 185, 129, 0.1)',
+  accent: '#e08a00',
+  accentHover: '#c77a00',
+  accentMuted: 'rgba(245, 166, 35, 0.1)',
 
   border: '#e5e5e5',
   borderLight: '#f0f0f0',
 
-  success: '#10b981',
+  success: '#22c55e',
   warning: '#f59e0b',
   error: '#ef4444',
   info: '#3b82f6',
 
-  userBubble: '#10b981',
+  userBubble: '#e08a00',
   assistantBubble: '#f7f7f8',
 };
 
 const DARK_COLORS: ThemeColors = {
   bgPrimary: '#000000',
   bgSecondary: '#171717',
-  bgTertiary: '#2d2d2d',
+  bgTertiary: '#1a1a26',
   bgOverlay: 'rgba(0, 0, 0, 0.7)',
 
-  textPrimary: '#ececf1',
+  textPrimary: '#e8e8f0',
   textSecondary: '#c5c5d2',
   textMuted: '#8e8ea0',
 
-  accent: '#10b981',
-  accentHover: '#34d399',
-  accentMuted: 'rgba(16, 185, 129, 0.15)',
+  accent: '#f5a623',
+  accentHover: '#e6951a',
+  accentMuted: 'rgba(245, 166, 35, 0.15)',
 
-  border: '#2d2d2d',
-  borderLight: '#3d3d3d',
+  border: '#2d2d44',
+  borderLight: '#3d3d5c',
 
-  success: '#10b981',
+  success: '#22c55e',
   warning: '#f59e0b',
   error: '#ef4444',
   info: '#3b82f6',
 
-  userBubble: '#10b981',
-  assistantBubble: '#2d2d2d',
+  userBubble: '#f5a623',
+  assistantBubble: '#1a1a26',
 };
 
 // Fluent Design Light Theme (Office 365 inspired)

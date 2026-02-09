@@ -39,7 +39,7 @@ const ErrorToastItem = ({ error, onDismiss }: ErrorToastItemProps) => {
         alignItems: 'flex-start',
         gap: '12px',
         padding: '14px 16px',
-        backgroundColor: '#2d2d2d',
+        backgroundColor: '#12121a',
         borderRadius: '10px',
         border: `1px solid ${config.color}40`,
         boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
@@ -82,7 +82,7 @@ const ErrorToastItem = ({ error, onDismiss }: ErrorToastItemProps) => {
         {error.details && (
           <p style={{ 
             fontSize: '11px', 
-            color: '#666', 
+            color: '#6a6a82', 
             margin: '6px 0 0 0',
             fontFamily: 'monospace',
           }}>
@@ -117,7 +117,7 @@ const ErrorToastItem = ({ error, onDismiss }: ErrorToastItemProps) => {
           border: 'none',
           padding: '4px',
           cursor: 'pointer',
-          color: '#666',
+          color: '#6a6a82',
           borderRadius: '4px',
           display: 'flex',
           alignItems: 'center',
@@ -180,7 +180,7 @@ export function ErrorToastContainer() {
         <div style={{
           textAlign: 'center',
           padding: '8px',
-          color: '#666',
+          color: '#6a6a82',
           fontSize: '12px',
         }}>
           +{errors.length - 5} autres notifications

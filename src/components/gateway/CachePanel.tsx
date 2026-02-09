@@ -174,7 +174,7 @@ export function CachePanel() {
 
 const styles: Record<string, React.CSSProperties> = {
   container: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#1a1a26',
     borderRadius: '12px',
     padding: '24px',
     color: '#fff'
@@ -182,7 +182,7 @@ const styles: Record<string, React.CSSProperties> = {
   loading: {
     padding: '40px',
     textAlign: 'center',
-    color: '#888'
+    color: '#6a6a82'
   },
   header: {
     display: 'flex',
@@ -201,7 +201,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   button: {
     padding: '8px 16px',
-    backgroundColor: '#333',
+    backgroundColor: '#2d2d44',
     border: 'none',
     borderRadius: '6px',
     color: '#fff',
@@ -236,7 +236,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   statLabel: {
     fontSize: '12px',
-    color: '#888',
+    color: '#6a6a82',
     marginTop: '4px'
   },
   section: {
@@ -267,7 +267,7 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: '6px'
   },
   configLabel: {
-    color: '#888',
+    color: '#6a6a82',
     fontSize: '13px'
   },
   configValue: {
@@ -277,7 +277,7 @@ const styles: Record<string, React.CSSProperties> = {
   searchInput: {
     padding: '8px 12px',
     backgroundColor: '#252525',
-    border: '1px solid #333',
+    border: '1px solid #2d2d44',
     borderRadius: '6px',
     color: '#fff',
     fontSize: '13px',
@@ -292,18 +292,18 @@ const styles: Record<string, React.CSSProperties> = {
   emptyState: {
     padding: '32px',
     textAlign: 'center',
-    color: '#666'
+    color: '#6a6a82'
   },
   keyRow: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: '10px 16px',
-    borderBottom: '1px solid #333',
+    borderBottom: '1px solid #2d2d44',
     cursor: 'pointer'
   },
   keyRowSelected: {
-    backgroundColor: '#333'
+    backgroundColor: '#2d2d44'
   },
   keyName: {
     fontSize: '13px',
@@ -313,7 +313,7 @@ const styles: Record<string, React.CSSProperties> = {
   deleteButton: {
     backgroundColor: 'transparent',
     border: 'none',
-    color: '#666',
+    color: '#6a6a82',
     cursor: 'pointer',
     fontSize: '18px',
     padding: '0 4px'

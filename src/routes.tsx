@@ -57,12 +57,25 @@ const CodeAssistantPage = lazy(() => import('./pages/CodeAssistantPage'));
 const CodePlayground = lazy(() => import('./pages/CodePlayground'));
 const FluentDemoPage = lazy(() => import('./pages/FluentDemoPage'));
 
-// Loading component
+// Loading component - AudioReader Studio style
 const PageLoader = () => (
-  <div className="min-h-screen flex items-center justify-center bg-slate-950">
-    <div className="flex flex-col items-center gap-4">
-      <div className="w-12 h-12 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
-      <p className="text-slate-400">Chargement...</p>
+  <div style={{
+    minHeight: '100%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'var(--bg-deep, #0a0a0f)',
+  }}>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
+      <div style={{
+        width: '48px',
+        height: '48px',
+        border: '4px solid rgba(245, 166, 35, 0.2)',
+        borderTopColor: 'var(--color-accent, #f5a623)',
+        borderRadius: '50%',
+        animation: 'spin 1s linear infinite',
+      }} />
+      <p style={{ color: 'var(--text-muted, #6a6a82)', fontSize: '14px' }}>Chargement...</p>
     </div>
   </div>
 );
@@ -224,6 +237,27 @@ export const routes: RouteObject[] = [
       
       // IT-002: Beautiful routes removed - using unified Office theme
       // Old *-beautiful routes now redirect to main pages with Office styling
+
+      // Catch-all 404
+      {
+        path: '*',
+        element: (
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            height: '100%',
+            flexDirection: 'column',
+            gap: '16px',
+          }}>
+            <span style={{ fontSize: '48px', fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--color-accent)' }}>404</span>
+            <p style={{ fontSize: '16px', color: 'var(--text-secondary)', margin: 0 }}>Page introuvable</p>
+            <a href="/" style={{ fontSize: '14px', color: 'var(--color-accent)', textDecoration: 'none' }}>
+              Retour au chat
+            </a>
+          </div>
+        ),
+      },
     ],
   },
 ];

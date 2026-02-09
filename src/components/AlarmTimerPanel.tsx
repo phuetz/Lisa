@@ -39,9 +39,9 @@ export default function AlarmTimerPanel() {
         position: 'absolute',
         left: 10,
         bottom: 10,
-        background: 'var(--bg-elevated, #2f2f2f)',
-        color: 'var(--text-primary, #ececec)',
-        border: '1px solid var(--border-primary, #424242)',
+        background: 'var(--bg-panel, #1a1a26)',
+        color: 'var(--text-primary, #e8e8f0)',
+        border: '1px solid var(--border-primary, #2d2d44)',
         padding: 10,
         borderRadius: 'var(--radius-md, 8px)',
         fontSize: 12,
@@ -49,12 +49,12 @@ export default function AlarmTimerPanel() {
       }}>
       {alarms.length > 0 && (
         <div>
-          <strong style={{ color: 'var(--text-secondary, #b4b4b4)' }}>{t('alarms')}</strong>
+          <strong style={{ color: 'var(--text-secondary, #9898b0)' }}>{t('alarms')}</strong>
           <ul style={{ listStyle: 'none', padding: 0, margin: '4px 0 0 0' }}>
             {alarms.map((a) => (
               <li role="listitem" key={a.id} style={{ padding: '2px 0', display: 'flex', alignItems: 'center', gap: 6 }}>
                 <span>{new Date(a.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                {a.triggered && <span aria-label="Terminé" style={{ color: 'var(--color-brand, #10a37f)' }}>✓</span>}
+                {a.triggered && <span aria-label="Terminé" style={{ color: 'var(--color-accent, #f5a623)' }}>✓</span>}
                 <button aria-label={t('delete')} onClick={() => cancelAlarm(a.id)} className="msg-action-btn" style={{ fontSize: 10, padding: '2px 4px', minWidth: 'auto', width: 'auto', height: 'auto' }}>✕</button>
               </li>
             ))}
@@ -63,12 +63,12 @@ export default function AlarmTimerPanel() {
       )}
       {timers.length > 0 && (
         <div style={{ marginTop: alarms.length > 0 ? 8 : 0 }}>
-          <strong style={{ color: 'var(--text-secondary, #b4b4b4)' }}>{t('timers')}</strong>
+          <strong style={{ color: 'var(--text-secondary, #9898b0)' }}>{t('timers')}</strong>
           <ul style={{ listStyle: 'none', padding: 0, margin: '4px 0 0 0' }}>
             {timers.map((timer) => (
               <li role="listitem" key={timer.id} style={{ padding: '2px 0', display: 'flex', alignItems: 'center', gap: 6 }}>
                 <span>{Math.max(0, Math.ceil((timer.finish - Date.now()) / 1000))}s</span>
-                {timer.triggered && <span aria-label="Terminé" style={{ color: 'var(--color-brand, #10a37f)' }}>✓</span>}
+                {timer.triggered && <span aria-label="Terminé" style={{ color: 'var(--color-accent, #f5a623)' }}>✓</span>}
                 <button aria-label={t('delete')} onClick={() => cancelTimer(timer.id)} className="msg-action-btn" style={{ fontSize: 10, padding: '2px 4px', minWidth: 'auto', width: 'auto', height: 'auto' }}>✕</button>
               </li>
             ))}

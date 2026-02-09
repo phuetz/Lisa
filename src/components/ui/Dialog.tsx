@@ -44,18 +44,18 @@ export const Dialog = ({
       {/* Dialog */}
       <div 
         className={cn(
-          'relative w-full mx-4 bg-[#1a1a1a] border border-[#404040] rounded-xl shadow-2xl',
+          'relative w-full mx-4 bg-[#1a1a26] border border-[#2d2d44] rounded-xl shadow-2xl',
           sizes[size],
           className
         )}
       >
         {/* Header */}
         {title && (
-          <div className="flex items-center justify-between p-6 border-b border-[#404040]">
+          <div className="flex items-center justify-between p-6 border-b border-[#2d2d44]">
             <h2 className="text-xl font-semibold text-white">{title}</h2>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-[#2a2a2a] rounded-lg transition-colors text-gray-400 hover:text-white"
+              className="p-2 hover:bg-[#12121a] rounded-lg transition-colors text-gray-400 hover:text-white"
             >
               <X size={20} />
             </button>
@@ -79,7 +79,7 @@ interface DialogFooterProps {
 export const DialogFooter = ({ children, className }: DialogFooterProps) => {
   return (
     <div className={cn(
-      'flex items-center justify-end gap-3 px-6 py-4 border-t border-[#404040] bg-[#0a0a0a]',
+      'flex items-center justify-end gap-3 px-6 py-4 border-t border-[#2d2d44] bg-[#0a0a0f]',
       className
     )}>
       {children}

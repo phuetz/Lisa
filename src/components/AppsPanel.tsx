@@ -22,14 +22,14 @@ export default function AppsPanel() {
       width: 250,
       maxHeight: 300,
       overflow: 'auto',
-      background: 'var(--bg-elevated, #2f2f2f)',
-      color: 'var(--text-primary, #ececec)',
-      border: '1px solid var(--border-primary, #424242)',
+      background: 'var(--bg-panel, #1a1a26)',
+      color: 'var(--text-primary, #e8e8f0)',
+      border: '1px solid var(--border-primary, #2d2d44)',
       borderRadius: 'var(--radius-md, 8px)',
       padding: 10,
       boxShadow: 'var(--shadow-elevated, 0 4px 20px rgba(0,0,0,0.4))',
     }}>
-      <h4 style={{ margin: '4px 0', color: 'var(--text-primary, #ececec)' }}>{t('mcp_resources')}</h4>
+      <h4 style={{ margin: '4px 0', color: 'var(--text-primary, #e8e8f0)' }}>{t('mcp_resources')}</h4>
       <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
         {resources.map((r) => (
           <li
@@ -58,7 +58,7 @@ export default function AppsPanel() {
             onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
           >
             <strong>{r.name ?? r.uri}</strong>
-            {r.type && <span style={{ color: 'var(--text-muted, #666)' }}> ({r.type})</span>}
+            {r.type && <span style={{ color: 'var(--text-muted, #6a6a82)' }}> ({r.type})</span>}
           </li>
         ))}
       </ul>

@@ -26,6 +26,12 @@ const CodeAssistantPage = lazy(() => import('../pages/CodeAssistantPage'));
 const CodePlayground = lazy(() => import('../pages/CodePlayground'));
 const NotebookPage = lazy(() => import('../pages/NotebookPage'));
 const GatewayPage = lazy(() => import('../pages/GatewayPage'));
+const PersonaPage = lazy(() => import('../pages/PersonaPage'));
+const SensesDashboard = lazy(() => import('../components/SensesDashboard'));
+const GrokCliPage = lazy(() => import('../pages/GrokCliPage'));
+
+// Eager import (non-lazy) for MonitoringPage
+import { MonitoringPage } from '../pages/MonitoringPage';
 
 export const router = createBrowserRouter([
   {
@@ -141,10 +147,38 @@ export const router = createBrowserRouter([
         ),
       },
       {
-        path: 'code',
+        path: 'playground',
         element: (
           <Suspense fallback={<LoadingFallback />}>
             <CodePlayground />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'personas',
+        element: (
+          <Suspense fallback={<LoadingFallback />}>
+            <PersonaPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'monitoring',
+        element: <MonitoringPage />,
+      },
+      {
+        path: 'senses',
+        element: (
+          <Suspense fallback={<LoadingFallback />}>
+            <SensesDashboard />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'grok-cli',
+        element: (
+          <Suspense fallback={<LoadingFallback />}>
+            <GrokCliPage />
           </Suspense>
         ),
       },

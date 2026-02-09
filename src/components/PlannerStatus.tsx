@@ -27,14 +27,14 @@ const PlannerStatus: React.FC = () => {
 
   if (plan.length === 0) {
     return (
-      <div className="fixed bottom-4 right-4 p-4 rounded-lg max-w-md w-full animate-pulse" style={{ background: 'var(--bg-elevated, #2f2f2f)', color: 'var(--text-primary, #ececec)', border: '1px solid var(--border-primary, #424242)', boxShadow: 'var(--shadow-elevated)' }}>
+      <div className="fixed bottom-4 right-4 p-4 rounded-lg max-w-md w-full animate-pulse" style={{ background: 'var(--bg-panel, #1a1a26)', color: 'var(--text-primary, #e8e8f0)', border: '1px solid var(--border-primary, #2d2d44)', boxShadow: 'var(--shadow-elevated)' }}>
         <p className="text-lg font-semibold">Lisa réfléchit...</p>
       </div>
     );
   }
 
   return (
-    <div className="fixed bottom-4 right-4 p-4 rounded-lg max-w-md w-full z-50" role="region" aria-label="Plan d'exécution" style={{ background: 'var(--bg-elevated, #2f2f2f)', color: 'var(--text-primary, #ececec)', border: '1px solid var(--border-primary, #424242)', boxShadow: 'var(--shadow-elevated)' }}>
+    <div className="fixed bottom-4 right-4 p-4 rounded-lg max-w-md w-full z-50" role="region" aria-label="Plan d'exécution" style={{ background: 'var(--bg-panel, #1a1a26)', color: 'var(--text-primary, #e8e8f0)', border: '1px solid var(--border-primary, #2d2d44)', boxShadow: 'var(--shadow-elevated)' }}>
       <div className="flex justify-between items-center mb-2">
         <h3 className="text-lg font-semibold">Plan d'exécution</h3>
         <button
@@ -48,7 +48,7 @@ const PlannerStatus: React.FC = () => {
       </div>
       <ul className="space-y-2 text-sm max-h-60 overflow-y-auto">
         {plan.map((step: WorkflowStep) => (
-          <li key={step.id} className="flex items-center justify-between p-2 rounded" style={{ background: 'var(--bg-secondary, #2d2d2d)' }}>
+          <li key={step.id} className="flex items-center justify-between p-2 rounded" style={{ background: 'var(--bg-surface, #12121a)' }}>
             <div className="flex-1">
               <div className="flex items-center">
                 <span className="mr-2 text-lg" aria-hidden="true">{statusIcon[step.status]}</span>
@@ -58,10 +58,10 @@ const PlannerStatus: React.FC = () => {
                 <p className="text-xs mt-1 pl-6" style={{ color: 'var(--color-error, #ef4444)' }}>Erreur: {step.error}</p>
               )}
               {step.status === 'completed' && step.output && (
-                <div className="text-xs mt-1 pl-6" style={{ color: 'var(--color-brand, #10a37f)' }}>
+                <div className="text-xs mt-1 pl-6" style={{ color: 'var(--color-accent, #f5a623)' }}>
                   <span className="font-semibold">Résultat:</span>
                   {typeof step.output === 'object' ? (
-                    <pre className="mt-1 p-2 rounded text-xs overflow-x-auto max-h-32" style={{ background: 'var(--bg-surface, #0d0d0d)' }}>
+                    <pre className="mt-1 p-2 rounded text-xs overflow-x-auto max-h-32" style={{ background: 'var(--bg-surface, #0a0a0f)' }}>
                       {formatOutput(step.output)}
                     </pre>
                   ) : (
@@ -71,7 +71,7 @@ const PlannerStatus: React.FC = () => {
               )}
             </div>
             {step.duration && (
-              <span className="text-xs ml-2" style={{ color: 'var(--text-muted, #666)' }}>{step.duration.toFixed(2)}s</span>
+              <span className="text-xs ml-2" style={{ color: 'var(--text-muted, #6a6a82)' }}>{step.duration.toFixed(2)}s</span>
             )}
           </li>
         ))}

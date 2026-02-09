@@ -221,37 +221,37 @@ export function DesktopPanel() {
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  container: { backgroundColor: '#1a1a1a', borderRadius: '12px', padding: '24px', color: '#fff' },
+  container: { backgroundColor: '#1a1a26', borderRadius: '12px', padding: '24px', color: '#fff' },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' },
   title: { margin: 0, fontSize: '20px', fontWeight: 600 },
   statusBadge: { padding: '4px 12px', borderRadius: '12px', fontSize: '12px' },
   warning: { padding: '12px 16px', backgroundColor: '#422006', border: '1px solid #854d0e', borderRadius: '8px', marginBottom: '20px', fontSize: '13px', color: '#fef3c7' },
   section: { marginTop: '20px' },
-  sectionTitle: { fontSize: '14px', fontWeight: 600, color: '#888', marginBottom: '12px', textTransform: 'uppercase' },
+  sectionTitle: { fontSize: '14px', fontWeight: 600, color: '#6a6a82', marginBottom: '12px', textTransform: 'uppercase' },
   positionDisplay: { padding: '12px', backgroundColor: '#252525', borderRadius: '8px', marginBottom: '12px', fontSize: '14px' },
   coordInputs: { display: 'flex', gap: '8px', marginBottom: '12px' },
-  coordInput: { flex: 1, padding: '10px 14px', backgroundColor: '#252525', border: '1px solid #333', borderRadius: '6px', color: '#fff', fontSize: '14px' },
+  coordInput: { flex: 1, padding: '10px 14px', backgroundColor: '#252525', border: '1px solid #2d2d44', borderRadius: '6px', color: '#fff', fontSize: '14px' },
   mouseActions: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' },
   actionBtn: { padding: '12px 8px', backgroundColor: '#252525', border: 'none', borderRadius: '8px', color: '#fff', fontSize: '12px', cursor: 'pointer' },
   scrollActions: { display: 'flex', gap: '8px', marginTop: '8px' },
   scrollBtn: { flex: 1, padding: '10px', backgroundColor: '#252525', border: 'none', borderRadius: '6px', color: '#fff', fontSize: '12px', cursor: 'pointer' },
   typeInput: { display: 'flex', gap: '8px', marginBottom: '12px' },
-  textInput: { flex: 1, padding: '12px 16px', backgroundColor: '#252525', border: '1px solid #333', borderRadius: '8px', color: '#fff', fontSize: '14px' },
+  textInput: { flex: 1, padding: '12px 16px', backgroundColor: '#252525', border: '1px solid #2d2d44', borderRadius: '8px', color: '#fff', fontSize: '14px' },
   typeBtn: { padding: '12px 20px', backgroundColor: '#3b82f6', border: 'none', borderRadius: '8px', color: '#fff', cursor: 'pointer' },
   hotkeys: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' },
   hotkeyBtn: { padding: '10px 8px', backgroundColor: '#252525', border: 'none', borderRadius: '6px', color: '#fff', fontSize: '12px', cursor: 'pointer' },
   quickActions: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' },
   quickBtn: { padding: '14px 8px', backgroundColor: '#1e3a5f', border: 'none', borderRadius: '8px', color: '#fff', fontSize: '12px', cursor: 'pointer' },
   historyList: { display: 'flex', flexDirection: 'column', gap: '4px', maxHeight: '120px', overflowY: 'auto' },
-  emptyState: { padding: '16px', textAlign: 'center', color: '#666' },
+  emptyState: { padding: '16px', textAlign: 'center', color: '#6a6a82' },
   historyItem: { display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 12px', backgroundColor: '#252525', borderRadius: '6px', fontSize: '12px' },
   historyStatus: { fontWeight: 600 },
   historyType: { flex: 1 },
-  historyTime: { color: '#666', fontSize: '11px' },
-  stats: { display: 'flex', gap: '16px', marginTop: '20px', paddingTop: '16px', borderTop: '1px solid #333' },
+  historyTime: { color: '#6a6a82', fontSize: '11px' },
+  stats: { display: 'flex', gap: '16px', marginTop: '20px', paddingTop: '16px', borderTop: '1px solid #2d2d44' },
   statItem: { flex: 1, textAlign: 'center' },
   statValue: { display: 'block', fontSize: '16px', fontWeight: 600, color: '#3b82f6' },
-  statLabel: { fontSize: '11px', color: '#888' }
+  statLabel: { fontSize: '11px', color: '#6a6a82' }
 };
 
 export default DesktopPanel;

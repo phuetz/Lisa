@@ -3,8 +3,6 @@
  */
 
 import { useState, useCallback } from 'react';
-import { OfficePageLayout } from '../components/layout/OfficePageLayout';
-import { useOfficeThemeStore } from '../store/officeThemeStore';
 import {
   Code, Play, AlertTriangle, CheckCircle, Info,
   FileCode, TestTube, Zap, Copy, RefreshCw
@@ -16,23 +14,7 @@ import {
   type CodeSuggestion
 } from '../services/CodeAssistantService';
 
-interface ThemeColors {
-  sidebar: string;
-  sidebarHover: string;
-  sidebarActive: string;
-  editor: string;
-  editorText: string;
-  editorSecondary: string;
-  dialog: string;
-  border: string;
-  accent: string;
-  success: string;
-  error: string;
-  inputBg: string;
-  inputBorder: string;
-}
-
-const IssueItem = ({ issue, colors }: { issue: CodeIssue; colors: ThemeColors }) => {
+const IssueItem = ({ issue }: { issue: CodeIssue }) => {
   const severityColors = {
     critical: { color: '#ef4444', bg: '#ef444420' },
     major: { color: '#f59e0b', bg: '#f59e0b20' },
@@ -62,15 +44,15 @@ const IssueItem = ({ issue, colors }: { issue: CodeIssue; colors: ThemeColors })
     >
       <Icon size={16} color={sColors.color} style={{ marginTop: '2px', flexShrink: 0 }} />
       <div style={{ flex: 1 }}>
-        <p style={{ fontSize: '13px', color: colors.editorText, margin: 0 }}>
+        <p style={{ fontSize: '13px', color: 'var(--text-primary)', margin: 0 }}>
           {issue.message}
         </p>
         <div style={{ display: 'flex', gap: '12px', marginTop: '6px' }}>
-          <span style={{ fontSize: '11px', color: colors.editorSecondary }}>
+          <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
             Ligne {issue.line}
           </span>
           {issue.rule && (
-            <span style={{ fontSize: '11px', color: colors.editorSecondary, opacity: 0.7 }}>
+            <span style={{ fontSize: '11px', color: 'var(--text-secondary)', opacity: 0.7 }}>
               {issue.rule}
             </span>
           )}
@@ -80,10 +62,10 @@ const IssueItem = ({ issue, colors }: { issue: CodeIssue; colors: ThemeColors })
   );
 };
 
-const SuggestionItem = ({ suggestion, colors }: { suggestion: CodeSuggestion; colors: ThemeColors }) => {
+const SuggestionItem = ({ suggestion }: { suggestion: CodeSuggestion }) => {
   const typeColors: Record<string, string> = {
     refactor: '#8b5cf6',
-    performance: '#10a37f',
+    performance: '#f5a623',
     security: '#ef4444',
     style: '#3b82f6',
     test: '#f59e0b',
@@ -93,9 +75,9 @@ const SuggestionItem = ({ suggestion, colors }: { suggestion: CodeSuggestion; co
     <div
       style={{
         padding: '14px',
-        backgroundColor: colors.sidebar,
+        backgroundColor: 'var(--bg-panel)',
         borderRadius: '10px',
-        borderLeft: `3px solid ${typeColors[suggestion.type] || colors.editorSecondary}`,
+        borderLeft: `3px solid ${typeColors[suggestion.type] || 'var(--text-secondary)'}`,
         marginBottom: '10px',
       }}
     >
@@ -113,22 +95,22 @@ const SuggestionItem = ({ suggestion, colors }: { suggestion: CodeSuggestion; co
         >
           {suggestion.type}
         </span>
-        <span style={{ fontSize: '14px', fontWeight: 500, color: colors.editorText }}>
+        <span style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text-primary)' }}>
           {suggestion.title}
         </span>
       </div>
-      <p style={{ fontSize: '13px', color: colors.editorSecondary, margin: 0, lineHeight: 1.5 }}>
+      <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5 }}>
         {suggestion.description}
       </p>
     </div>
   );
 };
 
-const MetricsDisplay = ({ metrics, colors }: { metrics: CodeReview['metrics']; colors: ThemeColors }) => {
+const MetricsDisplay = ({ metrics }: { metrics: CodeReview['metrics'] }) => {
   if (!metrics) return null;
 
   const getColor = (value: number, thresholds: [number, number]) => {
-    if (value >= thresholds[1]) return '#10a37f';
+    if (value >= thresholds[1]) return '#f5a623';
     if (value >= thresholds[0]) return '#f59e0b';
     return '#ef4444';
   };
@@ -142,18 +124,18 @@ const MetricsDisplay = ({ metrics, colors }: { metrics: CodeReview['metrics']; c
     }}>
       <div style={{
         padding: '16px',
-        backgroundColor: colors.sidebar,
+        backgroundColor: 'var(--bg-panel)',
         borderRadius: '10px',
         textAlign: 'center',
       }}>
-        <p style={{ fontSize: '24px', fontWeight: 600, color: colors.editorText, margin: 0 }}>
+        <p style={{ fontSize: '24px', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
           {metrics.linesOfCode}
         </p>
-        <p style={{ fontSize: '12px', color: colors.editorSecondary, marginTop: '4px' }}>Lignes de code</p>
+        <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px' }}>Lignes de code</p>
       </div>
       <div style={{
         padding: '16px',
-        backgroundColor: colors.sidebar,
+        backgroundColor: 'var(--bg-panel)',
         borderRadius: '10px',
         textAlign: 'center',
       }}>
@@ -165,11 +147,11 @@ const MetricsDisplay = ({ metrics, colors }: { metrics: CodeReview['metrics']; c
         }}>
           {metrics.complexity}
         </p>
-        <p style={{ fontSize: '12px', color: colors.editorSecondary, marginTop: '4px' }}>Complexite</p>
+        <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px' }}>Complexite</p>
       </div>
       <div style={{
         padding: '16px',
-        backgroundColor: colors.sidebar,
+        backgroundColor: 'var(--bg-panel)',
         borderRadius: '10px',
         textAlign: 'center',
       }}>
@@ -181,7 +163,7 @@ const MetricsDisplay = ({ metrics, colors }: { metrics: CodeReview['metrics']; c
         }}>
           {metrics.maintainability}%
         </p>
-        <p style={{ fontSize: '12px', color: colors.editorSecondary, marginTop: '4px' }}>Maintenabilite</p>
+        <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px' }}>Maintenabilite</p>
       </div>
     </div>
   );
@@ -193,9 +175,6 @@ export default function CodeAssistantPage() {
   const [review, setReview] = useState<CodeReview | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [activeTab, setActiveTab] = useState<'issues' | 'suggestions'>('issues');
-
-  const { getCurrentColors } = useOfficeThemeStore();
-  const colors = getCurrentColors();
 
   const handleAnalyze = useCallback(async () => {
     if (!code.trim()) return;
@@ -232,10 +211,11 @@ export async function fetchUserData(userId: string) {
 }`;
 
   return (
-    <OfficePageLayout
-      title="Assistant Code"
-      subtitle="Review de code, analyse statique et generation de tests"
-    >
+    <div style={{ padding: '24px' }}>
+      <div style={{ marginBottom: '24px' }}>
+        <h1 style={{ fontSize: '24px', fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 4px 0' }}>Assistant Code</h1>
+        <p style={{ fontSize: '14px', color: 'var(--text-secondary)', margin: 0 }}>Review de code, analyse statique et generation de tests</p>
+      </div>
       <div style={{
         display: 'grid',
         gridTemplateColumns: '1fr 1fr',
@@ -244,10 +224,10 @@ export async function fetchUserData(userId: string) {
         {/* Code Input */}
         <div
           style={{
-            backgroundColor: colors.dialog,
+            backgroundColor: 'var(--bg-surface)',
             borderRadius: '12px',
             padding: '20px',
-            border: `1px solid ${colors.border}`,
+            border: '1px solid var(--border-primary)',
           }}
         >
           <div style={{
@@ -257,7 +237,7 @@ export async function fetchUserData(userId: string) {
             marginBottom: '12px',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <FileCode size={18} color={colors.editorSecondary} />
+              <FileCode size={18} color="var(--text-secondary)" />
               <input
                 type="text"
                 value={filename}
@@ -265,10 +245,10 @@ export async function fetchUserData(userId: string) {
                 placeholder="filename.ts"
                 style={{
                   padding: '6px 10px',
-                  backgroundColor: colors.inputBg,
-                  border: `1px solid ${colors.inputBorder}`,
+                  backgroundColor: 'var(--bg-panel)',
+                  border: '1px solid var(--border-primary)',
                   borderRadius: '6px',
-                  color: colors.editorText,
+                  color: 'var(--text-primary)',
                   fontSize: '13px',
                   width: '150px',
                 }}
@@ -280,11 +260,11 @@ export async function fetchUserData(userId: string) {
                 aria-label="Copier le code"
                 style={{
                   padding: '8px',
-                  backgroundColor: colors.sidebar,
+                  backgroundColor: 'var(--bg-panel)',
                   border: 'none',
                   borderRadius: '6px',
                   cursor: 'pointer',
-                  color: colors.editorSecondary,
+                  color: 'var(--text-secondary)',
                 }}
               >
                 <Copy size={16} />
@@ -293,11 +273,11 @@ export async function fetchUserData(userId: string) {
                 onClick={() => setCode(exampleCode)}
                 style={{
                   padding: '6px 12px',
-                  backgroundColor: colors.sidebar,
+                  backgroundColor: 'var(--bg-panel)',
                   border: 'none',
                   borderRadius: '6px',
                   cursor: 'pointer',
-                  color: colors.editorSecondary,
+                  color: 'var(--text-secondary)',
                   fontSize: '12px',
                 }}
               >
@@ -314,10 +294,10 @@ export async function fetchUserData(userId: string) {
               width: '100%',
               height: '400px',
               padding: '14px',
-              backgroundColor: colors.sidebar,
-              border: `1px solid ${colors.border}`,
+              backgroundColor: 'var(--bg-panel)',
+              border: '1px solid var(--border-primary)',
               borderRadius: '8px',
-              color: colors.editorText,
+              color: 'var(--text-primary)',
               fontSize: '13px',
               fontFamily: 'monospace',
               resize: 'none',
@@ -336,8 +316,8 @@ export async function fetchUserData(userId: string) {
                 justifyContent: 'center',
                 gap: '8px',
                 padding: '12px',
-                backgroundColor: isAnalyzing || !code.trim() ? colors.sidebarHover : colors.accent,
-                color: '#fff',
+                backgroundColor: isAnalyzing || !code.trim() ? 'var(--bg-hover)' : 'var(--color-accent)',
+                color: 'var(--bg-deep)',
                 border: 'none',
                 borderRadius: '8px',
                 cursor: isAnalyzing || !code.trim() ? 'not-allowed' : 'pointer',
@@ -362,9 +342,9 @@ export async function fetchUserData(userId: string) {
                 justifyContent: 'center',
                 gap: '8px',
                 padding: '12px 16px',
-                backgroundColor: colors.sidebar,
-                color: colors.editorText,
-                border: `1px solid ${colors.border}`,
+                backgroundColor: 'var(--bg-panel)',
+                color: 'var(--text-primary)',
+                border: '1px solid var(--border-primary)',
                 borderRadius: '8px',
                 cursor: !code.trim() ? 'not-allowed' : 'pointer',
                 fontSize: '14px',
@@ -380,10 +360,10 @@ export async function fetchUserData(userId: string) {
         {/* Results */}
         <div
           style={{
-            backgroundColor: colors.dialog,
+            backgroundColor: 'var(--bg-surface)',
             borderRadius: '12px',
             padding: '20px',
-            border: `1px solid ${colors.border}`,
+            border: '1px solid var(--border-primary)',
           }}
         >
           <div style={{
@@ -392,8 +372,8 @@ export async function fetchUserData(userId: string) {
             gap: '10px',
             marginBottom: '16px',
           }}>
-            <Zap size={18} color="#10a37f" />
-            <h3 style={{ fontSize: '16px', fontWeight: 600, color: colors.editorText, margin: 0 }}>
+            <Zap size={18} color="#f5a623" />
+            <h3 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
               Resultats
             </h3>
           </div>
@@ -401,22 +381,22 @@ export async function fetchUserData(userId: string) {
           {review ? (
             <>
               {/* Metrics */}
-              <MetricsDisplay metrics={review.metrics} colors={colors} />
+              <MetricsDisplay metrics={review.metrics} />
 
               {/* Tabs */}
               <div style={{
                 display: 'flex',
                 gap: '8px',
                 marginBottom: '16px',
-                borderBottom: `1px solid ${colors.border}`,
+                borderBottom: '1px solid var(--border-primary)',
                 paddingBottom: '12px',
               }}>
                 <button
                   onClick={() => setActiveTab('issues')}
                   style={{
                     padding: '8px 14px',
-                    backgroundColor: activeTab === 'issues' ? colors.accent : 'transparent',
-                    color: activeTab === 'issues' ? '#fff' : colors.editorSecondary,
+                    backgroundColor: activeTab === 'issues' ? 'var(--color-accent)' : 'transparent',
+                    color: activeTab === 'issues' ? 'var(--bg-deep)' : 'var(--text-secondary)',
                     border: 'none',
                     borderRadius: '6px',
                     cursor: 'pointer',
@@ -429,8 +409,8 @@ export async function fetchUserData(userId: string) {
                   onClick={() => setActiveTab('suggestions')}
                   style={{
                     padding: '8px 14px',
-                    backgroundColor: activeTab === 'suggestions' ? colors.accent : 'transparent',
-                    color: activeTab === 'suggestions' ? '#fff' : colors.editorSecondary,
+                    backgroundColor: activeTab === 'suggestions' ? 'var(--color-accent)' : 'transparent',
+                    color: activeTab === 'suggestions' ? 'var(--bg-deep)' : 'var(--text-secondary)',
                     border: 'none',
                     borderRadius: '6px',
                     cursor: 'pointer',
@@ -446,11 +426,11 @@ export async function fetchUserData(userId: string) {
                 {activeTab === 'issues' && (
                   review.issues.length > 0 ? (
                     review.issues.map((issue, i) => (
-                      <IssueItem key={i} issue={issue} colors={colors} />
+                      <IssueItem key={i} issue={issue} />
                     ))
                   ) : (
-                    <div style={{ textAlign: 'center', padding: '40px', color: colors.editorSecondary }}>
-                      <CheckCircle size={32} color="#10a37f" style={{ marginBottom: '12px' }} />
+                    <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)' }}>
+                      <CheckCircle size={32} color="#f5a623" style={{ marginBottom: '12px' }} />
                       <p style={{ margin: 0 }}>Aucun probleme detecte</p>
                     </div>
                   )
@@ -459,11 +439,11 @@ export async function fetchUserData(userId: string) {
                 {activeTab === 'suggestions' && (
                   review.suggestions.length > 0 ? (
                     review.suggestions.map((suggestion, i) => (
-                      <SuggestionItem key={i} suggestion={suggestion} colors={colors} />
+                      <SuggestionItem key={i} suggestion={suggestion} />
                     ))
                   ) : (
-                    <div style={{ textAlign: 'center', padding: '40px', color: colors.editorSecondary }}>
-                      <CheckCircle size={32} color="#10a37f" style={{ marginBottom: '12px' }} />
+                    <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)' }}>
+                      <CheckCircle size={32} color="#f5a623" style={{ marginBottom: '12px' }} />
                       <p style={{ margin: 0 }}>Aucune suggestion</p>
                     </div>
                   )
@@ -474,7 +454,7 @@ export async function fetchUserData(userId: string) {
             <div style={{
               textAlign: 'center',
               padding: '80px 20px',
-              color: colors.editorSecondary,
+              color: 'var(--text-secondary)',
             }}>
               <Code size={48} style={{ marginBottom: '16px', opacity: 0.5 }} />
               <p style={{ fontSize: '15px', marginBottom: '8px' }}>
@@ -496,6 +476,6 @@ export async function fetchUserData(userId: string) {
           }
         `}
       </style>
-    </OfficePageLayout>
+    </div>
   );
 }

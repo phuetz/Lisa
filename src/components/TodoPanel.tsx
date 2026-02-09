@@ -13,15 +13,15 @@ export default function TodoPanel() {
       position: 'absolute',
       right: 10,
       bottom: 10,
-      background: 'var(--bg-elevated, #2f2f2f)',
-      color: 'var(--text-primary, #ececec)',
-      border: '1px solid var(--border-primary, #424242)',
+      background: 'var(--bg-panel, #1a1a26)',
+      color: 'var(--text-primary, #e8e8f0)',
+      border: '1px solid var(--border-primary, #2d2d44)',
       padding: 10,
       borderRadius: 'var(--radius-md, 8px)',
       fontSize: 12,
       boxShadow: 'var(--shadow-elevated, 0 4px 20px rgba(0,0,0,0.4))',
     }}>
-      <strong style={{ color: 'var(--text-secondary, #b4b4b4)' }}>{t('to_do')}</strong>
+      <strong style={{ color: 'var(--text-secondary, #9898b0)' }}>{t('to_do')}</strong>
       <ul role="list" style={{ listStyle: 'none', padding: 0, margin: '4px 0 0 0' }}>
         {todos.map((todo) => (
           <li role="listitem" key={todo.id} style={{ padding: '2px 0', display: 'flex', alignItems: 'center', gap: 6 }}>

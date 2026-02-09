@@ -75,8 +75,8 @@ export function ModernDropdown({
           role="menu"
           className={`
             absolute z-50 mt-2 ${width}
-            bg-[var(--bg-elevated,#2f2f2f)] backdrop-blur-xl
-            border border-[var(--border-primary,#424242)]
+            bg-[var(--bg-panel,#1a1a26)] backdrop-blur-xl
+            border border-[var(--border-primary,#2d2d44)]
             rounded-lg shadow-2xl
             overflow-hidden
             animate-in fade-in zoom-in-95 duration-200
@@ -86,7 +86,7 @@ export function ModernDropdown({
           {items.map((item, index) => (
             <div key={item.id || index}>
               {item.divider ? (
-                <div role="separator" className="my-1 border-t border-[var(--border-primary,#424242)]" />
+                <div role="separator" className="my-1 border-t border-[var(--border-primary,#2d2d44)]" />
               ) : (
                 <button
                   role="menuitem"
@@ -100,7 +100,7 @@ export function ModernDropdown({
                       ? 'opacity-50 cursor-not-allowed'
                       : item.danger
                         ? 'text-[var(--color-error,#ef4444)] hover:bg-[var(--color-error-subtle,rgba(239,68,68,0.15))]'
-                        : 'text-[var(--text-secondary,#b4b4b4)] hover:bg-[var(--bg-hover,rgba(255,255,255,0.06))]'
+                        : 'text-[var(--text-secondary,#9898b0)] hover:bg-[var(--bg-hover,rgba(255,255,255,0.06))]'
                     }
                   `}
                 >
@@ -147,7 +147,7 @@ export function ModernSelectDropdown({
   return (
     <div className="w-full">
       {label && (
-        <label className="block text-sm font-medium text-[var(--text-secondary,#b4b4b4)] mb-2">
+        <label className="block text-sm font-medium text-[var(--text-secondary,#9898b0)] mb-2">
           {label}
         </label>
       )}
@@ -157,12 +157,12 @@ export function ModernSelectDropdown({
             disabled={disabled}
             className={`
               w-full px-4 py-2.5 rounded-lg
-              bg-[var(--bg-secondary,#2d2d2d)] backdrop-blur-sm
+              bg-[var(--bg-surface,#12121a)] backdrop-blur-sm
               border transition-all duration-200
               flex items-center justify-between
               ${error
                 ? 'border-[var(--color-error,#ef4444)] focus:ring-2 focus:ring-[var(--color-error,#ef4444)]/50'
-                : 'border-[var(--border-primary,#424242)] focus:border-[var(--color-brand,#10a37f)] focus:ring-2 focus:ring-[var(--color-brand,#10a37f)]/50'
+                : 'border-[var(--border-primary,#2d2d44)] focus:border-[var(--color-accent,#f5a623)] focus:ring-2 focus:ring-[var(--color-accent,#f5a623)]/50'
               }
               ${disabled
                 ? 'opacity-50 cursor-not-allowed'
@@ -172,7 +172,7 @@ export function ModernSelectDropdown({
           >
             <div className="flex items-center gap-2">
               {selectedOption?.icon}
-              <span className={selectedOption ? 'text-[var(--text-primary,#ececec)]' : 'text-[var(--text-muted,#666)]'}>
+              <span className={selectedOption ? 'text-[var(--text-primary,#e8e8f0)]' : 'text-[var(--text-muted,#6a6a82)]'}>
                 {selectedOption?.label || placeholder}
               </span>
             </div>

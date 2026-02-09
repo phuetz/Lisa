@@ -110,7 +110,7 @@ export const ShareButton = ({ messages, conversationId, title, size = 18 }: Shar
               bottom: '100%',
               right: 0,
               marginBottom: '8px',
-              backgroundColor: '#2d2d2d',
+              backgroundColor: '#12121a',
               borderRadius: '12px',
               padding: '8px',
               zIndex: 101,

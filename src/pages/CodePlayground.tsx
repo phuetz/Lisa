@@ -4,8 +4,6 @@
  */
 
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { OfficePageLayout } from '../components/layout/OfficePageLayout';
-import { useOfficeThemeStore } from '../store/officeThemeStore';
 import Editor from '@monaco-editor/react';
 import {
   Play, Code, Eye, Copy, Download,
@@ -37,7 +35,7 @@ interface ModeConfig {
 }
 
 const PLAYGROUND_MODES: ModeConfig[] = [
-  { id: 'web', label: 'Web', icon: <Braces size={14} />, color: '#10a37f', description: 'HTML + CSS + JS' },
+  { id: 'web', label: 'Web', icon: <Braces size={14} />, color: '#f5a623', description: 'HTML + CSS + JS' },
   { id: 'html', label: 'HTML', icon: <FileCode size={14} />, color: '#e34c26', description: 'HTML seul' },
   { id: 'css', label: 'CSS', icon: <Palette size={14} />, color: '#264de4', description: 'CSS seul' },
   { id: 'javascript', label: 'JavaScript', icon: <Braces size={14} />, color: '#f7df1e', description: 'JS seul' },
@@ -114,14 +112,14 @@ h1 {
   font-size: 2.5rem;
   color: #fff;
   margin-bottom: 10px;
-  background: linear-gradient(90deg, #10a37f, #8b5cf6);
+  background: linear-gradient(90deg, #f5a623, #8b5cf6);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
 .subtitle {
-  color: #888;
+  color: #6a6a82;
   font-size: 1.1rem;
   margin-bottom: 30px;
 }
@@ -157,7 +155,7 @@ h1 {
 }
 
 .btn {
-  background: linear-gradient(90deg, #10a37f, #059669);
+  background: linear-gradient(90deg, #f5a623, #e6951a);
   color: white;
   border: none;
   padding: 14px 32px;
@@ -166,12 +164,12 @@ h1 {
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(16, 163, 127, 0.3);
+  box-shadow: 0 4px 15px rgba(245, 166, 35, 0.3);
 }
 
 .btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(16, 163, 127, 0.4);
+  box-shadow: 0 6px 20px rgba(245, 166, 35, 0.4);
 }
 
 .btn:active {
@@ -193,8 +191,8 @@ h1 {
 }
 
 .output.active {
-  background: rgba(16, 163, 127, 0.1);
-  color: #10a37f;
+  background: rgba(245, 166, 35, 0.1);
+  color: #f5a623;
 }
 
 @keyframes pulse {
@@ -443,7 +441,7 @@ body {
 }
 
 .header p {
-  color: #888;
+  color: #6a6a82;
   margin-top: 8px;
 }
 
@@ -474,7 +472,7 @@ body {
   border: none;
   border-radius: 8px;
   cursor: pointer;
-  background: #333;
+  background: #2d2d44;
   color: #fff;
   transition: all 0.2s;
 }
@@ -497,7 +495,7 @@ body {
 .add-item input {
   flex: 1;
   padding: 12px;
-  border: 1px solid #333;
+  border: 1px solid #2d2d44;
   border-radius: 8px;
   background: #1a1a2e;
   color: #fff;
@@ -559,7 +557,7 @@ body {
 .stats {
   text-align: center;
   margin-top: 16px;
-  color: #888;
+  color: #6a6a82;
   font-size: 14px;
 }`
   }
@@ -635,11 +633,11 @@ const CSS_TABS: EditorTab[] = [
 :root {
   --primary: #264de4;
   --secondary: #8b5cf6;
-  --accent: #10a37f;
+  --accent: #f5a623;
   --bg-dark: #1a1a2e;
   --bg-card: rgba(255, 255, 255, 0.05);
   --text: #ffffff;
-  --text-muted: #888888;
+  --text-muted: #6a6a82;
 }
 
 * {
@@ -941,8 +939,6 @@ const getInitialCodeForMode = (mode: PlaygroundMode): Record<string, string> => 
 };
 
 export default function CodePlayground() {
-  const { getCurrentColors } = useOfficeThemeStore();
-  const colors = getCurrentColors();
   const [mode, setMode] = useState<PlaygroundMode>('web');
   const [activeTab, setActiveTab] = useState<string>('html');
   const [code, setCode] = useState<Record<string, string>>(getInitialCodeForMode('web'));
@@ -1065,7 +1061,7 @@ export default function CodePlayground() {
     body {
       font-family: 'Fira Code', 'JetBrains Mono', monospace;
       background: #1a1a2e;
-      color: #10a37f;
+      color: #f5a623;
       padding: 20px;
       min-height: 100vh;
     }
@@ -1181,7 +1177,7 @@ export default function CodePlayground() {
       min-height: 100vh;
     }
     #output { white-space: pre-wrap; line-height: 1.6; }
-    .log { color: #10a37f; }
+    .log { color: #f5a623; }
     .error { color: #ef4444; }
     .header { color: #f7df1e; margin-bottom: 20px; font-size: 1.2rem; }
   </style>
@@ -1237,7 +1233,7 @@ export default function CodePlayground() {
       min-height: 100vh;
     }
     #output { white-space: pre-wrap; line-height: 1.6; }
-    .log { color: #10a37f; }
+    .log { color: #f5a623; }
     .error { color: #ef4444; }
     .header { color: #3178c6; margin-bottom: 20px; font-size: 1.2rem; }
   </style>
@@ -1357,12 +1353,18 @@ export default function CodePlayground() {
   const currentTab = currentTabs.find((t: EditorTab) => t.id === activeTab) || currentTabs[0];
 
   return (
-    <OfficePageLayout title="Code Playground" subtitle="Editeur de code en temps reel">
+    <div style={{ padding: '24px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
+        <div>
+          <h1 style={{ fontSize: '24px', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Code Playground</h1>
+          <p style={{ fontSize: '14px', color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>Editeur de code en temps reel</p>
+        </div>
+      </div>
       <div style={{
         display: 'flex',
         flexDirection: 'column',
         height: 'calc(100vh - 120px)',
-        backgroundColor: '#1e1e1e',
+        backgroundColor: '#12121a',
         borderRadius: '12px',
         overflow: 'hidden',
         border: '1px solid #333',
@@ -1373,7 +1375,7 @@ export default function CodePlayground() {
           justifyContent: 'space-between',
           alignItems: 'center',
           padding: '12px 16px',
-          backgroundColor: '#0d0d0d',
+          backgroundColor: '#0a0a0f',
           borderBottom: '1px solid #333',
         }}>
           {/* Left - Logo & Title */}
@@ -1382,7 +1384,7 @@ export default function CodePlayground() {
               width: '36px',
               height: '36px',
               borderRadius: '8px',
-              background: 'linear-gradient(135deg, #10a37f, #8b5cf6)',
+              background: 'linear-gradient(135deg, #f5a623, #8b5cf6)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -1393,7 +1395,7 @@ export default function CodePlayground() {
               <h1 style={{ fontSize: '16px', fontWeight: 600, color: '#fff', margin: 0 }}>
                 Lisa Playground
               </h1>
-              <p style={{ fontSize: '11px', color: '#666', margin: 0 }}>
+              <p style={{ fontSize: '11px', color: '#6a6a82', margin: 0 }}>
                 Éditeur de code en temps réel
               </p>
             </div>
@@ -1405,11 +1407,11 @@ export default function CodePlayground() {
               onClick={() => setLayout('horizontal')}
               style={{
                 padding: '8px',
-                backgroundColor: layout === 'horizontal' ? '#333' : 'transparent',
+                backgroundColor: layout === 'horizontal' ? '#2d2d44' : 'transparent',
                 border: 'none',
                 borderRadius: '6px',
                 cursor: 'pointer',
-                color: layout === 'horizontal' ? '#fff' : '#666',
+                color: layout === 'horizontal' ? '#fff' : '#6a6a82',
               }}
               title="Vue horizontale"
             >
@@ -1419,11 +1421,11 @@ export default function CodePlayground() {
               onClick={() => setLayout('vertical')}
               style={{
                 padding: '8px',
-                backgroundColor: layout === 'vertical' ? '#333' : 'transparent',
+                backgroundColor: layout === 'vertical' ? '#2d2d44' : 'transparent',
                 border: 'none',
                 borderRadius: '6px',
                 cursor: 'pointer',
-                color: layout === 'vertical' ? '#fff' : '#666',
+                color: layout === 'vertical' ? '#fff' : '#6a6a82',
               }}
               title="Vue verticale"
             >
@@ -1433,17 +1435,17 @@ export default function CodePlayground() {
               onClick={() => setLayout('preview-only')}
               style={{
                 padding: '8px',
-                backgroundColor: layout === 'preview-only' ? '#333' : 'transparent',
+                backgroundColor: layout === 'preview-only' ? '#2d2d44' : 'transparent',
                 border: 'none',
                 borderRadius: '6px',
                 cursor: 'pointer',
-                color: layout === 'preview-only' ? '#fff' : '#666',
+                color: layout === 'preview-only' ? '#fff' : '#6a6a82',
               }}
               title="Prévisualisation seule"
             >
               <Square size={16} />
             </button>
-            <div style={{ width: '1px', height: '20px', backgroundColor: '#333', margin: '0 8px' }} />
+            <div style={{ width: '1px', height: '20px', backgroundColor: '#2d2d44', margin: '0 8px' }} />
             <button
               onClick={() => setTheme(t => t === 'vs-dark' ? 'light' : 'vs-dark')}
               style={{
@@ -1452,7 +1454,7 @@ export default function CodePlayground() {
                 border: 'none',
                 borderRadius: '6px',
                 cursor: 'pointer',
-                color: '#666',
+                color: '#6a6a82',
               }}
               title="Changer le thème"
             >
@@ -1469,11 +1471,11 @@ export default function CodePlayground() {
                 alignItems: 'center',
                 gap: '6px',
                 padding: '8px 12px',
-                backgroundColor: autoRun ? '#10a37f20' : '#333',
+                backgroundColor: autoRun ? '#f5a62320' : '#2d2d44',
                 border: 'none',
                 borderRadius: '6px',
                 cursor: 'pointer',
-                color: autoRun ? '#10a37f' : '#888',
+                color: autoRun ? '#f5a623' : '#6a6a82',
                 fontSize: '12px',
               }}
             >
@@ -1487,7 +1489,7 @@ export default function CodePlayground() {
                 alignItems: 'center',
                 gap: '6px',
                 padding: '8px 16px',
-                background: 'linear-gradient(90deg, #10a37f, #059669)',
+                background: 'linear-gradient(90deg, #f5a623, #e6951a)',
                 border: 'none',
                 borderRadius: '6px',
                 cursor: 'pointer',
@@ -1503,11 +1505,11 @@ export default function CodePlayground() {
               onClick={handleCopy}
               style={{
                 padding: '8px',
-                backgroundColor: '#333',
+                backgroundColor: '#2d2d44',
                 border: 'none',
                 borderRadius: '6px',
                 cursor: 'pointer',
-                color: '#888',
+                color: '#6a6a82',
               }}
               title="Copier le code"
             >
@@ -1517,11 +1519,11 @@ export default function CodePlayground() {
               onClick={handleDownload}
               style={{
                 padding: '8px',
-                backgroundColor: '#333',
+                backgroundColor: '#2d2d44',
                 border: 'none',
                 borderRadius: '6px',
                 cursor: 'pointer',
-                color: '#888',
+                color: '#6a6a82',
               }}
               title="Télécharger"
             >
@@ -1531,11 +1533,11 @@ export default function CodePlayground() {
               onClick={handleReset}
               style={{
                 padding: '8px',
-                backgroundColor: '#333',
+                backgroundColor: '#2d2d44',
                 border: 'none',
                 borderRadius: '6px',
                 cursor: 'pointer',
-                color: '#888',
+                color: '#6a6a82',
               }}
               title="Réinitialiser"
             >
@@ -1545,11 +1547,11 @@ export default function CodePlayground() {
               onClick={() => setIsFullscreen(!isFullscreen)}
               style={{
                 padding: '8px',
-                backgroundColor: '#333',
+                backgroundColor: '#2d2d44',
                 border: 'none',
                 borderRadius: '6px',
                 cursor: 'pointer',
-                color: '#888',
+                color: '#6a6a82',
               }}
               title="Plein écran"
             >
@@ -1578,7 +1580,7 @@ export default function CodePlayground() {
               {/* Mode Selector + Editor Tabs */}
               <div style={{
                 display: 'flex',
-                backgroundColor: '#0d0d0d',
+                backgroundColor: '#0a0a0f',
                 borderBottom: '1px solid #333',
               }}>
                 {/* Mode Selector - All Languages */}
@@ -1602,7 +1604,7 @@ export default function CodePlayground() {
                         border: 'none',
                         borderBottom: mode === m.id ? `2px solid ${m.color}` : '2px solid transparent',
                         cursor: 'pointer',
-                        color: mode === m.id ? m.color : '#666',
+                        color: mode === m.id ? m.color : '#6a6a82',
                         fontSize: '11px',
                         fontWeight: 500,
                         whiteSpace: 'nowrap',
@@ -1626,11 +1628,11 @@ export default function CodePlayground() {
                       alignItems: 'center',
                       gap: '6px',
                       padding: '10px 16px',
-                      backgroundColor: activeTab === tab.id ? '#1e1e1e' : 'transparent',
+                      backgroundColor: activeTab === tab.id ? '#12121a' : 'transparent',
                       border: 'none',
-                      borderBottom: activeTab === tab.id ? '2px solid #10a37f' : '2px solid transparent',
+                      borderBottom: activeTab === tab.id ? '2px solid #f5a623' : '2px solid transparent',
                       cursor: 'pointer',
-                      color: activeTab === tab.id ? '#fff' : '#666',
+                      color: activeTab === tab.id ? '#fff' : '#6a6a82',
                       fontSize: '13px',
                       fontWeight: activeTab === tab.id ? 500 : 400,
                       transition: 'all 0.2s ease',
@@ -1650,7 +1652,7 @@ export default function CodePlayground() {
                     alignItems: 'center',
                     gap: '6px',
                     fontSize: '11px',
-                    color: pythonReady ? '#10a37f' : pythonLoading ? '#f59e0b' : '#666',
+                    color: pythonReady ? '#f5a623' : pythonLoading ? '#f59e0b' : '#6a6a82',
                   }}>
                     {pythonLoading ? '⏳ Chargement...' : pythonReady ? '✅ Prêt' : '🐍 Python'}
                   </div>
@@ -1690,7 +1692,7 @@ export default function CodePlayground() {
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Eye size={14} color="#666" />
-                <span style={{ fontSize: '12px', color: '#666', fontWeight: 500 }}>
+                <span style={{ fontSize: '12px', color: '#6a6a82', fontWeight: 500 }}>
                   Prévisualisation
                 </span>
               </div>
@@ -1739,7 +1741,7 @@ export default function CodePlayground() {
             {showConsole && (
               <div style={{
                 height: '150px',
-                backgroundColor: '#1e1e1e',
+                backgroundColor: '#12121a',
                 borderTop: '1px solid #333',
                 overflow: 'auto',
                 padding: '8px 12px',
@@ -1750,18 +1752,18 @@ export default function CodePlayground() {
                   alignItems: 'center',
                   marginBottom: '8px',
                 }}>
-                  <span style={{ fontSize: '12px', color: '#888', fontWeight: 500 }}>
+                  <span style={{ fontSize: '12px', color: '#6a6a82', fontWeight: 500 }}>
                     Console
                   </span>
                   <button
                     onClick={() => setConsoleOutput([])}
                     style={{
                       padding: '2px 6px',
-                      backgroundColor: '#333',
+                      backgroundColor: '#2d2d44',
                       border: 'none',
                       borderRadius: '4px',
                       cursor: 'pointer',
-                      color: '#888',
+                      color: '#6a6a82',
                       fontSize: '11px',
                     }}
                   >
@@ -1774,7 +1776,7 @@ export default function CodePlayground() {
                     style={{
                       fontSize: '12px',
                       fontFamily: 'monospace',
-                      color: line.startsWith('❌') ? '#ef4444' : '#10a37f',
+                      color: line.startsWith('❌') ? '#ef4444' : '#f5a623',
                       padding: '2px 0',
                     }}
                   >
@@ -1782,7 +1784,7 @@ export default function CodePlayground() {
                   </div>
                 ))}
                 {consoleOutput.length === 0 && (
-                  <div style={{ fontSize: '12px', color: '#666' }}>
+                  <div style={{ fontSize: '12px', color: '#6a6a82' }}>
                     Les logs console s'afficheront ici...
                   </div>
                 )}
@@ -1802,7 +1804,7 @@ export default function CodePlayground() {
                 border: 'none',
                 borderTop: '1px solid #ddd',
                 cursor: 'pointer',
-                color: '#666',
+                color: '#6a6a82',
                 fontSize: '12px',
               }}
             >
@@ -1810,7 +1812,7 @@ export default function CodePlayground() {
               Console
               {consoleOutput.length > 0 && (
                 <span style={{
-                  backgroundColor: '#10a37f',
+                  backgroundColor: '#f5a623',
                   color: '#fff',
                   padding: '1px 6px',
                   borderRadius: '10px',
@@ -1830,6 +1832,6 @@ export default function CodePlayground() {
           </div>
         </div>
       </div>
-    </OfficePageLayout>
+    </div>
   );
 }

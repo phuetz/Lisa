@@ -116,12 +116,12 @@ export const ChatHeader = ({ sidebarOpen, onToggleSidebar, onToggleInfo }: ChatH
   };
 
   return (
-    <header className="border-b border-[#404040] px-6 py-4 flex items-center justify-between bg-[#1a1a1a]">
+    <header className="border-b border-[#2d2d44] px-6 py-4 flex items-center justify-between bg-[#1a1a26]">
       <div className="flex items-center gap-4">
         {!sidebarOpen && (
           <button
             onClick={onToggleSidebar}
-            className="p-2 hover:bg-[#2a2a2a] rounded-lg transition-colors text-gray-400 hover:text-white"
+            className="p-2 hover:bg-[#1a1a26] rounded-lg transition-colors text-gray-400 hover:text-white"
           >
             <Menu size={20} />
           </button>
@@ -153,7 +153,7 @@ export const ChatHeader = ({ sidebarOpen, onToggleSidebar, onToggleInfo }: ChatH
                 'p-2 rounded-lg transition-colors',
                 conversation?.pinned
                   ? 'text-blue-400 bg-blue-500/20'
-                  : 'text-gray-400 hover:bg-[#2a2a2a] hover:text-white'
+                  : 'text-gray-400 hover:bg-[#1a1a26] hover:text-white'
               )}
               title="Épingler"
             >
@@ -162,7 +162,7 @@ export const ChatHeader = ({ sidebarOpen, onToggleSidebar, onToggleInfo }: ChatH
             
             <button
               onClick={handleExportJSON}
-              className="p-2 hover:bg-[#2a2a2a] rounded-lg transition-colors text-gray-400 hover:text-white"
+              className="p-2 hover:bg-[#1a1a26] rounded-lg transition-colors text-gray-400 hover:text-white"
               title="Exporter JSON"
             >
               <Download size={18} />
@@ -170,7 +170,7 @@ export const ChatHeader = ({ sidebarOpen, onToggleSidebar, onToggleInfo }: ChatH
             
             <button
               onClick={handleExportPDF}
-              className="p-2 hover:bg-[#2a2a2a] rounded-lg transition-colors text-gray-400 hover:text-red-400"
+              className="p-2 hover:bg-[#1a1a26] rounded-lg transition-colors text-gray-400 hover:text-red-400"
               title="Exporter PDF"
             >
               <FileText size={18} />
@@ -178,7 +178,7 @@ export const ChatHeader = ({ sidebarOpen, onToggleSidebar, onToggleInfo }: ChatH
             
             <button
               onClick={handleExportMarkdown}
-              className="p-2 hover:bg-[#2a2a2a] rounded-lg transition-colors text-gray-400 hover:text-purple-400"
+              className="p-2 hover:bg-[#1a1a26] rounded-lg transition-colors text-gray-400 hover:text-purple-400"
               title="Exporter Markdown"
             >
               <FileCode size={18} />
@@ -187,24 +187,24 @@ export const ChatHeader = ({ sidebarOpen, onToggleSidebar, onToggleInfo }: ChatH
             <div className="relative">
               <button
                 onClick={() => setShowShareMenu(!showShareMenu)}
-                className="p-2 hover:bg-[#2a2a2a] rounded-lg transition-colors text-gray-400 hover:text-blue-400"
+                className="p-2 hover:bg-[#1a1a26] rounded-lg transition-colors text-gray-400 hover:text-blue-400"
                 title="Partager"
               >
                 {copied ? <Check size={18} className="text-green-400" /> : <Share2 size={18} />}
               </button>
               
               {showShareMenu && (
-                <div className="absolute right-0 top-full mt-2 bg-[#2a2a2a] rounded-lg shadow-xl border border-[#404040] py-1 z-50 min-w-[160px]">
+                <div className="absolute right-0 top-full mt-2 bg-[#1a1a26] rounded-lg shadow-xl border border-[#2d2d44] py-1 z-50 min-w-[160px]">
                   <button
                     onClick={handleCopyToClipboard}
-                    className="w-full px-4 py-2 text-left text-sm text-gray-300 hover:bg-[#3a3a3a] flex items-center gap-2"
+                    className="w-full px-4 py-2 text-left text-sm text-gray-300 hover:bg-[#2d2d44] flex items-center gap-2"
                   >
                     <Copy size={14} />
                     Copier le texte
                   </button>
                   <button
                     onClick={handleShareLink}
-                    className="w-full px-4 py-2 text-left text-sm text-gray-300 hover:bg-[#3a3a3a] flex items-center gap-2"
+                    className="w-full px-4 py-2 text-left text-sm text-gray-300 hover:bg-[#2d2d44] flex items-center gap-2"
                   >
                     <Link size={14} />
                     Créer un lien
@@ -232,7 +232,7 @@ export const ChatHeader = ({ sidebarOpen, onToggleSidebar, onToggleInfo }: ChatH
 
         <button
           onClick={onToggleInfo}
-          className="p-2 hover:bg-[#2a2a2a] rounded-lg transition-colors text-gray-400 hover:text-white"
+          className="p-2 hover:bg-[#1a1a26] rounded-lg transition-colors text-gray-400 hover:text-white"
           title="Informations"
         >
           <Info size={18} />

@@ -26,7 +26,15 @@ export interface NetworkConfig {
   lmStudioUrl: string;
   ollamaUrl: string;
   isNative: boolean;
+  isElectron: boolean;
   platform: string;
+}
+
+/**
+ * Detect if running in Electron desktop environment
+ */
+export function isRunningInElectron(): boolean {
+  return typeof window !== 'undefined' && window.electronAPI !== undefined;
 }
 
 /**
@@ -66,11 +74,16 @@ export function getLMStudioUrl(): string {
   
   console.log('[NetworkConfig] isNative:', isNative, 'hostname:', typeof window !== 'undefined' ? window.location.hostname : 'N/A');
   
-  if (isNative) {
+  if (isRunningInElectron()) {
+    // Electron: direct localhost, no proxy needed
+    const url = `http://localhost:${DEFAULT_LM_STUDIO_PORT}/v1`;
+    console.log('[NetworkConfig] Electron detected. Using LM Studio at:', url);
+    return url;
+  } else if (isNative) {
     // On mobile, use the configured host (localhost with ADB reverse, or specific LAN IP)
     const url = `http://${MOBILE_LM_STUDIO_HOST}:${DEFAULT_LM_STUDIO_PORT}/v1`;
-    console.log('[NetworkConfig] 📱 Mobile detected. Using LM Studio at:', url);
-    console.log('[NetworkConfig] 💡 If connection fails, check GUIDE_CONNEXION_MOBILE.md');
+    console.log('[NetworkConfig] Mobile detected. Using LM Studio at:', url);
+    console.log('[NetworkConfig] If connection fails, check GUIDE_CONNEXION_MOBILE.md');
     return url;
   } else {
     // On web dev server, use the Vite proxy to avoid CORS issues
@@ -100,7 +113,8 @@ export function getNetworkConfig(): NetworkConfig {
     lmStudioUrl: getLMStudioUrl(),
     ollamaUrl: getOllamaUrl(),
     isNative: isRunningOnMobile(),
-    platform: Capacitor.getPlatform()
+    isElectron: isRunningInElectron(),
+    platform: isRunningInElectron() ? 'electron' : Capacitor.getPlatform()
   };
 }
 

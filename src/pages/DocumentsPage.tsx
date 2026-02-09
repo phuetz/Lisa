@@ -3,8 +3,6 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { OfficePageLayout } from '../components/layout/OfficePageLayout';
-import { useOfficeThemeStore } from '../store/officeThemeStore';
 import {
   FileText, Upload, Search, Trash2,
   Eye, AlertCircle, Loader2
@@ -14,27 +12,11 @@ import {
   type DocumentAnalysis
 } from '../services/DocumentAnalysisService';
 
-interface ThemeColors {
-  sidebar: string;
-  sidebarHover: string;
-  sidebarActive: string;
-  editor: string;
-  editorText: string;
-  editorSecondary: string;
-  dialog: string;
-  border: string;
-  accent: string;
-  success: string;
-  error: string;
-  inputBg: string;
-  inputBorder: string;
-}
-
 const StatusBadge = ({ status }: { status: DocumentAnalysis['status'] }) => {
   const config = {
-    pending: { color: '#666', bg: '#66666620', label: 'En attente' },
+    pending: { color: '#6a6a82', bg: '#6a6a8220', label: 'En attente' },
     processing: { color: '#f59e0b', bg: '#f59e0b20', label: 'Analyse...' },
-    completed: { color: '#10a37f', bg: '#10a37f20', label: 'Termine' },
+    completed: { color: '#f5a623', bg: '#f5a62320', label: 'Termine' },
     error: { color: '#ef4444', bg: '#ef444420', label: 'Erreur' },
   };
 
@@ -60,19 +42,17 @@ const DocumentCard = ({
   doc,
   onView,
   onDelete,
-  colors
 }: {
   doc: DocumentAnalysis;
   onView: (id: string) => void;
   onDelete: (id: string) => void;
-  colors: ThemeColors;
 }) => (
   <div
     style={{
       padding: '16px',
-      backgroundColor: colors.sidebar,
+      backgroundColor: 'var(--bg-panel)',
       borderRadius: '12px',
-      border: `1px solid ${colors.border}`,
+      border: '1px solid var(--border-primary)',
       marginBottom: '12px',
     }}
   >
@@ -83,19 +63,19 @@ const DocumentCard = ({
             width: '40px',
             height: '40px',
             borderRadius: '8px',
-            backgroundColor: colors.dialog,
+            backgroundColor: 'var(--bg-surface)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
           }}
         >
-          <FileText size={20} color={colors.editorSecondary} />
+          <FileText size={20} color="var(--text-secondary)" />
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <p style={{
             fontSize: '14px',
             fontWeight: 500,
-            color: colors.editorText,
+            color: 'var(--text-primary)',
             margin: 0,
             overflow: 'hidden',
             textOverflow: 'ellipsis',
@@ -105,7 +85,7 @@ const DocumentCard = ({
           </p>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '6px' }}>
             <StatusBadge status={doc.status} />
-            <span style={{ fontSize: '12px', color: colors.editorSecondary }}>
+            <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
               {doc.content?.wordCount || 0} mots
             </span>
           </div>
@@ -120,7 +100,7 @@ const DocumentCard = ({
             backgroundColor: 'transparent',
             border: 'none',
             cursor: 'pointer',
-            color: colors.editorSecondary,
+            color: 'var(--text-secondary)',
             borderRadius: '6px',
           }}
         >
@@ -134,7 +114,7 @@ const DocumentCard = ({
             backgroundColor: 'transparent',
             border: 'none',
             cursor: 'pointer',
-            color: colors.editorSecondary,
+            color: 'var(--text-secondary)',
             borderRadius: '6px',
           }}
         >
@@ -146,9 +126,9 @@ const DocumentCard = ({
     {doc.status === 'completed' && (
       <>
         {doc.summary && (
-          <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: `1px solid ${colors.border}` }}>
-            <p style={{ fontSize: '12px', color: colors.editorSecondary, marginBottom: '4px' }}>Resume</p>
-            <p style={{ fontSize: '13px', color: colors.editorText, margin: 0, lineHeight: 1.5, opacity: 0.85 }}>
+          <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid var(--border-primary)' }}>
+            <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '4px' }}>Resume</p>
+            <p style={{ fontSize: '13px', color: 'var(--text-primary)', margin: 0, lineHeight: 1.5, opacity: 0.85 }}>
               {doc.summary.substring(0, 200)}...
             </p>
           </div>
@@ -161,8 +141,8 @@ const DocumentCard = ({
                 key={i}
                 style={{
                   padding: '4px 8px',
-                  backgroundColor: colors.dialog,
-                  color: colors.editorSecondary,
+                  backgroundColor: 'var(--bg-surface)',
+                  color: 'var(--text-secondary)',
                   borderRadius: '4px',
                   fontSize: '11px',
                 }}
@@ -175,7 +155,7 @@ const DocumentCard = ({
 
         {doc.entities && doc.entities.length > 0 && (
           <div style={{ marginTop: '12px' }}>
-            <p style={{ fontSize: '12px', color: colors.editorSecondary, marginBottom: '6px' }}>
+            <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '6px' }}>
               {doc.entities.length} entites detectees
             </p>
           </div>
@@ -203,11 +183,9 @@ const DocumentCard = ({
 const DocumentDetail = ({
   doc,
   onClose,
-  colors
 }: {
   doc: DocumentAnalysis;
   onClose: () => void;
-  colors: ThemeColors;
 }) => (
   <div
     style={{
@@ -227,23 +205,23 @@ const DocumentDetail = ({
   >
     <div
       style={{
-        backgroundColor: colors.dialog,
+        backgroundColor: 'var(--bg-surface)',
         borderRadius: '16px',
         maxWidth: '800px',
         width: '100%',
         maxHeight: '90vh',
         overflow: 'auto',
         padding: '24px',
-        border: `1px solid ${colors.border}`,
+        border: '1px solid var(--border-primary)',
       }}
       onClick={e => e.stopPropagation()}
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
         <div>
-          <h2 style={{ fontSize: '20px', fontWeight: 600, color: colors.editorText, margin: 0 }}>
+          <h2 style={{ fontSize: '20px', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
             {doc.filename}
           </h2>
-          <p style={{ fontSize: '13px', color: colors.editorSecondary, marginTop: '4px' }}>
+          <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '4px' }}>
             Analyse le {new Date(doc.timestamp).toLocaleDateString('fr-FR')}
           </p>
         </div>
@@ -251,8 +229,8 @@ const DocumentDetail = ({
           onClick={onClose}
           style={{
             padding: '8px 16px',
-            backgroundColor: colors.sidebar,
-            color: colors.editorText,
+            backgroundColor: 'var(--bg-panel)',
+            color: 'var(--text-primary)',
             border: 'none',
             borderRadius: '6px',
             cursor: 'pointer',
@@ -264,8 +242,8 @@ const DocumentDetail = ({
 
       {doc.summary && (
         <div style={{ marginBottom: '20px' }}>
-          <h3 style={{ fontSize: '14px', color: colors.editorSecondary, marginBottom: '8px' }}>Resume</h3>
-          <p style={{ fontSize: '14px', color: colors.editorText, lineHeight: 1.6, margin: 0, opacity: 0.9 }}>
+          <h3 style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '8px' }}>Resume</h3>
+          <p style={{ fontSize: '14px', color: 'var(--text-primary)', lineHeight: 1.6, margin: 0, opacity: 0.9 }}>
             {doc.summary}
           </p>
         </div>
@@ -273,7 +251,7 @@ const DocumentDetail = ({
 
       {doc.entities && doc.entities.length > 0 && (
         <div style={{ marginBottom: '20px' }}>
-          <h3 style={{ fontSize: '14px', color: colors.editorSecondary, marginBottom: '8px' }}>
+          <h3 style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '8px' }}>
             Entites Extraites ({doc.entities.length})
           </h3>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
@@ -282,14 +260,14 @@ const DocumentDetail = ({
                 key={i}
                 style={{
                   padding: '8px 12px',
-                  backgroundColor: colors.sidebar,
+                  backgroundColor: 'var(--bg-panel)',
                   borderRadius: '6px',
                 }}
               >
-                <span style={{ fontSize: '11px', color: colors.editorSecondary, textTransform: 'uppercase' }}>
+                <span style={{ fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>
                   {entity.type}
                 </span>
-                <p style={{ fontSize: '13px', color: colors.editorText, margin: '4px 0 0 0' }}>
+                <p style={{ fontSize: '13px', color: 'var(--text-primary)', margin: '4px 0 0 0' }}>
                   {entity.value}
                 </p>
               </div>
@@ -300,15 +278,15 @@ const DocumentDetail = ({
 
       {doc.keywords && doc.keywords.length > 0 && (
         <div style={{ marginBottom: '20px' }}>
-          <h3 style={{ fontSize: '14px', color: colors.editorSecondary, marginBottom: '8px' }}>Mots-cles</h3>
+          <h3 style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '8px' }}>Mots-cles</h3>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
             {doc.keywords.map((keyword, i) => (
               <span
                 key={i}
                 style={{
                   padding: '6px 10px',
-                  backgroundColor: `${colors.accent}20`,
-                  color: colors.accent,
+                  backgroundColor: 'rgba(var(--color-accent-rgb, 245, 166, 35), 0.12)',
+                  color: 'var(--color-accent)',
                   borderRadius: '4px',
                   fontSize: '12px',
                 }}
@@ -322,13 +300,13 @@ const DocumentDetail = ({
 
       {doc.content?.text && (
         <div>
-          <h3 style={{ fontSize: '14px', color: colors.editorSecondary, marginBottom: '8px' }}>
+          <h3 style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '8px' }}>
             Contenu ({doc.content.wordCount} mots)
           </h3>
           <div
             style={{
               padding: '16px',
-              backgroundColor: colors.sidebar,
+              backgroundColor: 'var(--bg-panel)',
               borderRadius: '8px',
               maxHeight: '300px',
               overflow: 'auto',
@@ -336,7 +314,7 @@ const DocumentDetail = ({
           >
             <pre style={{
               fontSize: '12px',
-              color: colors.editorText,
+              color: 'var(--text-primary)',
               margin: 0,
               whiteSpace: 'pre-wrap',
               fontFamily: 'monospace',
@@ -357,9 +335,6 @@ export default function DocumentsPage() {
   const [isUploading, setIsUploading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const { getCurrentColors } = useOfficeThemeStore();
-  const colors = getCurrentColors();
 
   useEffect(() => {
     setDocuments(documentAnalysisService.getAllAnalyses());
@@ -398,11 +373,13 @@ export default function DocumentsPage() {
   );
 
   return (
-    <OfficePageLayout
-      title="Documents"
-      subtitle={`${documents.length} documents analyses`}
-      action={
-        <>
+    <div style={{ padding: '24px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
+        <div>
+          <h1 style={{ fontSize: '24px', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Documents</h1>
+          <p style={{ fontSize: '14px', color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>{documents.length} documents analyses</p>
+        </div>
+        <div>
           <input
             ref={fileInputRef}
             type="file"
@@ -419,8 +396,8 @@ export default function DocumentsPage() {
               alignItems: 'center',
               gap: '8px',
               padding: '10px 16px',
-              backgroundColor: colors.accent,
-              color: '#fff',
+              backgroundColor: 'var(--color-accent)',
+              color: 'var(--bg-deep)',
               border: 'none',
               borderRadius: '8px',
               cursor: isUploading ? 'wait' : 'pointer',
@@ -434,9 +411,9 @@ export default function DocumentsPage() {
             )}
             {isUploading ? 'Analyse...' : 'Importer'}
           </button>
-        </>
-      }
-    >
+        </div>
+      </div>
+
       {/* Search */}
       <div style={{
         position: 'relative',
@@ -444,7 +421,7 @@ export default function DocumentsPage() {
       }}>
         <Search
           size={18}
-          color={colors.editorSecondary}
+          color="var(--text-secondary)"
           style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }}
         />
         <input
@@ -455,10 +432,10 @@ export default function DocumentsPage() {
           style={{
             width: '100%',
             padding: '12px 12px 12px 44px',
-            backgroundColor: colors.inputBg,
-            border: `1px solid ${colors.inputBorder}`,
+            backgroundColor: 'var(--bg-panel)',
+            border: '1px solid var(--border-primary)',
             borderRadius: '10px',
-            color: colors.editorText,
+            color: 'var(--text-primary)',
             fontSize: '14px',
           }}
         />
@@ -473,7 +450,6 @@ export default function DocumentsPage() {
               doc={doc}
               onView={handleView}
               onDelete={handleDelete}
-              colors={colors}
             />
           ))}
         </div>
@@ -481,7 +457,7 @@ export default function DocumentsPage() {
         <div style={{
           textAlign: 'center',
           padding: '60px 20px',
-          color: colors.editorSecondary,
+          color: 'var(--text-secondary)',
         }}>
           <FileText size={48} style={{ marginBottom: '16px', opacity: 0.5 }} />
           <p style={{ fontSize: '16px', marginBottom: '8px' }}>
@@ -498,7 +474,6 @@ export default function DocumentsPage() {
         <DocumentDetail
           doc={selectedDoc}
           onClose={() => setSelectedDoc(null)}
-          colors={colors}
         />
       )}
 
@@ -510,6 +485,6 @@ export default function DocumentsPage() {
           }
         `}
       </style>
-    </OfficePageLayout>
+    </div>
   );
 }

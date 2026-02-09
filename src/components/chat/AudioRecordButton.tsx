@@ -94,7 +94,7 @@ export const AudioRecordButton = ({ onAudioReady, onCancel, disabled }: AudioRec
         alignItems: 'center',
         gap: '12px',
         padding: '8px 16px',
-        backgroundColor: '#1a1a1a',
+        backgroundColor: '#1a1a26',
         borderRadius: '24px',
         border: '1px solid #ef4444',
       }}>
@@ -105,7 +105,7 @@ export const AudioRecordButton = ({ onAudioReady, onCancel, disabled }: AudioRec
             padding: '8px',
             backgroundColor: 'transparent',
             border: 'none',
-            color: '#888',
+            color: '#6a6a82',
             cursor: 'pointer',
             borderRadius: '50%',
           }}
@@ -124,7 +124,7 @@ export const AudioRecordButton = ({ onAudioReady, onCancel, disabled }: AudioRec
             width: '10px',
             height: '10px',
             borderRadius: '50%',
-            backgroundColor: isPaused ? '#888' : '#ef4444',
+            backgroundColor: isPaused ? '#6a6a82' : '#ef4444',
             animation: isPaused ? 'none' : 'pulse 1s infinite',
           }} />
           <span style={{
@@ -165,7 +165,7 @@ export const AudioRecordButton = ({ onAudioReady, onCancel, disabled }: AudioRec
           onClick={isPaused ? resumeRecording : pauseRecording}
           style={{
             padding: '8px',
-            backgroundColor: '#333',
+            backgroundColor: '#2d2d44',
             border: 'none',
             color: '#fff',
             cursor: 'pointer',
@@ -181,7 +181,7 @@ export const AudioRecordButton = ({ onAudioReady, onCancel, disabled }: AudioRec
           onClick={handleStopAndSend}
           style={{
             padding: '10px',
-            backgroundColor: '#10a37f',
+            backgroundColor: '#f5a623',
             border: 'none',
             color: '#fff',
             cursor: 'pointer',
@@ -207,7 +207,7 @@ export const AudioRecordButton = ({ onAudioReady, onCancel, disabled }: AudioRec
         padding: '10px',
         backgroundColor: 'transparent',
         border: 'none',
-        color: disabled ? '#444' : '#888',
+        color: disabled ? '#2d2d44' : '#6a6a82',
         cursor: disabled ? 'not-allowed' : 'pointer',
         borderRadius: '50%',
         transition: 'all 0.2s',

@@ -1,6 +1,4 @@
 import { useState } from 'react';
-import { OfficePageLayout } from '../components/layout/OfficePageLayout';
-import { useOfficeThemeStore } from '../store/officeThemeStore';
 import SystemIntegrationPanel from '../components/SystemIntegrationPanel';
 import MemoryPanel from '../components/MemoryPanel';
 import DebugPanel from '../components/DebugPanel';
@@ -8,30 +6,16 @@ import { SecurityPanel } from '../components/SecurityPanel';
 import { HealthMonitorPanel } from '../components/health';
 import { Cpu, Database, Bug, Shield, Activity, ChevronRight } from 'lucide-react';
 
-interface ThemeColors {
-  sidebar: string;
-  sidebarHover: string;
-  sidebarActive: string;
-  editor: string;
-  editorText: string;
-  editorSecondary: string;
-  dialog: string;
-  border: string;
-  accent: string;
-}
-
 const TabItem = ({
   icon: Icon,
   label,
   active,
   onClick,
-  colors
 }: {
   icon: React.ElementType;
   label: string;
   active: boolean;
   onClick: () => void;
-  colors: ThemeColors;
 }) => (
   <button
     onClick={onClick}
@@ -41,7 +25,7 @@ const TabItem = ({
       alignItems: 'center',
       justifyContent: 'space-between',
       padding: '14px 16px',
-      backgroundColor: active ? colors.sidebarActive : 'transparent',
+      backgroundColor: active ? 'rgba(245, 166, 35, 0.12)' : 'transparent',
       border: 'none',
       borderRadius: '10px',
       cursor: 'pointer',
@@ -50,18 +34,15 @@ const TabItem = ({
     }}
   >
     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-      <Icon size={20} color={active ? colors.accent : colors.editorSecondary} />
-      <span style={{ fontSize: '14px', color: active ? colors.editorText : colors.editorSecondary }}>{label}</span>
+      <Icon size={20} color={active ? 'var(--color-accent)' : 'var(--text-secondary)'} />
+      <span style={{ fontSize: '14px', color: active ? 'var(--text-primary)' : 'var(--text-secondary)' }}>{label}</span>
     </div>
-    <ChevronRight size={16} color={active ? colors.accent : colors.editorSecondary} />
+    <ChevronRight size={16} color={active ? 'var(--color-accent)' : 'var(--text-secondary)'} />
   </button>
 );
 
 export default function SystemPage() {
   const [activeTab, setActiveTab] = useState('integration');
-
-  const { getCurrentColors } = useOfficeThemeStore();
-  const colors = getCurrentColors();
 
   const tabs = [
     { id: 'integration', label: 'Integration', icon: Cpu },
@@ -72,17 +53,17 @@ export default function SystemPage() {
   ];
 
   const cardStyle = {
-    backgroundColor: colors.dialog,
+    backgroundColor: 'var(--bg-surface)',
     borderRadius: '12px',
     padding: '20px',
-    border: `1px solid ${colors.border}`,
+    border: '1px solid var(--border-primary)',
   };
 
   return (
-    <OfficePageLayout
-      title="Systeme"
-      subtitle="Configuration et monitoring du systeme"
-    >
+    <div style={{ padding: '24px' }}>
+      <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 700, color: 'var(--text-primary)' }}>Systeme</h1>
+      <p style={{ margin: '4px 0 24px', fontSize: '13px', color: 'var(--text-muted)' }}>Configuration et monitoring du systeme</p>
+
       <div style={{
         display: 'grid',
         gridTemplateColumns: '280px 1fr',
@@ -90,11 +71,11 @@ export default function SystemPage() {
       }}>
         {/* Sidebar Tabs */}
         <div style={{
-          backgroundColor: colors.sidebar,
+          backgroundColor: 'var(--bg-panel)',
           borderRadius: '12px',
           padding: '12px',
           height: 'fit-content',
-          border: `1px solid ${colors.border}`
+          border: '1px solid var(--border-primary)'
         }}>
           {tabs.map(tab => (
             <TabItem
@@ -103,7 +84,6 @@ export default function SystemPage() {
               label={tab.label}
               active={activeTab === tab.id}
               onClick={() => setActiveTab(tab.id)}
-              colors={colors}
             />
           ))}
         </div>
@@ -117,6 +97,6 @@ export default function SystemPage() {
           {activeTab === 'debug' && <DebugPanel />}
         </div>
       </div>
-    </OfficePageLayout>
+    </div>
   );
 }

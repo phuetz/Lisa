@@ -46,7 +46,7 @@ const ARTIFACT_TYPES: { type: ArtifactType; icon: React.ReactNode; label: string
       color: #fff;
       min-height: 100vh;
     }
-    h1 { color: #10a37f; }
+    h1 { color: #f5a623; }
   </style>
 </head>
 <body>
@@ -71,7 +71,7 @@ const ARTIFACT_TYPES: { type: ArtifactType; icon: React.ReactNode; label: string
       fontFamily: 'system-ui, sans-serif'
     }}>
       <h1 style={{ color: '#61dafb' }}>⚛️ React App</h1>
-      <p style={{ color: '#888' }}>Compteur: {count}</p>
+      <p style={{ color: '#6a6a82' }}>Compteur: {count}</p>
       <button 
         onClick={() => setCount(c => c + 1)}
         style={{
@@ -162,7 +162,7 @@ body {
 }
 
 h1 {
-  color: #10a37f;
+  color: #f5a623;
   text-align: center;
 }
 
@@ -176,7 +176,7 @@ h1 {
 }
 
 .btn {
-  background: linear-gradient(135deg, #10a37f 0%, #0d8a6a 100%);
+  background: linear-gradient(135deg, #f5a623 0%, #e6951a 100%);
   color: white;
   border: none;
   padding: 12px 24px;
@@ -199,8 +199,8 @@ h1 {
     template: `<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#10a37f;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#0d8a6a;stop-opacity:1" />
+      <stop offset="0%" style="stop-color:#f5a623;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#e6951a;stop-opacity:1" />
     </linearGradient>
   </defs>
   <circle cx="100" cy="100" r="80" fill="url(#grad)" />
@@ -247,7 +247,7 @@ export const ArtifactCreator = ({ onClose, onInsert }: ArtifactCreatorProps) => 
       case 'css':
         return `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>${code}</style></head><body><div class="demo-container"><h1>🎨 CSS Preview</h1><p class="subtitle">Vos styles sont appliqués</p><div class="card"><h2>Card</h2><p>Exemple de carte.</p><button class="btn">Bouton</button></div></div></body></html>`;
       case 'javascript':
-        return `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>*{margin:0;padding:0;box-sizing:border-box;}body{font-family:'Fira Code',monospace;background:#1a1a2e;color:#10a37f;padding:20px;min-height:100vh;}#output{white-space:pre-wrap;line-height:1.6;}.log{color:#10a37f;}.error{color:#ef4444;}</style></head><body><div id="output"></div><script>const output=document.getElementById('output');const _log=console.log,_error=console.error;console.log=(...args)=>{_log(...args);output.innerHTML+='<div class="log">> '+args.map(a=>typeof a==='object'?JSON.stringify(a,null,2):String(a)).join(' ')+'</div>';};console.error=(...args)=>{_error(...args);output.innerHTML+='<div class="error">❌ '+args.join(' ')+'</div>';};try{${code}}catch(e){console.error(e.message);}</script></body></html>`;
+        return `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>*{margin:0;padding:0;box-sizing:border-box;}body{font-family:'Fira Code',monospace;background:#1a1a2e;color:#f5a623;padding:20px;min-height:100vh;}#output{white-space:pre-wrap;line-height:1.6;}.log{color:#f5a623;}.error{color:#ef4444;}</style></head><body><div id="output"></div><script>const output=document.getElementById('output');const _log=console.log,_error=console.error;console.log=(...args)=>{_log(...args);output.innerHTML+='<div class="log">> '+args.map(a=>typeof a==='object'?JSON.stringify(a,null,2):String(a)).join(' ')+'</div>';};console.error=(...args)=>{_error(...args);output.innerHTML+='<div class="error">❌ '+args.join(' ')+'</div>';};try{${code}}catch(e){console.error(e.message);}</script></body></html>`;
       case 'react':
         return `<!DOCTYPE html><html><head><meta charset="UTF-8"><script src="https://unpkg.com/react@18/umd/react.development.js"></script><script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script><script src="https://unpkg.com/@babel/standalone/babel.min.js"></script><style>*{margin:0;padding:0;box-sizing:border-box;}body{font-family:'Segoe UI',system-ui,sans-serif;background:#1a1a2e;color:#fff;min-height:100vh;padding:20px;}</style></head><body><div id="root"></div><script type="text/babel">try{${code}}catch(e){document.getElementById('root').innerHTML='<div style="color:red;padding:20px;">Erreur: '+e.message+'</div>';}</script></body></html>`;
       case 'python':
@@ -277,7 +277,7 @@ export const ArtifactCreator = ({ onClose, onInsert }: ArtifactCreatorProps) => 
         width: '90%',
         maxWidth: '900px',
         maxHeight: '90vh',
-        backgroundColor: '#1e1e1e',
+        backgroundColor: '#12121a',
         borderRadius: '16px',
         overflow: 'hidden',
         display: 'flex',
@@ -292,7 +292,7 @@ export const ArtifactCreator = ({ onClose, onInsert }: ArtifactCreatorProps) => 
           borderBottom: '1px solid #333',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <Wand2 size={20} color="#10a37f" />
+            <Wand2 size={20} color="#f5a623" />
             <h2 style={{ margin: 0, fontSize: '18px', color: '#fff' }}>
               Créer un Artefact
             </h2>
@@ -303,7 +303,7 @@ export const ArtifactCreator = ({ onClose, onInsert }: ArtifactCreatorProps) => 
               padding: '8px',
               backgroundColor: 'transparent',
               border: 'none',
-              color: '#888',
+              color: '#6a6a82',
               cursor: 'pointer',
               borderRadius: '6px',
             }}
@@ -330,9 +330,9 @@ export const ArtifactCreator = ({ onClose, onInsert }: ArtifactCreatorProps) => 
                 gap: '8px',
                 padding: '10px 16px',
                 backgroundColor: selectedType === type.type ? `${type.color}20` : 'transparent',
-                border: `1px solid ${selectedType === type.type ? type.color : '#333'}`,
+                border: `1px solid ${selectedType === type.type ? type.color : '#2d2d44'}`,
                 borderRadius: '8px',
-                color: selectedType === type.type ? type.color : '#888',
+                color: selectedType === type.type ? type.color : '#6a6a82',
                 cursor: 'pointer',
                 whiteSpace: 'nowrap',
                 fontSize: '13px',
@@ -355,7 +355,7 @@ export const ArtifactCreator = ({ onClose, onInsert }: ArtifactCreatorProps) => 
             style={{
               width: '100%',
               padding: '12px 16px',
-              backgroundColor: '#0d0d0d',
+              backgroundColor: '#0a0a0f',
               border: '1px solid #333',
               borderRadius: '8px',
               color: '#fff',
@@ -370,7 +370,7 @@ export const ArtifactCreator = ({ onClose, onInsert }: ArtifactCreatorProps) => 
           gap: '4px',
           padding: '8px 20px',
           borderBottom: '1px solid #333',
-          backgroundColor: '#0d0d0d',
+          backgroundColor: '#0a0a0f',
         }}>
           <button
             onClick={() => setView('code')}
@@ -379,10 +379,10 @@ export const ArtifactCreator = ({ onClose, onInsert }: ArtifactCreatorProps) => 
               alignItems: 'center',
               gap: '6px',
               padding: '6px 12px',
-              backgroundColor: view === 'code' ? '#333' : 'transparent',
+              backgroundColor: view === 'code' ? '#2d2d44' : 'transparent',
               border: 'none',
               borderRadius: '6px',
-              color: view === 'code' ? '#fff' : '#888',
+              color: view === 'code' ? '#fff' : '#6a6a82',
               cursor: 'pointer',
               fontSize: '12px',
             }}
@@ -397,10 +397,10 @@ export const ArtifactCreator = ({ onClose, onInsert }: ArtifactCreatorProps) => 
               alignItems: 'center',
               gap: '6px',
               padding: '6px 12px',
-              backgroundColor: view === 'preview' ? '#333' : 'transparent',
+              backgroundColor: view === 'preview' ? '#2d2d44' : 'transparent',
               border: 'none',
               borderRadius: '6px',
-              color: view === 'preview' ? '#fff' : '#888',
+              color: view === 'preview' ? '#fff' : '#6a6a82',
               cursor: 'pointer',
               fontSize: '12px',
             }}
@@ -415,10 +415,10 @@ export const ArtifactCreator = ({ onClose, onInsert }: ArtifactCreatorProps) => 
               alignItems: 'center',
               gap: '6px',
               padding: '6px 12px',
-              backgroundColor: view === 'split' ? '#333' : 'transparent',
+              backgroundColor: view === 'split' ? '#2d2d44' : 'transparent',
               border: 'none',
               borderRadius: '6px',
-              color: view === 'split' ? '#fff' : '#888',
+              color: view === 'split' ? '#fff' : '#6a6a82',
               cursor: 'pointer',
               fontSize: '12px',
             }}
@@ -487,7 +487,7 @@ export const ArtifactCreator = ({ onClose, onInsert }: ArtifactCreatorProps) => 
               backgroundColor: 'transparent',
               border: '1px solid #333',
               borderRadius: '8px',
-              color: '#888',
+              color: '#6a6a82',
               cursor: 'pointer',
               fontSize: '14px',
             }}
@@ -501,7 +501,7 @@ export const ArtifactCreator = ({ onClose, onInsert }: ArtifactCreatorProps) => 
               alignItems: 'center',
               gap: '8px',
               padding: '10px 20px',
-              backgroundColor: '#10a37f',
+              backgroundColor: '#f5a623',
               border: 'none',
               borderRadius: '8px',
               color: '#fff',

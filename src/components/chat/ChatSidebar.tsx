@@ -115,18 +115,18 @@ export const ChatSidebar = ({ isOpen, onToggle }: ChatSidebarProps) => {
   return (
     <aside 
       className={cn(
-        'transition-all duration-300 bg-[#1a1a1a] border-r border-[#404040] flex flex-col',
+        'transition-all duration-300 bg-[#1a1a26] border-r border-[#2d2d44] flex flex-col',
         isOpen ? 'w-[280px]' : 'w-[64px]'
       )}
     >
       {/* Header avec toggle */}
-      <div className="p-4 border-b border-[#404040] flex items-center justify-between">
+      <div className="p-4 border-b border-[#2d2d44] flex items-center justify-between">
         {isOpen && (
           <h2 className="text-lg font-semibold text-white">Conversations</h2>
         )}
         <button 
           onClick={onToggle}
-          className="p-2 hover:bg-[#2a2a2a] rounded-lg transition-colors text-gray-400 hover:text-white"
+          className="p-2 hover:bg-[#1a1a26] rounded-lg transition-colors text-gray-400 hover:text-white"
           title={isOpen ? 'Réduire' : 'Étendre'}
         >
           {isOpen ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
@@ -155,7 +155,7 @@ export const ChatSidebar = ({ isOpen, onToggle }: ChatSidebarProps) => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Rechercher..."
-                className="w-full pl-10 pr-4 py-2 bg-[#2a2a2a] border border-[#404040] rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 text-sm"
+                className="w-full pl-10 pr-4 py-2 bg-[#1a1a26] border border-[#2d2d44] rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 text-sm"
               />
             </div>
           </div>
@@ -168,7 +168,7 @@ export const ChatSidebar = ({ isOpen, onToggle }: ChatSidebarProps) => {
                 'flex-1 px-3 py-2 rounded-lg text-xs transition-colors',
                 showArchived 
                   ? 'bg-blue-600 text-white' 
-                  : 'bg-[#2a2a2a] text-gray-400 hover:text-white'
+                  : 'bg-[#1a1a26] text-gray-400 hover:text-white'
               )}
             >
               <Archive size={14} className="inline mr-1" />
@@ -176,7 +176,7 @@ export const ChatSidebar = ({ isOpen, onToggle }: ChatSidebarProps) => {
             </button>
             <button
               onClick={handleExport}
-              className="px-3 py-2 bg-[#2a2a2a] text-gray-400 hover:text-white rounded-lg text-xs transition-colors"
+              className="px-3 py-2 bg-[#1a1a26] text-gray-400 hover:text-white rounded-lg text-xs transition-colors"
               title="Exporter"
             >
               <Download size={14} />
@@ -203,8 +203,8 @@ export const ChatSidebar = ({ isOpen, onToggle }: ChatSidebarProps) => {
                     className={cn(
                       'w-full group relative flex items-start gap-3 px-3 py-2.5 rounded-lg transition-colors mb-1',
                       currentConversationId === conv.id
-                        ? 'bg-[#2a2a2a] text-white'
-                        : 'text-gray-400 hover:bg-[#2a2a2a] hover:text-white'
+                        ? 'bg-[#1a1a26] text-white'
+                        : 'text-gray-400 hover:bg-[#1a1a26] hover:text-white'
                     )}
                   >
                     <MessageSquare size={16} className="mt-0.5 flex-shrink-0" />
@@ -225,7 +225,7 @@ export const ChatSidebar = ({ isOpen, onToggle }: ChatSidebarProps) => {
                           e.stopPropagation();
                           pinConversation(conv.id);
                         }}
-                        className="p-1 hover:bg-[#404040] rounded"
+                        className="p-1 hover:bg-[#2d2d44] rounded"
                         title="Épingler"
                       >
                         <Pin size={14} className={conv.pinned ? 'text-blue-400' : ''} />
@@ -235,7 +235,7 @@ export const ChatSidebar = ({ isOpen, onToggle }: ChatSidebarProps) => {
                           e.stopPropagation();
                           archiveConversation(conv.id);
                         }}
-                        className="p-1 hover:bg-[#404040] rounded"
+                        className="p-1 hover:bg-[#2d2d44] rounded"
                         title="Archiver"
                       >
                         <Archive size={14} />
@@ -268,8 +268,8 @@ export const ChatSidebar = ({ isOpen, onToggle }: ChatSidebarProps) => {
                 className={cn(
                   'w-full p-3 rounded-lg transition-colors',
                   currentConversationId === conv.id
-                    ? 'bg-[#2a2a2a] text-white'
-                    : 'text-gray-400 hover:bg-[#2a2a2a] hover:text-white'
+                    ? 'bg-[#1a1a26] text-white'
+                    : 'text-gray-400 hover:bg-[#1a1a26] hover:text-white'
                 )}
                 title={conv.title}
               >

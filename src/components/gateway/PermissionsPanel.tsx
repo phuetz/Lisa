@@ -45,7 +45,7 @@ export function PermissionsPanel() {
       case 'admin': return '#ef4444';
       case 'elevated': return '#f59e0b';
       case 'basic': return '#10b981';
-      default: return '#666';
+      default: return '#6a6a82';
     }
   };
 
@@ -144,29 +144,29 @@ export function PermissionsPanel() {
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  container: { backgroundColor: '#1a1a1a', borderRadius: '12px', padding: '24px', color: '#fff' },
+  container: { backgroundColor: '#1a1a26', borderRadius: '12px', padding: '24px', color: '#fff' },
   header: { marginBottom: '20px' },
   title: { margin: 0, fontSize: '20px', fontWeight: 600 },
   levelCard: { display: 'flex', alignItems: 'center', gap: '16px', padding: '20px', backgroundColor: '#252525', borderRadius: '12px', border: '2px solid', marginBottom: '24px' },
   levelIcon: { fontSize: '32px' },
   levelInfo: { flex: 1 },
   levelName: { display: 'block', fontSize: '20px', fontWeight: 700, textTransform: 'capitalize' },
-  expiresIn: { fontSize: '13px', color: '#888' },
-  endButton: { padding: '8px 16px', backgroundColor: '#333', border: 'none', borderRadius: '6px', color: '#fff', cursor: 'pointer' },
+  expiresIn: { fontSize: '13px', color: '#6a6a82' },
+  endButton: { padding: '8px 16px', backgroundColor: '#2d2d44', border: 'none', borderRadius: '6px', color: '#fff', cursor: 'pointer' },
   section: { marginTop: '24px' },
-  sectionTitle: { fontSize: '14px', fontWeight: 600, color: '#888', marginBottom: '12px', textTransform: 'uppercase' },
+  sectionTitle: { fontSize: '14px', fontWeight: 600, color: '#6a6a82', marginBottom: '12px', textTransform: 'uppercase' },
   levelsGrid: { display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' },
   levelButton: { display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '16px', backgroundColor: '#252525', border: '2px solid transparent', borderRadius: '12px', color: '#fff', cursor: 'pointer', textAlign: 'center' },
   levelBtnIcon: { fontSize: '24px', marginBottom: '8px' },
   levelBtnName: { fontSize: '14px', fontWeight: 600, textTransform: 'capitalize' },
-  levelBtnDesc: { fontSize: '11px', color: '#888', marginTop: '4px' },
+  levelBtnDesc: { fontSize: '11px', color: '#6a6a82', marginTop: '4px' },
   auditList: { display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '200px', overflowY: 'auto' },
-  emptyState: { padding: '20px', textAlign: 'center', color: '#666' },
+  emptyState: { padding: '20px', textAlign: 'center', color: '#6a6a82' },
   auditItem: { display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', backgroundColor: '#252525', borderRadius: '6px', fontSize: '13px' },
   auditStatus: { fontWeight: 600 },
   auditAction: { flex: 1 },
   auditLevel: { fontSize: '11px', textTransform: 'uppercase' },
-  auditTime: { fontSize: '11px', color: '#666' }
+  auditTime: { fontSize: '11px', color: '#6a6a82' }
 };
 
 export default PermissionsPanel;

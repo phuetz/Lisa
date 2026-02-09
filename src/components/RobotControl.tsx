@@ -116,26 +116,26 @@ export const RobotControl: React.FC = () => {
 
       <style>{`
         .robot-control-panel {
-          background: var(--bg-elevated, #2f2f2f);
-          border: 1px solid var(--border-primary, #424242);
+          background: var(--bg-panel, #1a1a26);
+          border: 1px solid var(--border-primary, #2d2d44);
           border-radius: var(--radius-md, 8px);
           padding: 20px;
           margin: 20px 0;
           max-width: 400px;
-          color: var(--text-primary, #ececec);
+          color: var(--text-primary, #e8e8f0);
           box-shadow: var(--shadow-elevated, 0 4px 20px rgba(0,0,0,0.4));
         }
 
         .robot-control-panel h3 {
-          color: var(--text-primary, #ececec);
+          color: var(--text-primary, #e8e8f0);
         }
 
         .status-panel {
-          background: var(--bg-secondary, #2d2d2d);
+          background: var(--bg-surface, #12121a);
           border-radius: var(--radius-md, 8px);
           padding: 15px;
           margin-bottom: 15px;
-          border: 1px solid var(--border-subtle, #333);
+          border: 1px solid var(--border-subtle, #2d2d44);
         }
 
         .connection-status {
@@ -144,7 +144,7 @@ export const RobotControl: React.FC = () => {
         }
 
         .connection-status.connected {
-          color: var(--color-brand, #10a37f);
+          color: var(--color-accent, #f5a623);
         }
 
         .connection-status.disconnected {
@@ -154,7 +154,7 @@ export const RobotControl: React.FC = () => {
         .robot-status p {
           margin: 5px 0;
           font-size: 14px;
-          color: var(--text-secondary, #b4b4b4);
+          color: var(--text-secondary, #9898b0);
         }
 
         .error-message {
@@ -184,12 +184,12 @@ export const RobotControl: React.FC = () => {
         }
 
         .move-button {
-          background: var(--color-brand, #10a37f);
+          background: var(--color-accent, #f5a623);
           color: #fff;
         }
 
         .move-button:hover:not(:disabled) {
-          background: var(--color-brand-hover, #0d8c6d);
+          background: var(--color-accent-hover, #e6951a);
         }
 
         .stop-button.emergency {
@@ -202,14 +202,14 @@ export const RobotControl: React.FC = () => {
         }
 
         .refresh-button {
-          background: var(--bg-tertiary, #1a1a1a);
-          color: var(--text-secondary, #b4b4b4);
-          border: 1px solid var(--border-primary, #424242);
+          background: var(--bg-tertiary, #1a1a26);
+          color: var(--text-secondary, #9898b0);
+          border: 1px solid var(--border-primary, #2d2d44);
         }
 
         .refresh-button:hover:not(:disabled) {
           background: var(--bg-hover, rgba(255,255,255,0.06));
-          color: var(--text-primary, #ececec);
+          color: var(--text-primary, #e8e8f0);
         }
 
         .control-buttons button:disabled {
@@ -219,7 +219,7 @@ export const RobotControl: React.FC = () => {
 
         .control-buttons button:focus-visible {
           outline: none;
-          box-shadow: var(--focus-ring, 0 0 0 2px var(--color-brand));
+          box-shadow: var(--focus-ring, 0 0 0 2px var(--color-accent));
         }
 
         .speech-control {
@@ -230,25 +230,25 @@ export const RobotControl: React.FC = () => {
         .speech-input {
           flex: 1;
           padding: 8px 12px;
-          border: 1px solid var(--border-primary, #424242);
+          border: 1px solid var(--border-primary, #2d2d44);
           border-radius: var(--radius-sm, 4px);
           font-size: 14px;
-          background: var(--bg-secondary, #2d2d2d);
-          color: var(--text-primary, #ececec);
+          background: var(--bg-surface, #12121a);
+          color: var(--text-primary, #e8e8f0);
         }
 
         .speech-input::placeholder {
-          color: var(--text-muted, #666);
+          color: var(--text-muted, #6a6a82);
         }
 
         .speech-input:focus {
           outline: none;
-          border-color: var(--color-brand, #10a37f);
+          border-color: var(--color-accent, #f5a623);
           box-shadow: 0 0 0 2px rgba(16, 163, 127, 0.25);
         }
 
         .speak-button {
-          background: var(--color-brand, #10a37f);
+          background: var(--color-accent, #f5a623);
           color: #fff;
           border: none;
           border-radius: var(--radius-sm, 4px);
@@ -259,7 +259,7 @@ export const RobotControl: React.FC = () => {
         }
 
         .speak-button:hover:not(:disabled) {
-          background: var(--color-brand-hover, #0d8c6d);
+          background: var(--color-accent-hover, #e6951a);
         }
 
         .speak-button:disabled {
@@ -269,7 +269,7 @@ export const RobotControl: React.FC = () => {
 
         .speak-button:focus-visible {
           outline: none;
-          box-shadow: var(--focus-ring, 0 0 0 2px var(--color-brand));
+          box-shadow: var(--focus-ring, 0 0 0 2px var(--color-accent));
         }
       `}</style>
     </div>

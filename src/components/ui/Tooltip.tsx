@@ -59,7 +59,7 @@ export const Tooltip = ({
         <div
           role="tooltip"
           className={cn(
-            'absolute z-50 px-2 py-1 text-xs text-[var(--text-primary,#ececec)] bg-[var(--bg-elevated,#2f2f2f)] border border-[var(--border-primary,#424242)] rounded shadow-lg whitespace-nowrap pointer-events-none',
+            'absolute z-50 px-2 py-1 text-xs text-[var(--text-primary,#e8e8f0)] bg-[var(--bg-panel,#1a1a26)] border border-[var(--border-primary,#2d2d44)] rounded shadow-lg whitespace-nowrap pointer-events-none',
             positions[position],
             className
           )}

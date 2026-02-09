@@ -19,11 +19,11 @@ export function ModernBadge({
 }: ModernBadgeProps) {
   const variants = {
     default: outline
-      ? 'border-[var(--border-secondary,#555)] text-[var(--text-secondary,#b4b4b4)]'
-      : 'bg-[var(--bg-secondary,#2d2d2d)] text-[var(--text-secondary,#b4b4b4)]',
+      ? 'border-[var(--border-secondary,#3d3d5c)] text-[var(--text-secondary,#9898b0)]'
+      : 'bg-[var(--bg-surface,#12121a)] text-[var(--text-secondary,#9898b0)]',
     primary: outline
-      ? 'border-[var(--color-brand,#10a37f)] text-[var(--color-brand,#10a37f)]'
-      : 'bg-[var(--color-brand,#10a37f)]/20 text-[var(--color-brand,#10a37f)]',
+      ? 'border-[var(--color-accent,#f5a623)] text-[var(--color-accent,#f5a623)]'
+      : 'bg-[var(--color-accent,#f5a623)]/20 text-[var(--color-accent,#f5a623)]',
     success: outline
       ? 'border-green-600 text-green-400'
       : 'bg-green-500/20 text-green-400',
@@ -90,11 +90,11 @@ export function StatusBadge({ status, showDot = true }: StatusBadgeProps) {
         <span
           className={`
             w-1.5 h-1.5 rounded-full mr-1.5
-            ${status === 'active' ? 'bg-[var(--color-brand,#10a37f)] animate-pulse' : ''}
+            ${status === 'active' ? 'bg-[var(--color-accent,#f5a623)] animate-pulse' : ''}
             ${status === 'error' ? 'bg-[var(--color-error,#ef4444)] animate-pulse' : ''}
             ${status === 'pending' ? 'bg-[var(--color-warning,#f59e0b)] animate-pulse' : ''}
-            ${status === 'inactive' ? 'bg-[var(--text-muted,#666)]' : ''}
-            ${status === 'success' ? 'bg-[var(--color-brand,#10a37f)]' : ''}
+            ${status === 'inactive' ? 'bg-[var(--text-muted,#6a6a82)]' : ''}
+            ${status === 'success' ? 'bg-[var(--color-accent,#f5a623)]' : ''}
           `}
         />
       )}

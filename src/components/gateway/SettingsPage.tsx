@@ -263,7 +263,7 @@ function SettingItem({
           />
           <span style={{
             ...styles.toggleSlider,
-            backgroundColor: value ? '#3b82f6' : '#444'
+            backgroundColor: value ? '#3b82f6' : '#2d2d44'
           }} />
         </label>
       </div>
@@ -398,7 +398,7 @@ const styles: Record<string, React.CSSProperties> = {
   container: {
     display: 'flex',
     height: '100%',
-    backgroundColor: '#0a0a0a',
+    backgroundColor: '#0a0a0f',
     color: '#fff'
   },
   loading: {
@@ -406,15 +406,15 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     justifyContent: 'center',
     height: '100%',
-    color: '#888'
+    color: '#6a6a82'
   },
   sidebar: {
     width: '280px',
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#1a1a26',
     padding: '24px',
     display: 'flex',
     flexDirection: 'column',
-    borderRight: '1px solid #333'
+    borderRight: '1px solid #2d2d44'
   },
   sidebarTitle: {
     margin: '0 0 24px 0',
@@ -435,7 +435,7 @@ const styles: Record<string, React.CSSProperties> = {
     backgroundColor: 'transparent',
     border: 'none',
     borderRadius: '8px',
-    color: '#888',
+    color: '#6a6a82',
     cursor: 'pointer',
     fontSize: '14px',
     textAlign: 'left',
@@ -451,7 +451,7 @@ const styles: Record<string, React.CSSProperties> = {
     gap: '8px',
     marginTop: '24px',
     paddingTop: '24px',
-    borderTop: '1px solid #333'
+    borderTop: '1px solid #2d2d44'
   },
   actionButton: {
     padding: '10px 16px',
@@ -492,9 +492,9 @@ const styles: Record<string, React.CSSProperties> = {
   resetButton: {
     padding: '8px 16px',
     backgroundColor: 'transparent',
-    border: '1px solid #444',
+    border: '1px solid #2d2d44',
     borderRadius: '6px',
-    color: '#888',
+    color: '#6a6a82',
     cursor: 'pointer',
     fontSize: '13px'
   },
@@ -508,7 +508,7 @@ const styles: Record<string, React.CSSProperties> = {
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: '16px 20px',
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#1a1a26',
     borderRadius: '10px',
     gap: '20px'
   },
@@ -523,7 +523,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   settingValue: {
     fontSize: '13px',
-    color: '#888',
+    color: '#6a6a82',
     backgroundColor: '#252525',
     padding: '4px 8px',
     borderRadius: '4px',
@@ -559,7 +559,7 @@ const styles: Record<string, React.CSSProperties> = {
     width: '100px',
     padding: '8px 12px',
     backgroundColor: '#252525',
-    border: '1px solid #333',
+    border: '1px solid #2d2d44',
     borderRadius: '6px',
     color: '#fff',
     fontSize: '14px'
@@ -568,7 +568,7 @@ const styles: Record<string, React.CSSProperties> = {
     width: '200px',
     padding: '8px 12px',
     backgroundColor: '#252525',
-    border: '1px solid #333',
+    border: '1px solid #2d2d44',
     borderRadius: '6px',
     color: '#fff',
     fontSize: '14px'
@@ -576,7 +576,7 @@ const styles: Record<string, React.CSSProperties> = {
   select: {
     padding: '8px 12px',
     backgroundColor: '#252525',
-    border: '1px solid #333',
+    border: '1px solid #2d2d44',
     borderRadius: '6px',
     color: '#fff',
     fontSize: '14px',

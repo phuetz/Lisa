@@ -95,9 +95,9 @@ export const Artifact = ({ artifact, onUpdate, onClose, embedded = true }: Artif
 <html><head><meta charset="UTF-8">
 <style>
   *{margin:0;padding:0;box-sizing:border-box;}
-  body{font-family:'Fira Code',monospace;background:#1a1a2e;color:#10a37f;padding:20px;min-height:100vh;}
+  body{font-family:'Fira Code',monospace;background:#1a1a2e;color:#f5a623;padding:20px;min-height:100vh;}
   #output{white-space:pre-wrap;line-height:1.6;}
-  .log{color:#10a37f;}.error{color:#ef4444;}
+  .log{color:#f5a623;}.error{color:#ef4444;}
 </style></head>
 <body>
   <div id="output"></div>
@@ -118,7 +118,7 @@ export const Artifact = ({ artifact, onUpdate, onClose, embedded = true }: Artif
   *{margin:0;padding:0;box-sizing:border-box;}
   body{font-family:'Fira Code',monospace;background:#1a1a2e;color:#3178c6;padding:20px;min-height:100vh;}
   #output{white-space:pre-wrap;line-height:1.6;}
-  .log{color:#10a37f;}.error{color:#ef4444;}
+  .log{color:#f5a623;}.error{color:#ef4444;}
 </style></head>
 <body>
   <div id="output"></div>
@@ -204,8 +204,8 @@ export const Artifact = ({ artifact, onUpdate, onClose, embedded = true }: Artif
   }, [code]);
 
   const containerStyle: React.CSSProperties = isFullscreen
-    ? { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1000, backgroundColor: '#1e1e1e' }
-    : { borderRadius: '12px', border: '1px solid #333', overflow: 'hidden', backgroundColor: '#1e1e1e' };
+    ? { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1000, backgroundColor: '#12121a' }
+    : { borderRadius: '12px', border: '1px solid #333', overflow: 'hidden', backgroundColor: '#12121a' };
 
   return (
     <div style={containerStyle}>
@@ -215,7 +215,7 @@ export const Artifact = ({ artifact, onUpdate, onClose, embedded = true }: Artif
         alignItems: 'center',
         justifyContent: 'space-between',
         padding: '8px 12px',
-        backgroundColor: '#0d0d0d',
+        backgroundColor: '#0a0a0f',
         borderBottom: '1px solid #333',
       }}>
         {/* Left - Type & Title */}
@@ -245,10 +245,10 @@ export const Artifact = ({ artifact, onUpdate, onClose, embedded = true }: Artif
             onClick={() => setView('preview')}
             style={{
               padding: '6px 12px',
-              backgroundColor: view === 'preview' ? '#333' : 'transparent',
+              backgroundColor: view === 'preview' ? '#2d2d44' : 'transparent',
               border: 'none',
               borderRadius: '6px',
-              color: view === 'preview' ? '#fff' : '#888',
+              color: view === 'preview' ? '#fff' : '#6a6a82',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
@@ -263,10 +263,10 @@ export const Artifact = ({ artifact, onUpdate, onClose, embedded = true }: Artif
             onClick={() => setView('code')}
             style={{
               padding: '6px 12px',
-              backgroundColor: view === 'code' ? '#333' : 'transparent',
+              backgroundColor: view === 'code' ? '#2d2d44' : 'transparent',
               border: 'none',
               borderRadius: '6px',
-              color: view === 'code' ? '#fff' : '#888',
+              color: view === 'code' ? '#fff' : '#6a6a82',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
@@ -281,10 +281,10 @@ export const Artifact = ({ artifact, onUpdate, onClose, embedded = true }: Artif
             onClick={() => setView('split')}
             style={{
               padding: '6px 12px',
-              backgroundColor: view === 'split' ? '#333' : 'transparent',
+              backgroundColor: view === 'split' ? '#2d2d44' : 'transparent',
               border: 'none',
               borderRadius: '6px',
-              color: view === 'split' ? '#fff' : '#888',
+              color: view === 'split' ? '#fff' : '#6a6a82',
               cursor: 'pointer',
               fontSize: '12px',
             }}
@@ -299,7 +299,7 @@ export const Artifact = ({ artifact, onUpdate, onClose, embedded = true }: Artif
             <RefreshCw size={14} />
           </button>
           <button onClick={handleCopy} style={iconButtonStyle} title="Copier">
-            {copied ? <Check size={14} color="#10a37f" /> : <Copy size={14} />}
+            {copied ? <Check size={14} color="#f5a623" /> : <Copy size={14} />}
           </button>
           <button onClick={handleDownload} style={iconButtonStyle} title="Télécharger">
             <Download size={14} />
@@ -371,7 +371,7 @@ const iconButtonStyle: React.CSSProperties = {
   backgroundColor: 'transparent',
   border: 'none',
   borderRadius: '6px',
-  color: '#888',
+  color: '#6a6a82',
   cursor: 'pointer',
 };
 

@@ -161,7 +161,7 @@ export const ExportPDF = ({ messages, conversationTitle, onClose }: ExportPDFPro
       justifyContent: 'center'
     }}>
       <div style={{
-        backgroundColor: '#1a1a1a',
+        backgroundColor: '#1a1a26',
         borderRadius: '16px',
         padding: '24px',
         maxWidth: '800px',
@@ -176,7 +176,7 @@ export const ExportPDF = ({ messages, conversationTitle, onClose }: ExportPDFPro
           display: 'flex', 
           justifyContent: 'space-between', 
           alignItems: 'center',
-          borderBottom: '1px solid #333',
+          borderBottom: '1px solid #2d2d44',
           paddingBottom: '16px'
         }}>
           <h2 style={{ margin: 0, color: '#fff', fontSize: '18px' }}>
@@ -187,7 +187,7 @@ export const ExportPDF = ({ messages, conversationTitle, onClose }: ExportPDFPro
             style={{
               background: 'transparent',
               border: 'none',
-              color: '#888',
+              color: '#6a6a82',
               cursor: 'pointer',
               fontSize: '20px'
             }}
@@ -202,10 +202,10 @@ export const ExportPDF = ({ messages, conversationTitle, onClose }: ExportPDFPro
           alignItems: 'center',
           gap: '12px',
           padding: '12px',
-          backgroundColor: status === 'error' ? '#3f1515' : '#252525',
+          backgroundColor: status === 'error' ? '#3f1515' : '#1a1a26',
           borderRadius: '8px'
         }}>
-          {status === 'idle' && <FileDown size={20} color="#888" />}
+          {status === 'idle' && <FileDown size={20} color="#6a6a82" />}
           {['preparing', 'rendering', 'generating'].includes(status) && (
             <Loader2 size={20} color="#3b82f6" style={{ animation: 'spin 1s linear infinite' }} />
           )}
@@ -218,7 +218,7 @@ export const ExportPDF = ({ messages, conversationTitle, onClose }: ExportPDFPro
               <div style={{
                 marginTop: '8px',
                 height: '4px',
-                backgroundColor: '#333',
+                backgroundColor: '#2d2d44',
                 borderRadius: '2px',
                 overflow: 'hidden'
               }}>
@@ -281,13 +281,13 @@ export const ExportPDF = ({ messages, conversationTitle, onClose }: ExportPDFPro
           gap: '12px', 
           justifyContent: 'flex-end',
           paddingTop: '16px',
-          borderTop: '1px solid #333'
+          borderTop: '1px solid #2d2d44'
         }}>
           <button
             onClick={onClose}
             style={{
               padding: '10px 20px',
-              backgroundColor: '#333',
+              backgroundColor: '#2d2d44',
               border: 'none',
               borderRadius: '8px',
               color: '#fff',

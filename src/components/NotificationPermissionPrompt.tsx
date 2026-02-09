@@ -46,7 +46,7 @@ export function NotificationPermissionPrompt({ onClose }: NotificationPermission
     <div className="notification-permission-prompt" role="dialog" aria-labelledby="notif-title">
       <div className="prompt-content">
         <div className="prompt-header">
-          <span aria-hidden="true" style={{ fontSize: '1.2rem', marginRight: 12, color: 'var(--color-brand, #10a37f)' }}>&#128276;</span>
+          <span aria-hidden="true" style={{ fontSize: '1.2rem', marginRight: 12, color: 'var(--color-accent, #f5a623)' }}>&#128276;</span>
           <h3 id="notif-title">{t('Enable Notifications')}</h3>
         </div>
 
@@ -86,13 +86,13 @@ export function NotificationPermissionPrompt({ onClose }: NotificationPermission
         }
         
         .prompt-content {
-          background: var(--bg-elevated, #2f2f2f);
+          background: var(--bg-panel, #1a1a26);
           backdrop-filter: blur(8px);
           border-radius: var(--radius-lg, 12px);
           padding: 16px;
           box-shadow: var(--shadow-elevated, 0 4px 20px rgba(0, 0, 0, 0.4));
-          border: 1px solid var(--border-primary, #424242);
-          color: var(--text-primary, #ececec);
+          border: 1px solid var(--border-primary, #2d2d44);
+          color: var(--text-primary, #e8e8f0);
         }
 
         .prompt-header {
@@ -105,14 +105,14 @@ export function NotificationPermissionPrompt({ onClose }: NotificationPermission
           margin: 0;
           font-size: 1.1rem;
           font-weight: 600;
-          color: var(--text-primary, #ececec);
+          color: var(--text-primary, #e8e8f0);
         }
 
         .prompt-content p {
           margin: 0 0 16px 0;
           line-height: 1.5;
           font-size: 0.9rem;
-          color: var(--text-secondary, #b4b4b4);
+          color: var(--text-secondary, #9898b0);
         }
 
         .prompt-actions {
@@ -123,8 +123,8 @@ export function NotificationPermissionPrompt({ onClose }: NotificationPermission
 
         .dismiss-btn {
           background: transparent;
-          border: 1px solid var(--border-primary, #424242);
-          color: var(--text-secondary, #b4b4b4);
+          border: 1px solid var(--border-primary, #2d2d44);
+          color: var(--text-secondary, #9898b0);
           padding: 8px 16px;
           border-radius: var(--radius-md, 8px);
           font-size: 0.9rem;
@@ -138,11 +138,11 @@ export function NotificationPermissionPrompt({ onClose }: NotificationPermission
 
         .dismiss-btn:focus-visible {
           outline: none;
-          box-shadow: var(--focus-ring, 0 0 0 2px var(--color-brand));
+          box-shadow: var(--focus-ring, 0 0 0 2px var(--color-accent));
         }
 
         .enable-btn {
-          background: var(--color-brand, #10a37f);
+          background: var(--color-accent, #f5a623);
           border: none;
           color: #fff;
           padding: 8px 16px;
@@ -154,13 +154,13 @@ export function NotificationPermissionPrompt({ onClose }: NotificationPermission
         }
 
         .enable-btn:hover {
-          background: var(--color-brand-hover, #0d8c6d);
+          background: var(--color-accent-hover, #e6951a);
           transform: translateY(-1px);
         }
 
         .enable-btn:focus-visible {
           outline: none;
-          box-shadow: var(--focus-ring, 0 0 0 2px var(--color-brand));
+          box-shadow: var(--focus-ring, 0 0 0 2px var(--color-accent));
         }
       `}</style>
     </div>

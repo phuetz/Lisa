@@ -1,6 +1,4 @@
 import { useState, useEffect, useRef } from 'react';
-import { OfficePageLayout } from '../components/layout/OfficePageLayout';
-import { useOfficeThemeStore } from '../store/officeThemeStore';
 import {
   Mic, MicOff, Volume2, VolumeX, Play, Square,
   MessageSquare, Trash2, Copy, Check, ChevronDown,
@@ -25,7 +23,7 @@ const CircularVisualizer = ({ isActive }: { isActive: boolean }) => {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    
+
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
@@ -36,7 +34,7 @@ const CircularVisualizer = ({ isActive }: { isActive: boolean }) => {
 
     const animate = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      
+
       // Update bar heights
       barsRef.current = barsRef.current.map((h, i) => {
         if (isActive) {
@@ -51,7 +49,7 @@ const CircularVisualizer = ({ isActive }: { isActive: boolean }) => {
       for (let i = 0; i < barCount; i++) {
         const angle = (i / barCount) * Math.PI * 2 - Math.PI / 2;
         const barHeight = barsRef.current[i];
-        
+
         const x1 = centerX + Math.cos(angle) * radius;
         const y1 = centerY + Math.sin(angle) * radius;
         const x2 = centerX + Math.cos(angle) * (radius + barHeight);
@@ -104,9 +102,9 @@ const CircularVisualizer = ({ isActive }: { isActive: boolean }) => {
   }, [isActive]);
 
   return (
-    <canvas 
-      ref={canvasRef} 
-      width={250} 
+    <canvas
+      ref={canvasRef}
+      width={250}
       height={250}
       style={{ margin: '0 auto', display: 'block' }}
     />
@@ -149,9 +147,9 @@ const WaveVisualizer = ({ isActive }: { isActive: boolean }) => {
             width: '4px',
             height: `${height}px`,
             borderRadius: '2px',
-            background: isActive 
+            background: isActive
               ? `linear-gradient(to top, var(--color-purple, #8b5cf6), #a78bfa)`
-              : 'var(--text-muted, #666)',
+              : 'var(--text-muted, #6a6a82)',
             transition: 'height 0.05s ease'
           }}
         />
@@ -161,9 +159,6 @@ const WaveVisualizer = ({ isActive }: { isActive: boolean }) => {
 };
 
 export default function AudioPage() {
-  const { getCurrentColors } = useOfficeThemeStore();
-  const colors = getCurrentColors();
-
   // Voice Chat Hook
   const {
     isListening,
@@ -230,10 +225,10 @@ export default function AudioPage() {
 
   // Format time
   const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('fr-FR', { 
-      hour: '2-digit', 
-      minute: '2-digit', 
-      second: '2-digit' 
+    return date.toLocaleTimeString('fr-FR', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
     });
   };
 
@@ -254,7 +249,11 @@ export default function AudioPage() {
 
   if (!isSupported) {
     return (
-      <OfficePageLayout title="Audio" subtitle="Reconnaissance vocale et synthèse vocale">
+      <div style={{ padding: '24px' }}>
+        <div style={{ marginBottom: '24px' }}>
+          <h1 style={{ fontSize: '24px', fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 4px 0' }}>Audio</h1>
+          <p style={{ fontSize: '14px', color: 'var(--text-secondary)', margin: 0 }}>Reconnaissance vocale et synthèse vocale</p>
+        </div>
         <div style={{
           display: 'flex',
           alignItems: 'center',
@@ -274,17 +273,21 @@ export default function AudioPage() {
               Non supporté
             </h2>
             <p style={{ color: 'rgba(254, 202, 202, 0.7)', fontSize: '14px' }}>
-              La reconnaissance vocale n'est pas supportée par ce navigateur. 
+              La reconnaissance vocale n'est pas supportée par ce navigateur.
               Utilisez Chrome ou Edge.
             </p>
           </div>
         </div>
-      </OfficePageLayout>
+      </div>
     );
   }
 
   return (
-    <OfficePageLayout title="Audio" subtitle="Reconnaissance vocale et synthèse vocale">
+    <div style={{ padding: '24px' }}>
+      <div style={{ marginBottom: '24px' }}>
+        <h1 style={{ fontSize: '24px', fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 4px 0' }}>Audio</h1>
+        <p style={{ fontSize: '14px', color: 'var(--text-secondary)', margin: 0 }}>Reconnaissance vocale et synthèse vocale</p>
+      </div>
       {/* Header with tabs */}
       <div style={{
         display: 'flex',
@@ -295,7 +298,7 @@ export default function AudioPage() {
         <div style={{
           display: 'flex',
           gap: '8px',
-          background: 'var(--bg-secondary, #2d2d2d)',
+          background: 'var(--bg-surface, #12121a)',
           padding: '4px',
           borderRadius: '12px'
         }}>
@@ -311,8 +314,8 @@ export default function AudioPage() {
               gap: '8px',
               fontSize: '14px',
               fontWeight: 500,
-              background: activeTab === 'transcription' ? 'var(--color-brand, #10a37f)' : 'transparent',
-              color: activeTab === 'transcription' ? 'var(--text-primary, #ececec)' : 'var(--text-tertiary, #888)',
+              background: activeTab === 'transcription' ? 'var(--color-accent, #f5a623)' : 'transparent',
+              color: activeTab === 'transcription' ? 'var(--text-primary, #e8e8f0)' : 'var(--text-muted, #6a6a82)',
               transition: 'all 0.2s'
             }}
           >
@@ -332,7 +335,7 @@ export default function AudioPage() {
               fontSize: '14px',
               fontWeight: 500,
               background: activeTab === 'synthesis' ? 'var(--color-purple, #8b5cf6)' : 'transparent',
-              color: activeTab === 'synthesis' ? 'var(--text-primary, #ececec)' : 'var(--text-tertiary, #888)',
+              color: activeTab === 'synthesis' ? 'var(--text-primary, #e8e8f0)' : 'var(--text-muted, #6a6a82)',
               transition: 'all 0.2s'
             }}
           >
@@ -346,9 +349,9 @@ export default function AudioPage() {
           style={{
             padding: '12px',
             borderRadius: '12px',
-            border: '1px solid var(--border-primary, #424242)',
-            background: showSettings ? 'var(--border-primary, #424242)' : 'transparent',
-            color: 'var(--text-tertiary, #888)',
+            border: '1px solid var(--border-primary, #2d2d44)',
+            background: showSettings ? 'var(--border-primary, #2d2d44)' : 'transparent',
+            color: 'var(--text-muted, #6a6a82)',
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
@@ -362,18 +365,18 @@ export default function AudioPage() {
       {/* Settings Panel */}
       {showSettings && (
         <div style={{
-          background: 'var(--bg-secondary, #2d2d2d)',
+          background: 'var(--bg-surface, #12121a)',
           borderRadius: '16px',
           padding: '20px',
           marginBottom: '24px',
-          border: '1px solid var(--border-primary, #424242)'
+          border: '1px solid var(--border-primary, #2d2d44)'
         }}>
-          <h3 style={{ color: 'var(--text-primary, #ececec)', fontSize: '16px', fontWeight: 600, marginBottom: '16px' }}>
+          <h3 style={{ color: 'var(--text-primary, #e8e8f0)', fontSize: '16px', fontWeight: 600, marginBottom: '16px' }}>
             Paramètres vocaux
           </h3>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
             <div>
-              <label style={{ display: 'block', fontSize: '13px', color: 'var(--text-tertiary, #888)', marginBottom: '8px' }}>
+              <label style={{ display: 'block', fontSize: '13px', color: 'var(--text-muted, #6a6a82)', marginBottom: '8px' }}>
                 Voix
               </label>
               <select
@@ -385,10 +388,10 @@ export default function AudioPage() {
                 style={{
                   width: '100%',
                   padding: '10px 12px',
-                  background: 'var(--bg-surface, #0d0d0d)',
-                  border: '1px solid var(--border-primary, #424242)',
+                  background: 'var(--bg-deep, #0a0a0f)',
+                  border: '1px solid var(--border-primary, #2d2d44)',
                   borderRadius: '8px',
-                  color: 'var(--text-primary, #ececec)',
+                  color: 'var(--text-primary, #e8e8f0)',
                   fontSize: '14px'
                 }}
               >
@@ -399,8 +402,8 @@ export default function AudioPage() {
             </div>
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                <label style={{ fontSize: '13px', color: 'var(--text-tertiary, #888)' }}>Vitesse</label>
-                <span style={{ fontSize: '13px', color: 'var(--text-primary, #ececec)' }}>{speechRate.toFixed(1)}x</span>
+                <label style={{ fontSize: '13px', color: 'var(--text-muted, #6a6a82)' }}>Vitesse</label>
+                <span style={{ fontSize: '13px', color: 'var(--text-primary, #e8e8f0)' }}>{speechRate.toFixed(1)}x</span>
               </div>
               <input
                 type="range"
@@ -414,8 +417,8 @@ export default function AudioPage() {
             </div>
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                <label style={{ fontSize: '13px', color: 'var(--text-tertiary, #888)' }}>Tonalité</label>
-                <span style={{ fontSize: '13px', color: 'var(--text-primary, #ececec)' }}>{speechPitch.toFixed(1)}</span>
+                <label style={{ fontSize: '13px', color: 'var(--text-muted, #6a6a82)' }}>Tonalité</label>
+                <span style={{ fontSize: '13px', color: 'var(--text-primary, #e8e8f0)' }}>{speechPitch.toFixed(1)}</span>
               </div>
               <input
                 type="range"
@@ -433,7 +436,7 @@ export default function AudioPage() {
 
       {/* Main Content */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
-        
+
         {/* ========== TRANSCRIPTION PANEL ========== */}
         <div style={{
           background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(30, 41, 59, 0.8) 100%)',
@@ -465,12 +468,12 @@ export default function AudioPage() {
                 gap: '12px',
                 fontSize: '16px',
                 fontWeight: 600,
-                background: isListening 
+                background: isListening
                   ? 'linear-gradient(135deg, var(--color-error, #ef4444), #dc2626)'
-                  : 'linear-gradient(135deg, var(--color-brand, #10a37f), var(--color-brand-hover, #0d8c6d))',
-                color: 'var(--text-primary, #ececec)',
-                boxShadow: isListening 
-                  ? '0 8px 32px rgba(239, 68, 68, 0.3)' 
+                  : 'linear-gradient(135deg, var(--color-accent, #f5a623), var(--color-accent-hover, #e6951a))',
+                color: 'var(--text-primary, #e8e8f0)',
+                boxShadow: isListening
+                  ? '0 8px 32px rgba(239, 68, 68, 0.3)'
                   : '0 8px 32px rgba(16, 185, 129, 0.3)',
                 transition: 'all 0.3s'
               }}
@@ -503,10 +506,10 @@ export default function AudioPage() {
                   width: '12px',
                   height: '12px',
                   borderRadius: '50%',
-                  background: 'var(--color-brand, #10a37f)',
+                  background: 'var(--color-accent, #f5a623)',
                   animation: 'pulse 1.5s infinite'
                 }} />
-                <span style={{ color: 'var(--color-brand, #10a37f)', fontSize: '14px' }}>
+                <span style={{ color: 'var(--color-accent, #f5a623)', fontSize: '14px' }}>
                   Écoute en cours - Parlez maintenant
                 </span>
               </div>
@@ -529,7 +532,7 @@ export default function AudioPage() {
           </div>
 
           {/* Transcript */}
-          <div style={{ 
+          <div style={{
             padding: '0 24px 24px',
             maxHeight: '250px',
             overflowY: 'auto'
@@ -540,7 +543,7 @@ export default function AudioPage() {
               alignItems: 'center',
               marginBottom: '12px'
             }}>
-              <span style={{ color: 'var(--text-tertiary, #888)', fontSize: '13px' }}>
+              <span style={{ color: 'var(--text-muted, #6a6a82)', fontSize: '13px' }}>
                 {transcriptHistory.length} phrase{transcriptHistory.length !== 1 ? 's' : ''}
               </span>
               <div style={{ display: 'flex', gap: '8px' }}>
@@ -551,7 +554,7 @@ export default function AudioPage() {
                     padding: '6px',
                     background: 'transparent',
                     border: 'none',
-                    color: copied ? 'var(--color-brand, #10a37f)' : 'var(--text-muted, #666)',
+                    color: copied ? 'var(--color-accent, #f5a623)' : 'var(--text-muted, #6a6a82)',
                     cursor: transcriptHistory.length > 0 ? 'pointer' : 'not-allowed',
                     opacity: transcriptHistory.length > 0 ? 1 : 0.5
                   }}
@@ -565,7 +568,7 @@ export default function AudioPage() {
                     padding: '6px',
                     background: 'transparent',
                     border: 'none',
-                    color: 'var(--text-muted, #666)',
+                    color: 'var(--text-muted, #6a6a82)',
                     cursor: transcriptHistory.length > 0 ? 'pointer' : 'not-allowed',
                     opacity: transcriptHistory.length > 0 ? 1 : 0.5
                   }}
@@ -576,7 +579,7 @@ export default function AudioPage() {
             </div>
 
             <div style={{
-              background: 'var(--bg-surface, #0d0d0d)',
+              background: 'var(--bg-deep, #0a0a0f)',
               borderRadius: '12px',
               padding: '16px',
               minHeight: '150px'
@@ -588,7 +591,7 @@ export default function AudioPage() {
                   alignItems: 'center',
                   justifyContent: 'center',
                   height: '120px',
-                  color: 'var(--text-muted, #666)'
+                  color: 'var(--text-muted, #6a6a82)'
                 }}>
                   <MessageSquare size={32} style={{ marginBottom: '8px', opacity: 0.5 }} />
                   <span style={{ fontSize: '13px' }}>La transcription apparaîtra ici</span>
@@ -597,35 +600,35 @@ export default function AudioPage() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   {transcriptHistory.map((entry) => (
                     <div key={entry.id} style={{ display: 'flex', gap: '12px' }}>
-                      <span style={{ 
-                        fontSize: '11px', 
-                        color: 'var(--text-muted, #666)', 
+                      <span style={{
+                        fontSize: '11px',
+                        color: 'var(--text-muted, #6a6a82)',
                         fontFamily: 'monospace',
                         whiteSpace: 'nowrap',
                         paddingTop: '2px'
                       }}>
                         {formatTime(entry.timestamp)}
                       </span>
-                      <p style={{ color: 'var(--text-primary, #ececec)', fontSize: '14px', margin: 0, lineHeight: 1.5 }}>
+                      <p style={{ color: 'var(--text-primary, #e8e8f0)', fontSize: '14px', margin: 0, lineHeight: 1.5 }}>
                         {entry.text}
                       </p>
                     </div>
                   ))}
                   {interimTranscript && (
                     <div style={{ display: 'flex', gap: '12px' }}>
-                      <span style={{ 
-                        fontSize: '11px', 
-                        color: 'var(--color-info, #3b82f6)', 
+                      <span style={{
+                        fontSize: '11px',
+                        color: 'var(--color-info, #3b82f6)',
                         fontFamily: 'monospace',
                         whiteSpace: 'nowrap',
                         paddingTop: '2px'
                       }}>
                         ...
                       </span>
-                      <p style={{ 
-                        color: 'rgba(96, 165, 250, 0.7)', 
-                        fontSize: '14px', 
-                        margin: 0, 
+                      <p style={{
+                        color: 'rgba(96, 165, 250, 0.7)',
+                        fontSize: '14px',
+                        margin: 0,
                         fontStyle: 'italic',
                         lineHeight: 1.5
                       }}>
@@ -650,7 +653,7 @@ export default function AudioPage() {
           transition: 'opacity 0.3s'
         }}>
           {/* Visualizer */}
-          <div style={{ 
+          <div style={{
             padding: '40px 24px',
             borderBottom: '1px solid rgba(139, 92, 246, 0.1)',
             display: 'flex',
@@ -662,13 +665,13 @@ export default function AudioPage() {
               width: '100px',
               height: '100px',
               borderRadius: '50%',
-              background: isSpeaking 
-                ? 'linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(167, 139, 250, 0.1))' 
+              background: isSpeaking
+                ? 'linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(167, 139, 250, 0.1))'
                 : 'rgba(71, 85, 105, 0.2)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              border: `3px solid ${isSpeaking ? 'var(--color-purple, #8b5cf6)' : 'var(--text-muted, #666)'}`,
+              border: `3px solid ${isSpeaking ? 'var(--color-purple, #8b5cf6)' : 'var(--text-muted, #6a6a82)'}`,
               transition: 'all 0.3s'
             }}>
               {isSpeaking ? (
@@ -691,10 +694,10 @@ export default function AudioPage() {
                 width: '100%',
                 minHeight: '100px',
                 padding: '16px',
-                background: 'var(--bg-surface, #0d0d0d)',
-                border: '1px solid var(--border-primary, #424242)',
+                background: 'var(--bg-deep, #0a0a0f)',
+                border: '1px solid var(--border-primary, #2d2d44)',
                 borderRadius: '12px',
-                color: 'var(--text-primary, #ececec)',
+                color: 'var(--text-primary, #e8e8f0)',
                 fontSize: '14px',
                 resize: 'none',
                 outline: 'none',
@@ -711,10 +714,10 @@ export default function AudioPage() {
                   disabled={activeTab !== 'synthesis'}
                   style={{
                     padding: '6px 12px',
-                    background: 'var(--bg-secondary, #2d2d2d)',
-                    border: '1px solid var(--border-primary, #424242)',
+                    background: 'var(--bg-surface, #12121a)',
+                    border: '1px solid var(--border-primary, #2d2d44)',
                     borderRadius: '20px',
-                    color: 'var(--text-tertiary, #888)',
+                    color: 'var(--text-muted, #6a6a82)',
                     fontSize: '12px',
                     cursor: activeTab === 'synthesis' ? 'pointer' : 'not-allowed',
                     transition: 'all 0.2s'
@@ -742,12 +745,12 @@ export default function AudioPage() {
                   gap: '12px',
                   fontSize: '16px',
                   fontWeight: 600,
-                  background: (isSpeaking || !textToSpeak.trim()) 
-                    ? 'var(--border-primary, #424242)'
+                  background: (isSpeaking || !textToSpeak.trim())
+                    ? 'var(--border-primary, #2d2d44)'
                     : 'linear-gradient(135deg, var(--color-purple, #8b5cf6), #7c3aed)',
-                  color: (isSpeaking || !textToSpeak.trim()) ? 'var(--text-muted, #666)' : 'var(--text-primary, #ececec)',
-                  boxShadow: (isSpeaking || !textToSpeak.trim()) 
-                    ? 'none' 
+                  color: (isSpeaking || !textToSpeak.trim()) ? 'var(--text-muted, #6a6a82)' : 'var(--text-primary, #e8e8f0)',
+                  boxShadow: (isSpeaking || !textToSpeak.trim())
+                    ? 'none'
                     : '0 8px 32px rgba(139, 92, 246, 0.3)',
                   transition: 'all 0.3s'
                 }}
@@ -758,7 +761,7 @@ export default function AudioPage() {
                       width: '20px',
                       height: '20px',
                       border: '3px solid rgba(255,255,255,0.3)',
-                      borderTopColor: 'var(--text-primary, #ececec)',
+                      borderTopColor: 'var(--text-primary, #e8e8f0)',
                       borderRadius: '50%',
                       animation: 'spin 1s linear infinite'
                     }} />
@@ -834,13 +837,13 @@ export default function AudioPage() {
       }}>
         {[
           // Raw hex needed: used in template literals like `${stat.color}20`
-          { icon: Mic, label: 'Transcription', value: isListening ? 'Active' : 'Inactive', color: '#10a37f' },
+          { icon: Mic, label: 'Transcription', value: isListening ? 'Active' : 'Inactive', color: '#f5a623' },
           { icon: Volume2, label: 'Synthèse', value: isSpeaking ? 'Active' : 'Prête', color: '#8b5cf6' },
           { icon: MessageSquare, label: 'Phrases', value: transcriptHistory.length.toString(), color: '#3b82f6' },
           { icon: Headphones, label: 'Voix', value: selectedVoice?.name?.split(' ')[0] || 'Default', color: '#f59e0b' },
         ].map((stat, i) => (
           <div key={i} style={{
-            background: 'var(--bg-secondary, #2d2d2d)',
+            background: 'var(--bg-surface, #12121a)',
             borderRadius: '16px',
             padding: '20px',
             display: 'flex',
@@ -859,8 +862,8 @@ export default function AudioPage() {
               <stat.icon size={24} color={stat.color} />
             </div>
             <div>
-              <p style={{ color: 'var(--text-muted, #666)', fontSize: '12px', margin: 0 }}>{stat.label}</p>
-              <p style={{ color: 'var(--text-primary, #ececec)', fontSize: '16px', fontWeight: 600, margin: '4px 0 0' }}>{stat.value}</p>
+              <p style={{ color: 'var(--text-muted, #6a6a82)', fontSize: '12px', margin: 0 }}>{stat.label}</p>
+              <p style={{ color: 'var(--text-primary, #e8e8f0)', fontSize: '16px', fontWeight: 600, margin: '4px 0 0' }}>{stat.value}</p>
             </div>
           </div>
         ))}
@@ -876,6 +879,6 @@ export default function AudioPage() {
           to { transform: rotate(360deg); }
         }
       `}</style>
-    </OfficePageLayout>
+    </div>
   );
 }

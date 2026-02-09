@@ -56,6 +56,6 @@ export const parseChartData = (content: string): ChartData | null => {
 };
 
 export const DEFAULT_CHART_COLORS = [
-  '#10a37f', '#3b82f6', '#8b5cf6', '#ef4444', '#f59e0b',
+  '#f5a623', '#3b82f6', '#8b5cf6', '#ef4444', '#f59e0b',
   '#06b6d4', '#ec4899', '#84cc16', '#f97316', '#6366f1'
 ];

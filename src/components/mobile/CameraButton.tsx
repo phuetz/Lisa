@@ -91,7 +91,7 @@ export const CameraButton = ({ onImageCapture, disabled }: CameraButtonProps) =>
               position: 'fixed',
               bottom: '80px',
               right: '16px',
-              backgroundColor: '#2d2d2d',
+              backgroundColor: '#12121a',
               borderRadius: '12px',
               padding: '8px',
               zIndex: 101,

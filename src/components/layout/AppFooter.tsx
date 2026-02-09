@@ -19,18 +19,48 @@ export function AppFooter({ isAuthenticated, onLogout, onLoginClick }: AppFooter
       {isAuthenticated ? (
         <button
           onClick={onLogout}
-          className="fixed bottom-4 left-4 z-50 px-3 py-1 text-xs bg-slate-900/50 hover:bg-slate-900 text-white rounded transition-colors"
           title="Se déconnecter"
+          style={{
+            position: 'fixed',
+            bottom: '16px',
+            left: '16px',
+            zIndex: 50,
+            padding: '4px 12px',
+            fontSize: '12px',
+            backgroundColor: 'rgba(15, 23, 42, 0.5)',
+            color: '#fff',
+            borderRadius: '4px',
+            border: 'none',
+            cursor: 'pointer',
+            transition: 'background-color 0.2s',
+          }}
+          onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'rgba(15, 23, 42, 0.9)')}
+          onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'rgba(15, 23, 42, 0.5)')}
         >
           Déconnexion
         </button>
       ) : (
         <button
           onClick={onLoginClick}
-          className="fixed bottom-4 left-4 z-50 px-3 py-1 text-xs bg-slate-900/50 hover:bg-slate-900 text-white rounded transition-colors"
           title="Se connecter"
+          style={{
+            position: 'fixed',
+            bottom: '16px',
+            left: '16px',
+            zIndex: 50,
+            padding: '4px 12px',
+            fontSize: '12px',
+            backgroundColor: 'rgba(15, 23, 42, 0.5)',
+            color: '#fff',
+            borderRadius: '4px',
+            border: 'none',
+            cursor: 'pointer',
+            transition: 'background-color 0.2s',
+          }}
+          onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'rgba(15, 23, 42, 0.9)')}
+          onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'rgba(15, 23, 42, 0.5)')}
         >
-          🔐 Connexion
+          Connexion
         </button>
       )}
     </>

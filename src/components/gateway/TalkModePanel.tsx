@@ -90,7 +90,7 @@ export function TalkModePanel() {
       case 'processing': return '#f59e0b';
       case 'speaking': return '#3b82f6';
       case 'error': return '#ef4444';
-      default: return '#666';
+      default: return '#6a6a82';
     }
   };
 
@@ -103,7 +103,7 @@ export function TalkModePanel() {
           onClick={handleToggle}
           style={{
             ...styles.toggleButton,
-            backgroundColor: isEnabled ? '#10b981' : '#333'
+            backgroundColor: isEnabled ? '#10b981' : '#2d2d44'
           }}
         >
           {isEnabled ? 'ON' : 'OFF'}
@@ -203,7 +203,7 @@ export function TalkModePanel() {
 
 const styles: Record<string, React.CSSProperties> = {
   container: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#1a1a26',
     borderRadius: '12px',
     padding: '24px',
     color: '#fff'
@@ -247,7 +247,7 @@ const styles: Record<string, React.CSSProperties> = {
   transcript: {
     marginTop: '12px',
     padding: '8px 16px',
-    backgroundColor: '#333',
+    backgroundColor: '#2d2d44',
     borderRadius: '8px',
     fontSize: '14px',
     color: '#aaa',
@@ -295,7 +295,7 @@ const styles: Record<string, React.CSSProperties> = {
   sectionTitle: {
     fontSize: '14px',
     fontWeight: 600,
-    color: '#888',
+    color: '#6a6a82',
     marginBottom: '12px',
     textTransform: 'uppercase'
   },
@@ -317,7 +317,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   voiceEngine: {
     fontSize: '10px',
-    color: '#666',
+    color: '#6a6a82',
     textTransform: 'uppercase'
   },
   voiceName: {
@@ -327,7 +327,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   voiceLang: {
     fontSize: '11px',
-    color: '#888'
+    color: '#6a6a82'
   },
   historyList: {
     display: 'flex',
@@ -339,7 +339,7 @@ const styles: Record<string, React.CSSProperties> = {
   emptyState: {
     padding: '20px',
     textAlign: 'center',
-    color: '#666'
+    color: '#6a6a82'
   },
   historyItem: {
     display: 'flex',
@@ -362,9 +362,9 @@ const styles: Record<string, React.CSSProperties> = {
     gap: '4px',
     marginTop: '20px',
     paddingTop: '16px',
-    borderTop: '1px solid #333',
+    borderTop: '1px solid #2d2d44',
     fontSize: '11px',
-    color: '#555'
+    color: '#3d3d5c'
   }
 };
 

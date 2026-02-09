@@ -66,8 +66,8 @@ export function ModernModal({
         aria-labelledby={title ? 'modal-title' : undefined}
         className={`
           relative w-full ${sizeClasses[size]}
-          bg-[var(--bg-elevated,#2f2f2f)]/95 backdrop-blur-xl
-          border border-[var(--border-primary,#424242)]
+          bg-[var(--bg-panel,#1a1a26)]/95 backdrop-blur-xl
+          border border-[var(--border-primary,#2d2d44)]
           rounded-xl shadow-2xl
           animate-in zoom-in-95 duration-200
         `}
@@ -75,9 +75,9 @@ export function ModernModal({
       >
         {/* Header */}
         {(title || showCloseButton) && (
-          <div className="flex items-center justify-between p-6 border-b border-[var(--border-primary,#424242)]">
+          <div className="flex items-center justify-between p-6 border-b border-[var(--border-primary,#2d2d44)]">
             {title && (
-              <h2 id="modal-title" className="text-xl font-bold text-[var(--text-primary,#ececec)]">
+              <h2 id="modal-title" className="text-xl font-bold text-[var(--text-primary,#e8e8f0)]">
                 {title}
               </h2>
             )}
@@ -99,7 +99,7 @@ export function ModernModal({
 
         {/* Footer */}
         {footer && (
-          <div className="flex items-center justify-end gap-3 p-6 border-t border-[var(--border-primary,#424242)]">
+          <div className="flex items-center justify-end gap-3 p-6 border-t border-[var(--border-primary,#2d2d44)]">
             {footer}
           </div>
         )}
@@ -158,7 +158,7 @@ export function ConfirmModal({
         </>
       }
     >
-      <p className="text-[var(--text-secondary,#b4b4b4)]">{message}</p>
+      <p className="text-[var(--text-secondary,#9898b0)]">{message}</p>
     </ModernModal>
   );
 }

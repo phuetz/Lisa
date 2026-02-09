@@ -24,23 +24,23 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
   };
 
   const sourceColors: Record<string, string> = {
-    user: 'bg-[var(--color-brand,#10a37f)]',
+    user: 'bg-[var(--color-accent,#f5a623)]',
     lisa: 'bg-[var(--color-purple,#8b5cf6)]',
-    chatgpt: 'bg-[var(--color-brand,#10a37f)]',
+    chatgpt: 'bg-[var(--color-accent,#f5a623)]',
     claude: 'bg-[var(--color-warning,#f59e0b)]'
   };
 
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-4`}>
       <div className={`max-w-[80%] ${isUser ? 'order-2' : 'order-1'}`}>
-        <div className={`text-xs mb-1 ${isUser ? 'text-right' : 'text-left'} text-[var(--text-muted,#666)]`}>
+        <div className={`text-xs mb-1 ${isUser ? 'text-right' : 'text-left'} text-[var(--text-muted,#6a6a82)]`}>
           {sourceLabels[message.source] || message.source}
         </div>
         <div
           className={`rounded-2xl px-4 py-3 ${
             isUser
-              ? 'bg-[var(--color-brand,#10a37f)] text-white rounded-br-md'
-              : `${sourceColors[message.source] || 'bg-[var(--bg-tertiary,#1a1a1a)]'} text-white rounded-bl-md`
+              ? 'bg-[var(--color-accent,#f5a623)] text-white rounded-br-md'
+              : `${sourceColors[message.source] || 'bg-[var(--bg-tertiary,#1a1a26)]'} text-white rounded-bl-md`
           }`}
         >
           <p className="whitespace-pre-wrap">{message.content}</p>
@@ -51,7 +51,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
             </div>
           )}
         </div>
-        <div className="text-xs mt-1 text-[var(--text-muted,#666)]">
+        <div className="text-xs mt-1 text-[var(--text-muted,#6a6a82)]">
           {new Date(message.timestamp).toLocaleTimeString()}
         </div>
       </div>
@@ -147,24 +147,24 @@ export const AIBridgePanel: React.FC = () => {
   }, [clearMessages, createSession, target]);
 
   return (
-    <div className="flex flex-col h-full bg-[var(--bg-primary,#212121)] text-white">
+    <div className="flex flex-col h-full bg-[var(--bg-primary,#12121a)] text-white">
       {/* Header */}
-      <div className="flex-none p-4 border-b border-[var(--border-primary,#424242)]">
+      <div className="flex-none p-4 border-b border-[var(--border-primary,#2d2d44)]">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-xl font-bold">AI Bridge</h2>
-            <p className="text-sm text-[var(--text-muted,#666)]">
+            <p className="text-sm text-[var(--text-muted,#6a6a82)]">
               Lisa ↔ ChatGPT ↔ Claude
             </p>
           </div>
           <div className="flex items-center gap-4">
             {/* Target selector */}
             <div className="flex items-center gap-2">
-              <span className="text-sm text-[var(--text-muted,#666)]">Cible:</span>
+              <span className="text-sm text-[var(--text-muted,#6a6a82)]">Cible:</span>
               <select
                 value={target}
                 onChange={(e) => setTarget(e.target.value as AITarget)}
-                className="bg-[var(--bg-secondary,#2d2d2d)] border border-[var(--border-secondary,#555)] rounded px-3 py-1.5 text-sm"
+                className="bg-[var(--bg-surface,#12121a)] border border-[var(--border-secondary,#3d3d5c)] rounded px-3 py-1.5 text-sm"
               >
                 <option value="lisa">Lisa</option>
                 <option value="chatgpt">ChatGPT</option>
@@ -188,7 +188,7 @@ export const AIBridgePanel: React.FC = () => {
               onClick={() => setShowTools(!showTools)}
               aria-expanded={showTools}
               aria-label={`Outils (${tools.length})`}
-              className="px-3 py-1.5 bg-[var(--bg-tertiary,#1a1a1a)] hover:bg-[var(--bg-hover,rgba(255,255,255,0.06))] rounded text-sm"
+              className="px-3 py-1.5 bg-[var(--bg-tertiary,#1a1a26)] hover:bg-[var(--bg-hover,rgba(255,255,255,0.06))] rounded text-sm"
             >
               🔧 Outils ({tools.length})
             </button>
@@ -205,7 +205,7 @@ export const AIBridgePanel: React.FC = () => {
 
         {/* Session info */}
         {session && (
-          <div className="mt-2 text-xs text-[var(--text-muted,#666)]">
+          <div className="mt-2 text-xs text-[var(--text-muted,#6a6a82)]">
             Session: {session.id.slice(0, 8)}... | 
             Participants: {session.participants.join(', ')} |
             Messages: {messages.length}
@@ -223,18 +223,18 @@ export const AIBridgePanel: React.FC = () => {
 
       {/* Tools panel */}
       {showTools && (
-        <div className="flex-none p-4 border-b border-[var(--border-primary,#424242)] bg-[var(--bg-secondary,#2d2d2d)]/50 max-h-48 overflow-y-auto">
+        <div className="flex-none p-4 border-b border-[var(--border-primary,#2d2d44)] bg-[var(--bg-surface,#12121a)]/50 max-h-48 overflow-y-auto">
           <h3 className="text-sm font-semibold mb-2">Outils disponibles:</h3>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
             {tools.map((tool) => (
               <button
                 key={tool.name}
                 onClick={() => handleToolInvoke(tool.name)}
-                className="p-2 bg-[var(--bg-tertiary,#1a1a1a)] hover:bg-[var(--bg-hover,rgba(255,255,255,0.06))] rounded text-left text-xs"
+                className="p-2 bg-[var(--bg-tertiary,#1a1a26)] hover:bg-[var(--bg-hover,rgba(255,255,255,0.06))] rounded text-left text-xs"
                 title={tool.description}
               >
                 <div className="font-mono text-[var(--color-purple,#8b5cf6)]">{tool.name.replace('lisa_', '')}</div>
-                <div className="text-[var(--text-muted,#666)] truncate">{tool.description}</div>
+                <div className="text-[var(--text-muted,#6a6a82)] truncate">{tool.description}</div>
               </button>
             ))}
           </div>
@@ -245,7 +245,7 @@ export const AIBridgePanel: React.FC = () => {
       <div className="flex-1 overflow-y-auto p-4">
         {messages.length === 0 && !streamingContent && (
           <div className="h-full flex items-center justify-center">
-            <div className="text-center text-[var(--text-muted,#666)]">
+            <div className="text-center text-[var(--text-muted,#6a6a82)]">
               <div className="text-6xl mb-4">🌉</div>
               <h3 className="text-xl font-semibold mb-2">AI Bridge</h3>
               <p className="max-w-md">
@@ -264,10 +264,10 @@ export const AIBridgePanel: React.FC = () => {
         {isStreaming && streamingContent && (
           <div className="flex justify-start mb-4">
             <div className="max-w-[80%]">
-              <div className="text-xs mb-1 text-[var(--text-muted,#666)]">
+              <div className="text-xs mb-1 text-[var(--text-muted,#6a6a82)]">
                 {target === 'chatgpt' ? 'ChatGPT' : target === 'claude' ? 'Claude' : 'Lisa'}
               </div>
-              <div className="rounded-2xl px-4 py-3 bg-[var(--bg-tertiary,#1a1a1a)] text-white rounded-bl-md">
+              <div className="rounded-2xl px-4 py-3 bg-[var(--bg-tertiary,#1a1a26)] text-white rounded-bl-md">
                 <p className="whitespace-pre-wrap">{streamingContent}</p>
                 <span className="inline-block w-2 h-4 bg-white/50 animate-pulse ml-1" />
               </div>
@@ -279,14 +279,14 @@ export const AIBridgePanel: React.FC = () => {
       </div>
 
       {/* Input area */}
-      <form onSubmit={handleSubmit} className="flex-none p-4 border-t border-[var(--border-primary,#424242)]">
+      <form onSubmit={handleSubmit} className="flex-none p-4 border-t border-[var(--border-primary,#2d2d44)]">
         <div className="flex gap-2">
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder={`Message à ${target === 'chatgpt' ? 'ChatGPT' : target === 'claude' ? 'Claude' : 'Lisa'}...`}
-            className="flex-1 bg-[var(--bg-secondary,#2d2d2d)] border border-[var(--border-secondary,#555)] rounded-lg px-4 py-3 focus:outline-none focus:border-[var(--color-brand,#10a37f)]"
+            className="flex-1 bg-[var(--bg-surface,#12121a)] border border-[var(--border-secondary,#3d3d5c)] rounded-lg px-4 py-3 focus:outline-none focus:border-[var(--color-accent,#f5a623)]"
             disabled={isLoading || isStreaming}
           />
           
@@ -302,7 +302,7 @@ export const AIBridgePanel: React.FC = () => {
             <button
               type="submit"
               disabled={isLoading || !input.trim()}
-              className="px-6 py-3 bg-[var(--color-purple,#8b5cf6)] hover:opacity-90 disabled:bg-[var(--bg-tertiary,#1a1a1a)] disabled:cursor-not-allowed rounded-lg font-medium"
+              className="px-6 py-3 bg-[var(--color-purple,#8b5cf6)] hover:opacity-90 disabled:bg-[var(--bg-tertiary,#1a1a26)] disabled:cursor-not-allowed rounded-lg font-medium"
             >
               {isLoading ? '...' : 'Envoyer'}
             </button>

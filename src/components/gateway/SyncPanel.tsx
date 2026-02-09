@@ -68,7 +68,7 @@ export function SyncPanel() {
   };
 
   const providers: { id: SyncProvider; name: string; icon: string; color: string }[] = [
-    { id: 'local', name: 'Local', icon: '💻', color: '#666' },
+    { id: 'local', name: 'Local', icon: '💻', color: '#6a6a82' },
     { id: 'lisa-cloud', name: 'Lisa Cloud', icon: '☁️', color: '#3b82f6' },
     { id: 'google-drive', name: 'Google Drive', icon: '📁', color: '#4285f4' },
     { id: 'dropbox', name: 'Dropbox', icon: '📦', color: '#0061fe' },
@@ -156,7 +156,7 @@ export function SyncPanel() {
               onClick={handleToggleSync}
               style={{
                 ...styles.toggleButton,
-                backgroundColor: config.enabled ? '#10b981' : '#333'
+                backgroundColor: config.enabled ? '#10b981' : '#2d2d44'
               }}
             >
               {config.enabled ? 'ON' : 'OFF'}
@@ -174,7 +174,7 @@ export function SyncPanel() {
               disabled={!config.enabled}
               style={{
                 ...styles.toggleButton,
-                backgroundColor: config.autoSync && config.enabled ? '#10b981' : '#333',
+                backgroundColor: config.autoSync && config.enabled ? '#10b981' : '#2d2d44',
                 opacity: config.enabled ? 1 : 0.5
               }}
             >
@@ -268,7 +268,7 @@ function formatBytes(bytes: number): string {
 
 const styles: Record<string, React.CSSProperties> = {
   container: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#1a1a26',
     borderRadius: '12px',
     padding: '24px',
     color: '#fff'
@@ -276,7 +276,7 @@ const styles: Record<string, React.CSSProperties> = {
   loading: {
     padding: '40px',
     textAlign: 'center',
-    color: '#888'
+    color: '#6a6a82'
   },
   header: {
     display: 'flex',
@@ -331,7 +331,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   statusTime: {
     fontSize: '12px',
-    color: '#888'
+    color: '#6a6a82'
   },
   pendingBadge: {
     padding: '6px 12px',
@@ -347,7 +347,7 @@ const styles: Record<string, React.CSSProperties> = {
   sectionTitle: {
     fontSize: '14px',
     fontWeight: 600,
-    color: '#888',
+    color: '#6a6a82',
     marginBottom: '12px',
     textTransform: 'uppercase'
   },
@@ -361,7 +361,7 @@ const styles: Record<string, React.CSSProperties> = {
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: '14px 16px',
-    borderBottom: '1px solid #333'
+    borderBottom: '1px solid #2d2d44'
   },
   toggleInfo: {
     display: 'flex',
@@ -374,7 +374,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   toggleDesc: {
     fontSize: '12px',
-    color: '#666'
+    color: '#6a6a82'
   },
   toggleButton: {
     padding: '6px 16px',
@@ -422,7 +422,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   storageBar: {
     height: '8px',
-    backgroundColor: '#333',
+    backgroundColor: '#2d2d44',
     borderRadius: '4px',
     overflow: 'hidden',
     marginBottom: '12px'
@@ -437,14 +437,14 @@ const styles: Record<string, React.CSSProperties> = {
     justifyContent: 'space-between',
     alignItems: 'center',
     fontSize: '13px',
-    color: '#888'
+    color: '#6a6a82'
   },
   disconnectButton: {
     padding: '4px 12px',
     backgroundColor: 'transparent',
-    border: '1px solid #444',
+    border: '1px solid #2d2d44',
     borderRadius: '4px',
-    color: '#888',
+    color: '#6a6a82',
     cursor: 'pointer',
     fontSize: '12px'
   },

@@ -78,7 +78,7 @@ export function BrowserPanel() {
         <div style={styles.status}>
           <span style={{
             ...styles.statusDot,
-            backgroundColor: isConnected ? '#10b981' : '#666'
+            backgroundColor: isConnected ? '#10b981' : '#6a6a82'
           }} />
           <span>{isConnected ? 'Connecté' : 'Déconnecté'}</span>
         </div>
@@ -209,7 +209,7 @@ export function BrowserPanel() {
 
 const styles: Record<string, React.CSSProperties> = {
   container: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#1a1a26',
     borderRadius: '12px',
     padding: '24px',
     color: '#fff'
@@ -230,7 +230,7 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     gap: '8px',
     fontSize: '13px',
-    color: '#888'
+    color: '#6a6a82'
   },
   statusDot: {
     width: '8px',
@@ -256,7 +256,7 @@ const styles: Record<string, React.CSSProperties> = {
     flex: 1,
     padding: '12px 16px',
     backgroundColor: '#252525',
-    border: '1px solid #333',
+    border: '1px solid #2d2d44',
     borderRadius: '8px',
     color: '#fff',
     fontSize: '14px'
@@ -291,7 +291,7 @@ const styles: Record<string, React.CSSProperties> = {
   sectionTitle: {
     fontSize: '14px',
     fontWeight: 600,
-    color: '#888',
+    color: '#6a6a82',
     marginBottom: '12px',
     textTransform: 'uppercase'
   },
@@ -303,7 +303,7 @@ const styles: Record<string, React.CSSProperties> = {
   emptyState: {
     padding: '20px',
     textAlign: 'center',
-    color: '#666'
+    color: '#6a6a82'
   },
   pageItem: {
     display: 'flex',
@@ -322,14 +322,14 @@ const styles: Record<string, React.CSSProperties> = {
   },
   pageUrl: {
     fontSize: '12px',
-    color: '#888',
+    color: '#6a6a82',
     marginTop: '2px'
   },
   closeButton: {
     padding: '6px 10px',
     backgroundColor: 'transparent',
     border: 'none',
-    color: '#666',
+    color: '#6a6a82',
     cursor: 'pointer',
     fontSize: '14px'
   },
@@ -356,7 +356,7 @@ const styles: Record<string, React.CSSProperties> = {
     flex: 1
   },
   historyDuration: {
-    color: '#666',
+    color: '#6a6a82',
     fontSize: '12px'
   },
   stats: {
@@ -364,7 +364,7 @@ const styles: Record<string, React.CSSProperties> = {
     gap: '16px',
     marginTop: '20px',
     paddingTop: '20px',
-    borderTop: '1px solid #333'
+    borderTop: '1px solid #2d2d44'
   },
   statItem: {
     flex: 1,
@@ -378,7 +378,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   statLabel: {
     fontSize: '12px',
-    color: '#888'
+    color: '#6a6a82'
   }
 };
 

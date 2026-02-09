@@ -9,20 +9,20 @@ export const mobileTheme = {
     background: '#000000',
     backgroundSecondary: '#0a0a0a',
     backgroundTertiary: '#171717',
-    surface: '#1a1a1a',
+    surface: '#1a1a26',
     surfaceElevated: '#242424',
     
     // Primary colors
-    primary: '#10a37f',
-    primaryHover: '#0d8a6a',
-    primaryLight: 'rgba(16, 163, 127, 0.15)',
+    primary: '#f5a623',
+    primaryHover: '#e6951a',
+    primaryLight: 'rgba(245, 166, 35, 0.15)',
     
     // Accent colors
     accent: '#5436DA',
     accentLight: 'rgba(84, 54, 218, 0.15)',
     
     // Text colors
-    textPrimary: '#ececf1',
+    textPrimary: '#e8e8f0',
     textSecondary: '#8e8ea0',
     textTertiary: '#565869',
     textMuted: '#444654',
@@ -38,9 +38,9 @@ export const mobileTheme = {
     infoLight: 'rgba(59, 130, 246, 0.15)',
     
     // Border colors
-    border: '#2d2d2d',
+    border: '#2d2d44',
     borderLight: 'rgba(86, 88, 105, 0.3)',
-    borderFocus: '#10a37f',
+    borderFocus: '#f5a623',
     
     // Overlay
     overlay: 'rgba(0, 0, 0, 0.7)',
@@ -96,8 +96,8 @@ export const mobileTheme = {
     md: '0 4px 12px rgba(0, 0, 0, 0.3)',
     lg: '0 10px 30px rgba(0, 0, 0, 0.4)',
     xl: '0 20px 50px rgba(0, 0, 0, 0.5)',
-    glow: '0 0 20px rgba(16, 163, 127, 0.3)',
-    glowStrong: '0 0 40px rgba(16, 163, 127, 0.5)',
+    glow: '0 0 20px rgba(245, 166, 35, 0.3)',
+    glowStrong: '0 0 40px rgba(245, 166, 35, 0.5)',
   },
   
   transitions: {

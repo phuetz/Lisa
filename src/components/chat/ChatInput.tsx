@@ -250,6 +250,13 @@ export const ChatInput = () => {
 
       const toolCallingSystemPrompt = `Tu es Lisa, une assistante IA avec accès à des outils.
 
+## FICHIERS JOINTS
+
+Tu peux lire les fichiers joints par l'utilisateur (PDF, DOCX, TXT, images).
+Quand un fichier est joint, son contenu extrait apparaît dans le message entre balises [Contenu du fichier: nom] et [Fin du fichier].
+Analyse et utilise ce contenu pour répondre. Tu peux résumer, extraire des informations, répondre à des questions sur le document, etc.
+Si l'extraction a échoué, le message indiquera "Impossible d'extraire le texte" — dans ce cas, explique le problème.
+
 ## OUTILS DISPONIBLES
 
 ### RECHERCHE WEB
@@ -277,6 +284,7 @@ Exemples:
 1. "Ajoute une tâche..." → APPELLE add_todo
 2. "Liste mes tâches" → APPELLE list_todos
 3. Question actualités/météo → APPELLE web_search
+4. Fichier joint → Analyse le contenu extrait et réponds en conséquence
 
 Réponds en français, sois concis.`;
 
@@ -464,7 +472,7 @@ Réponds en français, sois concis.`;
         <div style={{
           position: 'absolute', inset: 0,
           backgroundColor: 'rgba(255,255,255,0.05)',
-          border: '2px dashed #666',
+          border: '2px dashed #6a6a82',
           borderRadius: '28px',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           zIndex: 20, pointerEvents: 'none',
@@ -503,9 +511,9 @@ Réponds en français, sois concis.`;
 
       {/* Main input container — ChatGPT style */}
       <div style={{
-        backgroundColor: '#2f2f2f',
+        backgroundColor: '#1a1a26',
         borderRadius: '26px',
-        border: isListening ? '1px solid #ef4444' : '1px solid #424242',
+        border: isListening ? '1px solid #ef4444' : '1px solid #2d2d44',
         transition: 'border-color 0.2s',
       }}>
         {/* Attachment previews */}
@@ -517,7 +525,7 @@ Réponds en français, sois concis.`;
             {attachments.map((att, idx) => (
               <div key={idx} style={{
                 position: 'relative', display: 'flex', alignItems: 'center', gap: '6px',
-                padding: '6px 10px', backgroundColor: '#424242', borderRadius: '10px',
+                padding: '6px 10px', backgroundColor: '#2d2d44', borderRadius: '10px',
                 fontSize: '12px', color: '#d1d1d1',
               }}>
                 {att.type === 'image' ? (
@@ -525,7 +533,7 @@ Réponds en français, sois concis.`;
                     width: '32px', height: '32px', borderRadius: '6px', objectFit: 'cover',
                   }} />
                 ) : (
-                  <Paperclip size={14} style={{ color: '#888' }} />
+                  <Paperclip size={14} style={{ color: '#6a6a82' }} />
                 )}
                 <span style={{ maxWidth: '80px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {att.name}
@@ -607,8 +615,8 @@ Réponds en français, sois concis.`;
                 style={{
                   position: 'absolute', bottom: '100%', left: 0,
                   marginBottom: '6px', padding: '6px',
-                  backgroundColor: '#2a2a2a', borderRadius: '14px',
-                  border: '1px solid #3a3a3a',
+                  backgroundColor: '#1a1a26', borderRadius: '14px',
+                  border: '1px solid #2d2d44',
                   display: 'flex', flexDirection: 'column', gap: '2px',
                   minWidth: '180px', zIndex: 30,
                   boxShadow: 'var(--shadow-elevated)',
@@ -693,7 +701,7 @@ Réponds en français, sois concis.`;
                   borderRadius: '50%',
                   backgroundColor: hasContent ? '#fff' : 'transparent',
                   border: 'none',
-                  color: hasContent ? '#000' : '#676767',
+                  color: hasContent ? '#000' : '#6a6a82',
                   cursor: hasContent ? 'pointer' : 'default',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   transition: 'background-color var(--transition-normal), color var(--transition-normal)',
@@ -736,7 +744,7 @@ const toolBtnStyle: React.CSSProperties = {
   width: '32px', height: '32px',
   backgroundColor: 'transparent',
   border: 'none',
-  color: '#b4b4b4',
+  color: '#9898b0',
   cursor: 'pointer',
   borderRadius: '8px',
   display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -745,7 +753,7 @@ const toolBtnStyle: React.CSSProperties = {
 
 const iconBtnStyle: React.CSSProperties = {
   padding: '2px', backgroundColor: 'transparent',
-  border: 'none', color: '#888', cursor: 'pointer',
+  border: 'none', color: '#6a6a82', cursor: 'pointer',
   display: 'flex', alignItems: 'center', borderRadius: '4px',
 };
 
@@ -767,7 +775,7 @@ function ActionItem({ icon, label, onClick, active }: {
         padding: '8px 12px',
         backgroundColor: 'transparent',
         border: 'none',
-        color: active ? 'var(--color-brand)' : 'var(--text-primary)',
+        color: active ? 'var(--color-accent)' : 'var(--text-primary)',
         cursor: 'pointer',
         borderRadius: '10px',
         fontSize: '13px',
@@ -775,7 +783,7 @@ function ActionItem({ icon, label, onClick, active }: {
         textAlign: 'left',
         transition: 'background-color var(--transition-fast)',
       }}
-      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#363636')}
+      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#2d2d44')}
       onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
     >
       {icon}

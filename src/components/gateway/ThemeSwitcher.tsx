@@ -122,7 +122,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   label: {
     fontSize: '13px',
-    color: '#888'
+    color: '#6a6a82'
   },
   dropdown: {
     position: 'relative'
@@ -133,7 +133,7 @@ const styles: Record<string, React.CSSProperties> = {
     gap: '8px',
     padding: '8px 12px',
     backgroundColor: '#252525',
-    border: '1px solid #333',
+    border: '1px solid #2d2d44',
     borderRadius: '8px',
     color: '#fff',
     cursor: 'pointer',
@@ -149,7 +149,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   arrow: {
     fontSize: '10px',
-    color: '#888'
+    color: '#6a6a82'
   },
   menu: {
     position: 'absolute',
@@ -158,7 +158,7 @@ const styles: Record<string, React.CSSProperties> = {
     right: 0,
     marginTop: '4px',
     backgroundColor: '#252525',
-    border: '1px solid #333',
+    border: '1px solid #2d2d44',
     borderRadius: '8px',
     overflow: 'hidden',
     zIndex: 1000,
@@ -178,7 +178,7 @@ const styles: Record<string, React.CSSProperties> = {
     textAlign: 'left'
   },
   menuItemActive: {
-    backgroundColor: '#333'
+    backgroundColor: '#2d2d44'
   },
   themeInfo: {
     flex: 1,
@@ -190,7 +190,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   themeType: {
     fontSize: '11px',
-    color: '#888',
+    color: '#6a6a82',
     textTransform: 'capitalize'
   },
   checkmark: {
@@ -200,7 +200,7 @@ const styles: Record<string, React.CSSProperties> = {
   toggleButton: {
     padding: '8px',
     backgroundColor: '#252525',
-    border: '1px solid #333',
+    border: '1px solid #2d2d44',
     borderRadius: '8px',
     cursor: 'pointer',
     fontSize: '16px'
@@ -208,7 +208,7 @@ const styles: Record<string, React.CSSProperties> = {
   compactButton: {
     padding: '8px 12px',
     backgroundColor: '#252525',
-    border: '1px solid #333',
+    border: '1px solid #2d2d44',
     borderRadius: '8px',
     cursor: 'pointer',
     fontSize: '18px'

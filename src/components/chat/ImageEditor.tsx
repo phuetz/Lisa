@@ -328,8 +328,8 @@ export const ImageEditor = ({ imageUrl, onSave, onCancel }: ImageEditorProps) =>
         alignItems: 'center',
         justifyContent: 'space-between',
         padding: '12px 20px',
-        backgroundColor: '#1a1a1a',
-        borderBottom: '1px solid #333',
+        backgroundColor: '#1a1a26',
+        borderBottom: '1px solid #2d2d44',
       }}>
         <button
           onClick={onCancel}
@@ -338,7 +338,7 @@ export const ImageEditor = ({ imageUrl, onSave, onCancel }: ImageEditorProps) =>
             alignItems: 'center',
             gap: '8px',
             padding: '8px 16px',
-            backgroundColor: '#333',
+            backgroundColor: '#2d2d44',
             border: 'none',
             borderRadius: '8px',
             color: '#fff',
@@ -354,7 +354,7 @@ export const ImageEditor = ({ imageUrl, onSave, onCancel }: ImageEditorProps) =>
             onClick={handleDownload}
             style={{
               padding: '8px',
-              backgroundColor: '#333',
+              backgroundColor: '#2d2d44',
               border: 'none',
               borderRadius: '8px',
               color: '#fff',
@@ -371,7 +371,7 @@ export const ImageEditor = ({ imageUrl, onSave, onCancel }: ImageEditorProps) =>
               alignItems: 'center',
               gap: '8px',
               padding: '8px 16px',
-              backgroundColor: '#10a37f',
+              backgroundColor: '#f5a623',
               border: 'none',
               borderRadius: '8px',
               color: '#fff',
@@ -391,7 +391,7 @@ export const ImageEditor = ({ imageUrl, onSave, onCancel }: ImageEditorProps) =>
         justifyContent: 'center',
         gap: '16px',
         padding: '12px',
-        backgroundColor: '#252525',
+        backgroundColor: '#1a1a26',
         flexWrap: 'wrap',
       }}>
         {/* Tools */}
@@ -402,7 +402,7 @@ export const ImageEditor = ({ imageUrl, onSave, onCancel }: ImageEditorProps) =>
               onClick={() => setTool(t.id)}
               style={{
                 padding: '10px',
-                backgroundColor: tool === t.id ? '#10a37f' : '#333',
+                backgroundColor: tool === t.id ? '#f5a623' : '#2d2d44',
                 border: 'none',
                 borderRadius: '8px',
                 color: '#fff',
@@ -415,7 +415,7 @@ export const ImageEditor = ({ imageUrl, onSave, onCancel }: ImageEditorProps) =>
           ))}
         </div>
 
-        <div style={{ width: '1px', height: '24px', backgroundColor: '#444' }} />
+        <div style={{ width: '1px', height: '24px', backgroundColor: '#2d2d44' }} />
 
         {/* Colors */}
         <div style={{ display: 'flex', gap: '4px' }}>
@@ -427,7 +427,7 @@ export const ImageEditor = ({ imageUrl, onSave, onCancel }: ImageEditorProps) =>
                 width: '28px',
                 height: '28px',
                 backgroundColor: c,
-                border: color === c ? '3px solid #fff' : '1px solid #444',
+                border: color === c ? '3px solid #fff' : '1px solid #2d2d44',
                 borderRadius: '50%',
                 cursor: 'pointer',
               }}
@@ -435,7 +435,7 @@ export const ImageEditor = ({ imageUrl, onSave, onCancel }: ImageEditorProps) =>
           ))}
         </div>
 
-        <div style={{ width: '1px', height: '24px', backgroundColor: '#444' }} />
+        <div style={{ width: '1px', height: '24px', backgroundColor: '#2d2d44' }} />
 
         {/* Line width */}
         <input
@@ -447,7 +447,7 @@ export const ImageEditor = ({ imageUrl, onSave, onCancel }: ImageEditorProps) =>
           style={{ width: '80px' }}
         />
 
-        <div style={{ width: '1px', height: '24px', backgroundColor: '#444' }} />
+        <div style={{ width: '1px', height: '24px', backgroundColor: '#2d2d44' }} />
 
         {/* Actions */}
         <div style={{ display: 'flex', gap: '4px' }}>
@@ -456,10 +456,10 @@ export const ImageEditor = ({ imageUrl, onSave, onCancel }: ImageEditorProps) =>
             disabled={actions.length === 0}
             style={{
               padding: '10px',
-              backgroundColor: '#333',
+              backgroundColor: '#2d2d44',
               border: 'none',
               borderRadius: '8px',
-              color: actions.length === 0 ? '#555' : '#fff',
+              color: actions.length === 0 ? '#3d3d5c' : '#fff',
               cursor: actions.length === 0 ? 'not-allowed' : 'pointer',
             }}
             title="Annuler"
@@ -471,10 +471,10 @@ export const ImageEditor = ({ imageUrl, onSave, onCancel }: ImageEditorProps) =>
             disabled={undoneActions.length === 0}
             style={{
               padding: '10px',
-              backgroundColor: '#333',
+              backgroundColor: '#2d2d44',
               border: 'none',
               borderRadius: '8px',
-              color: undoneActions.length === 0 ? '#555' : '#fff',
+              color: undoneActions.length === 0 ? '#3d3d5c' : '#fff',
               cursor: undoneActions.length === 0 ? 'not-allowed' : 'pointer',
             }}
             title="Refaire"
@@ -485,7 +485,7 @@ export const ImageEditor = ({ imageUrl, onSave, onCancel }: ImageEditorProps) =>
             onClick={handleClear}
             style={{
               padding: '10px',
-              backgroundColor: '#333',
+              backgroundColor: '#2d2d44',
               border: 'none',
               borderRadius: '8px',
               color: '#ef4444',
@@ -499,7 +499,7 @@ export const ImageEditor = ({ imageUrl, onSave, onCancel }: ImageEditorProps) =>
             onClick={handleRotate}
             style={{
               padding: '10px',
-              backgroundColor: '#333',
+              backgroundColor: '#2d2d44',
               border: 'none',
               borderRadius: '8px',
               color: '#fff',
@@ -513,7 +513,7 @@ export const ImageEditor = ({ imageUrl, onSave, onCancel }: ImageEditorProps) =>
             onClick={() => setZoom(prev => Math.min(prev + 0.25, 3))}
             style={{
               padding: '10px',
-              backgroundColor: '#333',
+              backgroundColor: '#2d2d44',
               border: 'none',
               borderRadius: '8px',
               color: '#fff',
@@ -527,7 +527,7 @@ export const ImageEditor = ({ imageUrl, onSave, onCancel }: ImageEditorProps) =>
             onClick={() => setZoom(prev => Math.max(prev - 0.25, 0.5))}
             style={{
               padding: '10px',
-              backgroundColor: '#333',
+              backgroundColor: '#2d2d44',
               border: 'none',
               borderRadius: '8px',
               color: '#fff',
@@ -574,10 +574,10 @@ export const ImageEditor = ({ imageUrl, onSave, onCancel }: ImageEditorProps) =>
           top: '50%',
           left: '50%',
           transform: 'translate(-50%, -50%)',
-          backgroundColor: '#1a1a1a',
+          backgroundColor: '#1a1a26',
           padding: '20px',
           borderRadius: '12px',
-          border: '1px solid #333',
+          border: '1px solid #2d2d44',
           zIndex: 2001,
         }}>
           <input
@@ -589,8 +589,8 @@ export const ImageEditor = ({ imageUrl, onSave, onCancel }: ImageEditorProps) =>
             style={{
               width: '300px',
               padding: '12px',
-              backgroundColor: '#252525',
-              border: '1px solid #444',
+              backgroundColor: '#1a1a26',
+              border: '1px solid #2d2d44',
               borderRadius: '8px',
               color: '#fff',
               fontSize: '14px',
@@ -605,7 +605,7 @@ export const ImageEditor = ({ imageUrl, onSave, onCancel }: ImageEditorProps) =>
               onClick={() => setTextPosition(null)}
               style={{
                 padding: '8px 16px',
-                backgroundColor: '#333',
+                backgroundColor: '#2d2d44',
                 border: 'none',
                 borderRadius: '6px',
                 color: '#fff',
@@ -618,7 +618,7 @@ export const ImageEditor = ({ imageUrl, onSave, onCancel }: ImageEditorProps) =>
               onClick={handleTextSubmit}
               style={{
                 padding: '8px 16px',
-                backgroundColor: '#10a37f',
+                backgroundColor: '#f5a623',
                 border: 'none',
                 borderRadius: '6px',
                 color: '#fff',

@@ -184,7 +184,7 @@ export function ActivityPanel({
 
 const styles: Record<string, React.CSSProperties> = {
   container: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#1a1a26',
     borderRadius: '12px',
     padding: '20px',
     color: '#fff'
@@ -201,7 +201,7 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 600
   },
   refreshButton: {
-    backgroundColor: '#333',
+    backgroundColor: '#2d2d44',
     border: 'none',
     borderRadius: '6px',
     padding: '8px 12px',
@@ -217,7 +217,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   select: {
     backgroundColor: '#252525',
-    border: '1px solid #333',
+    border: '1px solid #2d2d44',
     borderRadius: '6px',
     padding: '8px 12px',
     color: '#fff',
@@ -234,19 +234,19 @@ const styles: Record<string, React.CSSProperties> = {
   loading: {
     padding: '40px',
     textAlign: 'center',
-    color: '#888'
+    color: '#6a6a82'
   },
   empty: {
     padding: '40px',
     textAlign: 'center',
-    color: '#666'
+    color: '#6a6a82'
   },
   activityRow: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: '12px 16px',
-    borderBottom: '1px solid #333',
+    borderBottom: '1px solid #2d2d44',
     gap: '16px'
   },
   activityLeft: {
@@ -275,16 +275,16 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     gap: '8px',
     fontSize: '12px',
-    color: '#888',
+    color: '#6a6a82',
     marginTop: '2px'
   },
   activityCategory: {
-    backgroundColor: '#333',
+    backgroundColor: '#2d2d44',
     padding: '2px 6px',
     borderRadius: '4px'
   },
   activityActor: {
-    color: '#666'
+    color: '#6a6a82'
   },
   activityRight: {
     display: 'flex',
@@ -301,7 +301,7 @@ const styles: Record<string, React.CSSProperties> = {
     textTransform: 'uppercase'
   },
   activityTime: {
-    color: '#666',
+    color: '#6a6a82',
     fontSize: '12px',
     fontFamily: 'monospace'
   },
@@ -310,7 +310,7 @@ const styles: Record<string, React.CSSProperties> = {
     gap: '12px',
     marginTop: '12px',
     fontSize: '12px',
-    color: '#666'
+    color: '#6a6a82'
   }
 };
 

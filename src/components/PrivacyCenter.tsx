@@ -172,16 +172,16 @@ export const PrivacyCenter: React.FC<Props> = ({ onForget }) => {
   };
 
   return (
-    <div className="rounded-lg p-6" style={{ background: 'var(--bg-elevated, #2f2f2f)', color: 'var(--text-primary, #ececec)', border: '1px solid var(--border-primary, #424242)', boxShadow: 'var(--shadow-elevated, 0 4px 20px rgba(0,0,0,0.4))' }}>
+    <div className="rounded-lg p-6" style={{ background: 'var(--bg-panel, #1a1a26)', color: 'var(--text-primary, #e8e8f0)', border: '1px solid var(--border-primary, #2d2d44)', boxShadow: 'var(--shadow-elevated, 0 4px 20px rgba(0,0,0,0.4))' }}>
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-bold flex items-center gap-2">
-          <Lock style={{ color: 'var(--color-brand, #10a37f)' }} />
+          <Lock style={{ color: 'var(--color-accent, #f5a623)' }} />
           Centre de Confidentialité
         </h2>
         <button
           onClick={exportPrivacyReport}
           className="px-3 py-1 text-sm text-white rounded flex items-center gap-2"
-          style={{ background: 'var(--color-brand, #10a37f)', transition: 'opacity var(--transition-fast, 0.15s ease)' }}
+          style={{ background: 'var(--color-accent, #f5a623)', transition: 'opacity var(--transition-fast, 0.15s ease)' }}
         >
           <Download className="w-4 h-4" aria-hidden="true" />
           Rapport
@@ -189,23 +189,23 @@ export const PrivacyCenter: React.FC<Props> = ({ onForget }) => {
       </div>
 
       {/* Stockage */}
-      <div className="mb-6 p-4 rounded-lg" style={{ background: 'var(--color-brand-subtle, rgba(16,163,127,0.12))', border: '1px solid rgba(16,163,127,0.3)' }}>
+      <div className="mb-6 p-4 rounded-lg" style={{ background: 'var(--color-accent-subtle, rgba(245,166,35,0.12))', border: '1px solid rgba(16,163,127,0.3)' }}>
         <h3 className="font-semibold mb-3">Stockage Utilisé</h3>
         <div className="space-y-2 text-sm">
           <div className="flex justify-between">
-            <span style={{ color: 'var(--text-secondary, #b4b4b4)' }}>Conversations:</span>
+            <span style={{ color: 'var(--text-secondary, #9898b0)' }}>Conversations:</span>
             <span className="font-mono">{(storageInfo.conversations / 1024).toFixed(2)} KB</span>
           </div>
           <div className="flex justify-between">
-            <span style={{ color: 'var(--text-secondary, #b4b4b4)' }}>Documents:</span>
+            <span style={{ color: 'var(--text-secondary, #9898b0)' }}>Documents:</span>
             <span className="font-mono">{(storageInfo.documents / 1024).toFixed(2)} KB</span>
           </div>
           <div className="flex justify-between">
-            <span style={{ color: 'var(--text-secondary, #b4b4b4)' }}>Paramètres:</span>
+            <span style={{ color: 'var(--text-secondary, #9898b0)' }}>Paramètres:</span>
             <span className="font-mono">{(storageInfo.settings / 1024).toFixed(2)} KB</span>
           </div>
           <div className="flex justify-between">
-            <span style={{ color: 'var(--text-secondary, #b4b4b4)' }}>Cache:</span>
+            <span style={{ color: 'var(--text-secondary, #9898b0)' }}>Cache:</span>
             <span className="font-mono">{(storageInfo.cache / 1024).toFixed(2)} KB</span>
           </div>
           <div className="pt-2 mt-2 flex justify-between font-bold" style={{ borderTop: '1px solid rgba(16,163,127,0.3)' }}>
@@ -218,10 +218,10 @@ export const PrivacyCenter: React.FC<Props> = ({ onForget }) => {
       {/* Politique de Confidentialité */}
       <div className="mb-6 p-4 rounded-lg" style={{ background: 'rgba(16,163,127,0.08)', border: '1px solid rgba(16,163,127,0.2)' }}>
         <h3 className="font-semibold mb-3 flex items-center gap-2">
-          <CheckCircle className="w-5 h-5" style={{ color: 'var(--color-brand, #10a37f)' }} />
+          <CheckCircle className="w-5 h-5" style={{ color: 'var(--color-accent, #f5a623)' }} />
           Politique de Confidentialité
         </h3>
-        <ul className="space-y-2 text-sm" style={{ color: 'var(--text-secondary, #b4b4b4)' }}>
+        <ul className="space-y-2 text-sm" style={{ color: 'var(--text-secondary, #9898b0)' }}>
           <li><strong>Stockage Local:</strong> Toutes les données sont stockées localement dans votre navigateur</li>
           <li><strong>Aucune Synchronisation:</strong> Pas de synchronisation avec des serveurs cloud</li>
           <li><strong>Aucun Partage:</strong> Vos données ne sont jamais partagées avec des tiers</li>
@@ -273,7 +273,7 @@ export const PrivacyCenter: React.FC<Props> = ({ onForget }) => {
               <p id="confirm-title" className="font-semibold" style={{ color: 'var(--color-error, #ef4444)' }}>
                 Êtes-vous sûr?
               </p>
-              <p className="text-sm mt-1" style={{ color: 'var(--text-secondary, #b4b4b4)' }}>
+              <p className="text-sm mt-1" style={{ color: 'var(--text-secondary, #9898b0)' }}>
                 Cette action est irréversible. Les données supprimées ne peuvent pas être récupérées.
               </p>
             </div>
@@ -291,7 +291,7 @@ export const PrivacyCenter: React.FC<Props> = ({ onForget }) => {
               onClick={() => setShowConfirm(null)}
               disabled={isDeleting}
               className="flex-1 px-4 py-2 rounded disabled:opacity-50"
-              style={{ background: 'var(--bg-secondary, #2d2d2d)', color: 'var(--text-secondary, #b4b4b4)', border: '1px solid var(--border-primary, #424242)', transition: 'opacity var(--transition-fast, 0.15s ease)' }}
+              style={{ background: 'var(--bg-surface, #12121a)', color: 'var(--text-secondary, #9898b0)', border: '1px solid var(--border-primary, #2d2d44)', transition: 'opacity var(--transition-fast, 0.15s ease)' }}
             >
               Annuler
             </button>
@@ -300,7 +300,7 @@ export const PrivacyCenter: React.FC<Props> = ({ onForget }) => {
       )}
 
       {/* Info */}
-      <div className="mt-6 p-3 rounded text-xs" style={{ background: 'var(--bg-secondary, #2d2d2d)', color: 'var(--text-muted, #666)' }}>
+      <div className="mt-6 p-3 rounded text-xs" style={{ background: 'var(--bg-surface, #12121a)', color: 'var(--text-muted, #6a6a82)' }}>
         <p><strong>Conseil:</strong> Exportez régulièrement vos données importantes avant de les supprimer.</p>
       </div>
     </div>

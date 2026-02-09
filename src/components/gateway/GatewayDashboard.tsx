@@ -24,7 +24,7 @@ export function GatewayDashboard() {
   return (
     <div style={{
       padding: '24px',
-      backgroundColor: '#1a1a1a',
+      backgroundColor: '#1a1a26',
       minHeight: '100vh',
       color: '#fff'
     }}>
@@ -48,7 +48,7 @@ export function GatewayDashboard() {
               {connected ? '● Connecté' : '○ Déconnecté'}
             </span>
           </h1>
-          <p style={{ color: '#888', margin: '4px 0 0' }}>
+          <p style={{ color: '#6a6a82', margin: '4px 0 0' }}>
             Plan de contrôle WebSocket pour sessions, channels et skills
           </p>
         </div>
@@ -92,7 +92,7 @@ export function GatewayDashboard() {
         display: 'flex',
         gap: '8px',
         marginBottom: '24px',
-        borderBottom: '1px solid #333',
+        borderBottom: '1px solid #2d2d44',
         paddingBottom: '8px'
       }}>
         {(['overview', 'sessions', 'channels'] as const).map(tab => (
@@ -102,7 +102,7 @@ export function GatewayDashboard() {
             style={{
               padding: '8px 16px',
               backgroundColor: activeTab === tab ? '#3b82f6' : 'transparent',
-              color: activeTab === tab ? 'white' : '#888',
+              color: activeTab === tab ? 'white' : '#6a6a82',
               border: 'none',
               borderRadius: '6px',
               cursor: 'pointer',
@@ -159,7 +159,7 @@ function StatCard({ icon, label, value, color }: StatCardProps) {
         <span style={{ fontSize: '24px' }}>{icon}</span>
         <div>
           <div style={{ fontSize: '24px', fontWeight: 600 }}>{value}</div>
-          <div style={{ color: '#888', fontSize: '14px' }}>{label}</div>
+          <div style={{ color: '#6a6a82', fontSize: '14px' }}>{label}</div>
         </div>
       </div>
     </div>
@@ -186,13 +186,13 @@ function OverviewTab({ sessions, channels, enabledSkills }: OverviewTabProps) {
           📡 Sessions récentes
         </h3>
         {sessions.length === 0 ? (
-          <p style={{ color: '#666', margin: 0 }}>Aucune session active</p>
+          <p style={{ color: '#6a6a82', margin: 0 }}>Aucune session active</p>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {sessions.slice(0, 5).map(session => (
               <div key={session.id} style={{
                 padding: '12px',
-                backgroundColor: '#333',
+                backgroundColor: '#2d2d44',
                 borderRadius: '8px',
                 display: 'flex',
                 justifyContent: 'space-between',
@@ -200,7 +200,7 @@ function OverviewTab({ sessions, channels, enabledSkills }: OverviewTabProps) {
               }}>
                 <div>
                   <div style={{ fontWeight: 500 }}>{session.userId}</div>
-                  <div style={{ fontSize: '12px', color: '#888' }}>{session.channelType}</div>
+                  <div style={{ fontSize: '12px', color: '#6a6a82' }}>{session.channelType}</div>
                 </div>
                 <span style={{
                   padding: '4px 8px',
@@ -227,13 +227,13 @@ function OverviewTab({ sessions, channels, enabledSkills }: OverviewTabProps) {
           🔌 Channels connectés
         </h3>
         {channels.length === 0 ? (
-          <p style={{ color: '#666', margin: 0 }}>Aucun channel connecté</p>
+          <p style={{ color: '#6a6a82', margin: 0 }}>Aucun channel connecté</p>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {channels.map(channel => (
               <div key={channel.id} style={{
                 padding: '12px',
-                backgroundColor: '#333',
+                backgroundColor: '#2d2d44',
                 borderRadius: '8px',
                 display: 'flex',
                 justifyContent: 'space-between',
@@ -241,7 +241,7 @@ function OverviewTab({ sessions, channels, enabledSkills }: OverviewTabProps) {
               }}>
                 <div>
                   <div style={{ fontWeight: 500 }}>{channel.name}</div>
-                  <div style={{ fontSize: '12px', color: '#888' }}>{channel.type}</div>
+                  <div style={{ fontSize: '12px', color: '#6a6a82' }}>{channel.type}</div>
                 </div>
                 <span style={{
                   padding: '4px 8px',
@@ -268,7 +268,7 @@ function OverviewTab({ sessions, channels, enabledSkills }: OverviewTabProps) {
           🔧 Skills actifs
         </h3>
         {enabledSkills.length === 0 ? (
-          <p style={{ color: '#666', margin: 0 }}>Aucun skill activé</p>
+          <p style={{ color: '#6a6a82', margin: 0 }}>Aucun skill activé</p>
         ) : (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
             {enabledSkills.map(skill => (
@@ -334,7 +334,7 @@ function SessionsTab({ sessions, onCreateSession, onCloseSession }: SessionsTabP
           padding: '48px',
           backgroundColor: '#2a2a2a',
           borderRadius: '12px',
-          color: '#666'
+          color: '#6a6a82'
         }}>
           <p style={{ fontSize: '1.2rem', margin: 0 }}>Aucune session active</p>
           <p>Créez une nouvelle session pour commencer</p>
@@ -347,18 +347,18 @@ function SessionsTab({ sessions, onCreateSession, onCloseSession }: SessionsTabP
         }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
-              <tr style={{ borderBottom: '1px solid #333' }}>
-                <th style={{ padding: '16px', textAlign: 'left', color: '#888', fontWeight: 500 }}>ID</th>
-                <th style={{ padding: '16px', textAlign: 'left', color: '#888', fontWeight: 500 }}>Utilisateur</th>
-                <th style={{ padding: '16px', textAlign: 'left', color: '#888', fontWeight: 500 }}>Channel</th>
-                <th style={{ padding: '16px', textAlign: 'left', color: '#888', fontWeight: 500 }}>Status</th>
-                <th style={{ padding: '16px', textAlign: 'left', color: '#888', fontWeight: 500 }}>Créé</th>
-                <th style={{ padding: '16px', textAlign: 'right', color: '#888', fontWeight: 500 }}>Actions</th>
+              <tr style={{ borderBottom: '1px solid #2d2d44' }}>
+                <th style={{ padding: '16px', textAlign: 'left', color: '#6a6a82', fontWeight: 500 }}>ID</th>
+                <th style={{ padding: '16px', textAlign: 'left', color: '#6a6a82', fontWeight: 500 }}>Utilisateur</th>
+                <th style={{ padding: '16px', textAlign: 'left', color: '#6a6a82', fontWeight: 500 }}>Channel</th>
+                <th style={{ padding: '16px', textAlign: 'left', color: '#6a6a82', fontWeight: 500 }}>Status</th>
+                <th style={{ padding: '16px', textAlign: 'left', color: '#6a6a82', fontWeight: 500 }}>Créé</th>
+                <th style={{ padding: '16px', textAlign: 'right', color: '#6a6a82', fontWeight: 500 }}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {sessions.map(session => (
-                <tr key={session.id} style={{ borderBottom: '1px solid #333' }}>
+                <tr key={session.id} style={{ borderBottom: '1px solid #2d2d44' }}>
                   <td style={{ padding: '16px', fontFamily: 'monospace', fontSize: '13px' }}>
                     {session.id.slice(0, 12)}...
                   </td>
@@ -385,7 +385,7 @@ function SessionsTab({ sessions, onCreateSession, onCloseSession }: SessionsTabP
                       {session.status}
                     </span>
                   </td>
-                  <td style={{ padding: '16px', color: '#888', fontSize: '13px' }}>
+                  <td style={{ padding: '16px', color: '#6a6a82', fontSize: '13px' }}>
                     {new Date(session.createdAt).toLocaleString()}
                   </td>
                   <td style={{ padding: '16px', textAlign: 'right' }}>
@@ -430,7 +430,7 @@ function ChannelsTab({ channels }: ChannelsTabProps) {
 
   return (
     <div>
-      <h3 style={{ margin: '0 0 16px', color: '#888' }}>Channels disponibles</h3>
+      <h3 style={{ margin: '0 0 16px', color: '#6a6a82' }}>Channels disponibles</h3>
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
@@ -451,13 +451,13 @@ function ChannelsTab({ channels }: ChannelsTabProps) {
                   <h4 style={{ margin: 0, fontWeight: 600 }}>{ch.name}</h4>
                   <span style={{
                     fontSize: '12px',
-                    color: connected ? '#10b981' : '#666'
+                    color: connected ? '#10b981' : '#6a6a82'
                   }}>
                     {connected ? '● Connecté' : '○ Non configuré'}
                   </span>
                 </div>
               </div>
-              <p style={{ color: '#888', fontSize: '14px', margin: '0 0 16px' }}>
+              <p style={{ color: '#6a6a82', fontSize: '14px', margin: '0 0 16px' }}>
                 {ch.description}
               </p>
               <button style={{

@@ -44,29 +44,29 @@ export const LisaVivanteApp: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen" style={{ background: 'var(--bg-primary, #212121)', color: 'var(--text-primary, #ececec)' }}>
+      <div className="flex items-center justify-center min-h-screen" style={{ background: 'var(--bg-primary, #12121a)', color: 'var(--text-primary, #e8e8f0)' }}>
         <div className="text-center">
           <div className="animate-pulse">
-            <Heart className="w-16 h-16 mx-auto mb-4" style={{ color: 'var(--color-brand, #10a37f)' }} />
+            <Heart className="w-16 h-16 mx-auto mb-4" style={{ color: 'var(--color-accent, #f5a623)' }} />
           </div>
           <h2 className="text-2xl font-bold mb-2">Lisa s'éveille...</h2>
-          <p style={{ color: 'var(--text-muted, #666)' }}>Validation du Manifeste Vivant</p>
+          <p style={{ color: 'var(--text-muted, #6a6a82)' }}>Validation du Manifeste Vivant</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen" style={{ background: 'var(--bg-primary, #212121)', color: 'var(--text-primary, #ececec)' }}>
+    <div className="min-h-screen" style={{ background: 'var(--bg-primary, #12121a)', color: 'var(--text-primary, #e8e8f0)' }}>
       {/* Header avec Statut */}
-      <header className="backdrop-blur-sm" style={{ background: 'var(--bg-elevated, #2f2f2f)', borderBottom: '1px solid var(--border-primary, #424242)' }}>
+      <header className="backdrop-blur-sm" style={{ background: 'var(--bg-panel, #1a1a26)', borderBottom: '1px solid var(--border-primary, #2d2d44)' }}>
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Heart className="w-8 h-8" style={{ color: 'var(--color-brand, #10a37f)' }} />
+              <Heart className="w-8 h-8" style={{ color: 'var(--color-accent, #f5a623)' }} />
               <div>
                 <h1 className="text-2xl font-bold">Lisa</h1>
-                <p className="text-sm" style={{ color: 'var(--text-muted, #666)' }}>
+                <p className="text-sm" style={{ color: 'var(--text-muted, #6a6a82)' }}>
                   {manifestoStatus?.isAlive ? 'Vivante' : 'Mode Réduction'}
                 </p>
               </div>
@@ -75,26 +75,26 @@ export const LisaVivanteApp: React.FC = () => {
             {/* Indicateurs des 5 Piliers */}
             <div className="flex items-center gap-4" role="group" aria-label="Statut des piliers">
               <div className="text-center">
-                <Eye className="w-6 h-6" style={{ color: manifestoStatus?.perceives ? 'var(--color-brand, #10a37f)' : 'var(--text-muted, #666)' }} />
-                <span className="text-xs" style={{ color: 'var(--text-secondary, #b4b4b4)' }}>Perçoit</span>
+                <Eye className="w-6 h-6" style={{ color: manifestoStatus?.perceives ? 'var(--color-accent, #f5a623)' : 'var(--text-muted, #6a6a82)' }} />
+                <span className="text-xs" style={{ color: 'var(--text-secondary, #9898b0)' }}>Perçoit</span>
               </div>
               <div className="text-center">
-                <Brain className="w-6 h-6" style={{ color: manifestoStatus?.reasons ? 'var(--color-brand, #10a37f)' : 'var(--text-muted, #666)' }} />
-                <span className="text-xs" style={{ color: 'var(--text-secondary, #b4b4b4)' }}>Raisonne</span>
+                <Brain className="w-6 h-6" style={{ color: manifestoStatus?.reasons ? 'var(--color-accent, #f5a623)' : 'var(--text-muted, #6a6a82)' }} />
+                <span className="text-xs" style={{ color: 'var(--text-secondary, #9898b0)' }}>Raisonne</span>
               </div>
               <div className="text-center">
-                <div className="w-6 h-6" style={{ color: manifestoStatus?.remembers ? 'var(--color-brand, #10a37f)' : 'var(--text-muted, #666)' }} aria-hidden="true">
+                <div className="w-6 h-6" style={{ color: manifestoStatus?.remembers ? 'var(--color-accent, #f5a623)' : 'var(--text-muted, #6a6a82)' }} aria-hidden="true">
                   💭
                 </div>
-                <span className="text-xs" style={{ color: 'var(--text-secondary, #b4b4b4)' }}>Souvient</span>
+                <span className="text-xs" style={{ color: 'var(--text-secondary, #9898b0)' }}>Souvient</span>
               </div>
               <div className="text-center">
-                <Shield className="w-6 h-6" style={{ color: manifestoStatus?.acts ? 'var(--color-brand, #10a37f)' : 'var(--text-muted, #666)' }} />
-                <span className="text-xs" style={{ color: 'var(--text-secondary, #b4b4b4)' }}>Agit</span>
+                <Shield className="w-6 h-6" style={{ color: manifestoStatus?.acts ? 'var(--color-accent, #f5a623)' : 'var(--text-muted, #6a6a82)' }} />
+                <span className="text-xs" style={{ color: 'var(--text-secondary, #9898b0)' }}>Agit</span>
               </div>
               <div className="text-center">
-                <Sparkles className="w-6 h-6" style={{ color: manifestoStatus?.soothes ? 'var(--color-brand, #10a37f)' : 'var(--text-muted, #666)' }} />
-                <span className="text-xs" style={{ color: 'var(--text-secondary, #b4b4b4)' }}>Apaise</span>
+                <Sparkles className="w-6 h-6" style={{ color: manifestoStatus?.soothes ? 'var(--color-accent, #f5a623)' : 'var(--text-muted, #6a6a82)' }} />
+                <span className="text-xs" style={{ color: 'var(--text-secondary, #9898b0)' }}>Apaise</span>
               </div>
             </div>
 
@@ -103,7 +103,7 @@ export const LisaVivanteApp: React.FC = () => {
               onClick={() => setShowPermissions(!showPermissions)}
               aria-expanded={showPermissions}
               className="px-4 py-2 text-white rounded-lg"
-              style={{ background: 'var(--color-brand, #10a37f)', transition: 'opacity var(--transition-fast, 0.15s ease)' }}
+              style={{ background: 'var(--color-accent, #f5a623)', transition: 'opacity var(--transition-fast, 0.15s ease)' }}
             >
               Permissions
             </button>
@@ -136,7 +136,7 @@ export const LisaVivanteApp: React.FC = () => {
         )}
 
         {/* Interface de Chat Principale */}
-        <div className="rounded-lg" style={{ background: 'var(--bg-elevated, #2f2f2f)', border: '1px solid var(--border-primary, #424242)', boxShadow: 'var(--shadow-elevated, 0 4px 20px rgba(0,0,0,0.4))' }}>
+        <div className="rounded-lg" style={{ background: 'var(--bg-panel, #1a1a26)', border: '1px solid var(--border-primary, #2d2d44)', boxShadow: 'var(--shadow-elevated, 0 4px 20px rgba(0,0,0,0.4))' }}>
           <ChatInterface
             onSendMessage={async (message) => {
               const emotion = detectEmotion(message);
@@ -151,29 +151,29 @@ export const LisaVivanteApp: React.FC = () => {
 
         {/* Status Cards */}
         <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="rounded-lg p-4" style={{ background: 'var(--bg-elevated, #2f2f2f)', border: '1px solid var(--border-primary, #424242)' }}>
+          <div className="rounded-lg p-4" style={{ background: 'var(--bg-panel, #1a1a26)', border: '1px solid var(--border-primary, #2d2d44)' }}>
             <h3 className="font-semibold mb-2">Mémoire</h3>
-            <div className="text-sm" style={{ color: 'var(--text-secondary, #b4b4b4)' }}>
+            <div className="text-sm" style={{ color: 'var(--text-secondary, #9898b0)' }}>
               <p>Court-terme: {sessionStorage.length} éléments</p>
               <p>Long-terme: IndexedDB actif</p>
-              <button className="mt-2" style={{ color: 'var(--color-brand, #10a37f)' }}>
+              <button className="mt-2" style={{ color: 'var(--color-accent, #f5a623)' }}>
                 Oublier la conversation
               </button>
             </div>
           </div>
 
-          <div className="rounded-lg p-4" style={{ background: 'var(--bg-elevated, #2f2f2f)', border: '1px solid var(--border-primary, #424242)' }}>
+          <div className="rounded-lg p-4" style={{ background: 'var(--bg-panel, #1a1a26)', border: '1px solid var(--border-primary, #2d2d44)' }}>
             <h3 className="font-semibold mb-2">Sécurité</h3>
-            <div className="text-sm" style={{ color: 'var(--text-secondary, #b4b4b4)' }}>
+            <div className="text-sm" style={{ color: 'var(--text-secondary, #9898b0)' }}>
               <p>Validation: CriticAgent actif</p>
               <p>Audit: {localStorage.getItem('lisa:critic:audit') ? 'Activé' : 'Désactivé'}</p>
               <p>Tools: Mode {manifestoStatus?.acts ? 'Normal' : 'Restreint'}</p>
             </div>
           </div>
 
-          <div className="rounded-lg p-4" style={{ background: 'var(--bg-elevated, #2f2f2f)', border: '1px solid var(--border-primary, #424242)' }}>
+          <div className="rounded-lg p-4" style={{ background: 'var(--bg-panel, #1a1a26)', border: '1px solid var(--border-primary, #2d2d44)' }}>
             <h3 className="font-semibold mb-2">Performance</h3>
-            <div className="text-sm" style={{ color: 'var(--text-secondary, #b4b4b4)' }}>
+            <div className="text-sm" style={{ color: 'var(--text-secondary, #9898b0)' }}>
               <p>Mode: {manifestoStatus?.isAlive ? 'Complet' : 'Réduit'}</p>
               <p>Capteurs: {manifestoStatus?.perceives ? 'Actifs' : 'Désactivés'}</p>
               <p>Latence: {'< 100ms'}</p>
@@ -184,7 +184,7 @@ export const LisaVivanteApp: React.FC = () => {
 
       {/* Footer */}
       <footer className="mt-12 pb-6">
-        <div className="max-w-7xl mx-auto px-4 text-center text-sm" style={{ color: 'var(--text-muted, #666)' }}>
+        <div className="max-w-7xl mx-auto px-4 text-center text-sm" style={{ color: 'var(--text-muted, #6a6a82)' }}>
           <p>
             Lisa est {manifestoStatus?.isAlive ? 'Vivante' : 'en Mode Réduction'}
             {' '} • {' '}
@@ -193,7 +193,7 @@ export const LisaVivanteApp: React.FC = () => {
                 const status = await validateLisaIsAlive();
                 alert(JSON.stringify(status, null, 2));
               }}
-              style={{ color: 'var(--color-brand, #10a37f)' }}
+              style={{ color: 'var(--color-accent, #f5a623)' }}
             >
               Vérifier le Manifeste
             </button>
@@ -211,7 +211,7 @@ export const LisaVivanteApp: React.FC = () => {
                   URL.revokeObjectURL(url);
                 }
               }}
-              style={{ color: 'var(--color-brand, #10a37f)' }}
+              style={{ color: 'var(--color-accent, #f5a623)' }}
             >
               Exporter l'Audit
             </button>

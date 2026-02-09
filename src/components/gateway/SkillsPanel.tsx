@@ -69,7 +69,7 @@ export function SkillsPanel() {
   return (
     <div style={{
       padding: '24px',
-      backgroundColor: '#1a1a1a',
+      backgroundColor: '#1a1a26',
       minHeight: '100vh',
       color: '#fff'
     }}>
@@ -84,7 +84,7 @@ export function SkillsPanel() {
           <h1 style={{ fontSize: '1.5rem', fontWeight: 600, margin: 0 }}>
             🔧 Skills
           </h1>
-          <p style={{ color: '#888', margin: '4px 0 0' }}>
+          <p style={{ color: '#6a6a82', margin: '4px 0 0' }}>
             {enabledSkills.length} skills actifs sur {skills.length}
           </p>
         </div>
@@ -124,7 +124,7 @@ export function SkillsPanel() {
             minWidth: '200px',
             padding: '12px 16px',
             backgroundColor: '#2a2a2a',
-            border: '1px solid #333',
+            border: '1px solid #2d2d44',
             borderRadius: '8px',
             color: '#fff',
             fontSize: '14px'
@@ -136,7 +136,7 @@ export function SkillsPanel() {
           style={{
             padding: '12px 16px',
             backgroundColor: '#2a2a2a',
-            border: '1px solid #333',
+            border: '1px solid #2d2d44',
             borderRadius: '8px',
             color: '#fff',
             fontSize: '14px',
@@ -170,7 +170,7 @@ export function SkillsPanel() {
         <div style={{
           textAlign: 'center',
           padding: '48px',
-          color: '#666'
+          color: '#6a6a82'
         }}>
           <p style={{ fontSize: '1.2rem' }}>Aucun skill trouvé</p>
           <p>Essayez une autre recherche ou catégorie</p>
@@ -192,12 +192,12 @@ export function SkillsPanel() {
           zIndex: 1000
         }}>
           <div style={{
-            backgroundColor: '#1a1a1a',
+            backgroundColor: '#1a1a26',
             borderRadius: '12px',
             padding: '24px',
             width: '400px',
             maxWidth: '90%',
-            border: '1px solid #333'
+            border: '1px solid #2d2d44'
           }}>
             <h2 style={{ margin: '0 0 16px', fontSize: '1.2rem' }}>
               ➕ Installer un skill
@@ -211,7 +211,7 @@ export function SkillsPanel() {
                 width: '100%',
                 padding: '12px 16px',
                 backgroundColor: '#2a2a2a',
-                border: '1px solid #333',
+                border: '1px solid #2d2d44',
                 borderRadius: '8px',
                 color: '#fff',
                 fontSize: '14px',
@@ -225,8 +225,8 @@ export function SkillsPanel() {
                 style={{
                   padding: '10px 20px',
                   backgroundColor: 'transparent',
-                  color: '#888',
-                  border: '1px solid #333',
+                  color: '#6a6a82',
+                  border: '1px solid #2d2d44',
                   borderRadius: '8px',
                   cursor: 'pointer'
                 }}
@@ -238,7 +238,7 @@ export function SkillsPanel() {
                 disabled={!newSkillId.trim()}
                 style={{
                   padding: '10px 20px',
-                  backgroundColor: newSkillId.trim() ? '#3b82f6' : '#333',
+                  backgroundColor: newSkillId.trim() ? '#3b82f6' : '#2d2d44',
                   color: 'white',
                   border: 'none',
                   borderRadius: '8px',
@@ -299,7 +299,7 @@ function SkillCard({ skill, enabled, onToggle }: SkillCardProps) {
             height: '24px',
             borderRadius: '12px',
             border: 'none',
-            backgroundColor: enabled ? '#10b981' : '#333',
+            backgroundColor: enabled ? '#10b981' : '#2d2d44',
             cursor: 'pointer',
             position: 'relative',
             transition: 'background-color 0.2s ease'
@@ -334,7 +334,7 @@ function SkillCard({ skill, enabled, onToggle }: SkillCardProps) {
         justifyContent: 'space-between',
         alignItems: 'center',
         fontSize: '12px',
-        color: '#666'
+        color: '#6a6a82'
       }}>
         <span>v{skill.version}</span>
         <span>{toolCount} tool{toolCount !== 1 ? 's' : ''}</span>
@@ -346,9 +346,9 @@ function SkillCard({ skill, enabled, onToggle }: SkillCardProps) {
         <div style={{
           marginTop: '12px',
           paddingTop: '12px',
-          borderTop: '1px solid #333'
+          borderTop: '1px solid #2d2d44'
         }}>
-          <span style={{ fontSize: '11px', color: '#666' }}>
+          <span style={{ fontSize: '11px', color: '#6a6a82' }}>
             🔐 {skill.config.permissions.length} permission{skill.config.permissions.length !== 1 ? 's' : ''}
           </span>
         </div>

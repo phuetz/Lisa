@@ -1,6 +1,4 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { OfficePageLayout } from '../components/layout/OfficePageLayout';
-import { useOfficeThemeStore } from '../store/officeThemeStore';
 import {
   Eye, Camera, ScanLine, Palette, Users,
   Play, Square, AlertCircle, CheckCircle, AlertTriangle,
@@ -13,81 +11,36 @@ import type { OCRAgent, OCRResult } from '../agents/OCRAgent';
 import { BodyPartsPanel } from '../components/vision/BodyPartsPanel';
 import type { PoseLandmark } from '../components/vision/bodyPartsConstants';
 
-// Toggle Switch Component (reserved for future use)
-const _ToggleSwitch = ({ 
-  checked, 
-  onChange, 
-  label 
-}: { 
-  checked: boolean; 
-  onChange: (checked: boolean) => void; 
-  label: string;
-}) => (
-  <div style={{
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: '12px 0',
-    borderBottom: '1px solid var(--border-primary, #424242)'
-  }}>
-    <span style={{ fontSize: '14px', color: 'var(--text-primary, #ececec)' }}>{label}</span>
-    <button
-      onClick={() => onChange(!checked)}
-      style={{
-        width: '44px',
-        height: '24px',
-        borderRadius: '12px',
-        backgroundColor: checked ? 'var(--color-brand, #10a37f)' : 'var(--border-primary, #424242)',
-        border: 'none',
-        cursor: 'pointer',
-        position: 'relative',
-        transition: 'background-color 0.2s ease'
-      }}
-    >
-      <div style={{
-        width: '20px',
-        height: '20px',
-        borderRadius: '50%',
-        backgroundColor: 'var(--text-primary, #ececec)',
-        position: 'absolute',
-        top: '2px',
-        left: checked ? '22px' : '2px',
-        transition: 'left 0.2s ease'
-      }} />
-    </button>
-  </div>
-);
-
 // Select Component
-const Select = ({ 
-  label, 
-  value, 
-  onChange, 
-  options, 
-  icon: Icon 
-}: { 
-  label: string; 
-  value: string; 
-  onChange: (value: string) => void; 
+const Select = ({
+  label,
+  value,
+  onChange,
+  options,
+  icon: Icon
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
   options: { value: string; label: string; disabled?: boolean }[];
   icon?: React.ElementType;
 }) => (
   <div style={{ marginBottom: '16px' }}>
-    <label style={{ 
-      display: 'block', 
-      fontSize: '13px', 
-      color: 'var(--text-tertiary, #888)', 
-      marginBottom: '8px' 
+    <label style={{
+      display: 'block',
+      fontSize: '13px',
+      color: 'var(--text-tertiary, #6a6a82)',
+      marginBottom: '8px'
     }}>
       {label}
     </label>
     <div style={{ position: 'relative' }}>
       {Icon && (
-        <Icon size={18} color="#888" style={{ 
-          position: 'absolute', 
-          left: '12px', 
-          top: '50%', 
-          transform: 'translateY(-50%)' 
+        <Icon size={18} color="var(--text-muted, #6a6a82)" style={{
+          position: 'absolute',
+          left: '12px',
+          top: '50%',
+          transform: 'translateY(-50%)'
         }} />
       )}
       <select
@@ -96,10 +49,10 @@ const Select = ({
         style={{
           width: '100%',
           padding: Icon ? '12px 14px 12px 40px' : '12px 14px',
-          backgroundColor: 'var(--bg-tertiary, #1a1a1a)',
-          border: '1px solid var(--border-primary, #424242)',
+          backgroundColor: 'var(--bg-tertiary, #1a1a26)',
+          border: '1px solid var(--border-primary, #2d2d44)',
           borderRadius: '8px',
-          color: 'var(--text-primary, #ececec)',
+          color: 'var(--text-primary, #e8e8f0)',
           fontSize: '14px',
           outline: 'none',
           cursor: 'pointer',
@@ -112,10 +65,10 @@ const Select = ({
           </option>
         ))}
       </select>
-      <ChevronDown size={16} color="#888" style={{ 
-        position: 'absolute', 
-        right: '12px', 
-        top: '50%', 
+      <ChevronDown size={16} color="var(--text-muted, #6a6a82)" style={{
+        position: 'absolute',
+        right: '12px',
+        top: '50%',
         transform: 'translateY(-50%)',
         pointerEvents: 'none'
       }} />
@@ -123,77 +76,8 @@ const Select = ({
   </div>
 );
 
-// Result Card Component (reserved for future use)
-const _ResultCard = ({ 
-  title, 
-  children, 
-  processingTime 
-}: { 
-  title: string; 
-  children: React.ReactNode; 
-  processingTime?: number;
-}) => (
-  <div style={{
-    backgroundColor: 'var(--bg-tertiary, #1a1a1a)',
-    borderRadius: '10px',
-    padding: '16px',
-    marginTop: '16px'
-  }}>
-    <div style={{ 
-      display: 'flex', 
-      justifyContent: 'space-between', 
-      alignItems: 'center',
-      marginBottom: '12px'
-    }}>
-      <h4 style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary, #ececec)', margin: 0 }}>{title}</h4>
-      {processingTime && (
-        <span style={{ fontSize: '12px', color: 'var(--text-muted, #666)' }}>{processingTime}ms</span>
-      )}
-    </div>
-    {children}
-  </div>
-);
-
-// Detection Tag Component (reserved for future use)
-const _DetectionTag = ({ 
-  label, 
-  confidence, 
-  color = 'var(--color-brand, #10a37f)'
-}: { 
-  label: string; 
-  confidence: number; 
-  color?: string;
-}) => (
-  <div style={{
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: '8px',
-    padding: '6px 12px',
-    backgroundColor: `${color}20`,
-    borderRadius: '6px',
-    marginRight: '8px',
-    marginBottom: '8px'
-  }}>
-    <span style={{ fontSize: '13px', color: 'var(--text-primary, #ececec)' }}>{label}</span>
-    <span style={{ 
-      fontSize: '11px', 
-      color: color,
-      backgroundColor: `${color}30`,
-      padding: '2px 6px',
-      borderRadius: '4px'
-    }}>
-      {Math.round(confidence * 100)}%
-    </span>
-  </div>
-);
-
 export default function VisionPage() {
-  const { getCurrentColors } = useOfficeThemeStore();
-  const colors = getCurrentColors();
-
-  const [source, _setSource] = useState('webcam');
   const [task, setTask] = useState<VisionTask>('general_description');
-  const [_advancedVision, _setAdvancedVision] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [webcamActive, setWebcamActive] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -207,10 +91,10 @@ export default function VisionPage() {
     poses: number;
     hands: number;
   }>({ fps: 0, objects: 0, faces: 0, poses: 0, hands: 0 });
-  
+
   // Body pose landmarks for BodyPartsPanel
   const [detectedPoseLandmarks, setDetectedPoseLandmarks] = useState<PoseLandmark[] | null>(null);
-  
+
   // Overlay display options
   const [overlayOptions, setOverlayOptions] = useState({
     showObjects: true,
@@ -222,7 +106,7 @@ export default function VisionPage() {
     showLandmarks: true,
     showStats: true,
   });
-  
+
   // New features
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [detectionHistory, setDetectionHistory] = useState<Array<{
@@ -239,7 +123,7 @@ export default function VisionPage() {
     colors?: { color: string; percentage: number }[];
     processingTime?: number;
   } | null>(null);
-  
+
   // OCR State
   const [ocrProcessing, setOcrProcessing] = useState(false);
   const [ocrResult, setOcrResult] = useState<OCRResult | null>(null);
@@ -285,7 +169,6 @@ export default function VisionPage() {
             setError('Les détecteurs MediaPipe n\'ont pas pu être initialisés. Vérifiez votre connexion internet.');
           }
         } else {
-          // Agent exists but no waitForInitialization - consider it ready
           console.log('[VisionPage] No waitForInitialization, assuming ready');
           setDetectorsReady(true);
         }
@@ -333,17 +216,16 @@ export default function VisionPage() {
   // Initialize webcam
   const initWebcam = useCallback(async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { 
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
           width: { ideal: 640 },
           height: { ideal: 480 },
           facingMode: 'user'
-        } 
+        }
       });
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         streamRef.current = stream;
-        // Attendre que les métadonnées soient chargées avant de jouer
         await new Promise<void>((resolve, reject) => {
           if (!videoRef.current) {
             reject(new Error('Video element not found'));
@@ -390,12 +272,10 @@ export default function VisionPage() {
     canvasWidth: number,
     canvasHeight: number
   ) => {
-    // Finger names for hand landmarks
-    const fingerNames = ['Poignet', 'Pouce1', 'Pouce2', 'Pouce3', 'Pouce', 
+    const fingerNames = ['Poignet', 'Pouce1', 'Pouce2', 'Pouce3', 'Pouce',
       'Index1', 'Index2', 'Index3', 'Index', 'Majeur1', 'Majeur2', 'Majeur3', 'Majeur',
       'Annulaire1', 'Annulaire2', 'Annulaire3', 'Annulaire', 'Auriculaire1', 'Auriculaire2', 'Auriculaire3', 'Auriculaire'];
-    
-    // Pose landmark names
+
     const poseLandmarkNames = ['Nez', 'Œil G int', 'Œil G', 'Œil G ext', 'Œil D int', 'Œil D', 'Œil D ext',
       'Oreille G', 'Oreille D', 'Bouche G', 'Bouche D', 'Épaule G', 'Épaule D', 'Coude G', 'Coude D',
       'Poignet G', 'Poignet D', 'Petit doigt G', 'Petit doigt D', 'Index G', 'Index D', 'Pouce G', 'Pouce D',
@@ -403,33 +283,31 @@ export default function VisionPage() {
       'Pied G', 'Pied D'];
 
     ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-    
-    // Scale factors for coordinate transformation
+
     const scaleX = canvasWidth / videoWidth;
     const scaleY = canvasHeight / videoHeight;
 
     // Draw objects (green boxes)
     if (overlayOptions.showObjects) {
-      ctx.strokeStyle = '#10b981';
+      ctx.strokeStyle = '#22c55e';
       ctx.lineWidth = 3;
-      ctx.font = 'bold 14px Arial';
+      ctx.font = 'bold 14px Inter, Arial, sans-serif';
       detections.objects.forEach(obj => {
         const x = obj.box.x * scaleX;
         const y = obj.box.y * scaleY;
         const w = obj.box.width * scaleX;
         const h = obj.box.height * scaleY;
-        
-        // Draw box with rounded corners
+
         ctx.beginPath();
         ctx.roundRect(x, y, w, h, 8);
         ctx.stroke();
-        
+
         if (overlayOptions.showLabels) {
-          const label = overlayOptions.showConfidence 
+          const label = overlayOptions.showConfidence
             ? `${obj.name} ${Math.round(obj.confidence * 100)}%`
             : obj.name;
           const textWidth = ctx.measureText(label).width;
-          ctx.fillStyle = 'rgba(16, 185, 129, 0.9)';
+          ctx.fillStyle = 'rgba(34, 197, 94, 0.9)';
           ctx.beginPath();
           ctx.roundRect(x, y - 26, textWidth + 16, 24, 4);
           ctx.fill();
@@ -439,43 +317,42 @@ export default function VisionPage() {
       });
     }
 
-    // Draw faces (blue boxes with face mesh)
+    // Draw faces (cyan boxes with face mesh)
     if (overlayOptions.showFaces) {
-      ctx.strokeStyle = '#3b82f6';
+      ctx.strokeStyle = '#06b6d4';
       ctx.lineWidth = 2;
       detections.faces.forEach((face, faceIdx) => {
         const x = face.box.x * scaleX;
         const y = face.box.y * scaleY;
         const w = face.box.width * scaleX;
         const h = face.box.height * scaleY;
-        
-        // Draw face box
+
         ctx.beginPath();
         ctx.roundRect(x, y, w, h, 8);
         ctx.stroke();
-        
+
         if (overlayOptions.showLabels) {
           const label = `Visage ${faceIdx + 1}`;
           const textWidth = ctx.measureText(label).width;
-          ctx.fillStyle = 'rgba(59, 130, 246, 0.9)';
+          ctx.fillStyle = 'rgba(6, 182, 212, 0.9)';
           ctx.beginPath();
           ctx.roundRect(x, y - 26, textWidth + 16, 24, 4);
           ctx.fill();
           ctx.fillStyle = '#fff';
           ctx.fillText(label, x + 8, y - 8);
         }
-        
+
         // Draw face landmarks (mesh points)
         if (overlayOptions.showLandmarks && face.landmarks) {
-          ctx.fillStyle = 'rgba(59, 130, 246, 0.8)';
+          ctx.fillStyle = 'rgba(6, 182, 212, 0.8)';
           face.landmarks.forEach(point => {
             ctx.beginPath();
             ctx.arc(point.x * scaleX, point.y * scaleY, 2, 0, 2 * Math.PI);
             ctx.fill();
           });
-          
-          // Draw face contour (connect key points)
-          ctx.strokeStyle = 'rgba(59, 130, 246, 0.5)';
+
+          // Draw face contour
+          ctx.strokeStyle = 'rgba(6, 182, 212, 0.5)';
           ctx.lineWidth = 1;
           const faceContour = [10, 338, 297, 332, 284, 251, 389, 356, 454, 323, 361, 288, 397, 365, 379, 378, 400, 377, 152, 148, 176, 149, 150, 136, 172, 58, 132, 93, 234, 127, 162, 21, 54, 103, 67, 109, 10];
           if (face.landmarks.length > 400) {
@@ -504,9 +381,8 @@ export default function VisionPage() {
         [11, 23], [12, 24], [23, 24], [23, 25], [24, 26], [25, 27], [26, 28],
         [27, 29], [28, 30], [29, 31], [30, 32], [27, 31], [28, 32]
       ];
-      
+
       detections.poses.forEach(pose => {
-        // Draw connections with gradient
         poseConnections.forEach(([i, j]) => {
           if (pose.landmarks[i] && pose.landmarks[j]) {
             const a = pose.landmarks[i];
@@ -514,12 +390,12 @@ export default function VisionPage() {
             if (a.visibility > 0.5 && b.visibility > 0.5) {
               const ax = a.x * scaleX, ay = a.y * scaleY;
               const bx = b.x * scaleX, by = b.y * scaleY;
-              
+
               const gradient = ctx.createLinearGradient(ax, ay, bx, by);
               gradient.addColorStop(0, '#8b5cf6');
               gradient.addColorStop(1, '#a78bfa');
               ctx.strokeStyle = gradient;
-              
+
               ctx.beginPath();
               ctx.moveTo(ax, ay);
               ctx.lineTo(bx, by);
@@ -527,14 +403,12 @@ export default function VisionPage() {
             }
           }
         });
-        
-        // Draw points with labels
+
         pose.landmarks.forEach((point, idx) => {
           if (point.visibility > 0.5) {
             const px = point.x * scaleX;
             const py = point.y * scaleY;
-            
-            // Draw point
+
             ctx.fillStyle = '#8b5cf6';
             ctx.beginPath();
             ctx.arc(px, py, 5, 0, 2 * Math.PI);
@@ -543,10 +417,9 @@ export default function VisionPage() {
             ctx.beginPath();
             ctx.arc(px, py, 2, 0, 2 * Math.PI);
             ctx.fill();
-            
-            // Draw label for key points
+
             if (overlayOptions.showLabels && poseLandmarkNames[idx] && [0, 11, 12, 15, 16, 23, 24, 27, 28].includes(idx)) {
-              ctx.font = 'bold 10px Arial';
+              ctx.font = 'bold 10px Inter, Arial, sans-serif';
               ctx.fillStyle = 'rgba(139, 92, 246, 0.9)';
               const label = poseLandmarkNames[idx];
               const textWidth = ctx.measureText(label).width;
@@ -561,7 +434,7 @@ export default function VisionPage() {
       });
     }
 
-    // Draw hands (orange with finger labels)
+    // Draw hands (amber with finger labels)
     if (overlayOptions.showHands) {
       ctx.lineWidth = 2;
       const handConnections = [
@@ -572,9 +445,8 @@ export default function VisionPage() {
         [0, 17], [17, 18], [18, 19], [19, 20],
         [5, 9], [9, 13], [13, 17]
       ];
-      
+
       detections.hands.forEach(hand => {
-        // Draw connections
         ctx.strokeStyle = '#f59e0b';
         handConnections.forEach(([i, j]) => {
           if (hand.landmarks[i] && hand.landmarks[j]) {
@@ -582,20 +454,18 @@ export default function VisionPage() {
             const ay = hand.landmarks[i].y * scaleY;
             const bx = hand.landmarks[j].x * scaleX;
             const by = hand.landmarks[j].y * scaleY;
-            
+
             ctx.beginPath();
             ctx.moveTo(ax, ay);
             ctx.lineTo(bx, by);
             ctx.stroke();
           }
         });
-        
-        // Draw points with finger names
+
         hand.landmarks.forEach((point, idx) => {
           const px = point.x * scaleX;
           const py = point.y * scaleY;
-          
-          // Draw point
+
           ctx.fillStyle = '#f59e0b';
           ctx.beginPath();
           ctx.arc(px, py, 4, 0, 2 * Math.PI);
@@ -604,10 +474,9 @@ export default function VisionPage() {
           ctx.beginPath();
           ctx.arc(px, py, 2, 0, 2 * Math.PI);
           ctx.fill();
-          
-          // Draw finger tip labels
+
           if (overlayOptions.showLabels && overlayOptions.showLandmarks && [4, 8, 12, 16, 20].includes(idx)) {
-            ctx.font = 'bold 10px Arial';
+            ctx.font = 'bold 10px Inter, Arial, sans-serif';
             const label = fingerNames[idx] || `D${idx}`;
             ctx.fillStyle = 'rgba(245, 158, 11, 0.9)';
             const textWidth = ctx.measureText(label).width;
@@ -618,13 +487,12 @@ export default function VisionPage() {
             ctx.fillText(label, px - textWidth/2, py - 10);
           }
         });
-        
-        // Draw handedness label at wrist
+
         if (overlayOptions.showLabels && hand.landmarks[0]) {
           const wx = hand.landmarks[0].x * scaleX;
           const wy = hand.landmarks[0].y * scaleY;
-          const label = hand.handedness === 'Left' ? '🤚 Main Gauche' : '✋ Main Droite';
-          ctx.font = 'bold 12px Arial';
+          const label = hand.handedness === 'Left' ? 'Main Gauche' : 'Main Droite';
+          ctx.font = 'bold 12px Inter, Arial, sans-serif';
           const textWidth = ctx.measureText(label).width;
           ctx.fillStyle = 'rgba(245, 158, 11, 0.9)';
           ctx.beginPath();
@@ -640,81 +508,49 @@ export default function VisionPage() {
   // Real-time detection loop
   const runRealtimeDetection = useCallback(async () => {
     if (!realtimeMode || !webcamActive || !videoRef.current || !overlayCanvasRef.current) {
-      console.log('[Vision] Detection loop stopped:', { realtimeMode, webcamActive, hasVideo: !!videoRef.current, hasCanvas: !!overlayCanvasRef.current });
       return;
     }
 
     const video = videoRef.current;
     const canvas = overlayCanvasRef.current;
     const ctx = canvas.getContext('2d');
-    if (!ctx) {
-      console.error('[Vision] Could not get canvas 2D context');
-      return;
-    }
+    if (!ctx) return;
 
-    // Ensure canvas has proper dimensions
     if (video.videoWidth > 0 && video.videoHeight > 0) {
       if (canvas.width !== video.videoWidth || canvas.height !== video.videoHeight) {
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
-        console.log('[Vision] Canvas resized to:', canvas.width, 'x', canvas.height);
       }
     } else {
-      console.warn('[Vision] Video dimensions not ready:', video.videoWidth, 'x', video.videoHeight);
       animationFrameRef.current = requestAnimationFrame(runRealtimeDetection);
       return;
     }
 
-    // Get or cache vision agent
     if (!visionAgentRef.current) {
-      console.log('[Vision] Loading VisionAgent for realtime...');
       visionAgentRef.current = await getVisionAgent();
       if (visionAgentRef.current?.setRunningMode) {
-        console.log('[Vision] Setting VIDEO mode...');
         await visionAgentRef.current.setRunningMode('VIDEO');
-      }
-      if (visionAgentRef.current) {
-        console.log('[Vision] VisionAgent ready, isReady:', visionAgentRef.current.isReady);
       }
     }
 
     const agent = visionAgentRef.current;
     if (!agent || !agent.detectRealtime) {
-      console.warn('[Vision] Agent not ready or no detectRealtime method');
       animationFrameRef.current = requestAnimationFrame(runRealtimeDetection);
       return;
     }
 
-    // Calculate FPS
     const now = performance.now();
     const fps = lastFrameTimeRef.current ? Math.round(1000 / (now - lastFrameTimeRef.current)) : 0;
     lastFrameTimeRef.current = now;
 
-    // Run detection
     const detections = agent.detectRealtime(video);
-    
-    const totalDetections = detections.objects.length + detections.faces.length + detections.poses.length + detections.hands.length;
-
-    // Debug: Log detection counts every second
-    if (fps > 0 && Math.floor(now / 1000) !== Math.floor((now - 1000/fps) / 1000)) {
-      console.log('[Vision] Detections:', {
-        objects: detections.objects.length,
-        faces: detections.faces.length,
-        poses: detections.poses.length,
-        hands: detections.hands.length,
-        total: totalDetections,
-        canvasSize: `${canvas.width}x${canvas.height}`,
-        overlayOptions: overlayOptions
-      });
-    }
 
     // Throttle state updates to every 150ms to prevent flickering
     const shouldUpdateState = (now - lastStateUpdateRef.current) > 150;
-    
+
     if (shouldUpdateState) {
       lastStateUpdateRef.current = now;
-      
-      // Update stats (throttled)
+
       setRealtimeStats({
         fps,
         objects: detections.objects.length,
@@ -723,7 +559,6 @@ export default function VisionPage() {
         hands: detections.hands.length,
       });
 
-      // Update pose landmarks for BodyPartsPanel (throttled)
       if (detections.poses.length > 0 && detections.poses[0].landmarks) {
         setDetectedPoseLandmarks(detections.poses[0].landmarks as PoseLandmark[]);
       } else {
@@ -731,10 +566,7 @@ export default function VisionPage() {
       }
     }
 
-    // Draw on canvas with proper scaling
     drawDetections(ctx, detections, video.videoWidth, video.videoHeight, canvas.width, canvas.height);
-
-    // Continue loop
     animationFrameRef.current = requestAnimationFrame(runRealtimeDetection);
   }, [realtimeMode, webcamActive, getVisionAgent, drawDetections, overlayOptions]);
 
@@ -747,14 +579,12 @@ export default function VisionPage() {
       if (overlayCanvasRef.current && video.videoWidth && video.videoHeight) {
         overlayCanvasRef.current.width = video.videoWidth;
         overlayCanvasRef.current.height = video.videoHeight;
-        console.log('[Vision] Canvas synced:', video.videoWidth, 'x', video.videoHeight);
       }
     };
 
     video.addEventListener('loadedmetadata', syncCanvasSize);
     video.addEventListener('resize', syncCanvasSize);
-    
-    // Also sync immediately if video already has dimensions
+
     if (video.videoWidth && video.videoHeight) {
       syncCanvasSize();
     }
@@ -768,7 +598,6 @@ export default function VisionPage() {
   // Start/stop realtime detection when mode changes
   useEffect(() => {
     if (realtimeMode && webcamActive && detectorsReady) {
-      // Ensure canvas size matches video
       if (videoRef.current && overlayCanvasRef.current) {
         if (videoRef.current.videoWidth && videoRef.current.videoHeight) {
           overlayCanvasRef.current.width = videoRef.current.videoWidth;
@@ -777,17 +606,14 @@ export default function VisionPage() {
       }
       runRealtimeDetection();
     } else {
-      // Stop detection loop
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
         animationFrameRef.current = null;
       }
-      // Clear canvas
       if (overlayCanvasRef.current) {
         const ctx = overlayCanvasRef.current.getContext('2d');
         if (ctx) ctx.clearRect(0, 0, overlayCanvasRef.current.width, overlayCanvasRef.current.height);
       }
-      // Reset to IMAGE mode
       if (visionAgentRef.current?.setRunningMode && !realtimeMode) {
         visionAgentRef.current.setRunningMode('IMAGE');
       }
@@ -800,17 +626,15 @@ export default function VisionPage() {
     };
   }, [realtimeMode, webcamActive, detectorsReady, runRealtimeDetection]);
 
-  // Toggle realtime mode
   const toggleRealtimeMode = useCallback(() => {
     if (!detectorsReady) return;
     setRealtimeMode(prev => !prev);
   }, [detectorsReady]);
 
-  // Toggle fullscreen mode
   const toggleFullscreen = useCallback(() => {
     const container = videoContainerRef.current;
     if (!container) return;
-    
+
     if (!document.fullscreenElement) {
       container.requestFullscreen().then(() => {
         setIsFullscreen(true);
@@ -826,7 +650,6 @@ export default function VisionPage() {
     }
   }, []);
 
-  // Listen for fullscreen changes
   useEffect(() => {
     const handleFullscreenChange = () => {
       setIsFullscreen(!!document.fullscreenElement);
@@ -838,51 +661,34 @@ export default function VisionPage() {
   // Capture screenshot with overlay
   const captureScreenshotWithOverlay = useCallback(() => {
     if (!videoRef.current || !overlayCanvasRef.current) return;
-    
+
     const video = videoRef.current;
     const overlay = overlayCanvasRef.current;
-    
-    // Create a temporary canvas to merge video + overlay
+
     const mergedCanvas = document.createElement('canvas');
     mergedCanvas.width = video.videoWidth;
     mergedCanvas.height = video.videoHeight;
     const ctx = mergedCanvas.getContext('2d');
     if (!ctx) return;
-    
-    // Draw video frame
+
     ctx.drawImage(video, 0, 0);
-    
-    // Draw overlay on top
     ctx.drawImage(overlay, 0, 0, mergedCanvas.width, mergedCanvas.height);
-    
-    // Download image
+
     const link = document.createElement('a');
     link.download = `lisa-vision-${Date.now()}.png`;
     link.href = mergedCanvas.toDataURL('image/png');
     link.click();
-    
-    // Add to history
+
     setDetectionHistory(prev => {
-      const newEntry = { timestamp: Date.now(), type: 'object' as const, label: '📸 Capture sauvegardée' };
+      const newEntry = { timestamp: Date.now(), type: 'object' as const, label: 'Capture sauvegardée' };
       return [newEntry, ...prev].slice(0, 50);
     });
   }, []);
 
-  // Add detection to history (available for future use in realtime detection loop)
-  const _addToHistory = useCallback((type: 'object' | 'face' | 'pose' | 'hand', label: string, confidence?: number) => {
-    setDetectionHistory(prev => {
-      const newEntry = { timestamp: Date.now(), type, label, confidence };
-      const updated = [newEntry, ...prev].slice(0, 50); // Keep last 50
-      return updated;
-    });
-  }, []);
-
-  // Clear history
   const clearHistory = useCallback(() => {
     setDetectionHistory([]);
   }, []);
 
-  // Format timestamp for display
   const formatTime = (timestamp: number) => {
     const date = new Date(timestamp);
     return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
@@ -890,29 +696,19 @@ export default function VisionPage() {
 
   // Capture frame from webcam
   const captureFrame = useCallback((): string | null => {
-    if (!videoRef.current || !canvasRef.current) {
-      console.warn('[Vision] captureFrame: video or canvas ref not available');
-      return null;
-    }
-    
+    if (!videoRef.current || !canvasRef.current) return null;
+
     const video = videoRef.current;
     const canvas = canvasRef.current;
-    
-    // Vérifier que la vidéo a des dimensions valides
-    if (video.videoWidth === 0 || video.videoHeight === 0) {
-      console.warn('[Vision] captureFrame: video dimensions are 0');
-      return null;
-    }
-    
+
+    if (video.videoWidth === 0 || video.videoHeight === 0) return null;
+
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
-    
+
     const ctx = canvas.getContext('2d');
-    if (!ctx) {
-      console.warn('[Vision] captureFrame: could not get 2d context');
-      return null;
-    }
-    
+    if (!ctx) return null;
+
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
     return canvas.toDataURL('image/jpeg', 0.8);
   }, []);
@@ -922,59 +718,31 @@ export default function VisionPage() {
     return () => stopWebcam();
   }, [stopWebcam]);
 
-  // Analyze image with real VisionAgent
+  // Analyze image with VisionAgent
   const analyzeImage = async () => {
     setIsProcessing(true);
     setError(null);
     setResult(null);
-    
+
     try {
       const visionAgent = await getVisionAgent();
-      
       if (!visionAgent) {
         throw new Error('VisionAgent non disponible');
       }
 
-      let imageData: string | null = null;
-
-      // Get image based on source
-      if (source === 'webcam') {
-        if (!webcamActive) {
-          throw new Error('Veuillez d\'abord activer la webcam');
-        }
-        imageData = captureFrame();
-      } else if (source === 'screenshot') {
-        // Request screenshot
-        try {
-          const stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
-          const video = document.createElement('video');
-          video.srcObject = stream;
-          await new Promise(resolve => { video.onloadedmetadata = resolve; });
-          video.play();
-          
-          const canvas = document.createElement('canvas');
-          canvas.width = video.videoWidth;
-          canvas.height = video.videoHeight;
-          const ctx = canvas.getContext('2d');
-          if (ctx) {
-            ctx.drawImage(video, 0, 0);
-            imageData = canvas.toDataURL('image/png');
-          }
-          stream.getTracks().forEach(t => t.stop());
-        } catch {
-          throw new Error('Capture d\'écran annulée ou non autorisée');
-        }
+      if (!webcamActive) {
+        throw new Error('Veuillez d\'abord activer la webcam');
       }
 
+      const imageData = captureFrame();
       if (!imageData) {
         throw new Error('Impossible de capturer l\'image');
       }
 
-      // Call VisionAgent
       const agentResult = await visionAgent.execute({
         intent: 'analyze_image',
         parameters: {
-          source,
+          source: 'webcam',
           task,
           imageData,
           options: {
@@ -989,7 +757,7 @@ export default function VisionPage() {
       }
 
       const visionResult = agentResult.output as VisionResult;
-      
+
       setResult({
         description: visionResult.description,
         objects: visionResult.objects?.map(o => ({ name: o.name, confidence: o.confidence })),
@@ -1029,12 +797,10 @@ export default function VisionPage() {
 
     try {
       const ocrAgent = await getOCRAgent();
-      
       if (!ocrAgent) {
         throw new Error('OCRAgent non disponible');
       }
 
-      // Convert file to base64
       const imageData = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = () => resolve(reader.result as string);
@@ -1068,7 +834,6 @@ export default function VisionPage() {
     }
   };
 
-  // Copy OCR text to clipboard
   const copyOcrText = () => {
     if (ocrResult?.text) {
       navigator.clipboard.writeText(ocrResult.text);
@@ -1085,32 +850,39 @@ export default function VisionPage() {
   const TaskIcon = taskIcons[task] || Eye;
 
   return (
-    <OfficePageLayout title="Vision" subtitle="Detection d'objets, visages et poses en temps reel">
+    <div style={{ padding: '24px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
+        <div>
+          <h1 style={{ fontSize: '24px', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Vision</h1>
+          <p style={{ fontSize: '14px', color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>Détection d'objets, visages et poses en temps réel</p>
+        </div>
+      </div>
       {/* Hidden canvas for frame capture */}
       <canvas ref={canvasRef} style={{ display: 'none' }} />
-      
+
       <div style={{
         display: 'grid',
-        gridTemplateColumns: '1fr 600px',
+        gridTemplateColumns: 'minmax(300px, 1fr) minmax(280px, 480px)',
         gap: '20px',
         height: 'calc(100vh - 140px)',
         minHeight: '500px'
       }}>
         {/* ===== LEFT: Main Video Area ===== */}
-        <div 
+        <div
           ref={videoContainerRef}
           style={{
-            backgroundColor: 'var(--bg-surface, #0d0d0d)',
+            backgroundColor: 'var(--bg-surface, #12121a)',
             borderRadius: '12px',
             position: 'relative',
             overflow: 'hidden',
             display: 'flex',
-            flexDirection: 'column'
+            flexDirection: 'column',
+            border: '1px solid var(--border-primary, #2d2d44)'
           }}
         >
           {/* Video + Canvas Overlay */}
-          <div style={{ 
-            position: 'relative', 
+          <div style={{
+            position: 'relative',
             flex: 1,
             minHeight: 0,
             display: 'flex',
@@ -1143,30 +915,30 @@ export default function VisionPage() {
                 }}
               />
             </div>
-            
+
             {/* Stats overlay */}
             {webcamActive && realtimeMode && overlayOptions.showStats && (
               <div style={{
                 position: 'absolute',
                 top: '12px',
                 left: '12px',
-                backgroundColor: 'rgba(0,0,0,0.85)',
+                backgroundColor: 'rgba(10, 10, 15, 0.85)',
                 borderRadius: '8px',
                 padding: '12px 16px',
                 fontSize: '13px',
-                color: 'var(--text-primary, #ececec)',
-                fontFamily: 'monospace',
+                color: 'var(--text-primary, #e8e8f0)',
+                fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
                 backdropFilter: 'blur(8px)',
-                border: '1px solid rgba(255,255,255,0.1)'
+                border: '1px solid var(--border-primary, #2d2d44)'
               }}>
-                <div style={{ color: 'var(--color-brand, #10a37f)', fontWeight: 'bold', marginBottom: '6px', fontSize: '14px' }}>
-                  ⚡ {realtimeStats.fps} FPS
+                <div style={{ color: 'var(--color-accent, #f5a623)', fontWeight: 'bold', marginBottom: '6px', fontSize: '14px' }}>
+                  {realtimeStats.fps} FPS
                 </div>
                 <div style={{ display: 'grid', gap: '3px' }}>
-                  {overlayOptions.showObjects && <div>🟢 Objets: <span style={{ color: 'var(--color-brand, #10a37f)' }}>{realtimeStats.objects}</span></div>}
-                  {overlayOptions.showFaces && <div>🔵 Visages: <span style={{ color: 'var(--color-info, #3b82f6)' }}>{realtimeStats.faces}</span></div>}
-                  {overlayOptions.showPoses && <div>🟣 Poses: <span style={{ color: 'var(--color-purple, #8b5cf6)' }}>{realtimeStats.poses}</span></div>}
-                  {overlayOptions.showHands && <div>🟠 Mains: <span style={{ color: 'var(--color-warning, #f59e0b)' }}>{realtimeStats.hands}</span></div>}
+                  {overlayOptions.showObjects && <div>Objets: <span style={{ color: 'var(--color-green, #22c55e)' }}>{realtimeStats.objects}</span></div>}
+                  {overlayOptions.showFaces && <div>Visages: <span style={{ color: 'var(--color-info, #06b6d4)' }}>{realtimeStats.faces}</span></div>}
+                  {overlayOptions.showPoses && <div>Poses: <span style={{ color: 'var(--color-purple, #8b5cf6)' }}>{realtimeStats.poses}</span></div>}
+                  {overlayOptions.showHands && <div>Mains: <span style={{ color: 'var(--color-warning, #f59e0b)' }}>{realtimeStats.hands}</span></div>}
                 </div>
               </div>
             )}
@@ -1181,10 +953,10 @@ export default function VisionPage() {
                   right: '12px',
                   width: '40px',
                   height: '40px',
-                  backgroundColor: 'rgba(0,0,0,0.7)',
-                  border: '1px solid rgba(255,255,255,0.2)',
+                  backgroundColor: 'rgba(10, 10, 15, 0.7)',
+                  border: '1px solid var(--border-primary, #2d2d44)',
                   borderRadius: '8px',
-                  color: 'var(--text-primary, #ececec)',
+                  color: 'var(--text-primary, #e8e8f0)',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
@@ -1202,7 +974,7 @@ export default function VisionPage() {
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: 'var(--text-muted, #666)',
+                color: 'var(--text-muted, #6a6a82)',
                 gap: '16px'
               }}>
                 <Camera size={64} />
@@ -1211,16 +983,17 @@ export default function VisionPage() {
                   onClick={toggleWebcam}
                   style={{
                     padding: '12px 24px',
-                    backgroundColor: 'var(--color-brand, #10a37f)',
+                    backgroundColor: 'var(--color-accent, #f5a623)',
                     border: 'none',
                     borderRadius: '8px',
-                    color: 'var(--text-primary, #ececec)',
+                    color: 'var(--bg-deep, #0a0a0f)',
                     cursor: 'pointer',
                     fontSize: '14px',
                     fontWeight: 600,
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '8px'
+                    gap: '8px',
+                    fontFamily: 'inherit'
                   }}
                 >
                   <Play size={16} />
@@ -1234,8 +1007,8 @@ export default function VisionPage() {
           {webcamActive && (
             <div style={{
               padding: '12px 16px',
-              backgroundColor: 'var(--bg-tertiary, #1a1a1a)',
-              borderTop: '1px solid var(--border-subtle, #333)',
+              backgroundColor: 'var(--bg-panel, #1a1a26)',
+              borderTop: '1px solid var(--border-subtle, #1e1e30)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
@@ -1248,13 +1021,14 @@ export default function VisionPage() {
                   disabled={!detectorsReady}
                   style={{
                     padding: '8px 16px',
-                    backgroundColor: realtimeMode ? 'var(--color-brand, #10a37f)' : 'var(--bg-secondary, #2d2d2d)',
-                    border: realtimeMode ? '1px solid var(--color-brand, #10a37f)' : '1px solid var(--border-primary, #424242)',
+                    backgroundColor: realtimeMode ? 'var(--color-accent, #f5a623)' : 'var(--bg-surface, #12121a)',
+                    border: realtimeMode ? '1px solid var(--color-accent, #f5a623)' : '1px solid var(--border-primary, #2d2d44)',
                     borderRadius: '6px',
-                    color: realtimeMode ? 'var(--text-primary, #ececec)' : 'var(--text-tertiary, #888)',
+                    color: realtimeMode ? 'var(--bg-deep, #0a0a0f)' : 'var(--text-tertiary, #6a6a82)',
                     cursor: detectorsReady ? 'pointer' : 'not-allowed',
                     fontSize: '13px',
                     fontWeight: 500,
+                    fontFamily: 'inherit',
                     display: 'flex',
                     alignItems: 'center',
                     gap: '6px',
@@ -1273,12 +1047,13 @@ export default function VisionPage() {
                     onClick={captureScreenshotWithOverlay}
                     style={{
                       padding: '8px 12px',
-                      backgroundColor: 'var(--color-info, #3b82f6)',
+                      backgroundColor: 'var(--color-info, #06b6d4)',
                       border: 'none',
                       borderRadius: '6px',
-                      color: 'var(--text-primary, #ececec)',
+                      color: '#fff',
                       cursor: 'pointer',
                       fontSize: '12px',
+                      fontFamily: 'inherit',
                       display: 'flex',
                       alignItems: 'center',
                       gap: '6px'
@@ -1292,12 +1067,13 @@ export default function VisionPage() {
                   onClick={() => setShowHistory(prev => !prev)}
                   style={{
                     padding: '8px 12px',
-                    backgroundColor: showHistory ? 'var(--color-warning, #f59e0b)' : 'var(--bg-secondary, #2d2d2d)',
-                    border: '1px solid var(--border-primary, #424242)',
+                    backgroundColor: showHistory ? 'var(--color-warning, #f59e0b)' : 'var(--bg-surface, #12121a)',
+                    border: '1px solid var(--border-primary, #2d2d44)',
                     borderRadius: '6px',
-                    color: showHistory ? 'var(--text-primary, #ececec)' : 'var(--text-tertiary, #888)',
+                    color: showHistory ? 'var(--bg-deep, #0a0a0f)' : 'var(--text-tertiary, #6a6a82)',
                     cursor: 'pointer',
                     fontSize: '12px',
+                    fontFamily: 'inherit',
                     display: 'flex',
                     alignItems: 'center',
                     gap: '6px'
@@ -1316,10 +1092,11 @@ export default function VisionPage() {
                   backgroundColor: 'var(--color-error, #ef4444)',
                   border: 'none',
                   borderRadius: '6px',
-                  color: 'var(--text-primary, #ececec)',
+                  color: '#fff',
                   cursor: 'pointer',
                   fontSize: '13px',
                   fontWeight: 500,
+                  fontFamily: 'inherit',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '6px'
@@ -1342,26 +1119,27 @@ export default function VisionPage() {
         }}>
           {/* Header - spans both columns */}
           <div style={{
-            backgroundColor: 'var(--bg-secondary, #2d2d2d)',
+            backgroundColor: 'var(--bg-surface, #12121a)',
             borderRadius: '12px',
             padding: '16px',
-            gridColumn: '1 / -1'
+            gridColumn: '1 / -1',
+            border: '1px solid var(--border-primary, #2d2d44)'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
               <div style={{
                 width: '40px',
                 height: '40px',
                 borderRadius: '10px',
-                backgroundColor: 'rgba(59, 130, 246, 0.12)',
+                backgroundColor: 'rgba(6, 182, 212, 0.12)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center'
               }}>
-                <Eye size={20} color="#3b82f6" />
+                <Eye size={20} color="var(--color-info, #06b6d4)" />
               </div>
               <div>
-                <h3 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary, #ececec)', margin: 0 }}>Vision Agent</h3>
-                <p style={{ fontSize: '12px', color: 'var(--text-tertiary, #888)', margin: 0 }}>Analyse temps réel</p>
+                <h3 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary, #e8e8f0)', margin: 0 }}>Vision Agent</h3>
+                <p style={{ fontSize: '12px', color: 'var(--text-tertiary, #6a6a82)', margin: 0 }}>Analyse temps réel</p>
               </div>
             </div>
 
@@ -1369,18 +1147,18 @@ export default function VisionPage() {
             {initializingDetectors ? (
               <div style={{
                 padding: '10px',
-                backgroundColor: 'rgba(59, 130, 246, 0.12)',
+                backgroundColor: 'rgba(6, 182, 212, 0.12)',
                 borderRadius: '8px',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
                 fontSize: '12px',
-                color: 'var(--color-info, #3b82f6)'
+                color: 'var(--color-info, #06b6d4)'
               }}>
                 <div style={{
                   width: '12px',
                   height: '12px',
-                  border: '2px solid var(--color-info, #3b82f6)',
+                  border: '2px solid var(--color-info, #06b6d4)',
                   borderTopColor: 'transparent',
                   borderRadius: '50%',
                   animation: 'spin 1s linear infinite'
@@ -1390,13 +1168,13 @@ export default function VisionPage() {
             ) : detectorsReady ? (
               <div style={{
                 padding: '10px',
-                backgroundColor: 'var(--color-brand-subtle, rgba(16,163,127,0.12))',
+                backgroundColor: 'rgba(34, 197, 94, 0.12)',
                 borderRadius: '8px',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
                 fontSize: '12px',
-                color: 'var(--color-brand, #10a37f)'
+                color: 'var(--color-green, #22c55e)'
               }}>
                 <CheckCircle size={14} />
                 Détecteurs prêts
@@ -1421,13 +1199,14 @@ export default function VisionPage() {
                     backgroundColor: 'var(--color-error, #ef4444)',
                     border: 'none',
                     borderRadius: '6px',
-                    color: 'var(--text-primary, #ececec)',
+                    color: '#fff',
                     cursor: 'pointer',
                     fontSize: '12px',
-                    fontWeight: 500
+                    fontWeight: 500,
+                    fontFamily: 'inherit'
                   }}
                 >
-                  🔄 Réessayer
+                  Réessayer
                 </button>
               </div>
             )}
@@ -1436,14 +1215,15 @@ export default function VisionPage() {
           {/* Overlay Options */}
           {webcamActive && realtimeMode && (
             <div style={{
-              backgroundColor: 'var(--bg-secondary, #2d2d2d)',
+              backgroundColor: 'var(--bg-surface, #12121a)',
               borderRadius: '12px',
-              padding: '16px'
+              padding: '16px',
+              border: '1px solid var(--border-primary, #2d2d44)'
             }}>
-              <div style={{ 
-                fontSize: '12px', 
-                fontWeight: 600, 
-                color: 'var(--text-tertiary, #888)', 
+              <div style={{
+                fontSize: '12px',
+                fontWeight: 600,
+                color: 'var(--text-tertiary, #6a6a82)',
                 marginBottom: '12px',
                 textTransform: 'uppercase',
                 letterSpacing: '0.5px'
@@ -1452,27 +1232,27 @@ export default function VisionPage() {
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
                 {[
-                  // Raw hex needed: used in template literals like `${color}20`
-                  { key: 'showObjects', label: '🟢 Objets', color: '#10a37f' },
-                  { key: 'showFaces', label: '🔵 Visages', color: '#3b82f6' },
-                  { key: 'showPoses', label: '🟣 Poses', color: '#8b5cf6' },
-                  { key: 'showHands', label: '🟠 Mains', color: '#f59e0b' },
-                  { key: 'showLabels', label: '📝 Labels', color: '#6b7280' },
-                  { key: 'showConfidence', label: '📊 %', color: '#6b7280' },
-                  { key: 'showLandmarks', label: '📍 Points', color: '#6b7280' },
-                  { key: 'showStats', label: '📈 Stats', color: '#6b7280' },
+                  { key: 'showObjects', label: 'Objets', color: '#22c55e' },
+                  { key: 'showFaces', label: 'Visages', color: '#06b6d4' },
+                  { key: 'showPoses', label: 'Poses', color: '#8b5cf6' },
+                  { key: 'showHands', label: 'Mains', color: '#f59e0b' },
+                  { key: 'showLabels', label: 'Labels', color: '#9898b0' },
+                  { key: 'showConfidence', label: '%', color: '#9898b0' },
+                  { key: 'showLandmarks', label: 'Points', color: '#9898b0' },
+                  { key: 'showStats', label: 'Stats', color: '#9898b0' },
                 ].map(({ key, label, color }) => (
                   <button
                     key={key}
                     onClick={() => setOverlayOptions(prev => ({ ...prev, [key]: !prev[key as keyof typeof prev] }))}
                     style={{
                       padding: '8px',
-                      backgroundColor: overlayOptions[key as keyof typeof overlayOptions] ? `${color}20` : 'var(--bg-tertiary, #1a1a1a)',
-                      border: `1px solid ${overlayOptions[key as keyof typeof overlayOptions] ? color : 'var(--border-subtle, #333)'}`,
+                      backgroundColor: overlayOptions[key as keyof typeof overlayOptions] ? `${color}20` : 'var(--bg-panel, #1a1a26)',
+                      border: `1px solid ${overlayOptions[key as keyof typeof overlayOptions] ? color : 'var(--border-subtle, #1e1e30)'}`,
                       borderRadius: '6px',
-                      color: overlayOptions[key as keyof typeof overlayOptions] ? color : 'var(--text-muted, #666)',
+                      color: overlayOptions[key as keyof typeof overlayOptions] ? color : 'var(--text-muted, #6a6a82)',
                       fontSize: '11px',
                       fontWeight: 500,
+                      fontFamily: 'inherit',
                       cursor: 'pointer',
                       textAlign: 'center'
                     }}
@@ -1484,11 +1264,11 @@ export default function VisionPage() {
             </div>
           )}
 
-          {/* Body Parts Panel - Show when pose is detected - spans both columns */}
+          {/* Body Parts Panel - spans both columns */}
           {webcamActive && realtimeMode && overlayOptions.showPoses && (
             <div style={{ gridColumn: '1 / -1' }}>
-              <BodyPartsPanel 
-                landmarks={detectedPoseLandmarks} 
+              <BodyPartsPanel
+                landmarks={detectedPoseLandmarks}
                 showDetails={true}
                 compact={false}
               />
@@ -1498,14 +1278,15 @@ export default function VisionPage() {
           {/* Detection History - spans both columns */}
           {showHistory && (
             <div style={{
-              backgroundColor: 'var(--bg-secondary, #2d2d2d)',
+              backgroundColor: 'var(--bg-surface, #12121a)',
               borderRadius: '12px',
               padding: '16px',
               minHeight: '150px',
               maxHeight: '200px',
               display: 'flex',
               flexDirection: 'column',
-              gridColumn: '1 / -1'
+              gridColumn: '1 / -1',
+              border: '1px solid var(--border-primary, #2d2d44)'
             }}>
               <div style={{
                 display: 'flex',
@@ -1513,7 +1294,7 @@ export default function VisionPage() {
                 alignItems: 'center',
                 marginBottom: '12px'
               }}>
-                <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-tertiary, #888)', textTransform: 'uppercase' }}>
+                <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-tertiary, #6a6a82)', textTransform: 'uppercase' }}>
                   Historique ({detectionHistory.length})
                 </span>
                 <button
@@ -1526,6 +1307,7 @@ export default function VisionPage() {
                     color: 'var(--color-error, #ef4444)',
                     cursor: 'pointer',
                     fontSize: '10px',
+                    fontFamily: 'inherit',
                     display: 'flex',
                     alignItems: 'center',
                     gap: '4px'
@@ -1537,7 +1319,7 @@ export default function VisionPage() {
               </div>
               <div style={{ flex: 1, overflowY: 'auto' }}>
                 {detectionHistory.length === 0 ? (
-                  <div style={{ color: 'var(--text-muted, #666)', fontSize: '12px', textAlign: 'center', padding: '20px' }}>
+                  <div style={{ color: 'var(--text-muted, #6a6a82)', fontSize: '12px', textAlign: 'center', padding: '20px' }}>
                     Aucune détection
                   </div>
                 ) : (
@@ -1550,20 +1332,20 @@ export default function VisionPage() {
                           justifyContent: 'space-between',
                           alignItems: 'center',
                           padding: '6px 8px',
-                          backgroundColor: 'var(--bg-tertiary, #1a1a1a)',
+                          backgroundColor: 'var(--bg-panel, #1a1a26)',
                           borderRadius: '4px',
                           fontSize: '11px'
                         }}
                       >
                         <span style={{
-                          color: item.type === 'object' ? 'var(--color-brand, #10a37f)' :
-                                 item.type === 'face' ? 'var(--color-info, #3b82f6)' :
+                          color: item.type === 'object' ? 'var(--color-green, #22c55e)' :
+                                 item.type === 'face' ? 'var(--color-info, #06b6d4)' :
                                  item.type === 'pose' ? 'var(--color-purple, #8b5cf6)' : 'var(--color-warning, #f59e0b)'
                         }}>
                           {item.label}
                           {item.confidence && ` (${Math.round(item.confidence * 100)}%)`}
                         </span>
-                        <span style={{ color: 'var(--text-muted, #666)', fontSize: '10px' }}>
+                        <span style={{ color: 'var(--text-muted, #6a6a82)', fontSize: '10px' }}>
                           {formatTime(item.timestamp)}
                         </span>
                       </div>
@@ -1576,20 +1358,21 @@ export default function VisionPage() {
 
           {/* Analysis Settings */}
           <div style={{
-            backgroundColor: 'var(--bg-secondary, #2d2d2d)',
+            backgroundColor: 'var(--bg-surface, #12121a)',
             borderRadius: '12px',
-            padding: '16px'
+            padding: '16px',
+            border: '1px solid var(--border-primary, #2d2d44)'
           }}>
-            <div style={{ 
-              fontSize: '12px', 
-              fontWeight: 600, 
-              color: 'var(--text-tertiary, #888)', 
+            <div style={{
+              fontSize: '12px',
+              fontWeight: 600,
+              color: 'var(--text-tertiary, #6a6a82)',
               marginBottom: '12px',
               textTransform: 'uppercase'
             }}>
               Analyse statique
             </div>
-            
+
             <Select
               label="Type d'analyse"
               value={task}
@@ -1610,13 +1393,14 @@ export default function VisionPage() {
                 width: '100%',
                 marginTop: '12px',
                 padding: '12px',
-                backgroundColor: (isProcessing || !detectorsReady || !webcamActive) ? 'var(--border-primary, #424242)' : 'var(--color-brand, #10a37f)',
+                backgroundColor: (isProcessing || !detectorsReady || !webcamActive) ? 'var(--border-primary, #2d2d44)' : 'var(--color-accent, #f5a623)',
                 border: 'none',
                 borderRadius: '8px',
-                color: 'var(--text-primary, #ececec)',
+                color: (isProcessing || !detectorsReady || !webcamActive) ? 'var(--text-muted, #6a6a82)' : 'var(--bg-deep, #0a0a0f)',
                 cursor: (isProcessing || !detectorsReady || !webcamActive) ? 'not-allowed' : 'pointer',
                 fontSize: '13px',
-                fontWeight: 500,
+                fontWeight: 600,
+                fontFamily: 'inherit',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -1628,7 +1412,7 @@ export default function VisionPage() {
                   <div style={{
                     width: '14px',
                     height: '14px',
-                    border: '2px solid var(--text-primary, #ececec)',
+                    border: '2px solid var(--bg-deep, #0a0a0f)',
                     borderTopColor: 'transparent',
                     borderRadius: '50%',
                     animation: 'spin 1s linear infinite'
@@ -1646,20 +1430,21 @@ export default function VisionPage() {
 
           {/* OCR Section */}
           <div style={{
-            backgroundColor: 'var(--bg-secondary, #2d2d2d)',
+            backgroundColor: 'var(--bg-surface, #12121a)',
             borderRadius: '12px',
-            padding: '16px'
+            padding: '16px',
+            border: '1px solid var(--border-primary, #2d2d44)'
           }}>
-            <div style={{ 
-              fontSize: '12px', 
-              fontWeight: 600, 
-              color: 'var(--text-tertiary, #888)', 
+            <div style={{
+              fontSize: '12px',
+              fontWeight: 600,
+              color: 'var(--text-tertiary, #6a6a82)',
               marginBottom: '12px',
               textTransform: 'uppercase'
             }}>
               OCR - Reconnaissance de texte
             </div>
-            
+
             <input
               ref={fileInputRef}
               type="file"
@@ -1667,18 +1452,19 @@ export default function VisionPage() {
               onChange={handleFileSelect}
               style={{ display: 'none' }}
             />
-            
+
             <button
               onClick={() => fileInputRef.current?.click()}
               style={{
                 width: '100%',
                 padding: '12px',
-                backgroundColor: 'var(--bg-tertiary, #1a1a1a)',
-                border: '1px dashed var(--border-primary, #424242)',
+                backgroundColor: 'var(--bg-panel, #1a1a26)',
+                border: '1px dashed var(--border-primary, #2d2d44)',
                 borderRadius: '8px',
-                color: 'var(--text-tertiary, #888)',
+                color: 'var(--text-tertiary, #6a6a82)',
                 cursor: 'pointer',
                 fontSize: '13px',
+                fontFamily: 'inherit',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -1689,20 +1475,21 @@ export default function VisionPage() {
               <Upload size={16} />
               {selectedFile ? selectedFile.name : 'Sélectionner une image'}
             </button>
-            
+
             <button
               onClick={processOCR}
               disabled={ocrProcessing || !selectedFile}
               style={{
                 width: '100%',
                 padding: '12px',
-                backgroundColor: (ocrProcessing || !selectedFile) ? 'var(--border-primary, #424242)' : 'var(--color-info, #3b82f6)',
+                backgroundColor: (ocrProcessing || !selectedFile) ? 'var(--border-primary, #2d2d44)' : 'var(--color-info, #06b6d4)',
                 border: 'none',
                 borderRadius: '8px',
-                color: 'var(--text-primary, #ececec)',
+                color: (ocrProcessing || !selectedFile) ? 'var(--text-muted, #6a6a82)' : '#fff',
                 cursor: (ocrProcessing || !selectedFile) ? 'not-allowed' : 'pointer',
                 fontSize: '13px',
                 fontWeight: 500,
+                fontFamily: 'inherit',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -1714,7 +1501,7 @@ export default function VisionPage() {
                   <div style={{
                     width: '14px',
                     height: '14px',
-                    border: '2px solid var(--text-primary, #ececec)',
+                    border: '2px solid #fff',
                     borderTopColor: 'transparent',
                     borderRadius: '50%',
                     animation: 'spin 1s linear infinite'
@@ -1728,7 +1515,7 @@ export default function VisionPage() {
                 </>
               )}
             </button>
-            
+
             {/* OCR Result */}
             {ocrResult && (
               <div style={{ marginTop: '12px' }}>
@@ -1738,19 +1525,20 @@ export default function VisionPage() {
                   alignItems: 'center',
                   marginBottom: '8px'
                 }}>
-                  <span style={{ fontSize: '11px', color: 'var(--text-tertiary, #888)' }}>
+                  <span style={{ fontSize: '11px', color: 'var(--text-tertiary, #6a6a82)' }}>
                     Confiance: {ocrResult.confidence ? `${Math.round(ocrResult.confidence * 100)}%` : 'N/A'}
                   </span>
                   <button
                     onClick={copyOcrText}
                     style={{
                       padding: '4px 8px',
-                      backgroundColor: 'var(--color-brand-subtle, rgba(16,163,127,0.12))',
+                      backgroundColor: 'var(--color-brand-subtle, rgba(245, 166, 35, 0.10))',
                       border: 'none',
                       borderRadius: '4px',
-                      color: 'var(--color-brand, #10a37f)',
+                      color: 'var(--color-accent, #f5a623)',
                       cursor: 'pointer',
                       fontSize: '10px',
+                      fontFamily: 'inherit',
                       display: 'flex',
                       alignItems: 'center',
                       gap: '4px'
@@ -1762,10 +1550,10 @@ export default function VisionPage() {
                 </div>
                 <div style={{
                   padding: '10px',
-                  backgroundColor: 'var(--bg-tertiary, #1a1a1a)',
+                  backgroundColor: 'var(--bg-panel, #1a1a26)',
                   borderRadius: '6px',
                   fontSize: '12px',
-                  color: 'var(--text-secondary, #b4b4b4)',
+                  color: 'var(--text-secondary, #9898b0)',
                   lineHeight: 1.5,
                   maxHeight: '150px',
                   overflowY: 'auto',
@@ -1775,7 +1563,7 @@ export default function VisionPage() {
                 </div>
               </div>
             )}
-            
+
             {/* OCR Error */}
             {ocrError && (
               <div style={{
@@ -1796,21 +1584,22 @@ export default function VisionPage() {
           {/* Results */}
           {result && (
             <div style={{
-              backgroundColor: 'var(--bg-secondary, #2d2d2d)',
+              backgroundColor: 'var(--bg-surface, #12121a)',
               borderRadius: '12px',
-              padding: '16px'
+              padding: '16px',
+              border: '1px solid var(--border-primary, #2d2d44)'
             }}>
-              <div style={{ 
-                fontSize: '12px', 
-                fontWeight: 600, 
-                color: 'var(--text-tertiary, #888)', 
+              <div style={{
+                fontSize: '12px',
+                fontWeight: 600,
+                color: 'var(--text-tertiary, #6a6a82)',
                 marginBottom: '12px',
                 textTransform: 'uppercase'
               }}>
-                Résultats {result.processingTime && `(${result.processingTime}ms)`}
+                Résultats {result.processingTime && <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--color-accent, #f5a623)' }}>({result.processingTime}ms)</span>}
               </div>
               {result.description && (
-                <p style={{ fontSize: '13px', color: 'var(--text-secondary, #b4b4b4)', lineHeight: 1.5, margin: 0 }}>
+                <p style={{ fontSize: '13px', color: 'var(--text-secondary, #9898b0)', lineHeight: 1.5, margin: 0 }}>
                   {result.description}
                 </p>
               )}
@@ -1821,11 +1610,11 @@ export default function VisionPage() {
                       display: 'flex',
                       justifyContent: 'space-between',
                       padding: '6px 0',
-                      borderBottom: i < result.objects!.length - 1 ? '1px solid var(--border-subtle, #333)' : 'none',
+                      borderBottom: i < result.objects!.length - 1 ? '1px solid var(--border-subtle, #1e1e30)' : 'none',
                       fontSize: '12px'
                     }}>
-                      <span style={{ color: 'var(--color-brand, #10a37f)' }}>{obj.name}</span>
-                      <span style={{ color: 'var(--text-tertiary, #888)' }}>{Math.round(obj.confidence * 100)}%</span>
+                      <span style={{ color: 'var(--color-accent, #f5a623)' }}>{obj.name}</span>
+                      <span style={{ color: 'var(--text-tertiary, #6a6a82)', fontFamily: 'var(--font-mono)' }}>{Math.round(obj.confidence * 100)}%</span>
                     </div>
                   ))}
                 </div>
@@ -1841,7 +1630,8 @@ export default function VisionPage() {
               borderRadius: '8px',
               display: 'flex',
               alignItems: 'center',
-              gap: '10px'
+              gap: '10px',
+              gridColumn: '1 / -1'
             }}>
               <AlertCircle size={16} color="#ef4444" />
               <span style={{ fontSize: '12px', color: 'var(--color-error, #ef4444)' }}>{error}</span>
@@ -1849,6 +1639,6 @@ export default function VisionPage() {
           )}
         </div>
       </div>
-    </OfficePageLayout>
+    </div>
   );
 }

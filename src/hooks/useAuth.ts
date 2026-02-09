@@ -40,8 +40,9 @@ interface UseAuthReturn extends AuthState {
 
 const API_BASE_URL = `http://localhost:${import.meta.env.VITE_API_PORT || 3001}`;
 
-// Auto-login en mode développement ET sur mobile (Capacitor)
-const DEV_AUTO_LOGIN = import.meta.env.DEV || typeof window !== 'undefined' && !!Capacitor?.isNativePlatform?.();
+// Auto-login en mode développement, sur mobile (Capacitor), ou en Electron dev
+const isElectronDev = typeof window !== 'undefined' && !!(window as { electronAPI?: unknown }).electronAPI;
+const DEV_AUTO_LOGIN = import.meta.env.DEV || isElectronDev || typeof window !== 'undefined' && !!Capacitor?.isNativePlatform?.();
 const DEV_USER: User = {
   id: 'dev-user-001',
   email: 'dev@lisa.local',

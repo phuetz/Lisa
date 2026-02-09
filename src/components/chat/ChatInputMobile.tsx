@@ -346,7 +346,7 @@ export const ChatInputMobile = () => {
             backgroundColor: 'rgba(52, 53, 65, 0.6)',
             border: '1px solid rgba(86, 88, 105, 0.3)',
             borderRadius: '12px',
-            color: '#ececf1',
+            color: '#e8e8f0',
             fontSize: '16px',
             lineHeight: '1.4',
             resize: 'none',

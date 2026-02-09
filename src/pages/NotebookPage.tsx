@@ -3,15 +3,10 @@
  */
 
 import React, { useCallback } from 'react';
-import { OfficePageLayout } from '../components/layout/OfficePageLayout';
-import { useOfficeThemeStore } from '../store/officeThemeStore';
 import { NotebookEditor, type CellOutput } from '../components/notebook';
 import { safeEvaluate } from '../features/workflow/executor/SafeEvaluator';
 
 const NotebookPage: React.FC = () => {
-  const { getCurrentColors } = useOfficeThemeStore();
-  const colors = getCurrentColors();
-
   // Simulateur d'execution de code (pour demo)
   const handleExecuteCode = useCallback(async (code: string, _cellId: string): Promise<CellOutput[]> => {
     await new Promise(resolve => setTimeout(resolve, 500));
@@ -69,26 +64,28 @@ const NotebookPage: React.FC = () => {
   }, []);
 
   return (
-    <OfficePageLayout
-      title="Lisa Notebook"
-      subtitle="Editeur de code style Jupyter"
-      action={
+    <div style={{ padding: '24px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div>
+          <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 700, color: 'var(--text-primary)' }}>Lisa Notebook</h1>
+          <p style={{ margin: '4px 0 24px', fontSize: '13px', color: 'var(--text-muted)' }}>Editeur de code style Jupyter</p>
+        </div>
         <span style={{
           padding: '6px 12px',
-          backgroundColor: `${colors.success}20`,
-          color: colors.success,
+          backgroundColor: 'color-mix(in srgb, var(--color-green) 12%, transparent)',
+          color: 'var(--color-green)',
           borderRadius: '6px',
           fontSize: '12px',
           fontWeight: 500
         }}>
           Mode Simulation
         </span>
-      }
-    >
+      </div>
+
       <div style={{
-        backgroundColor: colors.dialog,
+        backgroundColor: 'var(--bg-surface)',
         borderRadius: '12px',
-        border: `1px solid ${colors.border}`,
+        border: '1px solid var(--border-primary)',
         height: 'calc(100vh - 200px)',
         overflow: 'hidden'
       }}>
@@ -97,7 +94,7 @@ const NotebookPage: React.FC = () => {
           onSave={handleSave}
         />
       </div>
-    </OfficePageLayout>
+    </div>
   );
 };
 

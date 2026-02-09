@@ -106,10 +106,10 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onSwitchToRegis
         }
 
         .login-form {
-          background: var(--bg-elevated, #2f2f2f);
+          background: var(--bg-panel, #1a1a26);
           padding: 2rem;
           border-radius: var(--radius-xl, 16px);
-          border: 1px solid var(--border-primary, #333);
+          border: 1px solid var(--border-primary, #2d2d44);
           box-shadow: var(--shadow-modal, 0 25px 50px -12px rgba(0, 0, 0, 0.8));
           width: 100%;
           max-width: 400px;
@@ -119,7 +119,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onSwitchToRegis
         .login-form h2 {
           text-align: center;
           margin-bottom: 1.5rem;
-          color: var(--text-primary, #ececec);
+          color: var(--text-primary, #e8e8f0);
           font-size: 1.5rem;
         }
 
@@ -131,16 +131,16 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onSwitchToRegis
           display: block;
           margin-bottom: 0.5rem;
           font-weight: 600;
-          color: var(--text-secondary, #b4b4b4);
+          color: var(--text-secondary, #9898b0);
           font-size: 0.9rem;
         }
 
         .form-group input {
           width: 100%;
           padding: 0.75rem;
-          background: var(--bg-primary, #212121);
-          color: var(--text-primary, #ececec);
-          border: 1px solid var(--border-primary, #333);
+          background: var(--bg-primary, #12121a);
+          color: var(--text-primary, #e8e8f0);
+          border: 1px solid var(--border-primary, #2d2d44);
           border-radius: var(--radius-md, 8px);
           font-size: 1rem;
           transition: border-color var(--transition-fast, 0.15s ease), box-shadow var(--transition-fast, 0.15s ease);
@@ -149,18 +149,18 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onSwitchToRegis
 
         .form-group input:focus {
           outline: none;
-          border-color: var(--color-brand, #10a37f);
-          box-shadow: 0 0 0 2px var(--color-brand-subtle, rgba(16, 163, 127, 0.12));
+          border-color: var(--color-accent, #f5a623);
+          box-shadow: 0 0 0 2px var(--color-accent-subtle, rgba(245, 166, 35, 0.12));
         }
 
         .form-group input:disabled {
-          background-color: var(--bg-tertiary, #1a1a1a);
-          color: var(--text-disabled, #555);
+          background-color: var(--bg-tertiary, #1a1a26);
+          color: var(--text-disabled, #3d3d5c);
           cursor: not-allowed;
         }
 
         .form-group input::placeholder {
-          color: var(--text-muted, #666);
+          color: var(--text-muted, #6a6a82);
         }
 
         .error-message {
@@ -176,7 +176,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onSwitchToRegis
         .submit-button {
           width: 100%;
           padding: 0.875rem;
-          background: var(--color-brand, #10a37f);
+          background: var(--color-accent, #f5a623);
           color: #fff;
           border: none;
           border-radius: var(--radius-md, 8px);
@@ -187,16 +187,16 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onSwitchToRegis
         }
 
         .submit-button:hover:not(:disabled) {
-          background: var(--color-brand-hover, #0d8c6d);
+          background: var(--color-accent-hover, #e6951a);
         }
 
         .submit-button:focus-visible {
           outline: none;
-          box-shadow: var(--focus-ring, 0 0 0 2px var(--color-brand));
+          box-shadow: var(--focus-ring, 0 0 0 2px var(--color-accent));
         }
 
         .submit-button:disabled {
-          background: var(--text-disabled, #555);
+          background: var(--text-disabled, #3d3d5c);
           cursor: not-allowed;
           opacity: 0.6;
         }
@@ -205,30 +205,30 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onSwitchToRegis
           text-align: center;
           margin-top: 1.5rem;
           padding-top: 1rem;
-          border-top: 1px solid var(--border-primary, #333);
+          border-top: 1px solid var(--border-primary, #2d2d44);
         }
 
         .form-footer p {
           margin: 0;
-          color: var(--text-muted, #666);
+          color: var(--text-muted, #6a6a82);
         }
 
         .link-button {
           background: none;
           border: none;
-          color: var(--color-brand, #10a37f);
+          color: var(--color-accent, #f5a623);
           cursor: pointer;
           text-decoration: underline;
           font-size: inherit;
         }
 
         .link-button:hover {
-          color: var(--color-brand-hover, #0d8c6d);
+          color: var(--color-accent-hover, #e6951a);
         }
 
         .link-button:focus-visible {
           outline: none;
-          box-shadow: var(--focus-ring, 0 0 0 2px var(--color-brand));
+          box-shadow: var(--focus-ring, 0 0 0 2px var(--color-accent));
           border-radius: 2px;
         }
       `}</style>

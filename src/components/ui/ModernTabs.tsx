@@ -33,13 +33,13 @@ export function ModernTabs({
 
   const variantStyles = {
     default: {
-      container: 'bg-[var(--bg-secondary,#2d2d2d)]/50 p-1 rounded-lg',
+      container: 'bg-[var(--bg-surface,#12121a)]/50 p-1 rounded-lg',
       button: `
         px-4 py-2 rounded-md transition-all duration-200
         hover:bg-[var(--bg-hover,rgba(255,255,255,0.06))]
       `,
-      active: 'bg-[var(--bg-tertiary,#1a1a1a)] shadow-lg',
-      inactive: 'text-[var(--text-muted,#666)]',
+      active: 'bg-[var(--bg-tertiary,#1a1a26)] shadow-lg',
+      inactive: 'text-[var(--text-muted,#6a6a82)]',
     },
     pills: {
       container: 'gap-2',
@@ -47,17 +47,17 @@ export function ModernTabs({
         px-4 py-2 rounded-full transition-all duration-200
         hover:bg-[var(--bg-hover,rgba(255,255,255,0.06))] border border-transparent
       `,
-      active: 'bg-gradient-to-r from-[var(--color-brand,#10a37f)] to-[var(--color-brand-hover,#0d8c6d)] text-[var(--text-primary,#ececec)] border-transparent',
-      inactive: 'text-[var(--text-muted,#666)] border-[var(--border-primary,#424242)]',
+      active: 'bg-gradient-to-r from-[var(--color-accent,#f5a623)] to-[var(--color-accent-hover,#e6951a)] text-[var(--text-primary,#e8e8f0)] border-transparent',
+      inactive: 'text-[var(--text-muted,#6a6a82)] border-[var(--border-primary,#2d2d44)]',
     },
     underline: {
-      container: 'border-b border-[var(--border-primary,#424242)] gap-6',
+      container: 'border-b border-[var(--border-primary,#2d2d44)] gap-6',
       button: `
         px-4 py-3 transition-all duration-200
         border-b-2 border-transparent
       `,
-      active: 'border-[var(--color-brand,#10a37f)] text-[var(--color-brand,#10a37f)]',
-      inactive: 'text-[var(--text-muted,#666)] hover:text-[var(--text-secondary,#b4b4b4)]',
+      active: 'border-[var(--color-accent,#f5a623)] text-[var(--color-accent,#f5a623)]',
+      inactive: 'text-[var(--text-muted,#6a6a82)] hover:text-[var(--text-secondary,#9898b0)]',
     },
   };
 
@@ -87,7 +87,7 @@ export function ModernTabs({
                   px-2 py-0.5 text-xs rounded-full
                   ${activeTab === tab.id
                     ? 'bg-white/20'
-                    : 'bg-[var(--color-brand,#10a37f)]/20 text-[var(--color-brand,#10a37f)]'
+                    : 'bg-[var(--color-accent,#f5a623)]/20 text-[var(--color-accent,#f5a623)]'
                   }
                 `}
               >
@@ -139,8 +139,8 @@ export function ModernVerticalTabs({
               w-full px-4 py-3 rounded-lg transition-all duration-200
               flex items-center gap-3 text-left
               ${activeTab === tab.id
-                ? 'bg-gradient-to-r from-blue-500/20 to-purple-500/20 border-l-2 border-[var(--color-brand,#10a37f)] text-[var(--text-primary,#ececec)]'
-                : 'text-[var(--text-muted,#666)] hover:bg-[var(--bg-hover,rgba(255,255,255,0.06))] border-l-2 border-transparent'
+                ? 'bg-gradient-to-r from-blue-500/20 to-purple-500/20 border-l-2 border-[var(--color-accent,#f5a623)] text-[var(--text-primary,#e8e8f0)]'
+                : 'text-[var(--text-muted,#6a6a82)] hover:bg-[var(--bg-hover,rgba(255,255,255,0.06))] border-l-2 border-transparent'
               }
               ${tab.disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
             `}
@@ -150,7 +150,7 @@ export function ModernVerticalTabs({
               <span className="font-medium">{tab.label}</span>
             </div>
             {tab.badge !== undefined && tab.badge > 0 && (
-              <span className="px-2 py-0.5 text-xs rounded-full bg-[var(--color-brand,#10a37f)]/20 text-[var(--color-brand,#10a37f)]">
+              <span className="px-2 py-0.5 text-xs rounded-full bg-[var(--color-accent,#f5a623)]/20 text-[var(--color-accent,#f5a623)]">
                 {tab.badge}
               </span>
             )}

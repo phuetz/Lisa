@@ -45,7 +45,7 @@ export default function WeatherBanner() {
 
   const ariaLabel = t('current_temperature', { temp: weather.match(/\d+/)?.[0] ?? '' });
   return (
-    <div role="status" aria-live="polite" aria-label={ariaLabel} style={{ position: 'absolute', top: 10, left: 10, padding: '8px 12px', background: '#1e1e1ecc', color: 'white', borderRadius: 6 }}>
+    <div role="status" aria-live="polite" aria-label={ariaLabel} style={{ position: 'absolute', top: 10, left: 10, padding: '8px 12px', background: '#12121acc', color: 'white', borderRadius: 6 }}>
       {weather}
     </div>
   );

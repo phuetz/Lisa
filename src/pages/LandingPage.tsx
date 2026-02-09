@@ -55,30 +55,30 @@ interface DemoStep {
 // ============================================================================
 
 const FeatureCard: React.FC<FeatureCardProps> = ({ icon, title, description, color }) => (
-  <div className="group relative p-6 rounded-2xl bg-[var(--bg-elevated,#2f2f2f)]/80 border border-[var(--border-primary,#424242)]/60 hover:border-[var(--border-secondary,#555)] transition-all duration-300 hover:transform hover:scale-[1.02]">
+  <div className="group relative p-6 rounded-2xl bg-[var(--bg-panel,#1a1a26)]/80 border border-[var(--border-primary,#2d2d44)]/60 hover:border-[var(--border-secondary,#3d3d5c)] transition-all duration-300 hover:transform hover:scale-[1.02]">
     <div className={`w-12 h-12 rounded-xl ${color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
       {icon}
     </div>
-    <h3 className="text-lg font-semibold text-[var(--text-primary,#ececec)] mb-2">{title}</h3>
-    <p className="text-[var(--text-muted,#666)] text-sm leading-relaxed">{description}</p>
+    <h3 className="text-lg font-semibold text-[var(--text-primary,#e8e8f0)] mb-2">{title}</h3>
+    <p className="text-[var(--text-muted,#6a6a82)] text-sm leading-relaxed">{description}</p>
   </div>
 );
 
 const PackageCard: React.FC<PackageCardProps> = ({ name, description, features, icon, color }) => (
-  <div className="relative p-6 rounded-2xl bg-gradient-to-br from-[var(--bg-secondary,#2d2d2d)]/80 to-[var(--bg-primary,#212121)]/80 border border-[var(--border-primary,#424242)]/60 hover:border-[var(--border-secondary,#555)] transition-all duration-300">
+  <div className="relative p-6 rounded-2xl bg-gradient-to-br from-[var(--bg-surface,#12121a)]/80 to-[var(--bg-primary,#12121a)]/80 border border-[var(--border-primary,#2d2d44)]/60 hover:border-[var(--border-secondary,#3d3d5c)] transition-all duration-300">
     <div className="flex items-start gap-4 mb-4">
       <div className={`w-10 h-10 rounded-lg ${color} flex items-center justify-center flex-shrink-0`}>
         {icon}
       </div>
       <div>
-        <h3 className="text-lg font-mono font-semibold text-[var(--text-primary,#ececec)]">{name}</h3>
-        <p className="text-[var(--text-muted,#666)] text-sm mt-1">{description}</p>
+        <h3 className="text-lg font-mono font-semibold text-[var(--text-primary,#e8e8f0)]">{name}</h3>
+        <p className="text-[var(--text-muted,#6a6a82)] text-sm mt-1">{description}</p>
       </div>
     </div>
     <ul className="space-y-2">
       {features.map((feature, i) => (
-        <li key={i} className="flex items-center gap-2 text-sm text-[var(--text-secondary,#b4b4b4)]">
-          <CheckCircle2 size={14} className="text-[var(--color-brand,#10a37f)] flex-shrink-0" />
+        <li key={i} className="flex items-center gap-2 text-sm text-[var(--text-secondary,#9898b0)]">
+          <CheckCircle2 size={14} className="text-[var(--color-accent,#f5a623)] flex-shrink-0" />
           {feature}
         </li>
       ))}
@@ -148,14 +148,14 @@ print(f"☁️ {data['condition']}")`, language: 'python' },
   }, [demoSteps.length]);
 
   return (
-    <div className="relative rounded-2xl bg-[var(--bg-primary,#212121)] border border-[var(--border-primary,#424242)] overflow-hidden">
-      <div className="flex items-center gap-2 px-4 py-3 bg-[var(--bg-secondary,#2d2d2d)] border-b border-[var(--border-primary,#424242)]">
+    <div className="relative rounded-2xl bg-[var(--bg-primary,#12121a)] border border-[var(--border-primary,#2d2d44)] overflow-hidden">
+      <div className="flex items-center gap-2 px-4 py-3 bg-[var(--bg-surface,#12121a)] border-b border-[var(--border-primary,#2d2d44)]">
         <div className="flex gap-1.5">
           <div className="w-3 h-3 rounded-full bg-red-500" />
           <div className="w-3 h-3 rounded-full bg-yellow-500" />
           <div className="w-3 h-3 rounded-full bg-green-500" />
         </div>
-        <span className="text-sm text-[var(--text-muted,#666)] ml-2">Lisa AI - Live Demo</span>
+        <span className="text-sm text-[var(--text-muted,#6a6a82)] ml-2">Lisa AI - Live Demo</span>
       </div>
       <div className="p-4 space-y-3 min-h-[280px]">
         {demoSteps.slice(0, activeStep + 1).map((step, i) => (
@@ -171,27 +171,27 @@ print(f"☁️ {data['condition']}")`, language: 'python' },
               </div>
             )}
             {step.type === 'assistant' && (
-              <div className="bg-[var(--bg-tertiary,#1a1a1a)] text-white px-4 py-2 rounded-2xl rounded-bl-md max-w-[80%]">
+              <div className="bg-[var(--bg-tertiary,#1a1a26)] text-white px-4 py-2 rounded-2xl rounded-bl-md max-w-[80%]">
                 {step.content}
               </div>
             )}
             {step.type === 'code' && (
-              <div className="bg-[var(--bg-surface,#0d0d0d)] rounded-lg overflow-hidden border border-[var(--border-primary,#424242)]">
-                <div className="flex items-center gap-2 px-3 py-1.5 bg-[var(--bg-secondary,#2d2d2d)] border-b border-[var(--border-primary,#424242)]">
-                  <Terminal size={12} className="text-[var(--color-brand,#10a37f)]" />
-                  <span className="text-xs text-[var(--text-muted,#666)]">Python</span>
+              <div className="bg-[var(--bg-deep,#0a0a0f)] rounded-lg overflow-hidden border border-[var(--border-primary,#2d2d44)]">
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-[var(--bg-surface,#12121a)] border-b border-[var(--border-primary,#2d2d44)]">
+                  <Terminal size={12} className="text-[var(--color-accent,#f5a623)]" />
+                  <span className="text-xs text-[var(--text-muted,#6a6a82)]">Python</span>
                   <div className="ml-auto flex items-center gap-1">
-                    <div className="w-2 h-2 rounded-full bg-[var(--color-brand,#10a37f)] animate-pulse" />
-                    <span className="text-xs text-[var(--color-brand,#10a37f)]">Running</span>
+                    <div className="w-2 h-2 rounded-full bg-[var(--color-accent,#f5a623)] animate-pulse" />
+                    <span className="text-xs text-[var(--color-accent,#f5a623)]">Running</span>
                   </div>
                 </div>
-                <pre className="p-3 text-sm text-[var(--text-secondary,#b4b4b4)] overflow-x-auto">
+                <pre className="p-3 text-sm text-[var(--text-secondary,#9898b0)] overflow-x-auto">
                   <code>{step.content}</code>
                 </pre>
               </div>
             )}
             {step.type === 'result' && (
-              <div className="bg-[var(--color-brand,#10a37f)]/20 border border-[var(--color-brand,#10a37f)]/30 text-[var(--color-brand,#10a37f)] px-4 py-2 rounded-lg font-mono text-sm whitespace-pre-line">
+              <div className="bg-[var(--color-accent,#f5a623)]/20 border border-[var(--color-accent,#f5a623)]/30 text-[var(--color-accent,#f5a623)] px-4 py-2 rounded-lg font-mono text-sm whitespace-pre-line">
                 {step.content}
               </div>
             )}
@@ -226,7 +226,7 @@ export const LandingPage: React.FC = () => {
       icon: <Eye size={24} className="text-white" />,
       title: 'Vision par IA',
       description: "Analysez images et vidéos en temps réel avec MediaPipe et Gemini Vision.",
-      color: 'bg-gradient-to-br from-[var(--color-brand,#10a37f)] to-[var(--color-brand-hover,#0d8c6d)]',
+      color: 'bg-gradient-to-br from-[var(--color-accent,#f5a623)] to-[var(--color-accent-hover,#e6951a)]',
     },
     {
       icon: <Mic size={24} className="text-white" />,
@@ -268,7 +268,7 @@ export const LandingPage: React.FC = () => {
       description: 'Analyse visuelle par IA',
       features: ['Détection d\'objets', 'Reconnaissance faciale', 'Segmentation', 'OCR intégré'],
       icon: <Eye size={20} className="text-white" />,
-      color: 'bg-[var(--color-brand,#10a37f)]',
+      color: 'bg-[var(--color-accent,#f5a623)]',
     },
     {
       name: '@lisa/audio-engine',
@@ -284,7 +284,7 @@ export const LandingPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--bg-surface,#0d0d0d)] text-[var(--text-primary,#ececec)] overflow-x-hidden">
+    <div className="min-h-screen bg-[var(--bg-deep,#0a0a0f)] text-[var(--text-primary,#e8e8f0)] overflow-x-hidden">
       {/* Hero Section */}
       <section className="relative min-h-screen flex items-center justify-center px-6 py-20">
         {/* Background Effects */}
@@ -296,32 +296,32 @@ export const LandingPage: React.FC = () => {
 
         <div className="relative z-10 max-w-5xl mx-auto text-center">
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--bg-secondary,#2d2d2d)]/80 border border-[var(--border-primary,#424242)] mb-8">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--bg-surface,#12121a)]/80 border border-[var(--border-primary,#2d2d44)] mb-8">
             <Sparkles size={16} className="text-[var(--color-warning,#f59e0b)]" />
-            <span className="text-sm text-[var(--text-secondary,#b4b4b4)]">Nouvelle génération d'applications IA</span>
+            <span className="text-sm text-[var(--text-secondary,#9898b0)]">Nouvelle génération d'applications IA</span>
           </div>
 
           {/* Main Title */}
           <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight">
-            <span className="bg-gradient-to-r from-[var(--text-primary,#ececec)] via-[var(--text-secondary,#b4b4b4)] to-[var(--text-muted,#666)] bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-[var(--text-primary,#e8e8f0)] via-[var(--text-secondary,#9898b0)] to-[var(--text-muted,#6a6a82)] bg-clip-text text-transparent">
               Construisez des applications
             </span>
             <br />
-            <span className="bg-gradient-to-r from-[var(--color-brand,#10a37f)] via-[var(--color-info,#3b82f6)] to-[var(--color-purple,#8b5cf6)] bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-[var(--color-accent,#f5a623)] via-[var(--color-info,#3b82f6)] to-[var(--color-purple,#8b5cf6)] bg-clip-text text-transparent">
               vivantes
             </span>
           </h1>
 
           {/* Subtitle with typewriter */}
-          <p className="text-xl md:text-2xl text-[var(--text-muted,#666)] mb-4">
+          <p className="text-xl md:text-2xl text-[var(--text-muted,#6a6a82)] mb-4">
             avec de l'IA qui{' '}
             <TypewriterText 
               texts={['agit', 'code', 'voit', 'écoute', 'comprend']} 
-              className="text-[var(--color-brand,#10a37f)] font-semibold"
+              className="text-[var(--color-accent,#f5a623)] font-semibold"
             />
           </p>
 
-          <p className="text-lg text-[var(--text-muted,#666)] max-w-2xl mx-auto mb-10">
+          <p className="text-lg text-[var(--text-muted,#6a6a82)] max-w-2xl mx-auto mb-10">
             Lisa combine chat intelligent, exécution de code, agents spécialisés et perception multimodale 
             dans une plateforme unifiée.
           </p>
@@ -330,14 +330,14 @@ export const LandingPage: React.FC = () => {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
             <button
               onClick={() => navigate('/chat')}
-              className="group flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-[var(--color-brand,#10a37f)] to-[var(--color-info,#3b82f6)] rounded-xl font-semibold text-lg hover:shadow-lg hover:shadow-[rgba(16,163,127,0.25)] transition-all duration-300 hover:scale-105"
+              className="group flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-[var(--color-accent,#f5a623)] to-[var(--color-info,#3b82f6)] rounded-xl font-semibold text-lg hover:shadow-lg hover:shadow-[rgba(245,166,35,0.25)] transition-all duration-300 hover:scale-105"
             >
               Commencer gratuitement
               <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
             </button>
             <button
               onClick={scrollToDemo}
-              className="flex items-center gap-2 px-8 py-4 bg-[var(--bg-secondary,#2d2d2d)] border border-[var(--border-primary,#424242)] rounded-xl font-semibold text-lg hover:bg-[var(--bg-tertiary,#1a1a1a)] transition-all duration-300"
+              className="flex items-center gap-2 px-8 py-4 bg-[var(--bg-surface,#12121a)] border border-[var(--border-primary,#2d2d44)] rounded-xl font-semibold text-lg hover:bg-[var(--bg-tertiary,#1a1a26)] transition-all duration-300"
             >
               <Play size={20} />
               Voir la démo
@@ -346,19 +346,19 @@ export const LandingPage: React.FC = () => {
 
           {/* Scroll indicator */}
           <div className="animate-bounce">
-            <ChevronDown size={32} className="text-[var(--text-muted,#666)] mx-auto" />
+            <ChevronDown size={32} className="text-[var(--text-muted,#6a6a82)] mx-auto" />
           </div>
         </div>
       </section>
 
       {/* Demo Section */}
-      <section id="demo" className="py-20 px-6 bg-[var(--bg-primary,#212121)]/50">
+      <section id="demo" className="py-20 px-6 bg-[var(--bg-primary,#12121a)]/50">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
               Une démo vaut mille mots
             </h2>
-            <p className="text-[var(--text-muted,#666)] text-lg max-w-2xl mx-auto">
+            <p className="text-[var(--text-muted,#6a6a82)] text-lg max-w-2xl mx-auto">
               Chat, code exécutable, agents intelligents — tout en une seule interface.
             </p>
           </div>
@@ -373,7 +373,7 @@ export const LandingPage: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="font-semibold text-lg mb-1">Posez votre question</h3>
-                  <p className="text-[var(--text-muted,#666)]">En langage naturel, avec images, fichiers ou voix.</p>
+                  <p className="text-[var(--text-muted,#6a6a82)]">En langage naturel, avec images, fichiers ou voix.</p>
                 </div>
               </div>
               
@@ -383,17 +383,17 @@ export const LandingPage: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="font-semibold text-lg mb-1">Lisa génère et exécute</h3>
-                  <p className="text-[var(--text-muted,#666)]">Code Python, appels API, agents spécialisés — automatiquement.</p>
+                  <p className="text-[var(--text-muted,#6a6a82)]">Code Python, appels API, agents spécialisés — automatiquement.</p>
                 </div>
               </div>
               
               <div className="flex items-start gap-4">
-                <div className="w-10 h-10 rounded-full bg-[var(--color-brand,#10a37f)] flex items-center justify-center flex-shrink-0">
+                <div className="w-10 h-10 rounded-full bg-[var(--color-accent,#f5a623)] flex items-center justify-center flex-shrink-0">
                   <span className="font-bold">3</span>
                 </div>
                 <div>
                   <h3 className="font-semibold text-lg mb-1">Résultats en temps réel</h3>
-                  <p className="text-[var(--text-muted,#666)]">Graphiques, données, fichiers — tout s'affiche instantanément.</p>
+                  <p className="text-[var(--text-muted,#6a6a82)]">Graphiques, données, fichiers — tout s'affiche instantanément.</p>
                 </div>
               </div>
             </div>
@@ -408,7 +408,7 @@ export const LandingPage: React.FC = () => {
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
               Tout ce dont vous avez besoin
             </h2>
-            <p className="text-[var(--text-muted,#666)] text-lg max-w-2xl mx-auto">
+            <p className="text-[var(--text-muted,#6a6a82)] text-lg max-w-2xl mx-auto">
               Une plateforme complète pour créer des applications IA de nouvelle génération.
             </p>
           </div>
@@ -422,17 +422,17 @@ export const LandingPage: React.FC = () => {
       </section>
 
       {/* Packages Section */}
-      <section className="py-20 px-6 bg-[var(--bg-primary,#212121)]/50">
+      <section className="py-20 px-6 bg-[var(--bg-primary,#12121a)]/50">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--bg-secondary,#2d2d2d)] border border-[var(--border-primary,#424242)] mb-4">
-              <Cpu size={16} className="text-[var(--color-brand,#10a37f)]" />
-              <span className="text-sm text-[var(--text-secondary,#b4b4b4)]">Architecture modulaire</span>
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--bg-surface,#12121a)] border border-[var(--border-primary,#2d2d44)] mb-4">
+              <Cpu size={16} className="text-[var(--color-accent,#f5a623)]" />
+              <span className="text-sm text-[var(--text-secondary,#9898b0)]">Architecture modulaire</span>
             </div>
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
               Des briques réutilisables
             </h2>
-            <p className="text-[var(--text-muted,#666)] text-lg max-w-2xl mx-auto">
+            <p className="text-[var(--text-muted,#6a6a82)] text-lg max-w-2xl mx-auto">
               Chaque composant est un package NPM indépendant. Utilisez-les dans vos propres projets.
             </p>
           </div>
@@ -448,7 +448,7 @@ export const LandingPage: React.FC = () => {
               href="https://github.com/lisa-ai"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-[var(--bg-secondary,#2d2d2d)] border border-[var(--border-primary,#424242)] rounded-xl hover:bg-[var(--bg-tertiary,#1a1a1a)] transition-colors"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-[var(--bg-surface,#12121a)] border border-[var(--border-primary,#2d2d44)] rounded-xl hover:bg-[var(--bg-tertiary,#1a1a26)] transition-colors"
             >
               <Github size={20} />
               Voir sur GitHub
@@ -463,20 +463,20 @@ export const LandingPage: React.FC = () => {
           <h2 className="text-3xl md:text-4xl font-bold mb-4">
             Déployez partout
           </h2>
-          <p className="text-[var(--text-muted,#666)] text-lg mb-10">
+          <p className="text-[var(--text-muted,#6a6a82)] text-lg mb-10">
             Web, desktop, mobile — une seule base de code.
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-8">
-            <div className="flex items-center gap-3 px-6 py-4 bg-[var(--bg-elevated,#2f2f2f)]/80 rounded-xl border border-[var(--border-primary,#424242)]">
+            <div className="flex items-center gap-3 px-6 py-4 bg-[var(--bg-panel,#1a1a26)]/80 rounded-xl border border-[var(--border-primary,#2d2d44)]">
               <Globe size={24} className="text-[var(--color-info,#3b82f6)]" />
               <span className="font-semibold">Web App</span>
             </div>
-            <div className="flex items-center gap-3 px-6 py-4 bg-[var(--bg-elevated,#2f2f2f)]/80 rounded-xl border border-[var(--border-primary,#424242)]">
-              <Smartphone size={24} className="text-[var(--color-brand,#10a37f)]" />
+            <div className="flex items-center gap-3 px-6 py-4 bg-[var(--bg-panel,#1a1a26)]/80 rounded-xl border border-[var(--border-primary,#2d2d44)]">
+              <Smartphone size={24} className="text-[var(--color-accent,#f5a623)]" />
               <span className="font-semibold">iOS & Android</span>
             </div>
-            <div className="flex items-center gap-3 px-6 py-4 bg-[var(--bg-elevated,#2f2f2f)]/80 rounded-xl border border-[var(--border-primary,#424242)]">
+            <div className="flex items-center gap-3 px-6 py-4 bg-[var(--bg-panel,#1a1a26)]/80 rounded-xl border border-[var(--border-primary,#2d2d44)]">
               <Cpu size={24} className="text-[var(--color-purple,#8b5cf6)]" />
               <span className="font-semibold">Desktop</span>
             </div>
@@ -487,7 +487,7 @@ export const LandingPage: React.FC = () => {
       {/* CTA Section */}
       <section className="py-20 px-6">
         <div className="max-w-4xl mx-auto">
-          <div className="relative rounded-3xl bg-gradient-to-r from-[var(--color-brand,#10a37f)] to-[var(--color-info,#3b82f6)] p-12 text-center overflow-hidden">
+          <div className="relative rounded-3xl bg-gradient-to-r from-[var(--color-accent,#f5a623)] to-[var(--color-info,#3b82f6)] p-12 text-center overflow-hidden">
             <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRjMC0yIDItNCAyLTRzLTItMi00LTJjLTIgMC00IDItNCAyczIgMiA0IDJjMiAwIDQtMiA0LTJ6Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-20" />
             
             <div className="relative z-10">
@@ -500,7 +500,7 @@ export const LandingPage: React.FC = () => {
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                 <button
                   onClick={() => navigate('/chat')}
-                  className="flex items-center gap-2 px-8 py-4 bg-white text-[var(--bg-surface,#0d0d0d)] rounded-xl font-semibold text-lg hover:bg-white/90 transition-colors"
+                  className="flex items-center gap-2 px-8 py-4 bg-white text-[var(--bg-deep,#0a0a0f)] rounded-xl font-semibold text-lg hover:bg-white/90 transition-colors"
                 >
                   <Zap size={20} />
                   Démarrer maintenant
@@ -518,21 +518,21 @@ export const LandingPage: React.FC = () => {
       </section>
 
       {/* Footer */}
-      <footer className="py-12 px-6 border-t border-[var(--border-primary,#424242)]">
+      <footer className="py-12 px-6 border-t border-[var(--border-primary,#2d2d44)]">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--color-brand,#10a37f)] to-[var(--color-info,#3b82f6)] flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--color-accent,#f5a623)] to-[var(--color-info,#3b82f6)] flex items-center justify-center">
               <Sparkles size={20} className="text-white" />
             </div>
             <span className="text-xl font-bold">Lisa</span>
           </div>
           
-          <p className="text-[var(--text-muted,#666)] text-sm">
+          <p className="text-[var(--text-muted,#6a6a82)] text-sm">
             © 2025 Lisa AI. Construit avec ❤️ pour les développeurs.
           </p>
           
           <div className="flex items-center gap-4">
-            <a href="https://github.com/lisa-ai" className="text-[var(--text-muted,#666)] hover:text-[var(--text-primary,#ececec)] transition-colors">
+            <a href="https://github.com/lisa-ai" className="text-[var(--text-muted,#6a6a82)] hover:text-[var(--text-primary,#e8e8f0)] transition-colors">
               <Github size={20} />
             </a>
           </div>

@@ -578,11 +578,44 @@ src/
 └── public/             # Ressources statiques et service worker
 ```
 
+## Application Desktop (Electron)
+
+Lisa peut tourner en tant qu'application desktop native via Electron :
+
+### Développement
+```bash
+pnpm electron:dev        # Lance Electron avec le dev server Vite (HMR)
+pnpm electron:build      # Build main + preload + renderer
+pnpm electron:preview    # Preview du build Electron
+```
+
+### Packaging
+```bash
+pnpm electron:package    # Build + crée un installateur (.exe / .dmg / .AppImage)
+```
+
+### Architecture Electron
+```
+electron/
+  main.ts          # Processus principal (BrowserWindow, Tray, IPC, API server)
+  preload.ts       # Bridge sécurisé (contextBridge → window.electronAPI)
+  types.ts         # Types TypeScript partagés
+electron.vite.config.ts  # Config electron-vite (3 targets)
+```
+
+### Fonctionnalités natives
+- **System tray** avec menu contextuel (Ouvrir, Chat, Dashboard, Agents, Quitter)
+- **Notifications natives** via l'API Electron
+- **Screen capture** via desktopCapturer
+- **Accès fichiers** (lecture/écriture texte et binaire)
+- **Dialogues natifs** (ouvrir/sauvegarder fichier)
+- **Serveur API embarqué** sur port 3001
+
 ## Démo locale
 ```bash
-npm install
-npm run dev
-# http://localhost:5173
+pnpm install
+pnpm dev
+# http://localhost:5180
 ```
 
 - [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh

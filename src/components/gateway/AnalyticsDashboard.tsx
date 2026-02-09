@@ -48,7 +48,7 @@ export function AnalyticsDashboard() {
       case 'success': return '#10b981';
       case 'warning': return '#f59e0b';
       case 'info': return '#3b82f6';
-      default: return '#888';
+      default: return '#6a6a82';
     }
   };
 
@@ -258,7 +258,7 @@ export function AnalyticsDashboard() {
 
 const styles: Record<string, React.CSSProperties> = {
   container: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#1a1a26',
     borderRadius: '12px',
     padding: '24px',
     color: '#fff'
@@ -266,7 +266,7 @@ const styles: Record<string, React.CSSProperties> = {
   loading: {
     padding: '40px',
     textAlign: 'center',
-    color: '#888'
+    color: '#6a6a82'
   },
   header: {
     display: 'flex',
@@ -291,7 +291,7 @@ const styles: Record<string, React.CSSProperties> = {
     backgroundColor: 'transparent',
     border: 'none',
     borderRadius: '6px',
-    color: '#888',
+    color: '#6a6a82',
     cursor: 'pointer',
     fontSize: '13px'
   },
@@ -327,7 +327,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   statLabel: {
     fontSize: '12px',
-    color: '#888'
+    color: '#6a6a82'
   },
   section: {
     marginTop: '24px'
@@ -335,7 +335,7 @@ const styles: Record<string, React.CSSProperties> = {
   sectionTitle: {
     fontSize: '14px',
     fontWeight: 600,
-    color: '#888',
+    color: '#6a6a82',
     marginBottom: '12px',
     textTransform: 'uppercase'
   },
@@ -368,7 +368,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   chartLabel: {
     fontSize: '10px',
-    color: '#666',
+    color: '#6a6a82',
     marginTop: '8px',
     textTransform: 'capitalize'
   },
@@ -398,7 +398,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   insightDesc: {
     fontSize: '12px',
-    color: '#888',
+    color: '#6a6a82',
     marginTop: '2px'
   },
   insightChange: {
@@ -420,18 +420,18 @@ const styles: Record<string, React.CSSProperties> = {
   emptyState: {
     padding: '20px',
     textAlign: 'center',
-    color: '#666'
+    color: '#6a6a82'
   },
   rankingItem: {
     display: 'flex',
     alignItems: 'center',
     gap: '12px',
     padding: '12px 16px',
-    borderBottom: '1px solid #333'
+    borderBottom: '1px solid #2d2d44'
   },
   rankingRank: {
     fontSize: '12px',
-    color: '#666',
+    color: '#6a6a82',
     width: '24px'
   },
   rankingName: {
@@ -455,7 +455,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   healthLabel: {
     fontSize: '14px',
-    color: '#888'
+    color: '#6a6a82'
   },
   healthValue: {
     fontSize: '14px',
@@ -463,7 +463,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   healthBar: {
     height: '6px',
-    backgroundColor: '#333',
+    backgroundColor: '#2d2d44',
     borderRadius: '3px',
     overflow: 'hidden'
   },

@@ -104,7 +104,7 @@ export function SkillsRegistryPanel() {
               onClick={() => handleToggleSkill(skill.id, skill.status === 'enabled')}
               style={{
                 ...styles.toggleButton,
-                backgroundColor: skill.status === 'enabled' ? '#10b981' : '#333'
+                backgroundColor: skill.status === 'enabled' ? '#10b981' : '#2d2d44'
               }}
             >
               {skill.status === 'enabled' ? 'ON' : 'OFF'}
@@ -133,13 +133,13 @@ export function SkillsRegistryPanel() {
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  container: { backgroundColor: '#1a1a1a', borderRadius: '12px', padding: '24px', color: '#fff' },
+  container: { backgroundColor: '#1a1a26', borderRadius: '12px', padding: '24px', color: '#fff' },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' },
   title: { margin: 0, fontSize: '20px', fontWeight: 600 },
-  badge: { padding: '4px 12px', backgroundColor: '#252525', borderRadius: '12px', fontSize: '12px', color: '#888' },
-  searchInput: { width: '100%', padding: '12px 16px', backgroundColor: '#252525', border: '1px solid #333', borderRadius: '8px', color: '#fff', fontSize: '14px', marginBottom: '16px', boxSizing: 'border-box' },
+  badge: { padding: '4px 12px', backgroundColor: '#252525', borderRadius: '12px', fontSize: '12px', color: '#6a6a82' },
+  searchInput: { width: '100%', padding: '12px 16px', backgroundColor: '#252525', border: '1px solid #2d2d44', borderRadius: '8px', color: '#fff', fontSize: '14px', marginBottom: '16px', boxSizing: 'border-box' },
   categories: { display: 'flex', gap: '8px', marginBottom: '20px', overflowX: 'auto', paddingBottom: '8px' },
-  catButton: { padding: '8px 14px', backgroundColor: '#252525', border: 'none', borderRadius: '6px', color: '#888', cursor: 'pointer', fontSize: '12px', whiteSpace: 'nowrap', textTransform: 'capitalize' },
+  catButton: { padding: '8px 14px', backgroundColor: '#252525', border: 'none', borderRadius: '6px', color: '#6a6a82', cursor: 'pointer', fontSize: '12px', whiteSpace: 'nowrap', textTransform: 'capitalize' },
   catButtonActive: { backgroundColor: '#3b82f6', color: '#fff' },
   skillsList: { display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '350px', overflowY: 'auto' },
   skillCard: { display: 'flex', alignItems: 'center', gap: '14px', padding: '14px', backgroundColor: '#252525', borderRadius: '10px' },
@@ -147,17 +147,17 @@ const styles: Record<string, React.CSSProperties> = {
   skillInfo: { flex: 1 },
   skillHeader: { display: 'flex', alignItems: 'baseline', gap: '8px' },
   skillName: { fontSize: '15px', fontWeight: 600 },
-  skillVersion: { fontSize: '11px', color: '#666' },
-  skillDesc: { fontSize: '12px', color: '#888', marginTop: '4px' },
-  skillMeta: { display: 'flex', gap: '12px', marginTop: '6px', fontSize: '11px', color: '#666' },
+  skillVersion: { fontSize: '11px', color: '#6a6a82' },
+  skillDesc: { fontSize: '12px', color: '#6a6a82', marginTop: '4px' },
+  skillMeta: { display: 'flex', gap: '12px', marginTop: '6px', fontSize: '11px', color: '#6a6a82' },
   skillSource: { textTransform: 'capitalize' },
   skillRating: { color: '#f59e0b' },
   skillUsage: {},
   toggleButton: { padding: '8px 14px', border: 'none', borderRadius: '6px', color: '#fff', fontSize: '11px', fontWeight: 600, cursor: 'pointer' },
-  stats: { display: 'flex', gap: '16px', marginTop: '20px', paddingTop: '16px', borderTop: '1px solid #333' },
+  stats: { display: 'flex', gap: '16px', marginTop: '20px', paddingTop: '16px', borderTop: '1px solid #2d2d44' },
   statItem: { flex: 1, textAlign: 'center' },
   statValue: { display: 'block', fontSize: '20px', fontWeight: 700, color: '#3b82f6' },
-  statLabel: { fontSize: '11px', color: '#888' }
+  statLabel: { fontSize: '11px', color: '#6a6a82' }
 };
 
 export default SkillsRegistryPanel;

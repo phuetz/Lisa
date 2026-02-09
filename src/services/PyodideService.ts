@@ -169,7 +169,7 @@ class PyodideServiceClass {
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
     font-family: 'Consolas', 'Monaco', 'Fira Code', monospace;
-    background: #1e1e1e;
+    background: #12121a;
     color: #d4d4d4;
     font-size: 14px;
     line-height: 1.5;
@@ -183,7 +183,7 @@ class PyodideServiceClass {
     flex: 0 0 auto;
     max-height: 50%;
     overflow: auto;
-    background: #1e1e1e;
+    background: #12121a;
     border-bottom: 1px solid #3c3c3c;
   }
   .editor-header {
@@ -200,7 +200,7 @@ class PyodideServiceClass {
     z-index: 10;
   }
   .editor-tab {
-    background: #1e1e1e;
+    background: #12121a;
     padding: 4px 12px;
     border-radius: 3px 3px 0 0;
     color: #d4d4d4;
@@ -220,7 +220,7 @@ class PyodideServiceClass {
     padding: 0 16px 0 8px;
     text-align: right;
     color: #858585;
-    background: #1e1e1e;
+    background: #12121a;
     user-select: none;
     vertical-align: top;
     font-size: 14px;
@@ -252,7 +252,7 @@ class PyodideServiceClass {
   /* Output Panel */
   .output-panel {
     flex: 1;
-    background: #1e1e1e;
+    background: #12121a;
     display: flex;
     flex-direction: column;
     overflow: hidden;

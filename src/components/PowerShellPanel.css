@@ -1,6 +1,6 @@
 .powershell-panel {
-  background-color: var(--bg-surface, #0d0d0d);
-  color: var(--text-secondary, #b4b4b4);
+  background-color: var(--bg-surface, #12121a);
+  color: var(--text-secondary, #9898b0);
   border-radius: var(--radius-md, 8px);
   padding: 15px;
   margin: 10px 0;
@@ -19,7 +19,7 @@
   align-items: center;
   margin-bottom: 10px;
   padding-bottom: 10px;
-  border-bottom: 1px solid var(--border-primary, #424242);
+  border-bottom: 1px solid var(--border-primary, #2d2d44);
 }
 
 .powershell-header h2 {
@@ -39,7 +39,7 @@
   display: flex;
   align-items: center;
   gap: 5px;
-  color: var(--text-secondary, #b4b4b4);
+  color: var(--text-secondary, #9898b0);
   font-size: 0.9rem;
   cursor: pointer;
 }
@@ -49,9 +49,9 @@
 }
 
 .clear-history-button {
-  background-color: var(--bg-secondary, #2d2d2d);
+  background-color: var(--bg-surface, #12121a);
   border: none;
-  color: var(--text-secondary, #b4b4b4);
+  color: var(--text-secondary, #9898b0);
   padding: 5px 10px;
   border-radius: var(--radius-sm, 4px);
   font-size: 0.9rem;
@@ -66,7 +66,7 @@
 .close-button {
   background-color: transparent;
   border: none;
-  color: var(--text-secondary, #b4b4b4);
+  color: var(--text-secondary, #9898b0);
   font-size: 1.5rem;
   cursor: pointer;
   padding: 0 5px;
@@ -100,8 +100,8 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  background-color: var(--bg-surface, #0d0d0d);
-  border: 1px solid var(--border-primary, #424242);
+  background-color: var(--bg-surface, #12121a);
+  border: 1px solid var(--border-primary, #2d2d44);
   border-radius: var(--radius-sm, 4px);
   overflow: hidden;
   position: relative;
@@ -121,11 +121,11 @@
 }
 
 .terminal-output::-webkit-scrollbar-track {
-  background: var(--bg-surface, #0d0d0d);
+  background: var(--bg-surface, #12121a);
 }
 
 .terminal-output::-webkit-scrollbar-thumb {
-  background-color: var(--border-primary, #424242);
+  background-color: var(--border-primary, #2d2d44);
   border-radius: 4px;
 }
 
@@ -169,19 +169,19 @@
 }
 
 .command-text {
-  color: var(--text-primary, #ececec);
+  color: var(--text-primary, #e8e8f0);
   font-weight: 500;
   word-break: break-all;
 }
 
 .command-time {
-  color: var(--text-muted, #666);
+  color: var(--text-muted, #6a6a82);
   font-size: 0.8rem;
   margin-left: auto;
 }
 
 .command-output {
-  background-color: var(--bg-primary, #212121);
+  background-color: var(--bg-primary, #12121a);
   padding: 10px;
   border-radius: var(--radius-sm, 4px);
   margin-top: 5px;
@@ -193,7 +193,7 @@
 }
 
 .command-output.success {
-  border-left: 4px solid var(--color-brand, #10a37f);
+  border-left: 4px solid var(--color-accent, #f5a623);
 }
 
 .command-output.error {
@@ -214,8 +214,8 @@
   display: flex;
   gap: 10px;
   padding: 10px;
-  background-color: var(--bg-primary, #212121);
-  border-top: 1px solid var(--border-primary, #424242);
+  background-color: var(--bg-primary, #12121a);
+  border-top: 1px solid var(--border-primary, #2d2d44);
   position: relative;
 }
 
@@ -223,8 +223,8 @@
   flex: 1;
   display: flex;
   align-items: center;
-  background-color: var(--bg-surface, #0d0d0d);
-  border: 1px solid var(--border-primary, #424242);
+  background-color: var(--bg-surface, #12121a);
+  border: 1px solid var(--border-primary, #2d2d44);
   border-radius: var(--radius-sm, 4px);
   padding: 0 10px;
 }
@@ -240,7 +240,7 @@
   background: transparent;
   border: none;
   outline: none;
-  color: var(--text-primary, #ececec);
+  color: var(--text-primary, #e8e8f0);
   font-family: 'Cascadia Code', 'Consolas', monospace;
   font-size: 0.9rem;
   padding: 8px 0;
@@ -249,7 +249,7 @@
 .execute-button {
   background-color: var(--color-info, #3b82f6);
   border: none;
-  color: var(--text-primary, #ececec);
+  color: var(--text-primary, #e8e8f0);
   padding: 8px 15px;
   border-radius: var(--radius-sm, 4px);
   font-weight: 500;
@@ -262,8 +262,8 @@
 }
 
 .execute-button:disabled {
-  background-color: var(--border-primary, #424242);
-  color: var(--text-muted, #666);
+  background-color: var(--border-primary, #2d2d44);
+  color: var(--text-muted, #6a6a82);
   cursor: not-allowed;
 }
 
@@ -272,8 +272,8 @@
   bottom: 100%;
   left: 10px;
   right: 10px;
-  background-color: var(--bg-primary, #212121);
-  border: 1px solid var(--border-primary, #424242);
+  background-color: var(--bg-primary, #12121a);
+  border: 1px solid var(--border-primary, #2d2d44);
   border-radius: var(--radius-sm, 4px);
   max-height: 200px;
   overflow-y: auto;
@@ -283,7 +283,7 @@
 .suggestion-item {
   padding: 8px 12px;
   cursor: pointer;
-  border-bottom: 1px solid var(--bg-secondary, #2d2d2d);
+  border-bottom: 1px solid var(--bg-surface, #12121a);
   transition: background-color var(--transition-fast, 0.15s ease);
 }
 
@@ -302,7 +302,7 @@
 }
 
 .suggestion-description {
-  color: var(--text-tertiary, #888);
+  color: var(--text-muted, #6a6a82);
   font-size: 0.8rem;
   margin-top: 2px;
 }
@@ -333,20 +333,20 @@
 }
 
 .no-output {
-  color: var(--text-muted, #666);
+  color: var(--text-muted, #6a6a82);
   font-style: italic;
 }
 
 .powershell-footer {
   margin-top: 10px;
   padding-top: 10px;
-  border-top: 1px solid var(--border-primary, #424242);
+  border-top: 1px solid var(--border-primary, #2d2d44);
 }
 
 .security-notice {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: var(--text-tertiary, #888);
+  color: var(--text-muted, #6a6a82);
   font-size: 0.8rem;
 }

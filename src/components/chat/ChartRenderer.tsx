@@ -61,7 +61,7 @@ const ChartRendererComponent: React.FC<ChartRendererProps> = ({ chartData }) => 
 
   const containerStyle: React.CSSProperties = {
     width: '100%',
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#1a1a26',
     borderRadius: '12px',
     padding: '16px',
     marginTop: '16px',
@@ -85,7 +85,7 @@ const ChartRendererComponent: React.FC<ChartRendererProps> = ({ chartData }) => 
   if (!data || data.length === 0) {
     return (
       <div style={containerStyle}>
-        <p style={{ color: '#888', textAlign: 'center' }}>Aucune donnée à afficher</p>
+        <p style={{ color: '#6a6a82', textAlign: 'center' }}>Aucune donnée à afficher</p>
       </div>
     );
   }
@@ -96,7 +96,7 @@ const ChartRendererComponent: React.FC<ChartRendererProps> = ({ chartData }) => 
       <div style={containerStyle}>
         <div style={titleStyle}>{title || 'Graphique'}</div>
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: CHART_HEIGHT }}>
-          <div style={{ color: '#888' }}>Chargement du graphique...</div>
+          <div style={{ color: '#6a6a82' }}>Chargement du graphique...</div>
         </div>
       </div>
     );
@@ -107,14 +107,14 @@ const ChartRendererComponent: React.FC<ChartRendererProps> = ({ chartData }) => 
       case 'line':
         return (
           <LineChart width={CHART_WIDTH} height={CHART_HEIGHT} data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#404040" />
+            <CartesianGrid strokeDasharray="3 3" stroke="#2d2d44" />
             <XAxis 
               dataKey={actualXKey} 
-              stroke="#888" 
-              tick={{ fill: '#888', fontSize: 12 }}
+              stroke="#6a6a82" 
+              tick={{ fill: '#6a6a82', fontSize: 12 }}
             />
-            <YAxis stroke="#888" tick={{ fill: '#888', fontSize: 12 }} />
-            <Tooltip contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid #404040' }} />
+            <YAxis stroke="#6a6a82" tick={{ fill: '#6a6a82', fontSize: 12 }} />
+            <Tooltip contentStyle={{ backgroundColor: '#1a1a26', border: '1px solid #2d2d44' }} />
             {actualYKeys.map((key, index) => (
               <Line
                 key={key}
@@ -132,14 +132,14 @@ const ChartRendererComponent: React.FC<ChartRendererProps> = ({ chartData }) => 
       case 'bar':
         return (
           <BarChart width={CHART_WIDTH} height={CHART_HEIGHT} data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#404040" />
+            <CartesianGrid strokeDasharray="3 3" stroke="#2d2d44" />
             <XAxis 
               dataKey={actualXKey} 
-              stroke="#888" 
-              tick={{ fill: '#888', fontSize: 12 }}
+              stroke="#6a6a82" 
+              tick={{ fill: '#6a6a82', fontSize: 12 }}
             />
-            <YAxis stroke="#888" tick={{ fill: '#888', fontSize: 12 }} />
-            <Tooltip contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid #404040' }} />
+            <YAxis stroke="#6a6a82" tick={{ fill: '#6a6a82', fontSize: 12 }} />
+            <Tooltip contentStyle={{ backgroundColor: '#1a1a26', border: '1px solid #2d2d44' }} />
             {actualYKeys.map((key, index) => (
               <Bar
                 key={key}
@@ -154,14 +154,14 @@ const ChartRendererComponent: React.FC<ChartRendererProps> = ({ chartData }) => 
       case 'area':
         return (
           <AreaChart width={CHART_WIDTH} height={CHART_HEIGHT} data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#404040" />
+            <CartesianGrid strokeDasharray="3 3" stroke="#2d2d44" />
             <XAxis 
               dataKey={actualXKey} 
-              stroke="#888" 
-              tick={{ fill: '#888', fontSize: 12 }}
+              stroke="#6a6a82" 
+              tick={{ fill: '#6a6a82', fontSize: 12 }}
             />
-            <YAxis stroke="#888" tick={{ fill: '#888', fontSize: 12 }} />
-            <Tooltip contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid #404040' }} />
+            <YAxis stroke="#6a6a82" tick={{ fill: '#6a6a82', fontSize: 12 }} />
+            <Tooltip contentStyle={{ backgroundColor: '#1a1a26', border: '1px solid #2d2d44' }} />
             {actualYKeys.map((key, index) => (
               <Area
                 key={key}
@@ -187,19 +187,19 @@ const ChartRendererComponent: React.FC<ChartRendererProps> = ({ chartData }) => 
               cy="50%"
               outerRadius={80}
               label={({ name, percent }) => `${name}: ${((percent || 0) * 100).toFixed(0)}%`}
-              labelLine={{ stroke: '#888' }}
+              labelLine={{ stroke: '#6a6a82' }}
             >
               {data.map((_, index) => (
                 <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
               ))}
             </Pie>
-            <Tooltip contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid #404040' }} />
+            <Tooltip contentStyle={{ backgroundColor: '#1a1a26', border: '1px solid #2d2d44' }} />
           </PieChart>
         );
       }
 
       default:
-        return <p style={{ color: '#888' }}>Type de graphique non supporté: {type}</p>;
+        return <p style={{ color: '#6a6a82' }}>Type de graphique non supporté: {type}</p>;
     }
   };
 

@@ -80,14 +80,14 @@ const DEFAULT_TEMPLATES: ExportTemplate[] = [
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{{title}}</title>
   <style>
-    body { font-family: system-ui, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; background: #1a1a1a; color: #fff; }
+    body { font-family: system-ui, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; background: #1a1a26; color: #fff; }
     .message { margin: 20px 0; padding: 15px; border-radius: 8px; }
     .user { background: #2563eb; }
-    .assistant { background: #333; }
-    .system { background: #666; font-style: italic; }
-    .timestamp { font-size: 12px; color: #888; }
-    h1 { border-bottom: 1px solid #333; padding-bottom: 10px; }
-    pre { background: #000; padding: 10px; border-radius: 4px; overflow-x: auto; }
+    .assistant { background: #2d2d44; }
+    .system { background: #6a6a82; font-style: italic; }
+    .timestamp { font-size: 12px; color: #6a6a82; }
+    h1 { border-bottom: 1px solid #2d2d44; padding-bottom: 10px; }
+    pre { background: #0a0a0f; padding: 10px; border-radius: 4px; overflow-x: auto; }
     code { font-family: monospace; }
   </style>
 </head>

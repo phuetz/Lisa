@@ -21,7 +21,7 @@ export function AccessibilityProvider({ children }: AccessibilityProviderProps) 
           top: '-40px',
           left: '0',
           padding: '8px 16px',
-          backgroundColor: '#10a37f',
+          backgroundColor: '#f5a623',
           color: '#fff',
           zIndex: 10000,
           transition: 'top 0.2s ease',
@@ -84,7 +84,7 @@ export function AccessibilityProvider({ children }: AccessibilityProviderProps) 
         {`
           /* Focus visible styles */
           :focus-visible {
-            outline: 2px solid #10a37f;
+            outline: 2px solid #f5a623;
             outline-offset: 2px;
           }
 

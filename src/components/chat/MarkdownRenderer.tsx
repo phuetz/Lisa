@@ -59,11 +59,11 @@ import { InlineCodeCell } from './InlineCodeCell';
 // Chart loading fallback
 const ChartFallback = () => (
   <div style={{ 
-    backgroundColor: '#1a1a1a', 
+    backgroundColor: '#1a1a26', 
     borderRadius: '12px', 
     padding: '24px', 
     textAlign: 'center',
-    color: '#888'
+    color: '#6a6a82'
   }}>
     Chargement du graphique...
   </div>
@@ -193,11 +193,11 @@ const PreBlock = ({ children, ...props }: { children: ReactNode }) => {
         justifyContent: 'space-between',
         alignItems: 'center',
         padding: '8px 12px',
-        backgroundColor: '#1a1a1a',
+        backgroundColor: '#1a1a26',
         borderRadius: '8px 8px 0 0',
-        borderBottom: '1px solid #333'
+        borderBottom: '1px solid #2d2d44'
       }}>
-        <span style={{ fontSize: '12px', color: '#888', textTransform: 'uppercase', fontWeight: 500 }}>
+        <span style={{ fontSize: '12px', color: '#6a6a82', textTransform: 'uppercase', fontWeight: 500 }}>
           {language}
         </span>
         <div style={{ display: 'flex', gap: '8px' }}>
@@ -209,10 +209,10 @@ const PreBlock = ({ children, ...props }: { children: ReactNode }) => {
                 alignItems: 'center',
                 gap: '4px',
                 padding: '4px 8px',
-                backgroundColor: '#10a37f20',
-                border: '1px solid #10a37f50',
+                backgroundColor: '#f5a62320',
+                border: '1px solid #f5a62350',
                 borderRadius: '4px',
-                color: '#10a37f',
+                color: '#f5a623',
                 cursor: 'pointer',
                 fontSize: '11px',
                 transition: 'all 0.2s'
@@ -232,7 +232,7 @@ const PreBlock = ({ children, ...props }: { children: ReactNode }) => {
               backgroundColor: 'transparent',
               border: '1px solid #404040',
               borderRadius: '4px',
-              color: copied ? '#10b981' : '#888',
+              color: copied ? '#10b981' : '#6a6a82',
               cursor: 'pointer',
               fontSize: '11px',
               transition: 'all 0.2s'
@@ -354,7 +354,7 @@ export const MarkdownRenderer = ({ content }: MarkdownRendererProps) => {
             return (
               <code
                 style={{
-                  backgroundColor: '#1e1e1e',
+                  backgroundColor: '#12121a',
                   padding: '2px 6px',
                   borderRadius: '4px',
                   fontSize: '0.9em',
@@ -407,11 +407,11 @@ export const MarkdownRenderer = ({ content }: MarkdownRendererProps) => {
               target="_blank"
               rel="noopener noreferrer"
               style={{
-                color: '#10a37f',
+                color: '#f5a623',
                 textDecoration: 'none',
                 borderBottom: '1px solid transparent'
               }}
-              onMouseEnter={(e) => e.currentTarget.style.borderBottomColor = '#10a37f'}
+              onMouseEnter={(e) => e.currentTarget.style.borderBottomColor = '#f5a623'}
               onMouseLeave={(e) => e.currentTarget.style.borderBottomColor = 'transparent'}
             >
               {children}
@@ -445,7 +445,7 @@ export const MarkdownRenderer = ({ content }: MarkdownRendererProps) => {
           return (
             <blockquote
               style={{
-                borderLeft: '4px solid #10a37f',
+                borderLeft: '4px solid #f5a623',
                 margin: '12px 0',
                 padding: '8px 16px',
                 backgroundColor: 'rgba(16, 163, 127, 0.1)',
@@ -459,7 +459,7 @@ export const MarkdownRenderer = ({ content }: MarkdownRendererProps) => {
         },
         // Headings - Style amélioré type Claude/ChatGPT
         h1({ children }) {
-          return <h1 style={{ fontSize: '1.5em', fontWeight: 700, margin: '24px 0 12px', color: '#fff', borderBottom: '1px solid #333', paddingBottom: '8px' }}>{children}</h1>;
+          return <h1 style={{ fontSize: '1.5em', fontWeight: 700, margin: '24px 0 12px', color: '#fff', borderBottom: '1px solid #2d2d44', paddingBottom: '8px' }}>{children}</h1>;
         },
         h2({ children }) {
           return <h2 style={{ fontSize: '1.35em', fontWeight: 600, margin: '20px 0 10px', color: '#fff' }}>{children}</h2>;
@@ -493,7 +493,7 @@ export const MarkdownRenderer = ({ content }: MarkdownRendererProps) => {
             <th style={{
               border: '1px solid #404040',
               padding: '8px 12px',
-              backgroundColor: '#2d2d2d',
+              backgroundColor: '#12121a',
               fontWeight: 600,
               textAlign: 'left'
             }}>

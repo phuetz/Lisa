@@ -202,7 +202,7 @@ const styles: Record<string, React.CSSProperties> = {
     backdropFilter: 'blur(4px)'
   },
   modal: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#1a1a26',
     borderRadius: '16px',
     width: '600px',
     maxWidth: '90vw',
@@ -210,14 +210,14 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     flexDirection: 'column',
     boxShadow: '0 25px 50px rgba(0,0,0,0.5)',
-    border: '1px solid #333'
+    border: '1px solid #2d2d44'
   },
   header: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: '20px 24px',
-    borderBottom: '1px solid #333'
+    borderBottom: '1px solid #2d2d44'
   },
   title: {
     margin: 0,
@@ -228,7 +228,7 @@ const styles: Record<string, React.CSSProperties> = {
   closeButton: {
     backgroundColor: 'transparent',
     border: 'none',
-    color: '#666',
+    color: '#6a6a82',
     fontSize: '28px',
     cursor: 'pointer',
     padding: '0 8px',
@@ -241,7 +241,7 @@ const styles: Record<string, React.CSSProperties> = {
     width: '100%',
     padding: '12px 16px',
     backgroundColor: '#252525',
-    border: '1px solid #333',
+    border: '1px solid #2d2d44',
     borderRadius: '8px',
     color: '#fff',
     fontSize: '14px',
@@ -262,7 +262,7 @@ const styles: Record<string, React.CSSProperties> = {
     backgroundColor: '#252525',
     border: 'none',
     borderRadius: '6px',
-    color: '#888',
+    color: '#6a6a82',
     cursor: 'pointer',
     fontSize: '13px',
     whiteSpace: 'nowrap'
@@ -279,7 +279,7 @@ const styles: Record<string, React.CSSProperties> = {
   emptyState: {
     padding: '40px',
     textAlign: 'center',
-    color: '#666'
+    color: '#6a6a82'
   },
   shortcutRow: {
     display: 'flex',
@@ -303,7 +303,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   shortcutDescription: {
     fontSize: '12px',
-    color: '#666'
+    color: '#6a6a82'
   },
   shortcutKeys: {
     display: 'flex',
@@ -314,36 +314,36 @@ const styles: Record<string, React.CSSProperties> = {
   kbd: {
     display: 'inline-block',
     padding: '4px 8px',
-    backgroundColor: '#333',
+    backgroundColor: '#2d2d44',
     borderRadius: '4px',
     fontSize: '12px',
     fontFamily: 'monospace',
     color: '#fff',
-    border: '1px solid #444',
+    border: '1px solid #2d2d44',
     boxShadow: '0 2px 0 #222'
   },
   keyPlus: {
-    color: '#666',
+    color: '#6a6a82',
     margin: '0 2px'
   },
   footer: {
     padding: '16px 24px',
-    borderTop: '1px solid #333',
+    borderTop: '1px solid #2d2d44',
     textAlign: 'center'
   },
   footerText: {
     fontSize: '12px',
-    color: '#666'
+    color: '#6a6a82'
   },
   kbdSmall: {
     display: 'inline-block',
     padding: '2px 6px',
-    backgroundColor: '#333',
+    backgroundColor: '#2d2d44',
     borderRadius: '3px',
     fontSize: '11px',
     fontFamily: 'monospace',
     color: '#fff',
-    border: '1px solid #444',
+    border: '1px solid #2d2d44',
     margin: '0 4px'
   },
   floatingButton: {
@@ -354,7 +354,7 @@ const styles: Record<string, React.CSSProperties> = {
     height: '48px',
     borderRadius: '50%',
     backgroundColor: '#252525',
-    border: '1px solid #333',
+    border: '1px solid #2d2d44',
     cursor: 'pointer',
     fontSize: '20px',
     display: 'flex',

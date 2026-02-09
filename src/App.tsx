@@ -15,6 +15,7 @@ import { useFallDetector } from './hooks/useFallDetector';
 import { SkipLink } from './components/ui/SkipLink';
 import { useIsMobile } from './hooks/useIsMobile';
 import { AppOverlays, AppFooter, AppVideo } from './components/layout';
+import { MainLayout } from './components/layout/MainLayout';
 
 // Lazy-load MediaPipe hooks to reduce main bundle (~180KB savings)
 const MediaPipeManager = lazy(() => import('./components/MediaPipeManager'));
@@ -54,11 +55,12 @@ function App() {
         alignItems: 'center',
         justifyContent: 'center',
         height: '100vh',
-        background: '#f8f9fa'
+        backgroundColor: 'var(--bg-deep, #0a0a0f)',
+        color: 'var(--text-primary, #e8e8f0)',
       }}>
         <div style={{ textAlign: 'center' }}>
-          <h2>🤖 Lisa</h2>
-          <p>Chargement...</p>
+          <div style={{ fontSize: '32px', marginBottom: '12px', color: 'var(--color-accent, #f5a623)' }}>Lisa</div>
+          <p style={{ color: 'var(--text-muted)' }}>Chargement...</p>
         </div>
       </div>
     );
@@ -66,7 +68,7 @@ function App() {
 
   return (
     <ErrorBoundary>
-      <div className="relative min-h-screen">
+      <div style={{ position: 'relative', height: '100dvh', overflow: 'hidden' }}>
         {/* Skip Link pour accessibilité - WCAG 2.4.1 */}
         <SkipLink targetId="main-content" label="Aller au contenu principal" />
 
@@ -89,17 +91,12 @@ function App() {
         {/* Auth footer buttons */}
         <AppFooter isAuthenticated={isAuthenticated} onLogout={logout} />
 
-        {/* Main content - routed pages */}
-        <main id="main-content" tabIndex={-1} className="outline-none" style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          overflow: 'hidden',
-        }}>
-          <Outlet />
-        </main>
+        {/* Main content - AudioReader Studio layout */}
+        <MainLayout>
+          <div id="main-content" tabIndex={-1} className="outline-none" style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+            <Outlet />
+          </div>
+        </MainLayout>
       </div>
     </ErrorBoundary>
   );

@@ -47,7 +47,7 @@ export function EmailPanel() {
     <div style={styles.container}>
       <div style={styles.header}>
         <h2 style={styles.title}>📧 Email Integration</h2>
-        <span style={{ ...styles.statusBadge, backgroundColor: isConnected ? '#10b981' : '#666' }}>
+        <span style={{ ...styles.statusBadge, backgroundColor: isConnected ? '#10b981' : '#6a6a82' }}>
           {isConnected ? 'Connecté' : 'Déconnecté'}
         </span>
       </div>
@@ -99,7 +99,7 @@ export function EmailPanel() {
                 </div>
                 <button
                   onClick={() => handleToggleFilter(filter.id, filter.enabled)}
-                  style={{ ...styles.toggleBtn, backgroundColor: filter.enabled ? '#10b981' : '#333' }}
+                  style={{ ...styles.toggleBtn, backgroundColor: filter.enabled ? '#10b981' : '#2d2d44' }}
                 >
                   {filter.enabled ? 'ON' : 'OFF'}
                 </button>
@@ -131,29 +131,29 @@ export function EmailPanel() {
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  container: { backgroundColor: '#1a1a1a', borderRadius: '12px', padding: '24px', color: '#fff' },
+  container: { backgroundColor: '#1a1a26', borderRadius: '12px', padding: '24px', color: '#fff' },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' },
   title: { margin: 0, fontSize: '20px', fontWeight: 600 },
   statusBadge: { padding: '4px 12px', borderRadius: '12px', fontSize: '12px' },
   connectButton: { width: '100%', padding: '16px', backgroundColor: '#3b82f6', border: 'none', borderRadius: '8px', color: '#fff', fontSize: '15px', cursor: 'pointer', marginBottom: '20px' },
-  disconnectButton: { width: '100%', padding: '12px', backgroundColor: '#333', border: 'none', borderRadius: '8px', color: '#fff', fontSize: '14px', cursor: 'pointer', marginBottom: '20px' },
+  disconnectButton: { width: '100%', padding: '12px', backgroundColor: '#2d2d44', border: 'none', borderRadius: '8px', color: '#fff', fontSize: '14px', cursor: 'pointer', marginBottom: '20px' },
   statsGrid: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '24px' },
   statCard: { display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '16px', backgroundColor: '#252525', borderRadius: '10px' },
   statValue: { fontSize: '24px', fontWeight: 700, color: '#3b82f6' },
-  statLabel: { fontSize: '12px', color: '#888', marginTop: '4px' },
+  statLabel: { fontSize: '12px', color: '#6a6a82', marginTop: '4px' },
   section: { marginTop: '24px' },
-  sectionTitle: { fontSize: '14px', fontWeight: 600, color: '#888', marginBottom: '12px', textTransform: 'uppercase' },
+  sectionTitle: { fontSize: '14px', fontWeight: 600, color: '#6a6a82', marginBottom: '12px', textTransform: 'uppercase' },
   filtersList: { display: 'flex', flexDirection: 'column', gap: '8px' },
-  emptyState: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', padding: '24px', backgroundColor: '#252525', borderRadius: '8px', color: '#666' },
-  addButton: { padding: '8px 16px', backgroundColor: '#333', border: 'none', borderRadius: '6px', color: '#fff', cursor: 'pointer' },
+  emptyState: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', padding: '24px', backgroundColor: '#252525', borderRadius: '8px', color: '#6a6a82' },
+  addButton: { padding: '8px 16px', backgroundColor: '#2d2d44', border: 'none', borderRadius: '6px', color: '#fff', cursor: 'pointer' },
   filterItem: { display: 'flex', alignItems: 'center', padding: '14px', backgroundColor: '#252525', borderRadius: '8px' },
   filterInfo: { flex: 1 },
   filterName: { display: 'block', fontSize: '14px', fontWeight: 500 },
-  filterConditions: { fontSize: '12px', color: '#888' },
+  filterConditions: { fontSize: '12px', color: '#6a6a82' },
   toggleBtn: { padding: '6px 12px', border: 'none', borderRadius: '4px', color: '#fff', fontSize: '11px', fontWeight: 600, cursor: 'pointer' },
   featuresGrid: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' },
   featureItem: { padding: '12px', backgroundColor: '#252525', borderRadius: '8px', fontSize: '13px', textAlign: 'center' },
-  providers: { marginTop: '20px', paddingTop: '16px', borderTop: '1px solid #333', fontSize: '12px', color: '#555', textAlign: 'center' }
+  providers: { marginTop: '20px', paddingTop: '16px', borderTop: '1px solid #2d2d44', fontSize: '12px', color: '#3d3d5c', textAlign: 'center' }
 };
 
 export default EmailPanel;

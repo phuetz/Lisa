@@ -1,6 +1,6 @@
 .github-panel {
-  background-color: var(--bg-surface, #0d0d0d);
-  color: var(--text-secondary, #b4b4b4);
+  background-color: var(--bg-surface, #12121a);
+  color: var(--text-secondary, #9898b0);
   border-radius: var(--radius-md, 8px);
   padding: 20px;
   margin: 10px 0;
@@ -14,7 +14,7 @@
   color: var(--color-info, #3b82f6);
   margin-top: 0;
   margin-bottom: 20px;
-  border-bottom: 1px solid var(--border-primary, #424242);
+  border-bottom: 1px solid var(--border-primary, #2d2d44);
   padding-bottom: 10px;
 }
 
@@ -27,9 +27,9 @@
 .auth-section {
   margin-bottom: 20px;
   padding: 15px;
-  background-color: var(--bg-primary, #212121);
+  background-color: var(--bg-primary, #12121a);
   border-radius: 6px;
-  border: 1px solid var(--border-primary, #424242);
+  border: 1px solid var(--border-primary, #2d2d44);
 }
 
 .input-group {
@@ -41,32 +41,32 @@
   flex: 1;
   padding: 10px;
   border-radius: 6px 0 0 6px;
-  border: 1px solid var(--border-primary, #424242);
-  background-color: var(--bg-surface, #0d0d0d);
-  color: var(--text-secondary, #b4b4b4);
+  border: 1px solid var(--border-primary, #2d2d44);
+  background-color: var(--bg-surface, #12121a);
+  color: var(--text-secondary, #9898b0);
 }
 
 .input-group button {
   padding: 10px 15px;
   border-radius: 0 6px 6px 0;
-  border: 1px solid var(--border-primary, #424242);
-  background-color: var(--color-brand, #10a37f);
-  color: var(--text-primary, #ececec);
+  border: 1px solid var(--border-primary, #2d2d44);
+  background-color: var(--color-accent, #f5a623);
+  color: var(--text-primary, #e8e8f0);
   cursor: pointer;
   transition: background-color var(--transition-fast, 0.15s ease);
 }
 
 .input-group button:hover {
-  background-color: var(--color-brand-hover, #0d8c6d);
+  background-color: var(--color-accent-hover, #e6951a);
 }
 
 .load-button {
   width: 100%;
   padding: 10px 15px;
   border-radius: 6px;
-  border: 1px solid var(--border-primary, #424242);
+  border: 1px solid var(--border-primary, #2d2d44);
   background-color: var(--color-info, #3b82f6);
-  color: var(--text-primary, #ececec);
+  color: var(--text-primary, #e8e8f0);
   cursor: pointer;
   transition: background-color var(--transition-fast, 0.15s ease);
 }
@@ -91,18 +91,18 @@
 }
 
 .notification.success {
-  background-color: var(--color-brand, #10a37f);
-  color: var(--text-primary, #ececec);
+  background-color: var(--color-accent, #f5a623);
+  color: var(--text-primary, #e8e8f0);
 }
 
 .notification.error {
   background-color: var(--color-error, #ef4444);
-  color: var(--text-primary, #ececec);
+  color: var(--text-primary, #e8e8f0);
 }
 
 .notification.info {
   background-color: var(--color-info, #3b82f6);
-  color: var(--text-primary, #ececec);
+  color: var(--text-primary, #e8e8f0);
 }
 
 @keyframes fadeIn {
@@ -119,7 +119,7 @@
   text-align: center;
   padding: 20px;
   font-style: italic;
-  color: var(--text-muted, #666);
+  color: var(--text-muted, #6a6a82);
 }
 
 .content-area {
@@ -134,12 +134,12 @@
 }
 
 .content-area::-webkit-scrollbar-track {
-  background: var(--bg-primary, #212121);
+  background: var(--bg-primary, #12121a);
   border-radius: 4px;
 }
 
 .content-area::-webkit-scrollbar-thumb {
-  background-color: var(--border-primary, #424242);
+  background-color: var(--border-primary, #2d2d44);
   border-radius: 4px;
 }
 
@@ -153,8 +153,8 @@
 }
 
 .repo-item, .issue-item, .pr-item, .commit-item {
-  background-color: var(--bg-primary, #212121);
-  border: 1px solid var(--border-primary, #424242);
+  background-color: var(--bg-primary, #12121a);
+  border: 1px solid var(--border-primary, #2d2d44);
   border-radius: 6px;
   padding: 15px;
   margin-bottom: 10px;
@@ -174,12 +174,12 @@
 }
 
 .repo-stats {
-  color: var(--text-muted, #666);
+  color: var(--text-muted, #6a6a82);
   font-size: 0.9rem;
 }
 
 .repo-desc {
-  color: var(--text-muted, #666);
+  color: var(--text-muted, #6a6a82);
   margin: 8px 0;
   font-size: 0.95rem;
   line-height: 1.4;
@@ -210,14 +210,14 @@
 }
 
 .repo-actions a:hover, .issue-footer a:hover, .pr-footer a:hover, .commit-footer a:hover, .readme-footer a:hover {
-  color: var(--color-brand, #10a37f);
+  color: var(--color-accent, #f5a623);
   text-decoration: underline;
 }
 
 .repo-actions button {
   padding: 5px 10px;
-  background-color: var(--color-brand, #10a37f);
-  color: var(--text-primary, #ececec);
+  background-color: var(--color-accent, #f5a623);
+  color: var(--text-primary, #e8e8f0);
   border: none;
   border-radius: var(--radius-sm, 4px);
   cursor: pointer;
@@ -225,7 +225,7 @@
 }
 
 .repo-actions button:hover {
-  background-color: var(--color-brand-hover, #0d8c6d);
+  background-color: var(--color-accent-hover, #e6951a);
 }
 
 .issue-state, .pr-state {
@@ -236,7 +236,7 @@
 }
 
 .issue-state.open, .pr-state.open {
-  color: var(--color-brand, #10a37f);
+  color: var(--color-accent, #f5a623);
 }
 
 .issue-state.closed, .pr-state.closed {
@@ -255,15 +255,15 @@
   border-radius: 12px;
   font-size: 0.8rem;
   background-color: var(--color-info, #3b82f6);
-  color: var(--bg-surface, #0d0d0d);
+  color: var(--bg-surface, #12121a);
 }
 
 .issue-author, .pr-author, .commit-author {
-  color: var(--text-muted, #666);
+  color: var(--text-muted, #6a6a82);
 }
 
 .pr-branches {
-  color: var(--text-muted, #666);
+  color: var(--text-muted, #6a6a82);
   font-size: 0.9rem;
   margin: 8px 0;
   font-family: monospace;
@@ -276,7 +276,7 @@
 }
 
 .commit-date {
-  color: var(--text-muted, #666);
+  color: var(--text-muted, #6a6a82);
   font-size: 0.9rem;
 }
 
@@ -287,7 +287,7 @@
 }
 
 .markdown-content {
-  background-color: var(--bg-primary, #212121);
+  background-color: var(--bg-primary, #12121a);
   border-radius: 6px;
   padding: 15px;
   overflow-x: auto;
@@ -297,8 +297,8 @@
 }
 
 .create-issue {
-  background-color: var(--bg-primary, #212121);
-  border: 1px solid var(--border-primary, #424242);
+  background-color: var(--bg-primary, #12121a);
+  border: 1px solid var(--border-primary, #2d2d44);
   border-radius: 6px;
   padding: 15px;
   margin-bottom: 20px;
@@ -309,9 +309,9 @@
   padding: 10px;
   margin-bottom: 10px;
   border-radius: 6px;
-  border: 1px solid var(--border-primary, #424242);
-  background-color: var(--bg-surface, #0d0d0d);
-  color: var(--text-secondary, #b4b4b4);
+  border: 1px solid var(--border-primary, #2d2d44);
+  background-color: var(--bg-surface, #12121a);
+  color: var(--text-secondary, #9898b0);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
 }
 
@@ -322,8 +322,8 @@
 
 .create-issue button {
   padding: 10px 15px;
-  background-color: var(--color-brand, #10a37f);
-  color: var(--text-primary, #ececec);
+  background-color: var(--color-accent, #f5a623);
+  color: var(--text-primary, #e8e8f0);
   border: none;
   border-radius: 6px;
   cursor: pointer;
@@ -332,11 +332,11 @@
 }
 
 .create-issue button:hover {
-  background-color: var(--color-brand-hover, #0d8c6d);
+  background-color: var(--color-accent-hover, #e6951a);
 }
 
 .repo-context {
-  background-color: var(--bg-primary, #212121);
+  background-color: var(--bg-primary, #12121a);
   border-radius: 6px;
   padding: 15px;
   margin-bottom: 15px;
@@ -350,9 +350,9 @@
 
 .nav-buttons button {
   padding: 8px 15px;
-  background-color: var(--bg-secondary, #2d2d2d);
-  color: var(--text-secondary, #b4b4b4);
-  border: 1px solid var(--border-primary, #424242);
+  background-color: var(--bg-surface, #12121a);
+  color: var(--text-secondary, #9898b0);
+  border: 1px solid var(--border-primary, #2d2d44);
   border-radius: 6px;
   cursor: pointer;
   transition: background-color var(--transition-fast, 0.15s ease), color var(--transition-fast, 0.15s ease);
@@ -364,7 +364,7 @@
 
 .nav-buttons button.active {
   background-color: var(--color-info, #3b82f6);
-  color: var(--text-primary, #ececec);
+  color: var(--text-primary, #e8e8f0);
   border-color: var(--color-info, #3b82f6);
 }
 
@@ -375,9 +375,9 @@
 
 .close-button {
   padding: 8px 20px;
-  background-color: var(--bg-secondary, #2d2d2d);
-  color: var(--text-secondary, #b4b4b4);
-  border: 1px solid var(--border-primary, #424242);
+  background-color: var(--bg-surface, #12121a);
+  color: var(--text-secondary, #9898b0);
+  border: 1px solid var(--border-primary, #2d2d44);
   border-radius: 6px;
   cursor: pointer;
   transition: background-color var(--transition-fast, 0.15s ease);

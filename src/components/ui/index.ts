@@ -47,8 +47,16 @@ export {
   WavesBackground 
 } from './AnimatedBackground';
 
-export { 
+export {
   GlowingCard,
   GlowingStatCard,
-  GlowingActionCard 
+  GlowingActionCard
 } from './GlowingCard';
+
+// AudioReader Studio UI Components
+export { Button } from './Button';
+export { Card } from './Card';
+export { Badge } from './Badge';
+export { Toggle } from './Toggle';
+export { Modal } from './Modal';
+export { Progress } from './Progress';

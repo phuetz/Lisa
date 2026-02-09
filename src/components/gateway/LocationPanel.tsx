@@ -98,7 +98,7 @@ export function LocationPanel() {
         </button>
         <button 
           onClick={handleToggleWatch}
-          style={{ ...styles.watchButton, backgroundColor: isWatching ? '#10b981' : '#333' }}
+          style={{ ...styles.watchButton, backgroundColor: isWatching ? '#10b981' : '#2d2d44' }}
         >
           {isWatching ? '⏹️ Arrêter suivi' : '👁️ Suivi continu'}
         </button>
@@ -138,28 +138,28 @@ export function LocationPanel() {
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  container: { backgroundColor: '#1a1a1a', borderRadius: '12px', padding: '24px', color: '#fff' },
+  container: { backgroundColor: '#1a1a26', borderRadius: '12px', padding: '24px', color: '#fff' },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' },
   title: { margin: 0, fontSize: '20px', fontWeight: 600 },
   permBadge: { padding: '4px 10px', borderRadius: '12px', fontSize: '11px', textTransform: 'capitalize' },
   locationCard: { backgroundColor: '#252525', borderRadius: '12px', padding: '24px', marginBottom: '20px' },
   coords: { display: 'flex', gap: '24px', marginBottom: '12px' },
   coordItem: { flex: 1 },
-  coordLabel: { display: 'block', fontSize: '12px', color: '#888', marginBottom: '4px' },
+  coordLabel: { display: 'block', fontSize: '12px', color: '#6a6a82', marginBottom: '4px' },
   coordValue: { fontSize: '18px', fontWeight: 600, color: '#3b82f6' },
-  accuracy: { fontSize: '13px', color: '#888' },
-  altitude: { fontSize: '13px', color: '#888', marginTop: '4px' },
-  noLocation: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', padding: '20px', color: '#666' },
+  accuracy: { fontSize: '13px', color: '#6a6a82' },
+  altitude: { fontSize: '13px', color: '#6a6a82', marginTop: '4px' },
+  noLocation: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', padding: '20px', color: '#6a6a82' },
   noLocationIcon: { fontSize: '32px' },
   actions: { display: 'flex', gap: '12px', marginBottom: '20px' },
   getButton: { flex: 1, padding: '14px', backgroundColor: '#3b82f6', border: 'none', borderRadius: '8px', color: '#fff', fontSize: '14px', cursor: 'pointer' },
   watchButton: { flex: 1, padding: '14px', border: 'none', borderRadius: '8px', color: '#fff', fontSize: '14px', cursor: 'pointer' },
   mapPlaceholder: { backgroundColor: '#252525', borderRadius: '12px', padding: '24px', textAlign: 'center', marginBottom: '20px' },
   mapLink: { color: '#3b82f6', textDecoration: 'none', fontSize: '14px' },
-  stats: { display: 'flex', gap: '16px', paddingTop: '16px', borderTop: '1px solid #333' },
+  stats: { display: 'flex', gap: '16px', paddingTop: '16px', borderTop: '1px solid #2d2d44' },
   statItem: { flex: 1, textAlign: 'center' },
   statValue: { display: 'block', fontSize: '18px', fontWeight: 600, color: '#3b82f6' },
-  statLabel: { fontSize: '11px', color: '#888' }
+  statLabel: { fontSize: '11px', color: '#6a6a82' }
 };
 
 export default LocationPanel;

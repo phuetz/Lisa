@@ -26,9 +26,9 @@ export const ModernCard: React.FC<ModernCardProps> = ({
   return (
     <div
       className={`
-        bg-[var(--bg-elevated,#2f2f2f)]/80 backdrop-blur-xl border border-[var(--border-primary,#424242)]/60 rounded-xl p-6
-        ${hover ? 'hover:bg-[var(--bg-hover,rgba(255,255,255,0.06))] hover:border-[var(--border-secondary,#555)] transition-all duration-300' : ''}
-        ${gradient ? 'bg-gradient-to-br from-[var(--bg-elevated,#2f2f2f)]/60 to-[var(--bg-surface,#0d0d0d)]/60' : ''}
+        bg-[var(--bg-panel,#1a1a26)]/80 backdrop-blur-xl border border-[var(--border-primary,#2d2d44)]/60 rounded-xl p-6
+        ${hover ? 'hover:bg-[var(--bg-hover,rgba(255,255,255,0.06))] hover:border-[var(--border-secondary,#3d3d5c)] transition-all duration-300' : ''}
+        ${gradient ? 'bg-gradient-to-br from-[var(--bg-panel,#1a1a26)]/60 to-[var(--bg-deep,#0a0a0f)]/60' : ''}
         ${className}
       `}
       {...props}
@@ -57,10 +57,10 @@ export const ModernCardHeader: React.FC<ModernCardHeaderProps> = ({
   return (
     <div className="flex items-start justify-between mb-4">
       <div className="flex items-start gap-3 flex-1">
-        {icon && <div className="text-[var(--color-brand,#10a37f)] mt-1">{icon}</div>}
+        {icon && <div className="text-[var(--color-accent,#f5a623)] mt-1">{icon}</div>}
         <div>
-          <h3 className="text-lg font-semibold text-[var(--text-primary,#ececec)]">{title}</h3>
-          {subtitle && <p className="text-sm text-[var(--text-muted,#666)] mt-1">{subtitle}</p>}
+          <h3 className="text-lg font-semibold text-[var(--text-primary,#e8e8f0)]">{title}</h3>
+          {subtitle && <p className="text-sm text-[var(--text-muted,#6a6a82)] mt-1">{subtitle}</p>}
         </div>
       </div>
       {action && <div>{action}</div>}
@@ -80,7 +80,7 @@ export const ModernCardBody: React.FC<ModernCardBodyProps> = ({
   children,
   className = '',
 }) => {
-  return <div className={`text-[var(--text-secondary,#b4b4b4)] ${className}`}>{children}</div>;
+  return <div className={`text-[var(--text-secondary,#9898b0)] ${className}`}>{children}</div>;
 };
 
 interface ModernCardFooterProps {
@@ -96,7 +96,7 @@ export const ModernCardFooter: React.FC<ModernCardFooterProps> = ({
   className = '',
 }) => {
   return (
-    <div className={`pt-4 border-t border-[var(--border-primary,#424242)]/60 flex items-center justify-between ${className}`}>
+    <div className={`pt-4 border-t border-[var(--border-primary,#2d2d44)]/60 flex items-center justify-between ${className}`}>
       {children}
     </div>
   );
@@ -121,13 +121,13 @@ export const StatCard: React.FC<StatCardProps> = ({
   color = 'blue',
 }) => {
   const colorClasses = {
-    blue: 'from-[var(--color-brand,#10a37f)]/20 to-[var(--color-brand,#10a37f)]/20 border-[var(--color-brand,#10a37f)]/30',
+    blue: 'from-[var(--color-accent,#f5a623)]/20 to-[var(--color-accent,#f5a623)]/20 border-[var(--color-accent,#f5a623)]/30',
     green: 'from-green-500/20 to-green-600/20 border-green-500/30',
     purple: 'from-purple-500/20 to-purple-600/20 border-purple-500/30',
     red: 'from-red-500/20 to-red-600/20 border-red-500/30',
   };
 
-  const changeColor = change && change > 0 ? 'text-[var(--color-brand,#10a37f)]' : 'text-[var(--color-error,#ef4444)]';
+  const changeColor = change && change > 0 ? 'text-[var(--color-accent,#f5a623)]' : 'text-[var(--color-error,#ef4444)]';
 
   return (
     <div
@@ -138,8 +138,8 @@ export const StatCard: React.FC<StatCardProps> = ({
     >
       <div className="flex items-start justify-between mb-4">
         <div>
-          <p className="text-sm text-[var(--text-muted,#666)]">{label}</p>
-          <p className="text-3xl font-bold text-[var(--text-primary,#ececec)] mt-2">{value}</p>
+          <p className="text-sm text-[var(--text-muted,#6a6a82)]">{label}</p>
+          <p className="text-3xl font-bold text-[var(--text-primary,#e8e8f0)] mt-2">{value}</p>
         </div>
         {icon && <div className="text-2xl opacity-50">{icon}</div>}
       </div>
@@ -180,13 +180,13 @@ export const FeatureCard: React.FC<FeatureCardProps> = ({
       onClick={onClick}
       onKeyDown={handleKeyDown}
       aria-label={title}
-      className="w-full text-left bg-[var(--bg-elevated,#2f2f2f)]/80 backdrop-blur-xl border border-[var(--border-primary,#424242)]/60 rounded-xl p-6 hover:bg-[var(--bg-hover,rgba(255,255,255,0.06))] hover:border-[var(--color-brand,#10a37f)]/50 transition-all duration-300 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand,#10a37f)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-surface,#0d0d0d)]"
+      className="w-full text-left bg-[var(--bg-panel,#1a1a26)]/80 backdrop-blur-xl border border-[var(--border-primary,#2d2d44)]/60 rounded-xl p-6 hover:bg-[var(--bg-hover,rgba(255,255,255,0.06))] hover:border-[var(--color-accent,#f5a623)]/50 transition-all duration-300 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent,#f5a623)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-deep,#0a0a0f)]"
     >
       <div className="text-3xl mb-3 group-hover:scale-110 transition-transform duration-300" aria-hidden="true">
         {icon}
       </div>
-      <h3 className="text-lg font-semibold text-[var(--text-primary,#ececec)] mb-2">{title}</h3>
-      <p className="text-sm text-[var(--text-secondary,#b4b4b4)]">{description}</p>
+      <h3 className="text-lg font-semibold text-[var(--text-primary,#e8e8f0)] mb-2">{title}</h3>
+      <p className="text-sm text-[var(--text-secondary,#9898b0)]">{description}</p>
     </button>
   );
 };

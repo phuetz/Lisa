@@ -12,3 +12,9 @@ export type { AppFooterProps } from './AppFooter';
 
 export { AppVideo } from './AppVideo';
 export type { AppVideoProps } from './AppVideo';
+
+// AudioReader Studio layout components
+export { MainLayout } from './MainLayout';
+export { Sidebar } from './Sidebar';
+export { TopBar } from './TopBar';
+export { MobileTabBar } from './MobileTabBar';

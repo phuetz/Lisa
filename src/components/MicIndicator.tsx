@@ -23,7 +23,7 @@ export default function MicIndicator() {
           width: 48,
           height: 48,
           borderRadius: '50%',
-          background: 'var(--color-brand, #10a37f)',
+          background: 'var(--color-accent, #f5a623)',
           color: '#fff',
           display: 'flex',
           alignItems: 'center',

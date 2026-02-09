@@ -228,7 +228,7 @@ function HealthCheckRow({ check }: { check: HealthCheck }) {
 
 const styles: Record<string, React.CSSProperties> = {
   container: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#1a1a26',
     borderRadius: '12px',
     padding: '24px',
     color: '#fff'
@@ -236,7 +236,7 @@ const styles: Record<string, React.CSSProperties> = {
   loading: {
     textAlign: 'center',
     padding: '40px',
-    color: '#888'
+    color: '#6a6a82'
   },
   header: {
     display: 'flex',
@@ -262,7 +262,7 @@ const styles: Record<string, React.CSSProperties> = {
     color: '#fff'
   },
   uptime: {
-    color: '#888',
+    color: '#6a6a82',
     fontSize: '14px'
   },
   metricsGrid: {
@@ -288,7 +288,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   metricTitle: {
     fontSize: '12px',
-    color: '#888',
+    color: '#6a6a82',
     marginBottom: '4px'
   },
   metricValue: {
@@ -298,7 +298,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   metricSubtitle: {
     fontSize: '11px',
-    color: '#666',
+    color: '#6a6a82',
     marginTop: '4px'
   },
   section: {
@@ -320,7 +320,7 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     gap: '12px',
     padding: '12px 16px',
-    borderBottom: '1px solid #333'
+    borderBottom: '1px solid #2d2d44'
   },
   checkIcon: {
     fontSize: '16px'
@@ -334,18 +334,18 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 600
   },
   checkMessage: {
-    color: '#888',
+    color: '#6a6a82',
     fontSize: '13px',
     flex: 2
   },
   checkDuration: {
-    color: '#666',
+    color: '#6a6a82',
     fontSize: '12px'
   },
   emptyState: {
     padding: '24px',
     textAlign: 'center',
-    color: '#666'
+    color: '#6a6a82'
   },
   errorsList: {
     backgroundColor: '#252525',
@@ -357,7 +357,7 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     gap: '12px',
     padding: '10px 16px',
-    borderBottom: '1px solid #333'
+    borderBottom: '1px solid #2d2d44'
   },
   errorType: {
     backgroundColor: '#ef4444',
@@ -373,7 +373,7 @@ const styles: Record<string, React.CSSProperties> = {
     color: '#ccc'
   },
   errorCount: {
-    color: '#888',
+    color: '#6a6a82',
     fontSize: '12px'
   }
 };

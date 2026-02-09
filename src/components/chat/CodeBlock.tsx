@@ -23,11 +23,11 @@ export const CodeBlock = ({ language, code }: CodeBlockProps) => {
   return (
     <div className="relative group my-4 not-prose">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-2 bg-[#1a1a1a] border border-[#404040] rounded-t-lg">
+      <div className="flex items-center justify-between px-4 py-2 bg-[#1a1a26] border border-[#2d2d44] rounded-t-lg">
         <span className="text-xs font-mono text-gray-400 uppercase">{language}</span>
         <button
           onClick={handleCopy}
-          className="flex items-center gap-1.5 px-2 py-1 text-xs text-gray-400 hover:text-white transition-colors rounded hover:bg-[#2a2a2a]"
+          className="flex items-center gap-1.5 px-2 py-1 text-xs text-gray-400 hover:text-white transition-colors rounded hover:bg-[#1a1a26]"
           title="Copier le code"
         >
           {copied ? (
@@ -45,7 +45,7 @@ export const CodeBlock = ({ language, code }: CodeBlockProps) => {
       </div>
       
       {/* Code */}
-      <pre className="!mt-0 p-4 bg-[#0a0a0a] border border-t-0 border-[#404040] rounded-b-lg overflow-x-auto">
+      <pre className="!mt-0 p-4 bg-[#0a0a0f] border border-t-0 border-[#2d2d44] rounded-b-lg overflow-x-auto">
         <code className={`language-${language} text-sm !bg-transparent`}>
           {code}
         </code>

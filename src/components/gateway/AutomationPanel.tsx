@@ -76,7 +76,7 @@ export function AutomationPanel() {
   return (
     <div style={{
       padding: '24px',
-      backgroundColor: '#1a1a1a',
+      backgroundColor: '#1a1a26',
       minHeight: '100vh',
       color: '#fff'
     }}>
@@ -85,7 +85,7 @@ export function AutomationPanel() {
         <h1 style={{ fontSize: '1.5rem', fontWeight: 600, margin: 0 }}>
           ⚡ Automation
         </h1>
-        <p style={{ color: '#888', margin: '4px 0 0' }}>
+        <p style={{ color: '#6a6a82', margin: '4px 0 0' }}>
           Tâches planifiées et webhooks pour intégrations externes
         </p>
       </div>
@@ -95,7 +95,7 @@ export function AutomationPanel() {
         display: 'flex',
         gap: '8px',
         marginBottom: '24px',
-        borderBottom: '1px solid #333',
+        borderBottom: '1px solid #2d2d44',
         paddingBottom: '8px'
       }}>
         <button
@@ -103,7 +103,7 @@ export function AutomationPanel() {
           style={{
             padding: '8px 16px',
             backgroundColor: activeTab === 'cron' ? '#3b82f6' : 'transparent',
-            color: activeTab === 'cron' ? 'white' : '#888',
+            color: activeTab === 'cron' ? 'white' : '#6a6a82',
             border: 'none',
             borderRadius: '6px',
             cursor: 'pointer',
@@ -120,7 +120,7 @@ export function AutomationPanel() {
           style={{
             padding: '8px 16px',
             backgroundColor: activeTab === 'webhooks' ? '#3b82f6' : 'transparent',
-            color: activeTab === 'webhooks' ? 'white' : '#888',
+            color: activeTab === 'webhooks' ? 'white' : '#6a6a82',
             border: 'none',
             borderRadius: '6px',
             cursor: 'pointer',
@@ -212,7 +212,7 @@ function CronTab({ jobs, onToggle, onDelete, onShowCreate }: CronTabProps) {
           padding: '48px',
           backgroundColor: '#2a2a2a',
           borderRadius: '12px',
-          color: '#666'
+          color: '#6a6a82'
         }}>
           <p style={{ fontSize: '1.2rem', margin: 0 }}>Aucune tâche planifiée</p>
           <p>Créez une tâche cron pour automatiser des actions</p>
@@ -241,8 +241,8 @@ function CronTab({ jobs, onToggle, onDelete, onShowCreate }: CronTabProps) {
                     {job.enabled ? '● Actif' : '○ Inactif'}
                   </span>
                 </div>
-                <div style={{ color: '#888', fontSize: '14px', marginTop: '4px' }}>
-                  <code style={{ backgroundColor: '#333', padding: '2px 6px', borderRadius: '4px' }}>
+                <div style={{ color: '#6a6a82', fontSize: '14px', marginTop: '4px' }}>
+                  <code style={{ backgroundColor: '#2d2d44', padding: '2px 6px', borderRadius: '4px' }}>
                     {job.schedule}
                   </code>
                   <span style={{ marginLeft: '12px' }}>
@@ -331,7 +331,7 @@ function WebhooksTab({ webhooks, onToggle, onDelete, onShowCreate }: WebhooksTab
           padding: '48px',
           backgroundColor: '#2a2a2a',
           borderRadius: '12px',
-          color: '#666'
+          color: '#6a6a82'
         }}>
           <p style={{ fontSize: '1.2rem', margin: 0 }}>Aucun webhook configuré</p>
           <p>Créez un webhook pour recevoir des notifications externes</p>
@@ -363,7 +363,7 @@ function WebhooksTab({ webhooks, onToggle, onDelete, onShowCreate }: WebhooksTab
                     alignItems: 'center',
                     gap: '8px',
                     marginTop: '8px',
-                    backgroundColor: '#333',
+                    backgroundColor: '#2d2d44',
                     padding: '8px 12px',
                     borderRadius: '6px'
                   }}>
@@ -385,7 +385,7 @@ function WebhooksTab({ webhooks, onToggle, onDelete, onShowCreate }: WebhooksTab
                       📋 Copier
                     </button>
                   </div>
-                  <div style={{ color: '#888', fontSize: '13px', marginTop: '8px' }}>
+                  <div style={{ color: '#6a6a82', fontSize: '13px', marginTop: '8px' }}>
                     {webhook.triggerCount} déclenchement{webhook.triggerCount !== 1 ? 's' : ''}
                     {webhook.lastTriggered && (
                       <span style={{ marginLeft: '12px' }}>
@@ -479,19 +479,19 @@ function CreateCronDialog({ onClose, onCreate }: CreateCronDialogProps) {
       zIndex: 1000
     }}>
       <div style={{
-        backgroundColor: '#1a1a1a',
+        backgroundColor: '#1a1a26',
         borderRadius: '12px',
         padding: '24px',
         width: '450px',
         maxWidth: '90%',
-        border: '1px solid #333'
+        border: '1px solid #2d2d44'
       }}>
         <h2 style={{ margin: '0 0 16px', fontSize: '1.2rem' }}>
           ➕ Nouvelle tâche Cron
         </h2>
         
         <div style={{ marginBottom: '16px' }}>
-          <label style={{ display: 'block', marginBottom: '6px', color: '#888', fontSize: '14px' }}>
+          <label style={{ display: 'block', marginBottom: '6px', color: '#6a6a82', fontSize: '14px' }}>
             Nom
           </label>
           <input
@@ -503,7 +503,7 @@ function CreateCronDialog({ onClose, onCreate }: CreateCronDialogProps) {
               width: '100%',
               padding: '12px',
               backgroundColor: '#2a2a2a',
-              border: '1px solid #333',
+              border: '1px solid #2d2d44',
               borderRadius: '8px',
               color: '#fff',
               fontSize: '14px',
@@ -513,7 +513,7 @@ function CreateCronDialog({ onClose, onCreate }: CreateCronDialogProps) {
         </div>
 
         <div style={{ marginBottom: '16px' }}>
-          <label style={{ display: 'block', marginBottom: '6px', color: '#888', fontSize: '14px' }}>
+          <label style={{ display: 'block', marginBottom: '6px', color: '#6a6a82', fontSize: '14px' }}>
             Planification
           </label>
           <select
@@ -530,7 +530,7 @@ function CreateCronDialog({ onClose, onCreate }: CreateCronDialogProps) {
               width: '100%',
               padding: '12px',
               backgroundColor: '#2a2a2a',
-              border: '1px solid #333',
+              border: '1px solid #2d2d44',
               borderRadius: '8px',
               color: '#fff',
               fontSize: '14px',
@@ -551,7 +551,7 @@ function CreateCronDialog({ onClose, onCreate }: CreateCronDialogProps) {
 
         {useCustom && (
           <div style={{ marginBottom: '16px' }}>
-            <label style={{ display: 'block', marginBottom: '6px', color: '#888', fontSize: '14px' }}>
+            <label style={{ display: 'block', marginBottom: '6px', color: '#6a6a82', fontSize: '14px' }}>
               Expression Cron
             </label>
             <input
@@ -563,7 +563,7 @@ function CreateCronDialog({ onClose, onCreate }: CreateCronDialogProps) {
                 width: '100%',
                 padding: '12px',
                 backgroundColor: '#2a2a2a',
-                border: '1px solid #333',
+                border: '1px solid #2d2d44',
                 borderRadius: '8px',
                 color: '#fff',
                 fontSize: '14px',
@@ -571,7 +571,7 @@ function CreateCronDialog({ onClose, onCreate }: CreateCronDialogProps) {
                 boxSizing: 'border-box'
               }}
             />
-            <p style={{ fontSize: '12px', color: '#666', margin: '6px 0 0' }}>
+            <p style={{ fontSize: '12px', color: '#6a6a82', margin: '6px 0 0' }}>
               Format: minute heure jour mois jour_semaine
             </p>
           </div>
@@ -583,8 +583,8 @@ function CreateCronDialog({ onClose, onCreate }: CreateCronDialogProps) {
             style={{
               padding: '10px 20px',
               backgroundColor: 'transparent',
-              color: '#888',
-              border: '1px solid #333',
+              color: '#6a6a82',
+              border: '1px solid #2d2d44',
               borderRadius: '8px',
               cursor: 'pointer'
             }}
@@ -596,7 +596,7 @@ function CreateCronDialog({ onClose, onCreate }: CreateCronDialogProps) {
             disabled={!name.trim()}
             style={{
               padding: '10px 20px',
-              backgroundColor: name.trim() ? '#3b82f6' : '#333',
+              backgroundColor: name.trim() ? '#3b82f6' : '#2d2d44',
               color: 'white',
               border: 'none',
               borderRadius: '8px',
@@ -660,19 +660,19 @@ function CreateWebhookDialog({ onClose, onCreate }: CreateWebhookDialogProps) {
       zIndex: 1000
     }}>
       <div style={{
-        backgroundColor: '#1a1a1a',
+        backgroundColor: '#1a1a26',
         borderRadius: '12px',
         padding: '24px',
         width: '450px',
         maxWidth: '90%',
-        border: '1px solid #333'
+        border: '1px solid #2d2d44'
       }}>
         <h2 style={{ margin: '0 0 16px', fontSize: '1.2rem' }}>
           ➕ Nouveau Webhook
         </h2>
         
         <div style={{ marginBottom: '16px' }}>
-          <label style={{ display: 'block', marginBottom: '6px', color: '#888', fontSize: '14px' }}>
+          <label style={{ display: 'block', marginBottom: '6px', color: '#6a6a82', fontSize: '14px' }}>
             Nom
           </label>
           <input
@@ -684,7 +684,7 @@ function CreateWebhookDialog({ onClose, onCreate }: CreateWebhookDialogProps) {
               width: '100%',
               padding: '12px',
               backgroundColor: '#2a2a2a',
-              border: '1px solid #333',
+              border: '1px solid #2d2d44',
               borderRadius: '8px',
               color: '#fff',
               fontSize: '14px',
@@ -694,7 +694,7 @@ function CreateWebhookDialog({ onClose, onCreate }: CreateWebhookDialogProps) {
         </div>
 
         <div style={{ marginBottom: '16px' }}>
-          <label style={{ display: 'block', marginBottom: '6px', color: '#888', fontSize: '14px' }}>
+          <label style={{ display: 'block', marginBottom: '6px', color: '#6a6a82', fontSize: '14px' }}>
             Template
           </label>
           <select
@@ -704,7 +704,7 @@ function CreateWebhookDialog({ onClose, onCreate }: CreateWebhookDialogProps) {
               width: '100%',
               padding: '12px',
               backgroundColor: '#2a2a2a',
-              border: '1px solid #333',
+              border: '1px solid #2d2d44',
               borderRadius: '8px',
               color: '#fff',
               fontSize: '14px',
@@ -718,7 +718,7 @@ function CreateWebhookDialog({ onClose, onCreate }: CreateWebhookDialogProps) {
         </div>
 
         <div style={{ marginBottom: '16px' }}>
-          <label style={{ display: 'block', marginBottom: '6px', color: '#888', fontSize: '14px' }}>
+          <label style={{ display: 'block', marginBottom: '6px', color: '#6a6a82', fontSize: '14px' }}>
             Secret (optionnel)
           </label>
           <input
@@ -730,7 +730,7 @@ function CreateWebhookDialog({ onClose, onCreate }: CreateWebhookDialogProps) {
               width: '100%',
               padding: '12px',
               backgroundColor: '#2a2a2a',
-              border: '1px solid #333',
+              border: '1px solid #2d2d44',
               borderRadius: '8px',
               color: '#fff',
               fontSize: '14px',
@@ -745,8 +745,8 @@ function CreateWebhookDialog({ onClose, onCreate }: CreateWebhookDialogProps) {
             style={{
               padding: '10px 20px',
               backgroundColor: 'transparent',
-              color: '#888',
-              border: '1px solid #333',
+              color: '#6a6a82',
+              border: '1px solid #2d2d44',
               borderRadius: '8px',
               cursor: 'pointer'
             }}
@@ -758,7 +758,7 @@ function CreateWebhookDialog({ onClose, onCreate }: CreateWebhookDialogProps) {
             disabled={!name.trim()}
             style={{
               padding: '10px 20px',
-              backgroundColor: name.trim() ? '#3b82f6' : '#333',
+              backgroundColor: name.trim() ? '#3b82f6' : '#2d2d44',
               color: 'white',
               border: 'none',
               borderRadius: '8px',

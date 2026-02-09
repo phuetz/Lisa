@@ -29,7 +29,7 @@ interface ConnectionInfo {
 // Provider display config
 const PROVIDER_CONFIG: Record<AIProviderType, { name: string; icon: string; color: string }> = {
   gemini: { name: 'Gemini', icon: '✨', color: '#4285f4' },
-  openai: { name: 'OpenAI', icon: '🤖', color: '#10a37f' },
+  openai: { name: 'OpenAI', icon: '🤖', color: '#f5a623' },
   anthropic: { name: 'Claude', icon: '🧠', color: '#d97706' },
   xai: { name: 'Grok', icon: '⚡', color: '#1da1f2' },
   lmstudio: { name: 'LM Studio', icon: '🏠', color: '#8b5cf6' },
@@ -101,11 +101,11 @@ export const ConnectionStatus = () => {
 
   const getStatusColor = () => {
     switch (info.state) {
-      case 'connected': return '#10a37f';
+      case 'connected': return '#f5a623';
       case 'degraded': return '#f59e0b';
       case 'cooldown': return '#8b5cf6';
       case 'disconnected': return '#ef4444';
-      default: return '#888';
+      default: return '#6a6a82';
     }
   };
 
@@ -242,8 +242,8 @@ export const ConnectionStatus = () => {
           top: '100%',
           right: 0,
           marginTop: '8px',
-          backgroundColor: '#1a1a1a',
-          border: '1px solid #333',
+          backgroundColor: '#1a1a26',
+          border: '1px solid #2d2d44',
           borderRadius: '12px',
           padding: '16px',
           minWidth: '280px',
@@ -257,12 +257,12 @@ export const ConnectionStatus = () => {
             gap: '8px',
             marginBottom: '12px',
             paddingBottom: '12px',
-            borderBottom: '1px solid #333'
+            borderBottom: '1px solid #2d2d44'
           }}>
             <span style={{ fontSize: '24px' }}>{providerConfig.icon}</span>
             <div>
               <div style={{ fontWeight: 600, color: '#fff' }}>{providerConfig.name}</div>
-              <div style={{ fontSize: '11px', color: '#888' }}>{currentModel.name}</div>
+              <div style={{ fontSize: '11px', color: '#6a6a82' }}>{currentModel.name}</div>
             </div>
             <div style={{
               marginLeft: 'auto',
@@ -276,20 +276,20 @@ export const ConnectionStatus = () => {
           {/* Stats */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px' }}>
             {/* Connection status */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', color: '#aaa' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', color: '#9898b0' }}>
               <span>État</span>
               <span style={{ color: getStatusColor(), fontWeight: 500 }}>{getStatusText()}</span>
             </div>
 
             {/* Model */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', color: '#aaa' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', color: '#9898b0' }}>
               <span>Modèle</span>
               <span style={{ color: '#fff' }}>{info.model || '-'}</span>
             </div>
 
             {/* Latency */}
             {info.latency > 0 && (
-              <div style={{ display: 'flex', justifyContent: 'space-between', color: '#aaa' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', color: '#9898b0' }}>
                 <span>Latence</span>
                 <span style={{ color: '#fff' }}>{info.latency}ms</span>
               </div>
@@ -297,7 +297,7 @@ export const ConnectionStatus = () => {
 
             {/* Token count */}
             {info.tokenCount !== undefined && info.tokenCount > 0 && (
-              <div style={{ display: 'flex', justifyContent: 'space-between', color: '#aaa' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', color: '#9898b0' }}>
                 <span>Tokens utilisés</span>
                 <span style={{ color: '#fff', display: 'flex', alignItems: 'center', gap: '4px' }}>
                   <Zap size={12} />
@@ -308,9 +308,9 @@ export const ConnectionStatus = () => {
 
             {/* Cost estimate */}
             {info.costEstimate !== undefined && info.costEstimate > 0 && (
-              <div style={{ display: 'flex', justifyContent: 'space-between', color: '#aaa' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', color: '#9898b0' }}>
                 <span>Coût estimé</span>
-                <span style={{ color: '#10a37f', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <span style={{ color: '#f5a623', display: 'flex', alignItems: 'center', gap: '4px' }}>
                   <DollarSign size={12} />
                   {formatCost(info.costEstimate)}
                 </span>
@@ -338,7 +338,7 @@ export const ConnectionStatus = () => {
             gap: '8px',
             marginTop: '16px',
             paddingTop: '12px',
-            borderTop: '1px solid #333'
+            borderTop: '1px solid #2d2d44'
           }}>
             <button
               onClick={() => {
@@ -347,7 +347,7 @@ export const ConnectionStatus = () => {
               style={{
                 flex: 1,
                 padding: '8px',
-                backgroundColor: '#333',
+                backgroundColor: '#2d2d44',
                 border: 'none',
                 borderRadius: '8px',
                 color: '#fff',
@@ -371,9 +371,9 @@ export const ConnectionStatus = () => {
               style={{
                 padding: '8px 12px',
                 backgroundColor: 'transparent',
-                border: '1px solid #333',
+                border: '1px solid #2d2d44',
                 borderRadius: '8px',
-                color: '#888',
+                color: '#6a6a82',
                 cursor: 'pointer',
                 fontSize: '12px'
               }}

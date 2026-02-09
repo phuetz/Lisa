@@ -96,7 +96,7 @@ export function ChannelsPanel() {
       case 'connected': return '#10b981';
       case 'connecting': return '#f59e0b';
       case 'error': return '#ef4444';
-      default: return '#666';
+      default: return '#6a6a82';
     }
   };
 
@@ -253,42 +253,42 @@ export function ChannelsPanel() {
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  container: { backgroundColor: '#1a1a1a', borderRadius: '12px', padding: '24px', color: '#fff' },
+  container: { backgroundColor: '#1a1a26', borderRadius: '12px', padding: '24px', color: '#fff' },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' },
   title: { margin: 0, fontSize: '20px', fontWeight: 600 },
   addButton: { padding: '8px 16px', backgroundColor: '#3b82f6', border: 'none', borderRadius: '6px', color: '#fff', cursor: 'pointer' },
   statsRow: { display: 'flex', gap: '12px', marginBottom: '24px' },
   statCard: { flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '16px', backgroundColor: '#252525', borderRadius: '10px' },
   statValue: { fontSize: '24px', fontWeight: 700, color: '#3b82f6' },
-  statLabel: { fontSize: '12px', color: '#888', marginTop: '4px' },
+  statLabel: { fontSize: '12px', color: '#6a6a82', marginTop: '4px' },
   channelList: { display: 'flex', flexDirection: 'column', gap: '10px' },
   channelCard: { display: 'flex', alignItems: 'center', gap: '14px', padding: '14px', backgroundColor: '#252525', borderRadius: '10px', border: '2px solid transparent', cursor: 'pointer' },
   channelIcon: { fontSize: '28px' },
   channelInfo: { flex: 1 },
   channelName: { fontSize: '15px', fontWeight: 600 },
-  channelType: { fontSize: '12px', color: '#888', textTransform: 'capitalize' },
+  channelType: { fontSize: '12px', color: '#6a6a82', textTransform: 'capitalize' },
   channelStatus: { display: 'flex', alignItems: 'center', gap: '6px' },
   statusDot: { width: '8px', height: '8px', borderRadius: '50%' },
-  statusText: { fontSize: '12px', color: '#888', textTransform: 'capitalize' },
+  statusText: { fontSize: '12px', color: '#6a6a82', textTransform: 'capitalize' },
   channelActions: { display: 'flex', gap: '8px' },
   connectBtn: { padding: '6px 12px', backgroundColor: '#10b981', border: 'none', borderRadius: '4px', color: '#fff', fontSize: '12px', cursor: 'pointer' },
-  disconnectBtn: { padding: '6px 12px', backgroundColor: '#666', border: 'none', borderRadius: '4px', color: '#fff', fontSize: '12px', cursor: 'pointer' },
+  disconnectBtn: { padding: '6px 12px', backgroundColor: '#6a6a82', border: 'none', borderRadius: '4px', color: '#fff', fontSize: '12px', cursor: 'pointer' },
   connectingText: { padding: '6px 12px' },
-  removeBtn: { padding: '6px 10px', backgroundColor: 'transparent', border: 'none', color: '#666', cursor: 'pointer' },
+  removeBtn: { padding: '6px 10px', backgroundColor: 'transparent', border: 'none', color: '#6a6a82', cursor: 'pointer' },
   section: { marginTop: '24px' },
-  sectionTitle: { fontSize: '14px', fontWeight: 600, color: '#888', marginBottom: '12px', textTransform: 'uppercase' },
+  sectionTitle: { fontSize: '14px', fontWeight: 600, color: '#6a6a82', marginBottom: '12px', textTransform: 'uppercase' },
   supportedGrid: { display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' },
   supportedItem: { padding: '10px 12px', backgroundColor: '#252525', borderRadius: '6px', fontSize: '13px' },
   modalOverlay: { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 },
-  modal: { backgroundColor: '#1a1a1a', borderRadius: '12px', padding: '24px', width: '400px', maxWidth: '90%' },
+  modal: { backgroundColor: '#1a1a26', borderRadius: '12px', padding: '24px', width: '400px', maxWidth: '90%' },
   modalTitle: { margin: '0 0 20px', fontSize: '18px', fontWeight: 600 },
   formGroup: { marginBottom: '16px' },
-  label: { display: 'block', fontSize: '13px', color: '#888', marginBottom: '6px' },
-  select: { width: '100%', padding: '10px 12px', backgroundColor: '#252525', border: '1px solid #333', borderRadius: '6px', color: '#fff', fontSize: '14px' },
-  input: { width: '100%', padding: '10px 12px', backgroundColor: '#252525', border: '1px solid #333', borderRadius: '6px', color: '#fff', fontSize: '14px', boxSizing: 'border-box' },
-  tokenHelp: { fontSize: '12px', color: '#666', marginBottom: '20px' },
+  label: { display: 'block', fontSize: '13px', color: '#6a6a82', marginBottom: '6px' },
+  select: { width: '100%', padding: '10px 12px', backgroundColor: '#252525', border: '1px solid #2d2d44', borderRadius: '6px', color: '#fff', fontSize: '14px' },
+  input: { width: '100%', padding: '10px 12px', backgroundColor: '#252525', border: '1px solid #2d2d44', borderRadius: '6px', color: '#fff', fontSize: '14px', boxSizing: 'border-box' },
+  tokenHelp: { fontSize: '12px', color: '#6a6a82', marginBottom: '20px' },
   modalActions: { display: 'flex', gap: '12px', justifyContent: 'flex-end' },
-  cancelBtn: { padding: '10px 20px', backgroundColor: '#333', border: 'none', borderRadius: '6px', color: '#fff', cursor: 'pointer' },
+  cancelBtn: { padding: '10px 20px', backgroundColor: '#2d2d44', border: 'none', borderRadius: '6px', color: '#fff', cursor: 'pointer' },
   confirmBtn: { padding: '10px 20px', backgroundColor: '#3b82f6', border: 'none', borderRadius: '6px', color: '#fff', cursor: 'pointer' }
 };
 

@@ -18,14 +18,14 @@ const LoadingFallback = () => (
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#212121',
+    backgroundColor: '#12121a',
     color: '#fff'
   }}>
     <div style={{ textAlign: 'center' }}>
       <div style={{
         width: '48px',
         height: '48px',
-        border: '3px solid #333',
+        border: '3px solid #2d2d44',
         borderTopColor: '#10b981',
         borderRadius: '50%',
         animation: 'spin 1s linear infinite',

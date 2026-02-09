@@ -16,8 +16,9 @@ let mammoth: typeof import('mammoth') | null = null;
 async function initPdfJs() {
   if (!pdfjsLib) {
     pdfjsLib = await import('pdfjs-dist');
-    // Set worker source
-    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+    // Use jsdelivr CDN which mirrors npm packages directly (cdnjs doesn't have v5+)
+    // pdfjs-dist v5 uses .mjs extensions
+    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
   }
   return pdfjsLib;
 }
@@ -193,7 +194,8 @@ class DocumentAnalysisServiceImpl {
     try {
       const pdfjs = await initPdfJs();
       const arrayBuffer = await file.arrayBuffer();
-      const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
+      // useWorkerFetch: false avoids network issues with worker, isEvalSupported: false for CSP
+      const pdf = await pdfjs.getDocument({ data: new Uint8Array(arrayBuffer) }).promise;
 
       const textParts: string[] = [];
       const numPages = pdf.numPages;

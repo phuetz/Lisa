@@ -42,10 +42,14 @@ createRoot(document.getElementById('root')!).render(
   </StrictMode>,
 );
 
-// Register service worker after app has loaded
-window.addEventListener('load', registerServiceWorker);
+// Skip service worker in Electron (not needed for desktop apps)
+const isElectron = typeof window !== 'undefined' && window.electronAPI !== undefined;
+if (!isElectron) {
+  // Register service worker after app has loaded
+  window.addEventListener('load', registerServiceWorker);
 
-// Reload the page when the new service worker activates
-navigator.serviceWorker?.addEventListener('controllerchange', () => {
-  window.location.reload();
-});
+  // Reload the page when the new service worker activates
+  navigator.serviceWorker?.addEventListener('controllerchange', () => {
+    window.location.reload();
+  });
+}

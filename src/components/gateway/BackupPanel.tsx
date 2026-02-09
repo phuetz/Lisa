@@ -118,8 +118,8 @@ export function BackupPanel() {
       case 'completed': return '#10b981';
       case 'in_progress': return '#3b82f6';
       case 'failed': return '#ef4444';
-      case 'expired': return '#666';
-      default: return '#888';
+      case 'expired': return '#6a6a82';
+      default: return '#6a6a82';
     }
   };
 
@@ -189,7 +189,7 @@ export function BackupPanel() {
                   onClick={() => handleToggleSchedule(schedule.id)}
                   style={{
                     ...styles.toggleButton,
-                    backgroundColor: schedule.enabled ? '#10b981' : '#333'
+                    backgroundColor: schedule.enabled ? '#10b981' : '#2d2d44'
                   }}
                 >
                   {schedule.enabled ? 'ON' : 'OFF'}
@@ -272,7 +272,7 @@ export function BackupPanel() {
 
 const styles: Record<string, React.CSSProperties> = {
   container: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#1a1a26',
     borderRadius: '12px',
     padding: '24px',
     color: '#fff'
@@ -319,7 +319,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   statLabel: {
     fontSize: '12px',
-    color: '#888',
+    color: '#6a6a82',
     marginTop: '4px'
   },
   section: {
@@ -341,7 +341,7 @@ const styles: Record<string, React.CSSProperties> = {
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: '14px 16px',
-    borderBottom: '1px solid #333'
+    borderBottom: '1px solid #2d2d44'
   },
   scheduleInfo: {
     display: 'flex',
@@ -354,7 +354,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   scheduleCron: {
     fontSize: '12px',
-    color: '#666',
+    color: '#6a6a82',
     fontFamily: 'monospace'
   },
   scheduleActions: {
@@ -364,7 +364,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   scheduleRetention: {
     fontSize: '12px',
-    color: '#888'
+    color: '#6a6a82'
   },
   toggleButton: {
     padding: '4px 12px',
@@ -383,11 +383,11 @@ const styles: Record<string, React.CSSProperties> = {
   emptyState: {
     padding: '40px',
     textAlign: 'center',
-    color: '#666'
+    color: '#6a6a82'
   },
   backupRow: {
     padding: '16px',
-    borderBottom: '1px solid #333',
+    borderBottom: '1px solid #2d2d44',
     cursor: 'pointer',
     transition: 'background-color 0.15s'
   },
@@ -416,18 +416,18 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     gap: '8px',
     fontSize: '12px',
-    color: '#888'
+    color: '#6a6a82'
   },
   backupActions: {
     display: 'flex',
     gap: '8px',
     marginTop: '12px',
     paddingTop: '12px',
-    borderTop: '1px solid #333'
+    borderTop: '1px solid #2d2d44'
   },
   actionButton: {
     padding: '6px 12px',
-    backgroundColor: '#333',
+    backgroundColor: '#2d2d44',
     border: 'none',
     borderRadius: '4px',
     color: '#fff',

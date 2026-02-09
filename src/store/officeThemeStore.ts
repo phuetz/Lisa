@@ -132,10 +132,69 @@ export const useOfficeThemeStore = create<OfficeThemeState>()(
         return allThemes.find((t) => t.id === state.themeId) || getDefaultTheme();
       },
 
-      getCurrentColors: () => {
+      getCurrentColors: (): ThemeColorScheme => {
+        // AudioReader Studio theme - override all legacy Office themes
+        // This maps to the CSS variables in index.css for consistency
         const state = get();
-        const theme = state.getCurrentTheme();
-        return state._resolvedMode === 'dark' ? theme.dark : theme.light;
+        const isDark = state._resolvedMode === 'dark';
+
+        if (isDark) {
+          return {
+            ribbon: '#0e0e16',
+            ribbonText: '#e8e8f0',
+            ribbonHover: '#1a1a26',
+            ribbonActive: 'rgba(245, 166, 35, 0.10)',
+            sidebar: '#0e0e16',
+            sidebarText: '#6a6a82',
+            sidebarHover: 'rgba(245, 166, 35, 0.06)',
+            sidebarActive: 'rgba(245, 166, 35, 0.10)',
+            editor: '#0a0a0f',
+            editorText: '#e8e8f0',
+            editorSecondary: '#9898b0',
+            dialog: '#12121a',
+            dialogText: '#e8e8f0',
+            accent: '#f5a623',
+            accentHover: '#e6951a',
+            accentText: '#0a0a0f',
+            border: '#2d2d44',
+            divider: '#1e1e30',
+            success: '#22c55e',
+            warning: '#f59e0b',
+            error: '#ef4444',
+            info: '#06b6d4',
+            inputBg: '#1a1a26',
+            inputBorder: '#2d2d44',
+            inputFocus: '#f5a623',
+          };
+        }
+
+        return {
+          ribbon: '#eaeaee',
+          ribbonText: '#1a1a2e',
+          ribbonHover: '#f0f0f4',
+          ribbonActive: 'rgba(224, 138, 0, 0.10)',
+          sidebar: '#eaeaee',
+          sidebarText: '#8a8a9e',
+          sidebarHover: 'rgba(224, 138, 0, 0.06)',
+          sidebarActive: 'rgba(224, 138, 0, 0.10)',
+          editor: '#f5f5f7',
+          editorText: '#1a1a2e',
+          editorSecondary: '#5a5a70',
+          dialog: '#ffffff',
+          dialogText: '#1a1a2e',
+          accent: '#e08a00',
+          accentHover: '#c87a00',
+          accentText: '#ffffff',
+          border: '#d4d4dc',
+          divider: '#eaeaf0',
+          success: '#22c55e',
+          warning: '#f59e0b',
+          error: '#ef4444',
+          info: '#06b6d4',
+          inputBg: '#f0f0f4',
+          inputBorder: '#d4d4dc',
+          inputFocus: '#e08a00',
+        };
       },
 
       getAllThemes: () => {

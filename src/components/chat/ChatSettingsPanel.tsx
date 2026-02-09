@@ -192,9 +192,9 @@ export const ChatSettingsPanel = ({ isOpen, onClose }: ChatSettingsPanelProps) =
           width: '90%',
           maxWidth: '700px',
           maxHeight: '85vh',
-          backgroundColor: '#1a1a1a',
+          backgroundColor: '#1a1a26',
           borderRadius: '16px',
-          border: '1px solid #333',
+          border: '1px solid #2d2d44',
           overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column',
@@ -208,11 +208,11 @@ export const ChatSettingsPanel = ({ isOpen, onClose }: ChatSettingsPanelProps) =
             alignItems: 'center',
             justifyContent: 'space-between',
             padding: '16px 20px',
-            borderBottom: '1px solid #333',
+            borderBottom: '1px solid #2d2d44',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <Settings size={20} color="#10a37f" />
+            <Settings size={20} color="#f5a623" />
             <h2 style={{ fontSize: '18px', fontWeight: 600, color: '#fff', margin: 0 }}>
               Paramètres
             </h2>
@@ -223,7 +223,7 @@ export const ChatSettingsPanel = ({ isOpen, onClose }: ChatSettingsPanelProps) =
               padding: '8px',
               backgroundColor: 'transparent',
               border: 'none',
-              color: '#888',
+              color: '#6a6a82',
               cursor: 'pointer',
               borderRadius: '8px',
             }}
@@ -238,7 +238,7 @@ export const ChatSettingsPanel = ({ isOpen, onClose }: ChatSettingsPanelProps) =
             display: 'flex',
             gap: '4px',
             padding: '12px 16px',
-            borderBottom: '1px solid #333',
+            borderBottom: '1px solid #2d2d44',
             overflowX: 'auto',
           }}
         >
@@ -251,10 +251,10 @@ export const ChatSettingsPanel = ({ isOpen, onClose }: ChatSettingsPanelProps) =
                 alignItems: 'center',
                 gap: '6px',
                 padding: '8px 14px',
-                backgroundColor: activeTab === tab.id ? '#10a37f20' : 'transparent',
+                backgroundColor: activeTab === tab.id ? '#f5a62320' : 'transparent',
                 border: 'none',
                 borderRadius: '8px',
-                color: activeTab === tab.id ? '#10a37f' : '#888',
+                color: activeTab === tab.id ? '#f5a623' : '#6a6a82',
                 cursor: 'pointer',
                 fontSize: '13px',
                 fontWeight: 500,
@@ -274,7 +274,7 @@ export const ChatSettingsPanel = ({ isOpen, onClose }: ChatSettingsPanelProps) =
           {activeTab === 'model' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '13px', color: '#888', marginBottom: '8px' }}>
+                <label style={{ display: 'block', fontSize: '13px', color: '#6a6a82', marginBottom: '8px' }}>
                   Modèle LLM
                 </label>
                 <select
@@ -283,7 +283,7 @@ export const ChatSettingsPanel = ({ isOpen, onClose }: ChatSettingsPanelProps) =
                   style={{
                     width: '100%',
                     padding: '10px 12px',
-                    backgroundColor: '#2d2d2d',
+                    backgroundColor: '#12121a',
                     border: '1px solid #404040',
                     borderRadius: '8px',
                     color: '#fff',
@@ -300,7 +300,7 @@ export const ChatSettingsPanel = ({ isOpen, onClose }: ChatSettingsPanelProps) =
 
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                  <label style={{ fontSize: '13px', color: '#888' }}>Température</label>
+                  <label style={{ fontSize: '13px', color: '#6a6a82' }}>Température</label>
                   <span style={{ fontSize: '13px', color: '#fff' }}>{temperature.toFixed(1)}</span>
                 </div>
                 <input
@@ -312,14 +312,14 @@ export const ChatSettingsPanel = ({ isOpen, onClose }: ChatSettingsPanelProps) =
                   onChange={(e) => setTemperature(parseFloat(e.target.value))}
                   style={{ width: '100%' }}
                 />
-                <p style={{ fontSize: '11px', color: '#666', marginTop: '4px' }}>
+                <p style={{ fontSize: '11px', color: '#6a6a82', marginTop: '4px' }}>
                   Plus haut = plus créatif, plus bas = plus précis
                 </p>
               </div>
 
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                  <label style={{ fontSize: '13px', color: '#888' }}>Tokens max</label>
+                  <label style={{ fontSize: '13px', color: '#6a6a82' }}>Tokens max</label>
                   <span style={{ fontSize: '13px', color: '#fff' }}>{maxTokens}</span>
                 </div>
                 <input
@@ -359,8 +359,8 @@ export const ChatSettingsPanel = ({ isOpen, onClose }: ChatSettingsPanelProps) =
                       onClick={() => setPreviewPromptId(prompt.id)}
                       style={{
                         padding: '10px 12px',
-                        backgroundColor: isPreviewing ? '#10a37f20' : isSelected ? '#2d4a3d' : '#2d2d2d',
-                        border: `1px solid ${isPreviewing ? '#10a37f' : isSelected ? '#10a37f50' : '#404040'}`,
+                        backgroundColor: isPreviewing ? '#f5a62320' : isSelected ? '#3d3520' : '#12121a',
+                        border: `1px solid ${isPreviewing ? '#f5a623' : isSelected ? '#f5a62350' : '#404040'}`,
                         borderRadius: '8px',
                         cursor: 'pointer',
                         transition: 'all 0.2s',
@@ -368,9 +368,9 @@ export const ChatSettingsPanel = ({ isOpen, onClose }: ChatSettingsPanelProps) =
                     >
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          {isSelected && <Check size={12} color="#10a37f" />}
+                          {isSelected && <Check size={12} color="#f5a623" />}
                           <span style={{ 
-                            color: isSelected ? '#10a37f' : '#fff', 
+                            color: isSelected ? '#f5a623' : '#fff', 
                             fontWeight: isSelected ? 600 : 500, 
                             fontSize: '13px' 
                           }}>
@@ -431,10 +431,10 @@ export const ChatSettingsPanel = ({ isOpen, onClose }: ChatSettingsPanelProps) =
                     justifyContent: 'center',
                     gap: '6px',
                     padding: '10px',
-                    backgroundColor: '#2d2d2d',
+                    backgroundColor: '#12121a',
                     border: '1px dashed #404040',
                     borderRadius: '8px',
-                    color: '#888',
+                    color: '#6a6a82',
                     cursor: 'pointer',
                     fontSize: '12px',
                     marginTop: '4px',
@@ -450,9 +450,9 @@ export const ChatSettingsPanel = ({ isOpen, onClose }: ChatSettingsPanelProps) =
                 flex: 1, 
                 display: 'flex', 
                 flexDirection: 'column',
-                backgroundColor: '#1a1a1a',
+                backgroundColor: '#1a1a26',
                 borderRadius: '8px',
-                border: '1px solid #333',
+                border: '1px solid #2d2d44',
                 overflow: 'hidden',
               }}>
                 {/* Editing Mode */}
@@ -460,8 +460,8 @@ export const ChatSettingsPanel = ({ isOpen, onClose }: ChatSettingsPanelProps) =
                   <>
                     <div style={{
                       padding: '12px 16px',
-                      backgroundColor: '#252525',
-                      borderBottom: '1px solid #333',
+                      backgroundColor: '#1a1a26',
+                      borderBottom: '1px solid #2d2d44',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
@@ -473,7 +473,7 @@ export const ChatSettingsPanel = ({ isOpen, onClose }: ChatSettingsPanelProps) =
                         style={{
                           flex: 1,
                           padding: '6px 10px',
-                          backgroundColor: '#1a1a1a',
+                          backgroundColor: '#1a1a26',
                           border: '1px solid #404040',
                           borderRadius: '4px',
                           color: '#fff',
@@ -486,7 +486,7 @@ export const ChatSettingsPanel = ({ isOpen, onClose }: ChatSettingsPanelProps) =
                           onClick={handleSaveEdit}
                           style={{
                             padding: '6px 12px',
-                            backgroundColor: '#10a37f',
+                            backgroundColor: '#f5a623',
                             border: 'none',
                             borderRadius: '4px',
                             color: '#fff',
@@ -518,7 +518,7 @@ export const ChatSettingsPanel = ({ isOpen, onClose }: ChatSettingsPanelProps) =
                       style={{
                         flex: 1,
                         padding: '16px',
-                        backgroundColor: '#1a1a1a',
+                        backgroundColor: '#1a1a26',
                         border: 'none',
                         color: '#e0e0e0',
                         fontSize: '13px',
@@ -535,8 +535,8 @@ export const ChatSettingsPanel = ({ isOpen, onClose }: ChatSettingsPanelProps) =
                   <>
                     <div style={{
                       padding: '12px 16px',
-                      backgroundColor: '#252525',
-                      borderBottom: '1px solid #333',
+                      backgroundColor: '#1a1a26',
+                      borderBottom: '1px solid #2d2d44',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
@@ -549,7 +549,7 @@ export const ChatSettingsPanel = ({ isOpen, onClose }: ChatSettingsPanelProps) =
                         style={{
                           flex: 1,
                           padding: '6px 10px',
-                          backgroundColor: '#1a1a1a',
+                          backgroundColor: '#1a1a26',
                           border: '1px solid #404040',
                           borderRadius: '4px',
                           color: '#fff',
@@ -561,7 +561,7 @@ export const ChatSettingsPanel = ({ isOpen, onClose }: ChatSettingsPanelProps) =
                           onClick={handleAddPrompt}
                           style={{
                             padding: '6px 12px',
-                            backgroundColor: '#10a37f',
+                            backgroundColor: '#f5a623',
                             border: 'none',
                             borderRadius: '4px',
                             color: '#fff',
@@ -594,7 +594,7 @@ export const ChatSettingsPanel = ({ isOpen, onClose }: ChatSettingsPanelProps) =
                       style={{
                         flex: 1,
                         padding: '16px',
-                        backgroundColor: '#1a1a1a',
+                        backgroundColor: '#1a1a26',
                         border: 'none',
                         color: '#e0e0e0',
                         fontSize: '13px',
@@ -616,22 +616,22 @@ export const ChatSettingsPanel = ({ isOpen, onClose }: ChatSettingsPanelProps) =
                     <>
                       <div style={{
                         padding: '12px 16px',
-                        backgroundColor: '#252525',
-                        borderBottom: '1px solid #333',
+                        backgroundColor: '#1a1a26',
+                        borderBottom: '1px solid #2d2d44',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
                       }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <MessageSquare size={16} color="#10a37f" />
+                          <MessageSquare size={16} color="#f5a623" />
                           <span style={{ color: '#fff', fontWeight: 600, fontSize: '14px' }}>
                             {previewPrompt.name}
                           </span>
                           {isCurrentlySelected && (
                             <span style={{
                               padding: '2px 8px',
-                              backgroundColor: '#10a37f30',
-                              color: '#10a37f',
+                              backgroundColor: '#f5a62330',
+                              color: '#f5a623',
                               borderRadius: '4px',
                               fontSize: '11px',
                               fontWeight: 500,
@@ -645,7 +645,7 @@ export const ChatSettingsPanel = ({ isOpen, onClose }: ChatSettingsPanelProps) =
                             onClick={() => setSelectedSystemPrompt(previewPromptId)}
                             style={{
                               padding: '6px 12px',
-                              backgroundColor: '#10a37f',
+                              backgroundColor: '#f5a623',
                               border: 'none',
                               borderRadius: '4px',
                               color: '#fff',
@@ -685,7 +685,7 @@ export const ChatSettingsPanel = ({ isOpen, onClose }: ChatSettingsPanelProps) =
                     flexDirection: 'column',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    color: '#666',
+                    color: '#6a6a82',
                     gap: '12px',
                   }}>
                     <MessageSquare size={48} strokeWidth={1} />
@@ -712,10 +712,10 @@ export const ChatSettingsPanel = ({ isOpen, onClose }: ChatSettingsPanelProps) =
                     alignItems: 'center',
                     gap: '12px',
                     padding: '14px 16px',
-                    backgroundColor: theme === t.id ? '#10a37f20' : '#2d2d2d',
-                    border: `1px solid ${theme === t.id ? '#10a37f' : '#404040'}`,
+                    backgroundColor: theme === t.id ? '#f5a62320' : '#12121a',
+                    border: `1px solid ${theme === t.id ? '#f5a623' : '#404040'}`,
                     borderRadius: '8px',
-                    color: theme === t.id ? '#10a37f' : '#fff',
+                    color: theme === t.id ? '#f5a623' : '#fff',
                     cursor: 'pointer',
                     fontSize: '14px',
                     textAlign: 'left',
@@ -776,15 +776,15 @@ export const ChatSettingsPanel = ({ isOpen, onClose }: ChatSettingsPanelProps) =
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     padding: '14px 16px',
-                    backgroundColor: '#2d2d2d',
+                    backgroundColor: '#12121a',
                     borderRadius: '8px',
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <div style={{ color: feature.enabled ? '#10a37f' : '#666' }}>{feature.icon}</div>
+                    <div style={{ color: feature.enabled ? '#f5a623' : '#6a6a82' }}>{feature.icon}</div>
                     <div>
                       <div style={{ color: '#fff', fontSize: '14px', fontWeight: 500 }}>{feature.label}</div>
-                      <div style={{ color: '#888', fontSize: '12px' }}>{feature.description}</div>
+                      <div style={{ color: '#6a6a82', fontSize: '12px' }}>{feature.description}</div>
                     </div>
                   </div>
                   <button
@@ -793,7 +793,7 @@ export const ChatSettingsPanel = ({ isOpen, onClose }: ChatSettingsPanelProps) =
                       width: '44px',
                       height: '24px',
                       borderRadius: '12px',
-                      backgroundColor: feature.enabled ? '#10a37f' : '#404040',
+                      backgroundColor: feature.enabled ? '#f5a623' : '#404040',
                       border: 'none',
                       cursor: 'pointer',
                       position: 'relative',
@@ -821,11 +821,11 @@ export const ChatSettingsPanel = ({ isOpen, onClose }: ChatSettingsPanelProps) =
                 <div style={{
                   marginTop: '8px',
                   padding: '16px',
-                  backgroundColor: '#252525',
+                  backgroundColor: '#1a1a26',
                   borderRadius: '8px',
-                  border: '1px solid #333',
+                  border: '1px solid #2d2d44',
                 }}>
-                  <div style={{ color: '#888', fontSize: '12px', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  <div style={{ color: '#6a6a82', fontSize: '12px', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                     Paramètres RAG avancés
                   </div>
 
@@ -840,7 +840,7 @@ export const ChatSettingsPanel = ({ isOpen, onClose }: ChatSettingsPanelProps) =
                       style={{
                         width: '100%',
                         padding: '8px 12px',
-                        backgroundColor: '#1a1a1a',
+                        backgroundColor: '#1a1a26',
                         border: '1px solid #404040',
                         borderRadius: '6px',
                         color: '#fff',
@@ -857,7 +857,7 @@ export const ChatSettingsPanel = ({ isOpen, onClose }: ChatSettingsPanelProps) =
                   <div style={{ marginBottom: '12px' }}>
                     <label style={{ display: 'flex', justifyContent: 'space-between', color: '#aaa', fontSize: '13px', marginBottom: '6px' }}>
                       <span>Seuil de similarité</span>
-                      <span style={{ color: '#10a37f' }}>{ragSimilarityThreshold.toFixed(2)}</span>
+                      <span style={{ color: '#f5a623' }}>{ragSimilarityThreshold.toFixed(2)}</span>
                     </label>
                     <input
                       type="range"
@@ -866,7 +866,7 @@ export const ChatSettingsPanel = ({ isOpen, onClose }: ChatSettingsPanelProps) =
                       step="0.05"
                       value={ragSimilarityThreshold}
                       onChange={(e) => setRagSimilarityThreshold(parseFloat(e.target.value))}
-                      style={{ width: '100%', accentColor: '#10a37f' }}
+                      style={{ width: '100%', accentColor: '#f5a623' }}
                     />
                   </div>
 
@@ -874,7 +874,7 @@ export const ChatSettingsPanel = ({ isOpen, onClose }: ChatSettingsPanelProps) =
                   <div>
                     <label style={{ display: 'flex', justifyContent: 'space-between', color: '#aaa', fontSize: '13px', marginBottom: '6px' }}>
                       <span>Résultats max</span>
-                      <span style={{ color: '#10a37f' }}>{ragMaxResults}</span>
+                      <span style={{ color: '#f5a623' }}>{ragMaxResults}</span>
                     </label>
                     <input
                       type="range"
@@ -883,7 +883,7 @@ export const ChatSettingsPanel = ({ isOpen, onClose }: ChatSettingsPanelProps) =
                       step="1"
                       value={ragMaxResults}
                       onChange={(e) => setRagMaxResults(parseInt(e.target.value))}
-                      style={{ width: '100%', accentColor: '#10a37f' }}
+                      style={{ width: '100%', accentColor: '#f5a623' }}
                     />
                   </div>
                 </div>
@@ -906,7 +906,7 @@ export const ChatSettingsPanel = ({ isOpen, onClose }: ChatSettingsPanelProps) =
                   alignItems: 'center',
                   gap: '12px',
                   padding: '14px 16px',
-                  backgroundColor: '#2d2d2d',
+                  backgroundColor: '#12121a',
                   border: '1px solid #404040',
                   borderRadius: '8px',
                   color: '#fff',
@@ -915,10 +915,10 @@ export const ChatSettingsPanel = ({ isOpen, onClose }: ChatSettingsPanelProps) =
                   textAlign: 'left',
                 }}
               >
-                <Download size={18} color="#10a37f" />
+                <Download size={18} color="#f5a623" />
                 <div>
                   <div style={{ fontWeight: 500 }}>Exporter toutes les données</div>
-                  <div style={{ fontSize: '12px', color: '#888' }}>
+                  <div style={{ fontSize: '12px', color: '#6a6a82' }}>
                     Télécharger un fichier JSON avec tous vos paramètres et conversations
                   </div>
                 </div>
@@ -930,7 +930,7 @@ export const ChatSettingsPanel = ({ isOpen, onClose }: ChatSettingsPanelProps) =
                   alignItems: 'center',
                   gap: '12px',
                   padding: '14px 16px',
-                  backgroundColor: '#2d2d2d',
+                  backgroundColor: '#12121a',
                   border: '1px solid #404040',
                   borderRadius: '8px',
                   color: '#fff',
@@ -941,7 +941,7 @@ export const ChatSettingsPanel = ({ isOpen, onClose }: ChatSettingsPanelProps) =
                 <Upload size={18} color="#3b82f6" />
                 <div>
                   <div style={{ fontWeight: 500 }}>Importer des données</div>
-                  <div style={{ fontSize: '12px', color: '#888' }}>Restaurer depuis un fichier de sauvegarde</div>
+                  <div style={{ fontSize: '12px', color: '#6a6a82' }}>Restaurer depuis un fichier de sauvegarde</div>
                 </div>
                 <input type="file" accept=".json" onChange={handleImportData} style={{ display: 'none' }} />
               </label>
@@ -957,7 +957,7 @@ export const ChatSettingsPanel = ({ isOpen, onClose }: ChatSettingsPanelProps) =
                   alignItems: 'center',
                   gap: '12px',
                   padding: '14px 16px',
-                  backgroundColor: '#2d2d2d',
+                  backgroundColor: '#12121a',
                   border: '1px solid #ef4444',
                   borderRadius: '8px',
                   color: '#ef4444',
@@ -969,7 +969,7 @@ export const ChatSettingsPanel = ({ isOpen, onClose }: ChatSettingsPanelProps) =
                 <RotateCcw size={18} />
                 <div>
                   <div style={{ fontWeight: 500 }}>Réinitialiser les paramètres</div>
-                  <div style={{ fontSize: '12px', color: '#888' }}>Remettre tous les paramètres par défaut</div>
+                  <div style={{ fontSize: '12px', color: '#6a6a82' }}>Remettre tous les paramètres par défaut</div>
                 </div>
               </button>
             </div>

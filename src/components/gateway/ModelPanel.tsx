@@ -271,7 +271,7 @@ export function ModelPanel() {
                   <span style={styles.providerName}>{provider.provider}</span>
                   <span style={{
                     ...styles.providerStatus,
-                    color: provider.isConfigured ? '#10b981' : '#666'
+                    color: provider.isConfigured ? '#10b981' : '#6a6a82'
                   }}>
                     {provider.isConfigured ? '✓ Configuré' : 'Non configuré'}
                   </span>
@@ -290,7 +290,7 @@ export function ModelPanel() {
 
 const styles: Record<string, React.CSSProperties> = {
   container: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#1a1a26',
     borderRadius: '12px',
     padding: '24px',
     color: '#fff'
@@ -298,7 +298,7 @@ const styles: Record<string, React.CSSProperties> = {
   loading: {
     padding: '40px',
     textAlign: 'center',
-    color: '#888'
+    color: '#6a6a82'
   },
   header: {
     marginBottom: '20px'
@@ -318,7 +318,7 @@ const styles: Record<string, React.CSSProperties> = {
     backgroundColor: '#252525',
     border: 'none',
     borderRadius: '8px',
-    color: '#888',
+    color: '#6a6a82',
     cursor: 'pointer',
     fontSize: '13px'
   },
@@ -360,7 +360,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   modelProvider: {
     fontSize: '12px',
-    color: '#888',
+    color: '#6a6a82',
     textTransform: 'capitalize'
   },
   defaultBadge: {
@@ -377,7 +377,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   metaItem: {
     fontSize: '12px',
-    color: '#888'
+    color: '#6a6a82'
   },
   capabilities: {
     display: 'flex',
@@ -386,7 +386,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   capBadge: {
     padding: '3px 8px',
-    backgroundColor: '#333',
+    backgroundColor: '#2d2d44',
     borderRadius: '4px',
     fontSize: '10px',
     color: '#aaa'
@@ -396,11 +396,11 @@ const styles: Record<string, React.CSSProperties> = {
     gap: '8px',
     marginTop: '12px',
     paddingTop: '12px',
-    borderTop: '1px solid #333'
+    borderTop: '1px solid #2d2d44'
   },
   actionButton: {
     padding: '6px 12px',
-    backgroundColor: '#333',
+    backgroundColor: '#2d2d44',
     border: 'none',
     borderRadius: '6px',
     color: '#fff',
@@ -434,7 +434,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   presetsLabel: {
     fontSize: '13px',
-    color: '#888'
+    color: '#6a6a82'
   },
   presetButton: {
     padding: '6px 12px',
@@ -474,7 +474,7 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     justifyContent: 'space-between',
     fontSize: '11px',
-    color: '#666',
+    color: '#6a6a82',
     marginTop: '6px'
   },
   providersList: {
@@ -503,7 +503,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   providerModels: {
     fontSize: '12px',
-    color: '#666',
+    color: '#6a6a82',
     marginTop: '6px',
     marginLeft: '36px'
   }

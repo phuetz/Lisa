@@ -236,16 +236,16 @@ export function CommandPalette({ isOpen, onClose, onAction }: CommandPaletteProp
       <div style={{
         width: '560px',
         maxWidth: '90vw',
-        backgroundColor: '#1a1a1a',
+        backgroundColor: '#1a1a26',
         borderRadius: '12px',
-        border: '1px solid #333',
+        border: '1px solid #2d2d44',
         boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
         overflow: 'hidden'
       }}>
         {/* Input */}
         <div style={{
           padding: '16px',
-          borderBottom: '1px solid #333',
+          borderBottom: '1px solid #2d2d44',
           display: 'flex',
           alignItems: 'center',
           gap: '12px'
@@ -275,10 +275,10 @@ export function CommandPalette({ isOpen, onClose, onAction }: CommandPaletteProp
           />
           <kbd style={{
             padding: '4px 8px',
-            backgroundColor: '#333',
+            backgroundColor: '#2d2d44',
             borderRadius: '4px',
             fontSize: '12px',
-            color: '#888'
+            color: '#6a6a82'
           }}>Esc</kbd>
         </div>
 
@@ -294,7 +294,7 @@ export function CommandPalette({ isOpen, onClose, onAction }: CommandPaletteProp
             <div style={{
               padding: '32px',
               textAlign: 'center',
-              color: '#666'
+              color: '#6a6a82'
             }}>
               {query ? 'Aucun résultat' : 'Commencez à taper pour rechercher'}
             </div>
@@ -329,7 +329,7 @@ export function CommandPalette({ isOpen, onClose, onAction }: CommandPaletteProp
                   </div>
                   {item.description && (
                     <div style={{
-                      color: '#888',
+                      color: '#6a6a82',
                       fontSize: '13px',
                       whiteSpace: 'nowrap',
                       overflow: 'hidden',
@@ -342,10 +342,10 @@ export function CommandPalette({ isOpen, onClose, onAction }: CommandPaletteProp
                 {item.shortcut && (
                   <kbd style={{
                     padding: '4px 8px',
-                    backgroundColor: '#333',
+                    backgroundColor: '#2d2d44',
                     borderRadius: '4px',
                     fontSize: '11px',
-                    color: '#888'
+                    color: '#6a6a82'
                   }}>
                     {item.shortcut}
                   </kbd>
@@ -358,22 +358,22 @@ export function CommandPalette({ isOpen, onClose, onAction }: CommandPaletteProp
         {/* Footer */}
         <div style={{
           padding: '10px 16px',
-          borderTop: '1px solid #333',
+          borderTop: '1px solid #2d2d44',
           display: 'flex',
           gap: '16px',
           fontSize: '12px',
-          color: '#666'
+          color: '#6a6a82'
         }}>
           <span>
-            <kbd style={{ padding: '2px 4px', backgroundColor: '#333', borderRadius: '2px', marginRight: '4px' }}>↑↓</kbd>
+            <kbd style={{ padding: '2px 4px', backgroundColor: '#2d2d44', borderRadius: '2px', marginRight: '4px' }}>↑↓</kbd>
             naviguer
           </span>
           <span>
-            <kbd style={{ padding: '2px 4px', backgroundColor: '#333', borderRadius: '2px', marginRight: '4px' }}>↵</kbd>
+            <kbd style={{ padding: '2px 4px', backgroundColor: '#2d2d44', borderRadius: '2px', marginRight: '4px' }}>↵</kbd>
             sélectionner
           </span>
           <span>
-            <kbd style={{ padding: '2px 4px', backgroundColor: '#333', borderRadius: '2px', marginRight: '4px' }}>Tab</kbd>
+            <kbd style={{ padding: '2px 4px', backgroundColor: '#2d2d44', borderRadius: '2px', marginRight: '4px' }}>Tab</kbd>
             changer mode
           </span>
         </div>

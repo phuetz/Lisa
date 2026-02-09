@@ -127,7 +127,7 @@ export const ChatLayoutMobile = () => {
             padding: '8px',
             backgroundColor: 'transparent',
             border: 'none',
-            color: '#ececf1',
+            color: '#e8e8f0',
             cursor: 'pointer',
             borderRadius: '6px',
             display: 'flex',
@@ -141,7 +141,7 @@ export const ChatLayoutMobile = () => {
         <h1 style={{
           fontSize: '16px',
           fontWeight: 600,
-          color: '#ececf1',
+          color: '#e8e8f0',
           margin: 0,
           flex: 1,
           textAlign: 'center'
@@ -201,7 +201,7 @@ export const ChatLayoutMobile = () => {
             width: '280px',
             maxWidth: '80vw',
             backgroundColor: '#171717',
-            borderRight: '1px solid #2d2d2d',
+            borderRight: '1px solid #2d2d44',
             zIndex: 80,
             display: 'flex',
             flexDirection: 'column'
@@ -209,7 +209,7 @@ export const ChatLayoutMobile = () => {
             {/* Sidebar Header */}
             <div style={{
               padding: '12px 16px',
-              borderBottom: '1px solid #2d2d2d',
+              borderBottom: '1px solid #2d2d44',
               paddingTop: 'max(12px, env(safe-area-inset-top))',
               display: 'flex',
               flexDirection: 'column',
@@ -223,7 +223,7 @@ export const ChatLayoutMobile = () => {
                     alignItems: 'center',
                     gap: '8px',
                     padding: '10px 16px',
-                    backgroundColor: '#2d2d2d',
+                    backgroundColor: '#12121a',
                     border: 'none',
                     borderRadius: '8px',
                     color: '#fff',
@@ -241,7 +241,7 @@ export const ChatLayoutMobile = () => {
                     padding: '8px',
                     backgroundColor: 'transparent',
                     border: 'none',
-                    color: '#888',
+                    color: '#6a6a82',
                     cursor: 'pointer'
                   }}
                 >
@@ -251,7 +251,7 @@ export const ChatLayoutMobile = () => {
               
               {/* Search */}
               <div style={{ position: 'relative' }}>
-                <Search size={16} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#666' }} />
+                <Search size={16} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#6a6a82' }} />
                 <input
                   type="text"
                   placeholder="Rechercher..."
@@ -260,8 +260,8 @@ export const ChatLayoutMobile = () => {
                   style={{
                     width: '100%',
                     padding: '8px 8px 8px 34px',
-                    backgroundColor: '#2d2d2d',
-                    border: '1px solid #3d3d3d',
+                    backgroundColor: '#12121a',
+                    border: '1px solid #3d3d5c',
                     borderRadius: '6px',
                     color: '#fff',
                     fontSize: '13px',
@@ -280,9 +280,9 @@ export const ChatLayoutMobile = () => {
                   gap: '6px',
                   padding: '8px',
                   backgroundColor: 'transparent',
-                  border: '1px solid #3d3d3d',
+                  border: '1px solid #3d3d5c',
                   borderRadius: '6px',
-                  color: '#888',
+                  color: '#6a6a82',
                   cursor: 'pointer',
                   fontSize: '12px'
                 }}
@@ -298,7 +298,7 @@ export const ChatLayoutMobile = () => {
                 <div style={{ 
                   padding: '20px', 
                   textAlign: 'center', 
-                  color: '#666',
+                  color: '#6a6a82',
                   fontSize: '14px'
                 }}>
                   Aucune conversation
@@ -315,14 +315,14 @@ export const ChatLayoutMobile = () => {
                         alignItems: 'center',
                         padding: '10px 12px',
                         cursor: 'pointer',
-                        backgroundColor: conv.id === currentConversationId ? '#2d2d2d' : 'transparent'
+                        backgroundColor: conv.id === currentConversationId ? '#12121a' : 'transparent'
                       }}
                       onClick={() => {
                         setCurrentConversation(conv.id);
                         setSidebarOpen(false);
                       }}
                     >
-                      <MessageSquare size={16} style={{ color: '#666', marginRight: '10px', flexShrink: 0 }} />
+                      <MessageSquare size={16} style={{ color: '#6a6a82', marginRight: '10px', flexShrink: 0 }} />
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{
                           color: '#fff',
@@ -333,7 +333,7 @@ export const ChatLayoutMobile = () => {
                         }}>
                           {conv.title}
                         </div>
-                        <div style={{ color: '#666', fontSize: '11px', marginTop: '2px' }}>
+                        <div style={{ color: '#6a6a82', fontSize: '11px', marginTop: '2px' }}>
                           {formatRelativeDate(conv.updatedAt)}
                         </div>
                       </div>
@@ -354,7 +354,7 @@ export const ChatLayoutMobile = () => {
             {/* Sidebar Footer */}
             <div style={{
               padding: '12px 16px',
-              borderTop: '1px solid #2d2d2d',
+              borderTop: '1px solid #2d2d44',
               paddingBottom: 'max(12px, env(safe-area-inset-bottom))'
             }}>
               <button
@@ -368,7 +368,7 @@ export const ChatLayoutMobile = () => {
                   backgroundColor: 'transparent',
                   border: 'none',
                   borderRadius: '8px',
-                  color: '#888',
+                  color: '#6a6a82',
                   cursor: 'pointer'
                 }}
               >

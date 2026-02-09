@@ -26,7 +26,7 @@ const DEFAULT_CONFIG: SplashConfig = {
   fadeInDuration: 300,
   autoHide: false,
   showSpinner: false,
-  backgroundColor: '#1a1a1a',
+  backgroundColor: '#1a1a26',
 };
 
 // ============================================================================

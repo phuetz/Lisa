@@ -21,13 +21,13 @@ export const InfoPanel = ({ onClose }: InfoPanelProps) => {
   }
 
   return (
-    <aside className="w-[320px] bg-[#1a1a1a] border-l border-[#404040] flex flex-col">
+    <aside className="w-[320px] bg-[#1a1a26] border-l border-[#2d2d44] flex flex-col">
       {/* Header */}
-      <div className="p-4 border-b border-[#404040] flex items-center justify-between">
+      <div className="p-4 border-b border-[#2d2d44] flex items-center justify-between">
         <h2 className="text-lg font-semibold text-white">Informations</h2>
         <button 
           onClick={onClose}
-          className="p-2 hover:bg-[#2a2a2a] rounded-lg transition-colors text-gray-400 hover:text-white"
+          className="p-2 hover:bg-[#1a1a26] rounded-lg transition-colors text-gray-400 hover:text-white"
         >
           <X size={20} />
         </button>
@@ -68,13 +68,13 @@ export const InfoPanel = ({ onClose }: InfoPanelProps) => {
             Statistiques
           </h3>
           <div className="space-y-2">
-            <div className="p-3 bg-[#2a2a2a] rounded-lg">
+            <div className="p-3 bg-[#1a1a26] rounded-lg">
               <div className="text-xs text-gray-400 mb-1">Messages utilisateur</div>
               <div className="text-2xl font-bold text-white">
                 {conversation.messages.filter(m => m.role === 'user').length}
               </div>
             </div>
-            <div className="p-3 bg-[#2a2a2a] rounded-lg">
+            <div className="p-3 bg-[#1a1a26] rounded-lg">
               <div className="text-xs text-gray-400 mb-1">Messages assistant</div>
               <div className="text-2xl font-bold text-white">
                 {conversation.messages.filter(m => m.role === 'assistant').length}
@@ -112,7 +112,7 @@ export const InfoPanel = ({ onClose }: InfoPanelProps) => {
             Paramètres
           </h3>
           <div className="space-y-2">
-            <label className="flex items-center justify-between p-3 bg-[#2a2a2a] rounded-lg cursor-pointer hover:bg-[#333333] transition-colors">
+            <label className="flex items-center justify-between p-3 bg-[#1a1a26] rounded-lg cursor-pointer hover:bg-[#2d2d44] transition-colors">
               <span className="text-sm text-white">Épinglé</span>
               <input 
                 type="checkbox" 
@@ -123,7 +123,7 @@ export const InfoPanel = ({ onClose }: InfoPanelProps) => {
                 className="w-4 h-4"
               />
             </label>
-            <label className="flex items-center justify-between p-3 bg-[#2a2a2a] rounded-lg cursor-pointer hover:bg-[#333333] transition-colors">
+            <label className="flex items-center justify-between p-3 bg-[#1a1a26] rounded-lg cursor-pointer hover:bg-[#2d2d44] transition-colors">
               <span className="text-sm text-white">Archivé</span>
               <input 
                 type="checkbox" 

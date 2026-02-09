@@ -38,11 +38,11 @@ export const ModernButton = React.forwardRef<HTMLButtonElement, ModernButtonProp
     ref
   ) => {
     const variantClasses = {
-      primary: 'bg-[var(--color-brand,#10a37f)] hover:bg-[var(--color-brand-hover,#0d8c6d)] text-white',
-      secondary: 'bg-[var(--bg-secondary,#2d2d2d)] hover:bg-[var(--bg-hover,rgba(255,255,255,0.06))] text-white border border-[var(--border-primary,#424242)]',
+      primary: 'bg-[var(--color-accent,#f5a623)] hover:bg-[var(--color-accent-hover,#e6951a)] text-white',
+      secondary: 'bg-[var(--bg-surface,#12121a)] hover:bg-[var(--bg-hover,rgba(255,255,255,0.06))] text-white border border-[var(--border-primary,#2d2d44)]',
       danger: 'bg-[var(--color-error,#ef4444)] hover:bg-red-600 text-white',
-      success: 'bg-[var(--color-brand,#10a37f)] hover:bg-[var(--color-brand-hover,#0d8c6d)] text-white',
-      ghost: 'bg-transparent hover:bg-[var(--bg-hover,rgba(255,255,255,0.06))] text-[var(--text-secondary,#b4b4b4)] border border-[var(--border-primary,#424242)]',
+      success: 'bg-[var(--color-accent,#f5a623)] hover:bg-[var(--color-accent-hover,#e6951a)] text-white',
+      ghost: 'bg-transparent hover:bg-[var(--bg-hover,rgba(255,255,255,0.06))] text-[var(--text-secondary,#9898b0)] border border-[var(--border-primary,#2d2d44)]',
     };
 
     const sizeClasses = {
@@ -62,9 +62,9 @@ export const ModernButton = React.forwardRef<HTMLButtonElement, ModernButtonProp
           flex items-center justify-center gap-2
           font-medium transition-all duration-200
           disabled:opacity-50 disabled:cursor-not-allowed
-          hover:shadow-lg hover:shadow-[var(--color-brand,#10a37f)]/25
-          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand,#10a37f)]
-          focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-surface,#0d0d0d)]
+          hover:shadow-lg hover:shadow-[var(--color-accent,#f5a623)]/25
+          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent,#f5a623)]
+          focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-deep,#0a0a0f)]
           ${className}
         `}
         {...props}
@@ -100,10 +100,10 @@ export const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>(
     };
 
     const variantClasses = {
-      primary: 'bg-[var(--color-brand,#10a37f)] hover:bg-[var(--color-brand-hover,#0d8c6d)] text-white',
-      secondary: 'bg-[var(--bg-secondary,#2d2d2d)] hover:bg-[var(--bg-hover,rgba(255,255,255,0.06))] text-[var(--text-secondary,#b4b4b4)]',
+      primary: 'bg-[var(--color-accent,#f5a623)] hover:bg-[var(--color-accent-hover,#e6951a)] text-white',
+      secondary: 'bg-[var(--bg-surface,#12121a)] hover:bg-[var(--bg-hover,rgba(255,255,255,0.06))] text-[var(--text-secondary,#9898b0)]',
       danger: 'bg-[var(--color-error,#ef4444)] hover:bg-red-600 text-white',
-      ghost: 'bg-transparent hover:bg-[var(--bg-hover,rgba(255,255,255,0.06))] text-[var(--text-secondary,#b4b4b4)] border border-[var(--border-primary,#424242)]',
+      ghost: 'bg-transparent hover:bg-[var(--bg-hover,rgba(255,255,255,0.06))] text-[var(--text-secondary,#9898b0)] border border-[var(--border-primary,#2d2d44)]',
     };
 
     return (
@@ -114,8 +114,8 @@ export const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>(
           ${variantClasses[variant]}
           rounded-lg transition-all duration-200
           hover:shadow-lg
-          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand,#10a37f)]
-          focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-surface,#0d0d0d)]
+          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent,#f5a623)]
+          focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-deep,#0a0a0f)]
           ${className}
         `}
         {...props}
@@ -161,12 +161,12 @@ export const FloatingActionButton = React.forwardRef<
       ref={ref}
       className={`
         fixed bottom-8 right-8 w-14 h-14 rounded-full
-        bg-[var(--color-brand,#10a37f)] hover:bg-[var(--color-brand-hover,#0d8c6d)]
+        bg-[var(--color-accent,#f5a623)] hover:bg-[var(--color-accent-hover,#e6951a)]
         text-white shadow-lg hover:shadow-xl
         flex items-center justify-center
         transition-all duration-200 hover:scale-110
-        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand,#10a37f)]
-        focus-visible:ring-offset-4 focus-visible:ring-offset-[var(--bg-surface,#0d0d0d)]
+        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent,#f5a623)]
+        focus-visible:ring-offset-4 focus-visible:ring-offset-[var(--bg-deep,#0a0a0f)]
         ${className}
       `}
       title={label}

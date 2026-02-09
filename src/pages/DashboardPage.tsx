@@ -1,61 +1,57 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { OfficePageLayout } from '../components/layout/OfficePageLayout';
-import { useOfficeThemeStore } from '../store/officeThemeStore';
 import {
   Activity, Zap, Brain, Eye, Mic, CheckCircle,
-  TrendingUp, TrendingDown, Clock, ArrowRight, RefreshCw
+  TrendingUp, TrendingDown, Clock, ArrowRight, RefreshCw, Headphones
 } from 'lucide-react';
 import { agentStatsService, type DashboardStats, type AgentActivity } from '../services/AgentStatsService';
+import { Card } from '../components/ui/Card';
+import { Badge } from '../components/ui/Badge';
 
-// Stat Card Component - Uses Office theme colors
+// Stat Card Component - AudioReader Studio style
 const StatCard = ({
   label,
   value,
   change,
   icon: Icon,
   color,
-  themeColors,
 }: {
   label: string;
   value: string | number;
   change: number;
   icon: React.ElementType;
-  color: string;
-  themeColors: ReturnType<typeof useOfficeThemeStore.getState>['getCurrentColors'];
+  color: 'accent' | 'cyan' | 'green' | 'red';
 }) => {
-  const colorPalette: Record<string, { bg: string; border: string; icon: string }> = {
-    blue: { bg: 'rgba(0, 120, 212, 0.1)', border: 'rgba(0, 120, 212, 0.3)', icon: '#0078d4' },
-    green: { bg: 'rgba(16, 124, 16, 0.1)', border: 'rgba(16, 124, 16, 0.3)', icon: '#107c10' },
-    purple: { bg: 'rgba(98, 100, 167, 0.1)', border: 'rgba(98, 100, 167, 0.3)', icon: '#6264a7' },
-    orange: { bg: 'rgba(255, 185, 0, 0.1)', border: 'rgba(255, 185, 0, 0.3)', icon: '#ffb900' },
+  const colorMap = {
+    accent: { bg: 'var(--color-brand-subtle)', icon: 'var(--color-accent)' },
+    cyan: { bg: 'var(--color-cyan-subtle)', icon: 'var(--color-cyan)' },
+    green: { bg: 'var(--color-green-subtle)', icon: 'var(--color-green)' },
+    red: { bg: 'var(--color-error-subtle)', icon: 'var(--color-error)' },
   };
-  const c = colorPalette[color] || colorPalette.blue;
-  const colors = themeColors();
+  const c = colorMap[color];
 
   return (
     <div style={{
       padding: '20px',
-      backgroundColor: colors.dialog,
-      borderRadius: '12px',
-      border: `1px solid ${colors.border}`,
-      boxShadow: '0 2px 4px rgba(0,0,0,0.04)',
+      backgroundColor: 'var(--bg-surface)',
+      borderRadius: 'var(--radius-xl)',
+      border: '1px solid var(--border-primary)',
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
-          <p style={{ fontSize: '13px', color: colors.editorSecondary, marginBottom: '8px' }}>{label}</p>
-          <p style={{ fontSize: '28px', fontWeight: 600, color: colors.editorText }}>{value}</p>
+          <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '8px' }}>{label}</p>
+          <p style={{ fontSize: '28px', fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-mono)' }}>{value}</p>
         </div>
         <div style={{
           width: '44px',
           height: '44px',
-          borderRadius: '10px',
+          borderRadius: 'var(--radius-lg)',
           backgroundColor: c.bg,
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'center'
+          justifyContent: 'center',
         }}>
-          <Icon size={22} color={c.icon} />
+          <Icon size={22} style={{ color: c.icon }} />
         </div>
       </div>
       <div style={{
@@ -63,41 +59,35 @@ const StatCard = ({
         alignItems: 'center',
         gap: '4px',
         marginTop: '12px',
-        fontSize: '13px'
+        fontSize: '13px',
       }}>
         {change >= 0 ? (
-          <TrendingUp size={14} color={colors.success} />
+          <TrendingUp size={14} style={{ color: 'var(--color-green)' }} />
         ) : (
-          <TrendingDown size={14} color={colors.error} />
+          <TrendingDown size={14} style={{ color: 'var(--color-error)' }} />
         )}
-        <span style={{ color: change >= 0 ? colors.success : colors.error }}>
+        <span style={{ color: change >= 0 ? 'var(--color-green)' : 'var(--color-error)', fontFamily: 'var(--font-mono)' }}>
           {change >= 0 ? '+' : ''}{change}%
         </span>
-        <span style={{ color: colors.editorSecondary }}>vs mois dernier</span>
+        <span style={{ color: 'var(--text-muted)' }}>vs mois dernier</span>
       </div>
     </div>
   );
 };
 
-// Activity Item Component - Uses Office theme colors
+// Activity Item Component
 const ActivityItem = ({
-  agent,
-  action,
-  time,
-  status,
-  themeColors,
+  agent, action, time, status,
 }: {
   agent: string;
   action: string;
   time: string;
   status: 'success' | 'pending' | 'error';
-  themeColors: ReturnType<typeof useOfficeThemeStore.getState>['getCurrentColors'];
 }) => {
-  const colors = themeColors();
-  const statusColorMap = {
-    success: colors.success,
-    pending: colors.warning,
-    error: colors.error
+  const statusBadge = {
+    success: 'green' as const,
+    pending: 'accent' as const,
+    error: 'red' as const,
   };
 
   return (
@@ -106,53 +96,43 @@ const ActivityItem = ({
       alignItems: 'center',
       justifyContent: 'space-between',
       padding: '14px 16px',
-      backgroundColor: colors.sidebar,
-      borderRadius: '10px',
-      marginBottom: '8px'
+      backgroundColor: 'var(--bg-panel)',
+      borderRadius: 'var(--radius-lg)',
+      marginBottom: '8px',
     }}>
       <div style={{ flex: 1 }}>
-        <p style={{ fontSize: '14px', fontWeight: 500, color: colors.editorText, marginBottom: '4px' }}>{agent}</p>
-        <p style={{ fontSize: '13px', color: colors.editorSecondary }}>{action}</p>
+        <p style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text-primary)', marginBottom: '4px' }}>{agent}</p>
+        <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>{action}</p>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: colors.editorSecondary }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-muted)' }}>
           <Clock size={14} />
-          <span style={{ fontSize: '12px' }}>{time}</span>
+          <span style={{ fontSize: '12px', fontFamily: 'var(--font-mono)' }}>{time}</span>
         </div>
-        <div style={{
-          width: '8px',
-          height: '8px',
-          borderRadius: '50%',
-          backgroundColor: statusColorMap[status]
-        }} />
+        <Badge color={statusBadge[status]}>
+          {status === 'success' ? 'OK' : status === 'pending' ? 'En cours' : 'Erreur'}
+        </Badge>
       </div>
     </div>
   );
 };
 
-// Quick Action Button Component - Uses Office theme colors
+// Quick Action Button Component
 const QuickActionButton = ({
-  icon: Icon,
-  label,
-  description,
-  color,
-  onClick,
-  themeColors,
+  icon: Icon, label, description, color, onClick,
 }: {
   icon: React.ElementType;
   label: string;
   description: string;
-  color: string;
+  color: 'accent' | 'cyan' | 'green';
   onClick: () => void;
-  themeColors: ReturnType<typeof useOfficeThemeStore.getState>['getCurrentColors'];
 }) => {
-  const colorPalette: Record<string, string> = {
-    blue: '#0078d4',
-    green: '#107c10',
-    purple: '#6264a7',
+  const colorMap = {
+    accent: 'var(--color-accent)',
+    cyan: 'var(--color-cyan)',
+    green: 'var(--color-green)',
   };
-  const colors = themeColors();
-  const iconColor = colorPalette[color] || colorPalette.blue;
+  const iconColor = colorMap[color];
 
   return (
     <button
@@ -160,40 +140,48 @@ const QuickActionButton = ({
       style={{
         width: '100%',
         padding: '16px',
-        backgroundColor: colors.sidebar,
-        border: `1px solid ${colors.border}`,
-        borderRadius: '10px',
+        backgroundColor: 'var(--bg-panel)',
+        border: '1px solid var(--border-primary)',
+        borderRadius: 'var(--radius-lg)',
         cursor: 'pointer',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        transition: 'all 0.2s ease',
-        marginBottom: '8px'
+        transition: 'border-color var(--transition-fast), background-color var(--transition-fast)',
+        marginBottom: '8px',
+        fontFamily: 'inherit',
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.borderColor = iconColor;
+        e.currentTarget.style.backgroundColor = 'var(--bg-panel)';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.borderColor = 'var(--border-primary)';
+        e.currentTarget.style.backgroundColor = 'var(--bg-panel)';
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
         <div style={{
           width: '40px',
           height: '40px',
-          borderRadius: '10px',
-          backgroundColor: `${iconColor}15`,
+          borderRadius: 'var(--radius-lg)',
+          backgroundColor: `color-mix(in srgb, ${iconColor} 10%, transparent)`,
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'center'
+          justifyContent: 'center',
         }}>
-          <Icon size={20} color={iconColor} />
+          <Icon size={20} style={{ color: iconColor }} />
         </div>
         <div style={{ textAlign: 'left' }}>
-          <p style={{ fontSize: '14px', fontWeight: 500, color: colors.editorText, marginBottom: '2px' }}>{label}</p>
-          <p style={{ fontSize: '12px', color: colors.editorSecondary }}>{description}</p>
+          <p style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text-primary)', marginBottom: '2px' }}>{label}</p>
+          <p style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{description}</p>
         </div>
       </div>
-      <ArrowRight size={18} color={colors.editorSecondary} />
+      <ArrowRight size={18} style={{ color: 'var(--text-muted)' }} />
     </button>
   );
 };
 
-// Type mapping for display
 const TYPE_LABELS: Record<string, string> = {
   perception: 'Perception',
   cognitive: 'Cognitif',
@@ -208,11 +196,6 @@ export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
 
-  // Get theme colors
-  const { getCurrentColors } = useOfficeThemeStore();
-  const colors = getCurrentColors();
-
-  // Load stats on mount and subscribe to updates
   useEffect(() => {
     const loadStats = () => {
       const stats = agentStatsService.getStats();
@@ -223,10 +206,8 @@ export default function DashboardPage() {
 
     loadStats();
     const unsubscribe = agentStatsService.subscribe(setDashboardStats);
-    
-    // Refresh every 30 seconds
     const interval = setInterval(loadStats, 30000);
-    
+
     return () => {
       unsubscribe();
       clearInterval(interval);
@@ -241,7 +222,6 @@ export default function DashboardPage() {
     setLastRefresh(new Date());
   }, []);
 
-  // Format activities for display
   const formatActivities = (activities: AgentActivity[]) => {
     return activities.map(activity => ({
       id: activity.id,
@@ -252,7 +232,6 @@ export default function DashboardPage() {
     }));
   };
 
-  // Default values while loading
   const stats = dashboardStats || {
     totalAgents: 0,
     activeAgents: 0,
@@ -262,7 +241,7 @@ export default function DashboardPage() {
     agentsStatus: [],
   };
 
-  const recentActivities = dashboardStats 
+  const recentActivities = dashboardStats
     ? formatActivities(dashboardStats.recentActivities)
     : [];
 
@@ -274,97 +253,70 @@ export default function DashboardPage() {
   })) || [];
 
   return (
-    <OfficePageLayout
-      title="Dashboard"
-      subtitle={`Mis a jour: ${lastRefresh.toLocaleTimeString('fr-FR')}`}
-      action={
+    <div style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto' }}>
+      {/* Header */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: '24px',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <Headphones size={28} style={{ color: 'var(--color-accent)' }} />
+          <div>
+            <h1 style={{ fontSize: '24px', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+              Lisa Studio
+            </h1>
+            <p style={{ fontSize: '13px', color: 'var(--text-muted)', margin: 0 }}>
+              Mis à jour : {lastRefresh.toLocaleTimeString('fr-FR')}
+            </p>
+          </div>
+        </div>
         <button
           onClick={handleRefresh}
           disabled={isLoading}
-          aria-label="Rafraichir les statistiques"
           style={{
             display: 'flex',
             alignItems: 'center',
             gap: '6px',
-            padding: '8px 12px',
-            backgroundColor: colors.sidebar,
-            border: `1px solid ${colors.border}`,
-            borderRadius: '8px',
-            color: colors.editorText,
+            padding: '8px 16px',
+            backgroundColor: 'var(--bg-panel)',
+            border: '1px solid var(--border-primary)',
+            borderRadius: 'var(--radius-lg)',
+            color: 'var(--text-primary)',
             cursor: isLoading ? 'wait' : 'pointer',
             opacity: isLoading ? 0.7 : 1,
-            transition: 'all 0.2s ease',
+            transition: 'border-color var(--transition-fast)',
+            fontFamily: 'inherit',
+            fontSize: '13px',
           }}
         >
           <RefreshCw size={14} style={{ animation: isLoading ? 'spin 1s linear infinite' : 'none' }} />
-          <span style={{ fontSize: '13px' }}>Rafraichir</span>
+          Rafraîchir
         </button>
-      }
-    >
-      {/* Stats Overview */}
+      </div>
+
+      {/* Stats Grid */}
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
         gap: '16px',
-        marginBottom: '24px'
+        marginBottom: '24px',
       }}>
-        <StatCard
-          label="Total Agents"
-          value={stats.totalAgents}
-          change={12}
-          icon={Brain}
-          color="blue"
-          themeColors={getCurrentColors}
-        />
-        <StatCard
-          label="Agents Actifs"
-          value={stats.activeAgents}
-          change={5}
-          icon={Zap}
-          color="green"
-          themeColors={getCurrentColors}
-        />
-        <StatCard
-          label="Taches Completees"
-          value={stats.tasksCompleted}
-          change={-3}
-          icon={CheckCircle}
-          color="purple"
-          themeColors={getCurrentColors}
-        />
-        <StatCard
-          label="Taux de Succes"
-          value={`${stats.successRate}%`}
-          change={2}
-          icon={Activity}
-          color="green"
-          themeColors={getCurrentColors}
-        />
+        <StatCard label="Total Agents" value={stats.totalAgents} change={12} icon={Brain} color="accent" />
+        <StatCard label="Agents Actifs" value={stats.activeAgents} change={5} icon={Zap} color="cyan" />
+        <StatCard label="Tâches Complétées" value={stats.tasksCompleted} change={-3} icon={CheckCircle} color="green" />
+        <StatCard label="Taux de Succès" value={`${stats.successRate}%`} change={2} icon={Activity} color="green" />
       </div>
 
+      {/* Activity + Quick Actions */}
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
-        gap: '24px'
+        gap: '24px',
       }}>
         {/* Recent Activity */}
-        <div style={{
-          backgroundColor: colors.dialog,
-          borderRadius: '12px',
-          padding: '20px',
-          border: `1px solid ${colors.border}`,
-        }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px',
-            marginBottom: '16px'
-          }}>
-            <Activity size={20} color={colors.success} />
-            <h3 style={{ fontSize: '16px', fontWeight: 600, color: colors.editorText, margin: 0 }}>
-              Activite Recente
-            </h3>
-          </div>
+        <Card title="Activité Récente" icon={<Activity size={18} />}>
           {recentActivities.length > 0 ? (
             recentActivities.map((activity) => (
               <ActivityItem
@@ -373,131 +325,63 @@ export default function DashboardPage() {
                 action={activity.action}
                 time={activity.time}
                 status={activity.status}
-                themeColors={getCurrentColors}
               />
             ))
           ) : (
-            <div style={{
-              padding: '20px',
-              textAlign: 'center',
-              color: colors.editorSecondary,
-              fontSize: '14px'
-            }}>
-              Aucune activite recente
+            <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '14px' }}>
+              Aucune activité récente
             </div>
           )}
-        </div>
+        </Card>
 
         {/* Quick Actions */}
-        <div style={{
-          backgroundColor: colors.dialog,
-          borderRadius: '12px',
-          padding: '20px',
-          border: `1px solid ${colors.border}`,
-        }}>
-          <h3 style={{
-            fontSize: '16px',
-            fontWeight: 600,
-            color: colors.editorText,
-            margin: '0 0 16px 0'
-          }}>
-            Actions Rapides
-          </h3>
-          <QuickActionButton
-            icon={Eye}
-            label="Vision"
-            description="Perception visuelle"
-            color="blue"
-            onClick={() => navigate('/vision')}
-            themeColors={getCurrentColors}
-          />
-          <QuickActionButton
-            icon={Mic}
-            label="Audio"
-            description="Perception auditive"
-            color="green"
-            onClick={() => navigate('/audio')}
-            themeColors={getCurrentColors}
-          />
-          <QuickActionButton
-            icon={Brain}
-            label="Workflows"
-            description="Gestion des taches"
-            color="purple"
-            onClick={() => navigate('/workflows')}
-            themeColors={getCurrentColors}
-          />
-        </div>
+        <Card title="Actions Rapides">
+          <QuickActionButton icon={Eye} label="Vision" description="Perception visuelle" color="accent" onClick={() => navigate('/vision')} />
+          <QuickActionButton icon={Mic} label="Audio" description="Perception auditive" color="cyan" onClick={() => navigate('/audio')} />
+          <QuickActionButton icon={Brain} label="Workflows" description="Gestion des tâches" color="green" onClick={() => navigate('/workflows')} />
+        </Card>
       </div>
 
       {/* Agents Status Table */}
-      <div style={{
-        marginTop: '24px',
-        backgroundColor: colors.dialog,
-        borderRadius: '12px',
-        padding: '20px',
-        border: `1px solid ${colors.border}`,
-      }}>
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '10px',
-          marginBottom: '16px'
-        }}>
-          <Zap size={20} color={colors.success} />
-          <h3 style={{ fontSize: '16px', fontWeight: 600, color: colors.editorText, margin: 0 }}>
-            Etat des Agents
-          </h3>
-        </div>
-
-        {/* Table Header */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: '2fr 1fr 1fr 1fr',
-          padding: '12px 16px',
-          backgroundColor: colors.sidebar,
-          borderRadius: '8px',
-          marginBottom: '8px'
-        }}>
-          <span style={{ fontSize: '12px', fontWeight: 600, color: colors.editorSecondary, textTransform: 'uppercase' }}>Nom</span>
-          <span style={{ fontSize: '12px', fontWeight: 600, color: colors.editorSecondary, textTransform: 'uppercase' }}>Type</span>
-          <span style={{ fontSize: '12px', fontWeight: 600, color: colors.editorSecondary, textTransform: 'uppercase' }}>Statut</span>
-          <span style={{ fontSize: '12px', fontWeight: 600, color: colors.editorSecondary, textTransform: 'uppercase' }}>Taches</span>
-        </div>
-
-        {/* Table Rows */}
-        {agentsStatus.map((agent, index) => (
-          <div
-            key={agent.name}
-            style={{
-              display: 'grid',
-              gridTemplateColumns: '2fr 1fr 1fr 1fr',
-              padding: '14px 16px',
-              backgroundColor: index % 2 === 0 ? 'transparent' : colors.sidebarHover,
-              borderRadius: '8px',
-              alignItems: 'center'
-            }}
-          >
-            <span style={{ fontSize: '14px', color: colors.editorText }}>{agent.name}</span>
-            <span style={{ fontSize: '14px', color: colors.editorSecondary }}>{agent.type}</span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <div style={{
-                width: '8px',
-                height: '8px',
-                borderRadius: '50%',
-                backgroundColor: agent.status === 'active' ? colors.success : colors.editorSecondary
-              }} />
-              <span style={{
-                fontSize: '13px',
-                color: agent.status === 'active' ? colors.success : colors.editorSecondary
-              }}>
-                {agent.status === 'active' ? 'Actif' : 'Inactif'}
-              </span>
-            </div>
-            <span style={{ fontSize: '14px', color: colors.editorSecondary }}>{agent.tasks}</span>
+      <div style={{ marginTop: '24px' }}>
+        <Card title="État des Agents" icon={<Zap size={18} />}>
+          {/* Table Header */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: '2fr 1fr 1fr 1fr',
+            padding: '12px 16px',
+            backgroundColor: 'var(--bg-panel)',
+            borderRadius: 'var(--radius-md)',
+            marginBottom: '8px',
+          }}>
+            <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Nom</span>
+            <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Type</span>
+            <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Statut</span>
+            <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Tâches</span>
           </div>
-        ))}
+
+          {agentsStatus.map((agent, index) => (
+            <div
+              key={agent.name}
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '2fr 1fr 1fr 1fr',
+                padding: '14px 16px',
+                backgroundColor: index % 2 === 0 ? 'transparent' : 'var(--bg-panel)',
+                borderRadius: 'var(--radius-md)',
+                alignItems: 'center',
+              }}
+            >
+              <span style={{ fontSize: '14px', color: 'var(--text-primary)' }}>{agent.name}</span>
+              <span style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>{agent.type}</span>
+              <Badge color={agent.status === 'active' ? 'green' : 'muted'}>
+                {agent.status === 'active' ? 'Actif' : 'Inactif'}
+              </Badge>
+              <span style={{ fontSize: '14px', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>{agent.tasks}</span>
+            </div>
+          ))}
+        </Card>
       </div>
-    </OfficePageLayout>
+    </div>
   );
 }

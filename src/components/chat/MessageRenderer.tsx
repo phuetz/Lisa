@@ -32,7 +32,7 @@ export const MessageRenderer = ({ content }: MessageRendererProps) => {
               />
             ) : (
               <code 
-                className="px-1.5 py-0.5 bg-[#1a1a1a] rounded text-sm font-mono text-blue-300 border border-[#404040]" 
+                className="px-1.5 py-0.5 bg-[#1a1a26] rounded text-sm font-mono text-blue-300 border border-[#2d2d44]" 
                 {...props}
               >
                 {children}
@@ -58,7 +58,7 @@ export const MessageRenderer = ({ content }: MessageRendererProps) => {
           },
           
           h1({children}) {
-            return <h1 className="text-2xl font-bold mb-4 mt-6 first:mt-0 text-white border-b border-[#404040] pb-2">{children}</h1>;
+            return <h1 className="text-2xl font-bold mb-4 mt-6 first:mt-0 text-white border-b border-[#2d2d44] pb-2">{children}</h1>;
           },
           
           h2({children}) {
@@ -92,7 +92,7 @@ export const MessageRenderer = ({ content }: MessageRendererProps) => {
           table({children}) {
             return (
               <div className="overflow-x-auto my-4">
-                <table className="min-w-full border border-[#404040] rounded-lg">
+                <table className="min-w-full border border-[#2d2d44] rounded-lg">
                   {children}
                 </table>
               </div>
@@ -100,7 +100,7 @@ export const MessageRenderer = ({ content }: MessageRendererProps) => {
           },
           
           thead({children}) {
-            return <thead className="bg-[#2a2a2a]">{children}</thead>;
+            return <thead className="bg-[#1a1a26]">{children}</thead>;
           },
           
           tbody({children}) {
@@ -108,11 +108,11 @@ export const MessageRenderer = ({ content }: MessageRendererProps) => {
           },
           
           tr({children}) {
-            return <tr className="hover:bg-[#2a2a2a] transition-colors">{children}</tr>;
+            return <tr className="hover:bg-[#1a1a26] transition-colors">{children}</tr>;
           },
           
           th({children}) {
-            return <th className="px-4 py-2 text-left text-sm font-semibold text-white border-b border-[#404040]">{children}</th>;
+            return <th className="px-4 py-2 text-left text-sm font-semibold text-white border-b border-[#2d2d44]">{children}</th>;
           },
           
           td({children}) {
@@ -120,7 +120,7 @@ export const MessageRenderer = ({ content }: MessageRendererProps) => {
           },
           
           hr() {
-            return <hr className="my-4 border-[#404040]" />;
+            return <hr className="my-4 border-[#2d2d44]" />;
           },
           
           strong({children}) {
@@ -136,7 +136,7 @@ export const MessageRenderer = ({ content }: MessageRendererProps) => {
               <img 
                 src={src} 
                 alt={alt}
-                className="max-w-full h-auto rounded-lg my-3 border border-[#404040]"
+                className="max-w-full h-auto rounded-lg my-3 border border-[#2d2d44]"
                 loading="lazy"
               />
             );

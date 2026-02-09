@@ -156,7 +156,7 @@ export const ArtifactPanel = () => {
 <html><head><meta charset="UTF-8">
 <style>
   *{margin:0;padding:0;box-sizing:border-box;}
-  body{font-family:'Fira Code',monospace;background:#1a1a2e;color:#10a37f;padding:20px;min-height:100vh;}
+  body{font-family:'Fira Code',monospace;background:#1a1a2e;color:#f5a623;padding:20px;min-height:100vh;}
   #output{white-space:pre-wrap;line-height:1.6;}
 </style>
 ${consoleCapture}
@@ -420,10 +420,10 @@ ${consoleCapture}
                 alignItems: 'center',
                 gap: '6px',
                 padding: '6px 12px',
-                backgroundColor: autoRun ? 'var(--color-brand-subtle)' : '#252525',
-                border: `1px solid ${autoRun ? 'var(--color-brand)' : 'var(--border-primary)'}`,
+                backgroundColor: autoRun ? 'var(--color-accent-subtle)' : '#1a1a26',
+                border: `1px solid ${autoRun ? 'var(--color-accent)' : 'var(--border-primary)'}`,
                 borderRadius: 'var(--radius-md)',
-                color: autoRun ? 'var(--color-brand)' : 'var(--text-tertiary)',
+                color: autoRun ? 'var(--color-accent)' : 'var(--text-tertiary)',
                 fontSize: '12px',
                 fontWeight: 500,
                 cursor: 'pointer',
@@ -443,7 +443,7 @@ ${consoleCapture}
                 alignItems: 'center',
                 gap: '6px',
                 padding: '8px 16px',
-                backgroundColor: 'var(--color-brand)',
+                backgroundColor: 'var(--color-accent)',
                 border: 'none',
                 borderRadius: 'var(--radius-md)',
                 color: '#fff',
@@ -452,8 +452,8 @@ ${consoleCapture}
                 cursor: 'pointer',
                 transition: 'background-color var(--transition-fast)',
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--color-brand-hover)')}
-              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'var(--color-brand)')}
+              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--color-accent-hover)')}
+              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'var(--color-accent)')}
             >
               <Play size={16} fill="#fff" />
               Run
@@ -462,7 +462,7 @@ ${consoleCapture}
             {/* View Mode Toggle */}
             <div style={{
               display: 'flex',
-              backgroundColor: 'var(--bg-secondary)',
+              backgroundColor: 'var(--bg-surface)',
               borderRadius: 'var(--radius-md)',
               overflow: 'hidden',
             }}>
@@ -477,7 +477,7 @@ ${consoleCapture}
                   title={title}
                   style={{
                     padding: '8px 10px',
-                    backgroundColor: viewMode === mode ? 'var(--color-brand)' : 'transparent',
+                    backgroundColor: viewMode === mode ? 'var(--color-accent)' : 'transparent',
                     border: 'none',
                     color: viewMode === mode ? '#fff' : 'var(--text-tertiary)',
                     cursor: 'pointer',
@@ -492,7 +492,7 @@ ${consoleCapture}
 
             {/* Action Buttons */}
             <button onClick={handleCopy} className="artifact-icon-btn" aria-label={copied ? 'Copié' : 'Copier le code'}>
-              {copied ? <Check size={16} color="var(--color-brand)" /> : <Copy size={16} />}
+              {copied ? <Check size={16} color="var(--color-accent)" /> : <Copy size={16} />}
             </button>
             <button onClick={handleDownload} className="artifact-icon-btn" aria-label="Télécharger le fichier">
               <Download size={16} />
@@ -529,7 +529,7 @@ ${consoleCapture}
                   alignItems: 'center',
                   gap: '6px',
                   padding: '8px 14px',
-                  backgroundColor: selectedFileIndex === index ? 'var(--bg-secondary)' : 'transparent',
+                  backgroundColor: selectedFileIndex === index ? 'var(--bg-surface)' : 'transparent',
                   border: selectedFileIndex === index ? '1px solid var(--border-secondary)' : '1px solid transparent',
                   borderRadius: '6px',
                   color: selectedFileIndex === index ? 'var(--text-primary)' : 'var(--text-tertiary)',
@@ -580,7 +580,7 @@ ${consoleCapture}
               display: 'flex',
               flexDirection: 'column',
               borderRight: viewMode === 'split' ? '1px solid var(--border-primary)' : 'none',
-              backgroundColor: '#1e1e1e',
+              backgroundColor: '#12121a',
             }}>
               {/* File Tab */}
               <div style={{
@@ -588,7 +588,7 @@ ${consoleCapture}
                 alignItems: 'center',
                 padding: '0 12px',
                 height: '36px',
-                backgroundColor: 'var(--bg-secondary)',
+                backgroundColor: 'var(--bg-surface)',
                 borderBottom: '1px solid var(--border-primary)',
               }}>
                 <div style={{
@@ -596,10 +596,10 @@ ${consoleCapture}
                   alignItems: 'center',
                   gap: '6px',
                   padding: '6px 12px',
-                  backgroundColor: '#1e1e1e',
+                  backgroundColor: '#12121a',
                   borderRadius: '6px 6px 0 0',
                   marginBottom: '-1px',
-                  borderBottom: '1px solid #1e1e1e',
+                  borderBottom: '1px solid #12121a',
                   color: config.color,
                 }}>
                   {config.icon}
@@ -715,8 +715,8 @@ ${consoleCapture}
                       {consoleOutput.length > 0 && (
                         <span style={{
                           padding: '2px 6px',
-                          backgroundColor: 'var(--color-brand-subtle)',
-                          color: 'var(--color-brand)',
+                          backgroundColor: 'var(--color-accent-subtle)',
+                          color: 'var(--color-accent)',
                           borderRadius: '4px',
                           fontSize: '10px',
                         }}>
@@ -745,7 +745,7 @@ ${consoleCapture}
                         <div
                           key={i}
                           style={{
-                            color: line.startsWith('❌') ? 'var(--color-error)' : line.startsWith('⚠️') ? '#f59e0b' : 'var(--color-brand)',
+                            color: line.startsWith('❌') ? 'var(--color-error)' : line.startsWith('⚠️') ? '#f59e0b' : 'var(--color-accent)',
                           }}
                         >
                           {line}

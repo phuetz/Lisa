@@ -60,7 +60,7 @@ export function LisaNavigation() {
         aria-label={isMobileMenuOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
         aria-expanded={isMobileMenuOpen}
         className="md:hidden fixed top-4 left-4 z-50 p-2 rounded-lg"
-        style={{ background: 'var(--bg-elevated, #2f2f2f)', color: 'var(--text-primary, #ececec)', boxShadow: 'var(--shadow-elevated, 0 4px 20px rgba(0,0,0,0.4))' }}
+        style={{ background: 'var(--bg-panel, #1a1a26)', color: 'var(--text-primary, #e8e8f0)', boxShadow: 'var(--shadow-elevated, 0 4px 20px rgba(0,0,0,0.4))' }}
       >
         {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
       </button>
@@ -79,12 +79,12 @@ export function LisaNavigation() {
         <div className="p-6">
           {/* Logo/Title */}
           <div className="flex items-center gap-3 mb-8">
-            <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: 'var(--color-brand, #10a37f)' }}>
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: 'var(--color-accent, #f5a623)' }}>
               <Brain className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold" style={{ color: 'var(--text-primary, #ececec)' }}>Lisa Vivante</h1>
-              <p className="text-xs" style={{ color: 'var(--text-muted, #666)' }}>Manifeste Vivant</p>
+              <h1 className="text-xl font-bold" style={{ color: 'var(--text-primary, #e8e8f0)' }}>Lisa Vivante</h1>
+              <p className="text-xs" style={{ color: 'var(--text-muted, #6a6a82)' }}>Manifeste Vivant</p>
             </div>
           </div>
 
@@ -95,7 +95,7 @@ export function LisaNavigation() {
                 {/* Category Header */}
                 {item.category && (
                   (!navItems[index - 1] || navItems[index - 1].category !== item.category) && (
-                    <h3 className="text-xs font-semibold uppercase tracking-wider mt-4 mb-2" style={{ color: 'var(--text-muted, #666)' }}>
+                    <h3 className="text-xs font-semibold uppercase tracking-wider mt-4 mb-2" style={{ color: 'var(--text-muted, #6a6a82)' }}>
                       {item.category}
                     </h3>
                   )
@@ -108,8 +108,8 @@ export function LisaNavigation() {
                   aria-current={isActive(item.path) ? 'page' : undefined}
                   className="flex items-center gap-3 px-4 py-2 rounded-lg transition-all"
                   style={isActive(item.path)
-                    ? { background: 'var(--color-brand, #10a37f)', color: '#fff' }
-                    : { color: 'var(--text-secondary, #b4b4b4)' }
+                    ? { background: 'var(--color-accent, #f5a623)', color: '#fff' }
+                    : { color: 'var(--text-secondary, #9898b0)' }
                   }
                 >
                   {item.icon}
@@ -120,14 +120,14 @@ export function LisaNavigation() {
           </nav>
 
           {/* Status */}
-          <div className="mt-8 p-4 rounded-lg" style={{ background: 'var(--color-brand-subtle, rgba(16,163,127,0.12))' }}>
+          <div className="mt-8 p-4 rounded-lg" style={{ background: 'var(--color-accent-subtle, rgba(245,166,35,0.12))' }}>
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: 'var(--color-brand, #10a37f)' }} />
-              <p className="text-sm font-semibold" style={{ color: 'var(--color-brand, #10a37f)' }}>
+              <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: 'var(--color-accent, #f5a623)' }} />
+              <p className="text-sm font-semibold" style={{ color: 'var(--color-accent, #f5a623)' }}>
                 Lisa est Vivante
               </p>
             </div>
-            <p className="text-xs mt-1" style={{ color: 'var(--text-muted, #666)' }}>
+            <p className="text-xs mt-1" style={{ color: 'var(--text-muted, #6a6a82)' }}>
               5 piliers actifs
             </p>
           </div>
@@ -145,7 +145,7 @@ export function LisaNavigation() {
                 key={pillar.title}
                 className="text-center p-2 rounded-lg"
                 title={pillar.title}
-                style={{ background: 'var(--bg-secondary, #2d2d2d)' }}
+                style={{ background: 'var(--bg-surface, #12121a)' }}
               >
                 <p className="text-lg" aria-hidden="true">{pillar.emoji}</p>
               </div>

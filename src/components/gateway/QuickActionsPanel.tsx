@@ -174,7 +174,7 @@ export function QuickActionsPanel({ onExecute, compact = false }: QuickActionsPa
                 onClick={() => handlePin(action.id, action.isPinned)}
                 style={{
                   ...styles.pinButton,
-                  color: action.isPinned ? '#f59e0b' : '#666'
+                  color: action.isPinned ? '#f59e0b' : '#6a6a82'
                 }}
                 title={action.isPinned ? 'Désépingler' : 'Épingler'}
               >
@@ -197,7 +197,7 @@ export function QuickActionsPanel({ onExecute, compact = false }: QuickActionsPa
 
 const styles: Record<string, React.CSSProperties> = {
   container: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#1a1a26',
     borderRadius: '12px',
     padding: '24px',
     color: '#fff'
@@ -228,7 +228,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   compactName: {
     fontSize: '11px',
-    color: '#888',
+    color: '#6a6a82',
     textAlign: 'center'
   },
   header: {
@@ -246,7 +246,7 @@ const styles: Record<string, React.CSSProperties> = {
   searchInput: {
     padding: '8px 14px',
     backgroundColor: '#252525',
-    border: '1px solid #333',
+    border: '1px solid #2d2d44',
     borderRadius: '8px',
     color: '#fff',
     fontSize: '13px',
@@ -267,7 +267,7 @@ const styles: Record<string, React.CSSProperties> = {
     backgroundColor: '#252525',
     border: 'none',
     borderRadius: '6px',
-    color: '#888',
+    color: '#6a6a82',
     cursor: 'pointer',
     fontSize: '12px',
     whiteSpace: 'nowrap'
@@ -286,7 +286,7 @@ const styles: Record<string, React.CSSProperties> = {
   emptyState: {
     padding: '40px',
     textAlign: 'center',
-    color: '#666'
+    color: '#6a6a82'
   },
   actionCard: {
     display: 'flex',
@@ -322,15 +322,15 @@ const styles: Record<string, React.CSSProperties> = {
   },
   actionDesc: {
     fontSize: '12px',
-    color: '#888'
+    color: '#6a6a82'
   },
   shortcut: {
     padding: '3px 8px',
-    backgroundColor: '#333',
+    backgroundColor: '#2d2d44',
     borderRadius: '4px',
     fontSize: '11px',
     fontFamily: 'monospace',
-    color: '#888'
+    color: '#6a6a82'
   },
   pinButton: {
     padding: '14px 12px',
@@ -344,9 +344,9 @@ const styles: Record<string, React.CSSProperties> = {
     gap: '8px',
     marginTop: '16px',
     paddingTop: '16px',
-    borderTop: '1px solid #333',
+    borderTop: '1px solid #2d2d44',
     fontSize: '12px',
-    color: '#666',
+    color: '#6a6a82',
     justifyContent: 'center'
   }
 };

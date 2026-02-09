@@ -1,22 +1,21 @@
-// src/components/SensesDashboard.tsx
 /**
  * LES 5 SENS DE LISA - Dashboard de Visualisation
- * 
- * Affiche l'état en temps réel des 5 modalités sensorielles:
- * 👁️ Vision - Perception visuelle
- * 👂 Ouïe - Perception auditive
- * ✋ Toucher - Perception tactile
- * 🌍 Environnement - Perception environnementale
- * 💭 Proprioception - Conscience de soi
+ * AudioReader Studio design - inline styles + CSS variables
  */
 
 import React, { useState } from 'react';
+import {
+  Eye, Ear, Hand, Globe, Brain,
+  Zap, MapPin, Wind, CloudSun, Play, Square,
+  AlertTriangle, Rocket, ChevronDown, ChevronRight,
+} from 'lucide-react';
 import { useSenses } from '../hooks/useSenses';
 import type { SenseModality } from '../types';
 
 interface SenseCardProps {
   name: string;
-  icon: React.ReactNode;
+  icon: React.ElementType;
+  color: string;
   modality: SenseModality;
   isActive: boolean;
   latestPercept: unknown;
@@ -27,7 +26,8 @@ interface SenseCardProps {
 
 const SenseCard: React.FC<SenseCardProps> = ({
   name,
-  icon,
+  icon: Icon,
+  color,
   modality,
   isActive,
   latestPercept,
@@ -40,63 +40,126 @@ const SenseCard: React.FC<SenseCardProps> = ({
   return (
     <article
       aria-labelledby={`sense-${modality}-title`}
-      aria-describedby={`sense-${modality}-desc`}
-      className={`
-        relative overflow-hidden rounded-2xl p-6 transition-all duration-300
-        focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2 focus-within:ring-offset-gray-900
-        ${isActive 
-          ? 'bg-gradient-to-br from-blue-500/20 to-purple-500/20 border-2 border-blue-400/50' 
-          : 'bg-gray-800/50 border border-gray-700/50'
-        }
-      `}
+      style={{
+        backgroundColor: 'var(--bg-surface)',
+        border: `1px solid ${isActive ? color + '40' : 'var(--border-primary)'}`,
+        borderRadius: '16px',
+        padding: '24px',
+        position: 'relative',
+        transition: 'border-color 0.2s ease',
+      }}
     >
-      {/* Status indicator */}
-      <div 
-        className={`absolute top-4 right-4 w-3 h-3 rounded-full ${isActive ? 'bg-green-400 animate-pulse' : 'bg-gray-600'}`}
-        role="status"
-        aria-label={isActive ? `${name} actif` : `${name} inactif`}
+      {/* Status dot */}
+      <div
+        style={{
+          position: 'absolute',
+          top: '16px',
+          right: '16px',
+          width: '10px',
+          height: '10px',
+          borderRadius: '50%',
+          backgroundColor: isActive ? 'var(--color-green, #22c55e)' : 'var(--text-muted)',
+        }}
       />
-      
-      {/* Icon and title */}
-      <div className="flex items-center gap-3 mb-4">
-        <span className="text-4xl" role="img" aria-label={name}>{icon}</span>
+
+      {/* Icon + Title */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '16px' }}>
+        <div
+          style={{
+            width: '52px',
+            height: '52px',
+            borderRadius: '14px',
+            backgroundColor: color + '15',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+          }}
+        >
+          <Icon size={26} color={color} />
+        </div>
         <div>
-          <h3 id={`sense-${modality}-title`} className="text-xl font-bold text-white">{name}</h3>
-          <p id={`sense-${modality}-desc`} className="text-sm text-gray-300">{description}</p>
+          <h3
+            id={`sense-${modality}-title`}
+            style={{ fontSize: '17px', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}
+          >
+            {name}
+          </h3>
+          <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: '2px 0 0 0' }}>
+            {description}
+          </p>
         </div>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 gap-4 mb-4" role="group" aria-label="Statistiques">
-        <div className="bg-black/20 rounded-lg p-3">
-          <p className="text-xs text-gray-300 uppercase">Status</p>
-          <p className={`text-lg font-semibold ${isActive ? 'text-green-400' : 'text-gray-400'}`}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '16px' }}>
+        <div style={{
+          padding: '12px',
+          backgroundColor: 'var(--bg-panel)',
+          borderRadius: '10px',
+        }}>
+          <p style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', margin: 0 }}>Status</p>
+          <p style={{
+            fontSize: '15px',
+            fontWeight: 600,
+            color: isActive ? 'var(--color-green, #22c55e)' : 'var(--text-muted)',
+            margin: '4px 0 0 0',
+          }}>
             {isActive ? 'Actif' : 'Inactif'}
           </p>
         </div>
-        <div className="bg-black/20 rounded-lg p-3">
-          <p className="text-xs text-gray-300 uppercase">Percepts</p>
-          <p className="text-lg font-semibold text-blue-400">{perceptCount}</p>
+        <div style={{
+          padding: '12px',
+          backgroundColor: 'var(--bg-panel)',
+          borderRadius: '10px',
+        }}>
+          <p style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', margin: 0 }}>Percepts</p>
+          <p style={{
+            fontSize: '15px',
+            fontWeight: 600,
+            fontFamily: 'var(--font-mono)',
+            color: color,
+            margin: '4px 0 0 0',
+          }}>
+            {perceptCount}
+          </p>
         </div>
       </div>
 
       {/* Latest percept preview */}
       {latestPercept && (
-        <div className="mb-4">
+        <div style={{ marginBottom: '14px' }}>
           <button
             onClick={() => setExpanded(!expanded)}
             aria-expanded={expanded}
-            aria-controls={`percept-${modality}-preview`}
-            className="text-xs text-gray-300 hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: '12px',
+              color: 'var(--text-secondary)',
+              padding: 0,
+            }}
           >
-            {expanded ? '▼ Masquer' : '▶ Voir dernier percept'}
+            {expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+            {expanded ? 'Masquer' : 'Voir dernier percept'}
           </button>
           {expanded && (
-            <pre 
-              id={`percept-${modality}-preview`}
-              className="mt-2 p-3 bg-black/30 rounded-lg text-xs text-gray-300 overflow-auto max-h-32"
-              aria-label="Dernier percept reçu"
-            >
+            <pre style={{
+              marginTop: '8px',
+              padding: '12px',
+              backgroundColor: 'var(--bg-deep)',
+              borderRadius: '8px',
+              fontSize: '11px',
+              fontFamily: 'var(--font-mono)',
+              color: 'var(--text-secondary)',
+              overflow: 'auto',
+              maxHeight: '120px',
+              border: '1px solid var(--border-primary)',
+            }}>
               {JSON.stringify(latestPercept, null, 2)}
             </pre>
           )}
@@ -108,20 +171,57 @@ const SenseCard: React.FC<SenseCardProps> = ({
         onClick={onToggle}
         aria-pressed={isActive}
         aria-label={isActive ? `Désactiver ${name}` : `Activer ${name}`}
-        className={`
-          w-full py-2 px-4 rounded-lg font-medium transition-all
-          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900
-          ${isActive 
-            ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30' 
-            : 'bg-blue-500/20 text-blue-400 hover:bg-blue-500/30'
-          }
-        `}
+        style={{
+          width: '100%',
+          padding: '10px',
+          borderRadius: '10px',
+          border: 'none',
+          cursor: 'pointer',
+          fontSize: '14px',
+          fontWeight: 500,
+          fontFamily: 'inherit',
+          transition: 'all 0.2s ease',
+          backgroundColor: isActive ? 'rgba(239, 68, 68, 0.12)' : color + '18',
+          color: isActive ? 'var(--color-red, #ef4444)' : color,
+        }}
       >
         {isActive ? 'Désactiver' : 'Activer'}
       </button>
     </article>
   );
 };
+
+const QuickActionButton = ({
+  icon: Icon,
+  label,
+  color,
+  onClick,
+}: {
+  icon: React.ElementType;
+  label: string;
+  color: string;
+  onClick: () => void;
+}) => (
+  <button
+    onClick={onClick}
+    style={{
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      gap: '8px',
+      padding: '16px 12px',
+      backgroundColor: color + '12',
+      border: '1px solid ' + color + '25',
+      borderRadius: '12px',
+      cursor: 'pointer',
+      transition: 'all 0.2s ease',
+      fontFamily: 'inherit',
+    }}
+  >
+    <Icon size={22} color={color} />
+    <span style={{ fontSize: '12px', color, fontWeight: 500 }}>{label}</span>
+  </button>
+);
 
 export const SensesDashboard: React.FC = () => {
   const {
@@ -146,38 +246,15 @@ export const SensesDashboard: React.FC = () => {
     enableHearing: false,
   });
 
-  const senses = [
-    {
-      modality: 'vision' as SenseModality,
-      name: 'Vision',
-      icon: '👁️',
-      description: 'Caméra, reconnaissance visuelle',
-    },
-    {
-      modality: 'hearing' as SenseModality,
-      name: 'Ouïe',
-      icon: '👂',
-      description: 'Microphone, voix, sons',
-    },
-    {
-      modality: 'touch' as SenseModality,
-      name: 'Toucher',
-      icon: '✋',
-      description: 'Souris, clavier, capteurs',
-    },
-    {
-      modality: 'environment' as SenseModality,
-      name: 'Environnement',
-      icon: '🌍',
-      description: 'Météo, qualité air, position',
-    },
-    {
-      modality: 'proprioception' as SenseModality,
-      name: 'Proprioception',
-      icon: '💭',
-      description: 'État système, conscience de soi',
-    },
+  const senses: { modality: SenseModality; name: string; icon: React.ElementType; color: string; description: string }[] = [
+    { modality: 'vision', name: 'Vision', icon: Eye, color: '#8b5cf6', description: 'Caméra, reconnaissance visuelle' },
+    { modality: 'hearing', name: 'Ouïe', icon: Ear, color: '#06b6d4', description: 'Microphone, voix, sons' },
+    { modality: 'touch', name: 'Toucher', icon: Hand, color: '#f59e0b', description: 'Souris, clavier, capteurs' },
+    { modality: 'environment', name: 'Environnement', icon: Globe, color: '#22c55e', description: 'Météo, qualité air, position' },
+    { modality: 'proprioception', name: 'Proprioception', icon: Brain, color: '#ec4899', description: 'État système, conscience de soi' },
   ];
+
+  const activeSensesCount = Object.values(status).filter(Boolean).length;
 
   const handleToggle = async (modality: SenseModality, isActive: boolean) => {
     if (isActive) {
@@ -188,36 +265,57 @@ export const SensesDashboard: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-8">
+    <div style={{ padding: '24px' }}>
       {/* Header */}
-      <div className="max-w-7xl mx-auto mb-8">
-        <div className="flex items-center gap-4 mb-4">
-          <span className="text-5xl">🧠</span>
-          <div>
-            <h1 className="text-4xl font-bold text-white">Les 5 Sens de Lisa</h1>
-            <p className="text-gray-400">Perception multi-modale en temps réel</p>
-          </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
+        <div>
+          <h1 style={{ fontSize: '24px', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+            Les 5 Sens
+          </h1>
+          <p style={{ fontSize: '14px', color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>
+            Perception multi-modale en temps réel
+          </p>
         </div>
-        
-        {/* Global status */}
-        <div className="flex items-center gap-4 mt-4">
-          <div className={`px-4 py-2 rounded-full ${isReady ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'}`}>
-            {isReady ? '✓ Système prêt' : '◌ Initialisation...'}
-          </div>
-          <div className="text-gray-500">
-            {Object.values(status).filter(Boolean).length}/5 sens actifs
-          </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <span style={{
+            padding: '6px 14px',
+            borderRadius: '20px',
+            fontSize: '13px',
+            fontWeight: 500,
+            backgroundColor: isReady ? 'rgba(34, 197, 94, 0.12)' : 'rgba(245, 158, 11, 0.12)',
+            color: isReady ? 'var(--color-green, #22c55e)' : '#f59e0b',
+          }}>
+            {isReady ? 'Système prêt' : 'Initialisation...'}
+          </span>
+          <span style={{
+            padding: '6px 14px',
+            borderRadius: '20px',
+            fontSize: '13px',
+            fontWeight: 500,
+            fontFamily: 'var(--font-mono)',
+            backgroundColor: 'var(--bg-panel)',
+            color: 'var(--color-accent)',
+            border: '1px solid var(--border-primary)',
+          }}>
+            {activeSensesCount}/5 actifs
+          </span>
         </div>
       </div>
 
       {/* Senses Grid */}
-      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+        gap: '20px',
+        marginBottom: '32px',
+      }}>
         {senses.map(sense => (
           <SenseCard
             key={sense.modality}
             modality={sense.modality}
             name={sense.name}
             icon={sense.icon}
+            color={sense.color}
             description={sense.description}
             isActive={status[sense.modality]}
             latestPercept={latestPercepts[sense.modality]}
@@ -227,57 +325,41 @@ export const SensesDashboard: React.FC = () => {
         ))}
       </div>
 
-      {/* Actions Panel */}
-      <div className="max-w-7xl mx-auto">
-        <h2 className="text-2xl font-bold text-white mb-4">Actions rapides</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <button
-            onClick={() => triggerHaptic('vibrate', 0.5)}
-            className="p-4 bg-purple-500/20 rounded-xl text-purple-400 hover:bg-purple-500/30 transition-all"
-          >
-            📳 Vibration
-          </button>
-          <button
-            onClick={() => void refreshWeather()}
-            className="p-4 bg-blue-500/20 rounded-xl text-blue-400 hover:bg-blue-500/30 transition-all"
-          >
-            🌤️ Météo
-          </button>
-          <button
-            onClick={() => void refreshAirQuality()}
-            className="p-4 bg-green-500/20 rounded-xl text-green-400 hover:bg-green-500/30 transition-all"
-          >
-            💨 Qualité air
-          </button>
-          <button
+      {/* Quick Actions */}
+      <div style={{
+        backgroundColor: 'var(--bg-surface)',
+        borderRadius: '16px',
+        padding: '24px',
+        border: '1px solid var(--border-primary)',
+      }}>
+        <h2 style={{ fontSize: '17px', fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 16px 0' }}>
+          Actions rapides
+        </h2>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
+          gap: '12px',
+        }}>
+          <QuickActionButton icon={Zap} label="Vibration" color="#8b5cf6" onClick={() => triggerHaptic('vibrate', 0.5)} />
+          <QuickActionButton icon={CloudSun} label="Météo" color="#3b82f6" onClick={() => void refreshWeather()} />
+          <QuickActionButton icon={Wind} label="Qualité air" color="#22c55e" onClick={() => void refreshAirQuality()} />
+          <QuickActionButton
+            icon={MapPin}
+            label="Position"
+            color="#f59e0b"
             onClick={() => {
               const loc = getLocation();
               if (loc) alert(`Position: ${loc.latitude.toFixed(4)}, ${loc.longitude.toFixed(4)}`);
               else alert('Position non disponible');
             }}
-            className="p-4 bg-orange-500/20 rounded-xl text-orange-400 hover:bg-orange-500/30 transition-all"
-          >
-            📍 Position
-          </button>
-          <button
-            onClick={() => startTask('test-agent')}
-            className="p-4 bg-cyan-500/20 rounded-xl text-cyan-400 hover:bg-cyan-500/30 transition-all"
-          >
-            ▶️ Démarrer tâche
-          </button>
-          <button
-            onClick={() => endTask('test-agent')}
-            className="p-4 bg-teal-500/20 rounded-xl text-teal-400 hover:bg-teal-500/30 transition-all"
-          >
-            ⏹️ Terminer tâche
-          </button>
-          <button
-            onClick={() => recordError()}
-            className="p-4 bg-red-500/20 rounded-xl text-red-400 hover:bg-red-500/30 transition-all"
-          >
-            ⚠️ Logger erreur
-          </button>
-          <button
+          />
+          <QuickActionButton icon={Play} label="Démarrer tâche" color="#06b6d4" onClick={() => startTask('test-agent')} />
+          <QuickActionButton icon={Square} label="Terminer tâche" color="#14b8a6" onClick={() => endTask('test-agent')} />
+          <QuickActionButton icon={AlertTriangle} label="Logger erreur" color="#ef4444" onClick={() => recordError()} />
+          <QuickActionButton
+            icon={Rocket}
+            label="Activer tous"
+            color="var(--color-accent)"
             onClick={async () => {
               await Promise.all([
                 enableSense('vision'),
@@ -287,52 +369,7 @@ export const SensesDashboard: React.FC = () => {
                 enableSense('proprioception'),
               ]);
             }}
-            className="p-4 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-xl text-white hover:from-blue-500/30 hover:to-purple-500/30 transition-all"
-          >
-            🚀 Activer tous
-          </button>
-        </div>
-      </div>
-
-      {/* Legend */}
-      <div className="max-w-7xl mx-auto mt-8 p-6 bg-gray-800/50 rounded-2xl">
-        <h3 className="text-lg font-semibold text-white mb-4">Légende des sens</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
-          <div className="flex items-start gap-3">
-            <span className="text-2xl">👁️</span>
-            <div>
-              <p className="text-white font-medium">Vision</p>
-              <p className="text-gray-400">Détection d'objets, visages, gestes, poses via caméra</p>
-            </div>
-          </div>
-          <div className="flex items-start gap-3">
-            <span className="text-2xl">👂</span>
-            <div>
-              <p className="text-white font-medium">Ouïe</p>
-              <p className="text-gray-400">Reconnaissance vocale, émotions audio, classification sons</p>
-            </div>
-          </div>
-          <div className="flex items-start gap-3">
-            <span className="text-2xl">✋</span>
-            <div>
-              <p className="text-white font-medium">Toucher</p>
-              <p className="text-gray-400">Entrées souris/clavier, gestes tactiles, capteurs IoT</p>
-            </div>
-          </div>
-          <div className="flex items-start gap-3">
-            <span className="text-2xl">🌍</span>
-            <div>
-              <p className="text-white font-medium">Environnement</p>
-              <p className="text-gray-400">Météo, qualité air (AQI, CO2), géolocalisation, lumière</p>
-            </div>
-          </div>
-          <div className="flex items-start gap-3">
-            <span className="text-2xl">💭</span>
-            <div>
-              <p className="text-white font-medium">Proprioception</p>
-              <p className="text-gray-400">CPU, mémoire, état agents, capacités, humeur simulée</p>
-            </div>
-          </div>
+          />
         </div>
       </div>
     </div>

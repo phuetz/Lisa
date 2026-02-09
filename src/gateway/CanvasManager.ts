@@ -76,7 +76,7 @@ export interface CanvasSnapshot {
 }
 
 const DEFAULT_THEME: CanvasTheme = {
-  background: '#1a1a1a',
+  background: '#1a1a26',
   foreground: '#ffffff',
   accent: '#3b82f6',
   fontFamily: 'Inter, system-ui, sans-serif',

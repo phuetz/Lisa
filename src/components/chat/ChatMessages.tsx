@@ -77,7 +77,7 @@ const MessageActions = ({ content, messageId, role, onEdit, onRegenerate, onDele
             onClick={handleSaveEdit}
             style={{
               padding: '6px 12px',
-              backgroundColor: '#10a37f',
+              backgroundColor: '#f5a623',
               border: 'none',
               borderRadius: '6px',
               color: '#fff',
@@ -91,7 +91,7 @@ const MessageActions = ({ content, messageId, role, onEdit, onRegenerate, onDele
             onClick={handleCancelEdit}
             style={{
               padding: '6px 12px',
-              backgroundColor: '#404040',
+              backgroundColor: '#2d2d44',
               border: 'none',
               borderRadius: '6px',
               color: '#fff',
@@ -222,8 +222,8 @@ const MessageContent = ({ content, role }: MessageContentProps) => {
             key={artifact.id}
             style={{
               marginBottom: '16px',
-              backgroundColor: '#0d0d0d',
-              border: '1px solid #333',
+              backgroundColor: '#0a0a0f',
+              border: '1px solid #2d2d44',
               borderRadius: '12px',
               overflow: 'hidden',
             }}
@@ -282,7 +282,7 @@ const MessageContent = ({ content, role }: MessageContentProps) => {
                 </div>
                 <div style={{ 
                   fontSize: '12px', 
-                  color: '#888',
+                  color: '#6a6a82',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '6px'
@@ -295,7 +295,7 @@ const MessageContent = ({ content, role }: MessageContentProps) => {
                   }}>
                     {artifact.type}
                   </span>
-                  <span style={{ color: '#555' }}>•</span>
+                  <span style={{ color: '#3d3d5c' }}>•</span>
                   <span>{codeLines.length} lignes</span>
                 </div>
               </div>
@@ -321,7 +321,7 @@ const MessageContent = ({ content, role }: MessageContentProps) => {
             {/* Code Preview */}
             <div style={{
               padding: '12px 16px',
-              backgroundColor: '#0d0d0d',
+              backgroundColor: '#0a0a0f',
               fontFamily: "'Fira Code', 'JetBrains Mono', monospace",
               fontSize: '13px',
               lineHeight: 1.5,
@@ -330,8 +330,8 @@ const MessageContent = ({ content, role }: MessageContentProps) => {
               <pre style={{ margin: 0, color: '#e1e1e1' }}>
                 {previewLines.map((line, i) => (
                   <div key={i} style={{ display: 'flex' }}>
-                    <span style={{ 
-                      color: '#555', 
+                    <span style={{
+                      color: '#3d3d5c',
                       marginRight: '16px', 
                       minWidth: '24px',
                       textAlign: 'right',
@@ -357,7 +357,7 @@ const MessageContent = ({ content, role }: MessageContentProps) => {
                     marginTop: '8px',
                     backgroundColor: '#1a1a2e',
                     borderRadius: '8px',
-                    color: '#888',
+                    color: '#6a6a82',
                     cursor: 'pointer',
                     fontSize: '12px',
                     transition: 'all 0.2s',
@@ -368,7 +368,7 @@ const MessageContent = ({ content, role }: MessageContentProps) => {
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.backgroundColor = '#1a1a2e';
-                    e.currentTarget.style.color = '#888';
+                    e.currentTarget.style.color = '#6a6a82';
                   }}
                 >
                   <span>Voir les {codeLines.length - 8} lignes restantes</span>
@@ -395,7 +395,7 @@ const getArtifactColor = (type: string): string => {
     svg: '#ffb13b',
     mermaid: '#ff3670',
   };
-  return colors[type] || '#10a37f';
+  return colors[type] || '#f5a623';
 };
 
 export const ChatMessages = () => {
@@ -497,7 +497,19 @@ export const ChatMessages = () => {
   };
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    // Scroll within the nearest scrollable ancestor only — NOT scrollIntoView
+    // which bubbles up and can scroll the entire page layout
+    const el = messagesEndRef.current;
+    if (!el) return;
+    let container: HTMLElement | null = el.parentElement;
+    while (container) {
+      const { overflowY } = getComputedStyle(container);
+      if (overflowY === 'auto' || overflowY === 'scroll') break;
+      container = container.parentElement;
+    }
+    if (container) {
+      container.scrollTop = container.scrollHeight;
+    }
   }, [messages, streamingMessage, isTyping]);
 
   // Utiliser une suggestion comme prompt
@@ -530,11 +542,11 @@ export const ChatMessages = () => {
             height: '100px',
             margin: '0 auto 32px',
             borderRadius: '24px',
-            background: 'linear-gradient(135deg, #10a37f 0%, #1a7f64 100%)',
+            background: 'linear-gradient(135deg, #f5a623 0%, #e6951a 100%)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '0 20px 40px rgba(16, 163, 127, 0.3)',
+            boxShadow: '0 20px 40px rgba(245, 166, 35, 0.3)',
             animation: 'float 3s ease-in-out infinite'
           }}>
             <Sparkles size={48} color="#fff" />
@@ -626,7 +638,7 @@ export const ChatMessages = () => {
           aria-label={`Message de ${message.role === 'assistant' ? 'Lisa' : 'vous'}`}
           style={{
             padding: '24px 0',
-            backgroundColor: message.role === 'assistant' ? 'var(--bg-secondary)' : 'transparent'
+            backgroundColor: message.role === 'assistant' ? 'var(--bg-surface)' : 'transparent'
           }}
         >
           <div style={{
@@ -641,7 +653,7 @@ export const ChatMessages = () => {
               width: '32px',
               height: '32px',
               borderRadius: 'var(--radius-sm)',
-              backgroundColor: message.role === 'assistant' ? 'var(--color-brand)' : 'var(--color-user)',
+              backgroundColor: message.role === 'assistant' ? 'var(--color-accent)' : 'var(--color-user)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -708,7 +720,7 @@ export const ChatMessages = () => {
       
       {/* Streaming message */}
       {streamingMessage && (
-        <div style={{ padding: '24px 0', backgroundColor: 'var(--bg-secondary)' }} role="status" aria-label="Lisa est en train de répondre">
+        <div style={{ padding: '24px 0', backgroundColor: 'var(--bg-surface)' }} role="status" aria-label="Lisa est en train de répondre">
           <div style={{
             maxWidth: '1100px',
             margin: '0 auto',
@@ -720,7 +732,7 @@ export const ChatMessages = () => {
               width: '32px',
               height: '32px',
               borderRadius: 'var(--radius-sm)',
-              backgroundColor: 'var(--color-brand)',
+              backgroundColor: 'var(--color-accent)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -745,7 +757,7 @@ export const ChatMessages = () => {
                     display: 'inline-block',
                     width: '8px',
                     height: '16px',
-                    backgroundColor: 'var(--color-brand)',
+                    backgroundColor: 'var(--color-accent)',
                     marginLeft: '2px',
                     animation: 'blink 1s infinite'
                   }}
@@ -758,7 +770,7 @@ export const ChatMessages = () => {
 
       {/* Enhanced Typing/Thinking indicator */}
       {isTyping && !streamingMessage && (
-        <div style={{ padding: '24px 0', backgroundColor: 'var(--bg-secondary)' }} role="status" aria-label="Lisa réfléchit">
+        <div style={{ padding: '24px 0', backgroundColor: 'var(--bg-surface)' }} role="status" aria-label="Lisa réfléchit">
           <div style={{
             maxWidth: '1100px',
             margin: '0 auto',
@@ -817,7 +829,7 @@ export const ChatMessages = () => {
 
                 {/* Stage 3: Generating */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', opacity: 0.5 }}>
-                  <Sparkles size={12} color="var(--color-brand)" aria-hidden="true" />
+                  <Sparkles size={12} color="var(--color-accent)" aria-hidden="true" />
                   <span style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>Génération</span>
                 </div>
 

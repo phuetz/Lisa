@@ -1,6 +1,6 @@
 .screenshare-panel {
-  background-color: var(--bg-primary, #212121);
-  color: var(--text-primary, #ececec);
+  background-color: var(--bg-primary, #12121a);
+  color: var(--text-primary, #e8e8f0);
   border-radius: var(--radius-md, 8px);
   padding: 20px;
   margin: 10px 0;
@@ -27,7 +27,7 @@
 .close-button {
   background: transparent;
   border: none;
-  color: var(--text-tertiary, #888);
+  color: var(--text-muted, #6a6a82);
   font-size: 1.5rem;
   cursor: pointer;
   padding: 0 5px;
@@ -46,18 +46,18 @@
 }
 
 .notification.success {
-  background-color: var(--color-brand, #10a37f);
-  color: var(--text-primary, #ececec);
+  background-color: var(--color-accent, #f5a623);
+  color: var(--text-primary, #e8e8f0);
 }
 
 .notification.error {
   background-color: var(--color-error, #ef4444);
-  color: var(--text-primary, #ececec);
+  color: var(--text-primary, #e8e8f0);
 }
 
 .notification.info {
   background-color: var(--color-info, #3b82f6);
-  color: var(--text-primary, #ececec);
+  color: var(--text-primary, #e8e8f0);
 }
 
 @keyframes fadeIn {
@@ -87,7 +87,7 @@
 
 .screenshare-controls {
   flex: 1;
-  background-color: var(--bg-secondary, #2d2d2d);
+  background-color: var(--bg-surface, #12121a);
   border-radius: 6px;
   padding: 15px;
 }
@@ -106,7 +106,7 @@
 .option-group label {
   display: block;
   margin-bottom: 8px;
-  color: var(--text-primary, #ececec);
+  color: var(--text-primary, #e8e8f0);
 }
 
 .radio-options {
@@ -140,17 +140,17 @@
 }
 
 .start-button {
-  background-color: var(--color-brand, #10a37f);
-  color: var(--text-primary, #ececec);
+  background-color: var(--color-accent, #f5a623);
+  color: var(--text-primary, #e8e8f0);
 }
 
 .start-button:hover {
-  background-color: var(--color-brand-hover, #0d8c6d);
+  background-color: var(--color-accent-hover, #e6951a);
 }
 
 .stop-button {
   background-color: var(--color-error, #ef4444);
-  color: var(--text-primary, #ececec);
+  color: var(--text-primary, #e8e8f0);
 }
 
 .stop-button:hover {
@@ -178,7 +178,7 @@
 
 .preview-container {
   flex: 2;
-  background-color: var(--bg-secondary, #2d2d2d);
+  background-color: var(--bg-surface, #12121a);
   border-radius: 6px;
   padding: 15px;
   display: flex;
@@ -192,7 +192,7 @@
   max-height: 220px;
   border-radius: var(--radius-sm, 4px);
   object-fit: contain;
-  background-color: var(--bg-surface, #0d0d0d);
+  background-color: var(--bg-surface, #12121a);
 }
 
 .preview-placeholder {
@@ -201,15 +201,15 @@
   justify-content: center;
   width: 100%;
   height: 100%;
-  color: var(--text-muted, #666);
+  color: var(--text-muted, #6a6a82);
   text-align: center;
   font-style: italic;
-  background-color: var(--bg-tertiary, #1a1a1a);
+  background-color: var(--bg-tertiary, #1a1a26);
   border-radius: var(--radius-sm, 4px);
 }
 
 .screenshare-history {
-  background-color: var(--bg-secondary, #2d2d2d);
+  background-color: var(--bg-surface, #12121a);
   border-radius: 6px;
   padding: 15px;
 }
@@ -228,8 +228,8 @@
 }
 
 .clear-history-button {
-  background-color: var(--text-muted, #666);
-  color: var(--text-primary, #ececec);
+  background-color: var(--text-muted, #6a6a82);
+  color: var(--text-primary, #e8e8f0);
   border: none;
   border-radius: var(--radius-sm, 4px);
   padding: 5px 10px;
@@ -239,7 +239,7 @@
 }
 
 .clear-history-button:hover {
-  background-color: var(--text-tertiary, #888);
+  background-color: var(--text-muted, #6a6a82);
 }
 
 .history-list {
@@ -249,7 +249,7 @@
 
 .history-item {
   padding: 12px;
-  background-color: var(--bg-elevated, #2f2f2f);
+  background-color: var(--bg-panel, #1a1a26);
   border-radius: var(--radius-sm, 4px);
   margin-bottom: 10px;
 }
@@ -268,11 +268,11 @@
 
 .history-time {
   font-size: 0.9rem;
-  color: var(--text-tertiary, #888);
+  color: var(--text-muted, #6a6a82);
 }
 
 .no-history {
-  color: var(--text-muted, #666);
+  color: var(--text-muted, #6a6a82);
   text-align: center;
   font-style: italic;
 }
@@ -280,14 +280,14 @@
 .screenshare-footer {
   margin-top: 20px;
   padding-top: 15px;
-  border-top: 1px solid var(--border-primary, #424242);
+  border-top: 1px solid var(--border-primary, #2d2d44);
 }
 
 .privacy-notice {
   display: flex;
   align-items: center;
   gap: 10px;
-  color: var(--text-muted, #666);
+  color: var(--text-muted, #6a6a82);
   font-size: 0.9rem;
 }
 

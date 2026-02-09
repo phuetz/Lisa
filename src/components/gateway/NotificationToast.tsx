@@ -221,11 +221,11 @@ const styles: Record<string, React.CSSProperties> = {
     pointerEvents: 'none'
   },
   toast: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#1a1a26',
     borderRadius: '10px',
     padding: '16px',
     boxShadow: '0 10px 40px rgba(0,0,0,0.4)',
-    border: '1px solid #333',
+    border: '1px solid #2d2d44',
     pointerEvents: 'auto',
     transition: 'all 0.3s ease'
   },
@@ -246,7 +246,7 @@ const styles: Record<string, React.CSSProperties> = {
   closeButton: {
     backgroundColor: 'transparent',
     border: 'none',
-    color: '#666',
+    color: '#6a6a82',
     cursor: 'pointer',
     fontSize: '20px',
     padding: '0 4px',
@@ -255,7 +255,7 @@ const styles: Record<string, React.CSSProperties> = {
   toastMessage: {
     margin: '8px 0 0 28px',
     fontSize: '13px',
-    color: '#888',
+    color: '#6a6a82',
     lineHeight: 1.4
   },
   toastActions: {
@@ -266,7 +266,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   actionButton: {
     padding: '6px 12px',
-    backgroundColor: '#333',
+    backgroundColor: '#2d2d44',
     border: 'none',
     borderRadius: '6px',
     color: '#fff',
@@ -280,7 +280,7 @@ const styles: Record<string, React.CSSProperties> = {
   progressContainer: {
     marginTop: '12px',
     height: '3px',
-    backgroundColor: '#333',
+    backgroundColor: '#2d2d44',
     borderRadius: '2px',
     overflow: 'hidden'
   },

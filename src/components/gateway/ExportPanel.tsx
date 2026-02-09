@@ -189,7 +189,7 @@ export function ExportPanel({ conversationId, conversationTitle }: ExportPanelPr
 
 const styles: Record<string, React.CSSProperties> = {
   container: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#1a1a26',
     borderRadius: '12px',
     padding: '24px',
     color: '#fff'
@@ -208,7 +208,7 @@ const styles: Record<string, React.CSSProperties> = {
   sectionTitle: {
     fontSize: '14px',
     fontWeight: 600,
-    color: '#888',
+    color: '#6a6a82',
     marginBottom: '12px'
   },
   formatGrid: {
@@ -225,7 +225,7 @@ const styles: Record<string, React.CSSProperties> = {
     backgroundColor: '#252525',
     border: '2px solid transparent',
     borderRadius: '8px',
-    color: '#888',
+    color: '#6a6a82',
     cursor: 'pointer',
     fontSize: '13px',
     transition: 'all 0.15s'
@@ -280,7 +280,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   lastExportTitle: {
     fontSize: '12px',
-    color: '#888',
+    color: '#6a6a82',
     textTransform: 'uppercase'
   },
   lastExportSize: {
@@ -292,7 +292,7 @@ const styles: Record<string, React.CSSProperties> = {
     justifyContent: 'space-between'
   },
   lastExportTime: {
-    color: '#666',
+    color: '#6a6a82',
     fontSize: '12px'
   },
   historyList: {
@@ -305,7 +305,7 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     gap: '12px',
     padding: '12px 16px',
-    borderBottom: '1px solid #333'
+    borderBottom: '1px solid #2d2d44'
   },
   historyFormat: {
     fontSize: '16px'
@@ -317,7 +317,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   historySize: {
     fontSize: '12px',
-    color: '#666'
+    color: '#6a6a82'
   }
 };
 
