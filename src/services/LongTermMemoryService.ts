@@ -7,7 +7,7 @@
 import { openDB, type IDBPDatabase } from 'idb';
 import { aiService, type AIMessage } from './aiService';
 
-interface MemoryEntry {
+export interface MemoryEntry {
   id: string;
   type: 'preference' | 'fact' | 'context' | 'instruction';
   key: string;
@@ -228,6 +228,56 @@ class LongTermMemoryService {
     }
 
     return sections.join('\n\n');
+  }
+
+  async updateMemory(
+    id: string,
+    updates: Partial<Pick<MemoryEntry, 'type' | 'key' | 'value' | 'importance' | 'tags'>>
+  ): Promise<MemoryEntry | null> {
+    await this.init();
+    if (!this.db) return null;
+
+    const entry = await this.db.get('memories', id);
+    if (!entry) return null;
+
+    const updated: MemoryEntry = { ...entry, ...updates, updatedAt: new Date() };
+    await this.db.put('memories', updated);
+    return updated;
+  }
+
+  async deleteById(id: string): Promise<boolean> {
+    await this.init();
+    if (!this.db) return false;
+
+    await this.db.delete('memories', id);
+    return true;
+  }
+
+  async getStats(): Promise<{
+    total: number;
+    byType: Record<string, number>;
+    avgImportance: number;
+    mostAccessed: MemoryEntry | null;
+  }> {
+    const all = await this.getAll();
+    const byType: Record<string, number> = {};
+    let totalImportance = 0;
+    let mostAccessed: MemoryEntry | null = null;
+
+    for (const entry of all) {
+      byType[entry.type] = (byType[entry.type] || 0) + 1;
+      totalImportance += entry.importance;
+      if (!mostAccessed || entry.accessCount > mostAccessed.accessCount) {
+        mostAccessed = entry;
+      }
+    }
+
+    return {
+      total: all.length,
+      byType,
+      avgImportance: all.length > 0 ? totalImportance / all.length : 0,
+      mostAccessed,
+    };
   }
 
   async clearAll(): Promise<void> {

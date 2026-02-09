@@ -2,7 +2,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import {
   MessageSquare, LayoutDashboard, Eye, Mic, Bot, Workflow,
   Home, Heart, FileText, Code, Wrench, Brain, Activity, Zap,
-  Settings, Headphones, ChevronLeft, ChevronRight, Sun, Moon,
+  Database, Settings, Headphones, ChevronLeft, ChevronRight, Sun, Moon,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -21,6 +21,7 @@ const navigationItems = [
   { icon: Brain, label: 'Personas', path: '/personas' },
   { icon: Activity, label: 'Monitoring', path: '/monitoring' },
   { icon: Zap, label: '5 Sens', path: '/senses' },
+  { icon: Database, label: 'Mémoire', path: '/memory' },
 ];
 
 interface SidebarProps {

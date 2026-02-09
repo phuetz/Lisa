@@ -338,8 +338,8 @@ class RAGServiceImpl {
     }
 
     try {
-      // Rechercher les souvenirs similaires
-      const scoredMemories = await this.searchSimilar(query, limit);
+      // Recherche hybride (BM25 + vecteurs) pour un meilleur rappel
+      const scoredMemories = await this.hybridSearch(query, { limit });
 
       // Convert to Memory[] (strip similarity for compatibility)
       const relevantMemories: Memory[] = scoredMemories.map(({ similarity: _similarity, ...memory }) => memory);
@@ -390,6 +390,126 @@ class RAGServiceImpl {
         timestamp: new Date().toISOString()
       };
     }
+  }
+
+  /**
+   * Recherche hybride BM25 + vecteurs (inspiré OpenClaw)
+   * Union-based: les résultats des deux méthodes contribuent au score final.
+   */
+  async hybridSearch(
+    query: string,
+    options: { limit?: number; vectorWeight?: number; textWeight?: number } = {}
+  ): Promise<Array<Memory & { similarity: number }>> {
+    const {
+      limit = this.config.maxResults,
+      vectorWeight = 0.6,
+      textWeight = 0.4,
+    } = options;
+
+    if (!this.config.enabled) return [];
+
+    try {
+      // 1. Vector search (existant)
+      const vectorResults = await this.searchSimilar(query, limit * 2);
+
+      // 2. BM25 keyword search
+      const keywordResults = this.bm25Search(query, limit * 2);
+
+      // 3. Union et merge des scores
+      const scoreMap = new Map<string, {
+        memory: Memory;
+        vectorScore: number;
+        textScore: number;
+      }>();
+
+      for (const result of vectorResults) {
+        scoreMap.set(result.id, {
+          memory: result,
+          vectorScore: result.similarity,
+          textScore: 0,
+        });
+      }
+
+      for (const { memory, score } of keywordResults) {
+        const existing = scoreMap.get(memory.id);
+        if (existing) {
+          existing.textScore = score;
+        } else {
+          scoreMap.set(memory.id, {
+            memory,
+            vectorScore: 0,
+            textScore: score,
+          });
+        }
+      }
+
+      // 4. Score hybride et tri
+      return Array.from(scoreMap.values())
+        .map(({ memory, vectorScore, textScore }) => ({
+          ...memory,
+          similarity: vectorWeight * vectorScore + textWeight * textScore,
+        }))
+        .filter(item => item.similarity >= this.config.similarityThreshold * 0.8)
+        .sort((a, b) => b.similarity - a.similarity)
+        .slice(0, limit);
+    } catch (error) {
+      console.warn('[RAG] Hybrid search failed, falling back to vector-only:', error);
+      return this.searchSimilar(query, limit);
+    }
+  }
+
+  /**
+   * BM25-like keyword scoring sur les mémoires en cache.
+   * TF-IDF avec normalisation longueur document.
+   */
+  private bm25Search(query: string, limit: number): Array<{ memory: Memory; score: number }> {
+    const context = memoryService.getContext();
+    const allMemories = [...context.shortTerm, ...context.longTerm];
+    if (allMemories.length === 0) return [];
+
+    const queryTerms = query.toLowerCase().split(/\s+/).filter(t => t.length > 2);
+    if (queryTerms.length === 0) return [];
+
+    const k1 = 1.5;
+    const b = 0.75;
+    const N = allMemories.length;
+    const avgDocLen = allMemories.reduce((sum, m) => sum + m.content.length, 0) / N;
+
+    // IDF: nombre de docs contenant chaque terme
+    const termDocCounts = new Map<string, number>();
+    for (const term of queryTerms) {
+      let count = 0;
+      for (const memory of allMemories) {
+        if (memory.content.toLowerCase().includes(term)) count++;
+      }
+      termDocCounts.set(term, count);
+    }
+
+    const scored = allMemories.map(memory => {
+      const docLower = memory.content.toLowerCase();
+      const docLen = memory.content.length;
+      let score = 0;
+
+      for (const term of queryTerms) {
+        const tf = docLower.split(term).length - 1;
+        if (tf === 0) continue;
+
+        const df = termDocCounts.get(term) || 0;
+        const idf = Math.log((N - df + 0.5) / (df + 0.5) + 1);
+        const tfNorm = (tf * (k1 + 1)) / (tf + k1 * (1 - b + b * (docLen / avgDocLen)));
+        score += idf * tfNorm;
+      }
+
+      return { memory, score };
+    });
+
+    const maxScore = Math.max(...scored.map(s => s.score), 0.001);
+
+    return scored
+      .map(s => ({ ...s, score: s.score / maxScore }))
+      .filter(s => s.score > 0.1)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, limit);
   }
 
   /**

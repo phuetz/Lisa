@@ -29,6 +29,7 @@ const GatewayPage = lazy(() => import('../pages/GatewayPage'));
 const PersonaPage = lazy(() => import('../pages/PersonaPage'));
 const SensesDashboard = lazy(() => import('../components/SensesDashboard'));
 const GrokCliPage = lazy(() => import('../pages/GrokCliPage'));
+const MemoryPage = lazy(() => import('../pages/MemoryPage'));
 
 // Eager import (non-lazy) for MonitoringPage
 import { MonitoringPage } from '../pages/MonitoringPage';
@@ -195,6 +196,14 @@ export const router = createBrowserRouter([
         element: (
           <Suspense fallback={<LoadingFallback />}>
             <GatewayPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'memory',
+        element: (
+          <Suspense fallback={<LoadingFallback />}>
+            <MemoryPage />
           </Suspense>
         ),
       },
