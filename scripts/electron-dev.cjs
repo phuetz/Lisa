@@ -5,7 +5,7 @@ delete process.env.ELECTRON_RUN_AS_NODE;
 
 const { execSync } = require('child_process');
 const args = process.argv.slice(2).join(' ');
-const cmd = `electron-vite ${args || 'dev'}`;
+const cmd = `npx electron-vite ${args || 'dev'}`;
 
 try {
   execSync(cmd, { stdio: 'inherit', cwd: process.cwd() });

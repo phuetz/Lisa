@@ -22,6 +22,7 @@
     "electron:build": "electron-vite build",
     "electron:preview": "node scripts/electron-dev.cjs preview",
     "electron:package": "electron-vite build && node scripts/electron-dev.cjs preview",
+    "postinstall:wasm": "node -e \"require('fs').copyFileSync(require.resolve('sql.js/dist/sql-wasm.wasm'),'public/sql-wasm.wasm')\"",
     "prepare": "husky install",
     "pre-commit": "lint-staged"
   },
@@ -112,6 +113,7 @@
     "roslib": "^1.4.1",
     "rxjs": "^7.8.1",
     "sonner": "^2.0.6",
+    "sql.js": "^1.13.0",
     "tailwind-merge": "^3.4.0",
     "tesseract.js": "^6.0.1",
     "three": "^0.178.0",

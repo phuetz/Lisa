@@ -4,17 +4,11 @@
  * Provides high-performance approximate nearest neighbor (ANN) search
  * using a pure JavaScript HNSW (Hierarchical Navigable Small World) implementation.
  *
- * Features:
- * - O(log n) search complexity vs O(n) linear search
- * - Cosine similarity metric
- * - IndexedDB persistence
- * - Memory-efficient with typed arrays
- *
- * Based on the HNSW algorithm paper:
- * "Efficient and robust approximate nearest neighbor search using HNSW graphs"
+ * Persistence via SQLite (DatabaseService) instead of IndexedDB.
+ * HNSW graph logic stays in JS; nodes/config are serialized to SQL tables.
  */
 
-import { openDB, type IDBPDatabase, type DBSchema } from 'idb';
+import { databaseService } from './DatabaseService';
 
 // ============================================================================
 // Types
@@ -36,44 +30,16 @@ interface HNSWNode {
   id: string;
   vector: Float32Array;
   metadata: Record<string, unknown>;
-  neighbors: Map<number, Set<number>>; // level -> neighbor indices
+  neighbors: Map<number, Set<number>>;
   level: number;
 }
 
 interface VectorStoreConfig {
   dimensions: number;
-  M: number; // Max connections per layer
-  efConstruction: number; // Size of dynamic candidate list during construction
-  efSearch: number; // Size of dynamic candidate list during search
-  mL: number; // Level multiplier (1/ln(M))
-}
-
-// ============================================================================
-// IndexedDB Schema
-// ============================================================================
-
-interface VectorStoreDB extends DBSchema {
-  vectors: {
-    key: string;
-    value: {
-      id: string;
-      vector: number[];
-      metadata: Record<string, unknown>;
-      neighbors: Array<[number, number[]]>; // Serialized Map
-      level: number;
-    };
-    indexes: {
-      'by-level': number;
-    };
-  };
-  config: {
-    key: string;
-    value: {
-      entryPoint: number | null;
-      maxLevel: number;
-      nextIndex: number;
-    };
-  };
+  M: number;
+  efConstruction: number;
+  efSearch: number;
+  mL: number;
 }
 
 // ============================================================================
@@ -87,8 +53,8 @@ export class VectorStoreService {
   private maxLevel = 0;
   private nextIndex = 0;
   private config: VectorStoreConfig;
-  private db: IDBPDatabase<VectorStoreDB> | null = null;
   private initialized = false;
+  private dirty = false;
 
   constructor(dimensions: number = 1536, options?: Partial<VectorStoreConfig>) {
     this.config = {
@@ -104,84 +70,87 @@ export class VectorStoreService {
   // Initialization
   // ==========================================================================
 
-  /**
-   * Initialize the vector store
-   */
   async initialize(): Promise<void> {
     if (this.initialized) return;
 
     try {
-      this.db = await openDB<VectorStoreDB>('lisa-vector-store', 1, {
-        upgrade(db) {
-          const vectorStore = db.createObjectStore('vectors', { keyPath: 'id' });
-          vectorStore.createIndex('by-level', 'level');
-          db.createObjectStore('config', { keyPath: 'key' });
-        }
-      });
-
-      // Load existing data
+      await databaseService.init();
       await this.loadFromDB();
       this.initialized = true;
       console.log(`[VectorStore] Initialized with ${this.nodes.size} vectors, ${this.config.dimensions} dims`);
     } catch (error) {
-      console.warn('[VectorStore] IndexedDB init failed, using memory only:', error);
+      console.warn('[VectorStore] SQLite init failed, using memory only:', error);
       this.initialized = true;
     }
   }
 
   private async loadFromDB(): Promise<void> {
-    if (!this.db) return;
+    if (!databaseService.ready) return;
 
     try {
       // Load config
-      const config = await this.db.get('config', 'main');
-      if (config) {
-        this.entryPoint = config.entryPoint;
-        this.maxLevel = config.maxLevel;
-        this.nextIndex = config.nextIndex;
+      const configRow = await databaseService.get<{
+        entry_point: string | null; max_level: number; next_index: number;
+      }>('SELECT * FROM vector_config WHERE key = ?', ['main']);
+
+      if (configRow) {
+        this.entryPoint = configRow.entry_point !== null ? parseInt(configRow.entry_point) : null;
+        this.maxLevel = configRow.max_level;
+        this.nextIndex = configRow.next_index;
       }
 
       // Load vectors
-      const allVectors = await this.db.getAll('vectors');
-      for (const stored of allVectors) {
+      const rows = await databaseService.all<{
+        id: string; vector: string; metadata: string; level: number; neighbors: string;
+      }>('SELECT * FROM vectors');
+
+      for (const row of rows) {
+        const vectorArr = JSON.parse(row.vector) as number[];
+        const neighborsArr = JSON.parse(row.neighbors) as Array<[number, number[]]>;
+
         const node: HNSWNode = {
-          id: stored.id,
-          vector: new Float32Array(stored.vector),
-          metadata: stored.metadata,
-          neighbors: new Map(stored.neighbors.map(([level, indices]) => [level, new Set(indices)])),
-          level: stored.level
+          id: row.id,
+          vector: new Float32Array(vectorArr),
+          metadata: row.metadata ? JSON.parse(row.metadata) : {},
+          neighbors: new Map(neighborsArr.map(([level, indices]) => [level, new Set(indices)])),
+          level: row.level
         };
 
         const index = this.idToIndex.size;
         this.nodes.set(index, node);
-        this.idToIndex.set(stored.id, index);
+        this.idToIndex.set(row.id, index);
       }
     } catch (error) {
-      console.warn('[VectorStore] Failed to load from IndexedDB:', error);
+      console.warn('[VectorStore] Failed to load from SQLite:', error);
     }
   }
 
   private async saveNode(index: number): Promise<void> {
-    if (!this.db) return;
+    if (!databaseService.ready) return;
 
     const node = this.nodes.get(index);
     if (!node) return;
 
     try {
-      await this.db.put('vectors', {
-        id: node.id,
-        vector: Array.from(node.vector),
-        metadata: node.metadata,
-        neighbors: Array.from(node.neighbors.entries()).map(([level, set]) => [level, Array.from(set)]),
-        level: node.level
-      });
+      const neighborsArr = Array.from(node.neighbors.entries()).map(
+        ([level, set]) => [level, Array.from(set)]
+      );
 
-      await this.db.put('config', {
-        key: 'main',
-        entryPoint: this.entryPoint,
-        maxLevel: this.maxLevel,
-        nextIndex: this.nextIndex
-      });
+      await databaseService.run(
+        'INSERT OR REPLACE INTO vectors (id, vector, metadata, level, neighbors) VALUES (?, ?, ?, ?, ?)',
+        [
+          node.id,
+          JSON.stringify(Array.from(node.vector)),
+          JSON.stringify(node.metadata),
+          node.level,
+          JSON.stringify(neighborsArr)
+        ]
+      );
+
+      await databaseService.run(
+        'INSERT OR REPLACE INTO vector_config (key, entry_point, max_level, next_index) VALUES (?, ?, ?, ?)',
+        ['main', this.entryPoint !== null ? String(this.entryPoint) : null, this.maxLevel, this.nextIndex]
+      );
     } catch (error) {
       console.warn('[VectorStore] Failed to save node:', error);
     }
@@ -191,13 +160,9 @@ export class VectorStoreService {
   // Core HNSW Operations
   // ==========================================================================
 
-  /**
-   * Add a vector to the index
-   */
   async add(entry: VectorEntry): Promise<number> {
     if (!this.initialized) await this.initialize();
 
-    // Check if ID already exists
     if (this.idToIndex.has(entry.id)) {
       return this.idToIndex.get(entry.id)!;
     }
@@ -214,7 +179,6 @@ export class VectorStoreService {
       level
     };
 
-    // Initialize neighbor sets for each level
     for (let l = 0; l <= level; l++) {
       node.neighbors.set(l, new Set());
     }
@@ -222,7 +186,6 @@ export class VectorStoreService {
     this.nodes.set(index, node);
     this.idToIndex.set(entry.id, index);
 
-    // Insert into graph
     if (this.entryPoint === null) {
       this.entryPoint = index;
       this.maxLevel = level;
@@ -230,15 +193,11 @@ export class VectorStoreService {
       await this.insertNode(index, vector, level);
     }
 
-    // Persist
     await this.saveNode(index);
 
     return index;
   }
 
-  /**
-   * Add multiple vectors (batch)
-   */
   async addBatch(entries: VectorEntry[]): Promise<number[]> {
     const indices: number[] = [];
     for (const entry of entries) {
@@ -247,9 +206,6 @@ export class VectorStoreService {
     return indices;
   }
 
-  /**
-   * Search for similar vectors
-   */
   search(queryVector: number[], k: number = 10): SearchResult[] {
     if (!this.initialized || this.entryPoint === null || this.nodes.size === 0) {
       return [];
@@ -262,15 +218,12 @@ export class VectorStoreService {
       const node = this.nodes.get(index)!;
       return {
         id: node.id,
-        score: 1 - distance, // Convert distance to similarity
+        score: 1 - distance,
         metadata: node.metadata
       };
     });
   }
 
-  /**
-   * Remove a vector by ID
-   */
   async remove(id: string): Promise<boolean> {
     const index = this.idToIndex.get(id);
     if (index === undefined) return false;
@@ -278,7 +231,6 @@ export class VectorStoreService {
     const node = this.nodes.get(index);
     if (!node) return false;
 
-    // Remove from neighbors' lists
     for (const [level, neighbors] of node.neighbors) {
       for (const neighborIdx of neighbors) {
         const neighbor = this.nodes.get(neighborIdx);
@@ -288,11 +240,9 @@ export class VectorStoreService {
       }
     }
 
-    // Remove node
     this.nodes.delete(index);
     this.idToIndex.delete(id);
 
-    // Update entry point if needed
     if (this.entryPoint === index) {
       this.entryPoint = this.nodes.size > 0 ? this.nodes.keys().next().value : null;
       if (this.entryPoint !== null) {
@@ -302,13 +252,8 @@ export class VectorStoreService {
       }
     }
 
-    // Remove from DB
-    if (this.db) {
-      try {
-        await this.db.delete('vectors', id);
-      } catch {
-        // Ignore
-      }
+    if (databaseService.ready) {
+      databaseService.run('DELETE FROM vectors WHERE id = ?', [id]).catch(() => {});
     }
 
     return true;
@@ -330,7 +275,6 @@ export class VectorStoreService {
     let currentNode = this.entryPoint!;
     let currentDist = this.distance(vector, this.nodes.get(currentNode)!.vector);
 
-    // Search from top to level+1
     for (let l = this.maxLevel; l > level; l--) {
       let changed = true;
       while (changed) {
@@ -349,24 +293,20 @@ export class VectorStoreService {
       }
     }
 
-    // Insert at each level
     for (let l = Math.min(level, this.maxLevel); l >= 0; l--) {
       const candidates = this.searchLayer(vector, currentNode, this.config.efConstruction, l);
       const neighbors = this.selectNeighbors(vector, candidates, this.config.M);
 
-      // Add neighbors
       const node = this.nodes.get(index)!;
       for (const [neighborIdx] of neighbors) {
         node.neighbors.get(l)!.add(neighborIdx);
 
-        // Add reverse connection
         const neighbor = this.nodes.get(neighborIdx)!;
         if (!neighbor.neighbors.has(l)) {
           neighbor.neighbors.set(l, new Set());
         }
         neighbor.neighbors.get(l)!.add(index);
 
-        // Trim if needed
         if (neighbor.neighbors.get(l)!.size > this.config.M) {
           this.trimConnections(neighborIdx, l);
         }
@@ -377,7 +317,6 @@ export class VectorStoreService {
       }
     }
 
-    // Update max level if needed
     if (level > this.maxLevel) {
       this.maxLevel = level;
       this.entryPoint = index;
@@ -395,17 +334,14 @@ export class VectorStoreService {
     const results: Array<[number, number]> = [...candidates];
 
     while (candidates.length > 0) {
-      // Get closest candidate
       candidates.sort((a, b) => a[1] - b[1]);
       const [currentIdx, currentDist] = candidates.shift()!;
 
-      // Check if we should stop
       results.sort((a, b) => a[1] - b[1]);
       if (results.length >= ef && currentDist > results[ef - 1][1]) {
         break;
       }
 
-      // Explore neighbors
       const neighbors = this.nodes.get(currentIdx)!.neighbors.get(level);
       if (neighbors) {
         for (const neighborIdx of neighbors) {
@@ -437,7 +373,6 @@ export class VectorStoreService {
     candidates: Array<[number, number]>,
     M: number
   ): Array<[number, number]> {
-    // Simple selection: take M closest
     candidates.sort((a, b) => a[1] - b[1]);
     return candidates.slice(0, M);
   }
@@ -448,7 +383,6 @@ export class VectorStoreService {
 
     if (neighbors.size <= this.config.M) return;
 
-    // Calculate distances and keep M closest
     const distances: Array<[number, number]> = [];
     for (const neighborIdx of neighbors) {
       const neighbor = this.nodes.get(neighborIdx);
@@ -460,7 +394,6 @@ export class VectorStoreService {
     distances.sort((a, b) => a[1] - b[1]);
     const toKeep = new Set(distances.slice(0, this.config.M).map(d => d[0]));
 
-    // Remove excess connections
     for (const neighborIdx of neighbors) {
       if (!toKeep.has(neighborIdx)) {
         neighbors.delete(neighborIdx);
@@ -474,7 +407,6 @@ export class VectorStoreService {
     let currentNode = this.entryPoint;
     let currentDist = this.distance(query, this.nodes.get(currentNode)!.vector);
 
-    // Search from top to level 1
     for (let l = this.maxLevel; l > 0; l--) {
       let changed = true;
       while (changed) {
@@ -496,7 +428,6 @@ export class VectorStoreService {
       }
     }
 
-    // Search at level 0 with ef = max(k, efSearch)
     const ef = Math.max(k, this.config.efSearch);
     const results = this.searchLayer(query, currentNode, ef, 0);
 
@@ -507,9 +438,6 @@ export class VectorStoreService {
   // Distance Metrics
   // ==========================================================================
 
-  /**
-   * Cosine distance (1 - cosine similarity)
-   */
   private distance(a: Float32Array, b: Float32Array): number {
     let dotProduct = 0;
     let normA = 0;
@@ -527,16 +455,13 @@ export class VectorStoreService {
     if (normA === 0 || normB === 0) return 1;
 
     const similarity = dotProduct / (normA * normB);
-    return 1 - similarity; // Convert to distance
+    return 1 - similarity;
   }
 
   // ==========================================================================
   // Utility Methods
   // ==========================================================================
 
-  /**
-   * Get index statistics
-   */
   getStats(): { size: number; dimensions: number; maxLevel: number; entryPoint: string | null } {
     return {
       size: this.nodes.size,
@@ -546,16 +471,10 @@ export class VectorStoreService {
     };
   }
 
-  /**
-   * Check if ID exists
-   */
   has(id: string): boolean {
     return this.idToIndex.has(id);
   }
 
-  /**
-   * Get vector by ID
-   */
   get(id: string): VectorEntry | null {
     const index = this.idToIndex.get(id);
     if (index === undefined) return null;
@@ -570,9 +489,6 @@ export class VectorStoreService {
     };
   }
 
-  /**
-   * Clear all vectors
-   */
   async clear(): Promise<void> {
     this.nodes.clear();
     this.idToIndex.clear();
@@ -580,21 +496,14 @@ export class VectorStoreService {
     this.maxLevel = 0;
     this.nextIndex = 0;
 
-    if (this.db) {
-      try {
-        await this.db.clear('vectors');
-        await this.db.clear('config');
-      } catch {
-        // Ignore
-      }
+    if (databaseService.ready) {
+      databaseService.run('DELETE FROM vectors').catch(() => {});
+      databaseService.run('DELETE FROM vector_config').catch(() => {});
     }
 
     console.log('[VectorStore] Cleared');
   }
 
-  /**
-   * Export all vectors
-   */
   export(): VectorEntry[] {
     const entries: VectorEntry[] = [];
     for (const node of this.nodes.values()) {
@@ -607,9 +516,6 @@ export class VectorStoreService {
     return entries;
   }
 
-  /**
-   * Import vectors
-   */
   async import(entries: VectorEntry[]): Promise<void> {
     for (const entry of entries) {
       await this.add(entry);

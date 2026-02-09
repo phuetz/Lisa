@@ -2,9 +2,10 @@
  * Long-Term Memory Service
  * Service pour stocker et récupérer les souvenirs persistants de Lisa
  * Utilise le LLM pour extraire intelligemment les informations mémorables
+ * Persistence via SQLite (DatabaseService) with FTS4 full-text search.
  */
 
-import { openDB, type IDBPDatabase } from 'idb';
+import { databaseService } from './DatabaseService';
 import { aiService, type AIMessage } from './aiService';
 
 export interface MemoryEntry {
@@ -16,40 +17,59 @@ export interface MemoryEntry {
   updatedAt: Date;
   accessCount: number;
   lastAccessedAt: Date;
-  importance: number; // 0-1, plus c'est haut plus c'est important
+  importance: number;
   tags: string[];
 }
 
-interface MemoryDB {
-  memories: {
-    key: string;
-    value: MemoryEntry;
-    indexes: {
-      'by-type': string;
-      'by-key': string;
-      'by-importance': number;
-      'by-tags': string[];
-    };
-  };
-}
-
 class LongTermMemoryService {
-  private db: IDBPDatabase<MemoryDB> | null = null;
-  private readonly DB_NAME = 'lisa-memory-db';
-  private readonly DB_VERSION = 1;
+  private dbReady = false;
 
   async init(): Promise<void> {
-    if (this.db) return;
+    if (this.dbReady) return;
 
-    this.db = await openDB<MemoryDB>(this.DB_NAME, this.DB_VERSION, {
-      upgrade(db) {
-        const store = db.createObjectStore('memories', { keyPath: 'id' });
-        store.createIndex('by-type', 'type');
-        store.createIndex('by-key', 'key');
-        store.createIndex('by-importance', 'importance');
-        store.createIndex('by-tags', 'tags', { multiEntry: true });
-      },
-    });
+    try {
+      await databaseService.init();
+      this.dbReady = true;
+    } catch (err) {
+      console.error('[LongTermMemory] SQLite init failed:', err);
+      throw err;
+    }
+  }
+
+  private toEntry(row: Record<string, unknown>, tags: string[] = []): MemoryEntry {
+    return {
+      id: row.id as string,
+      type: row.type as MemoryEntry['type'],
+      key: row.key as string,
+      value: row.value as string,
+      createdAt: new Date(row.created_at as number),
+      updatedAt: new Date(row.updated_at as number),
+      accessCount: (row.access_count as number) || 0,
+      lastAccessedAt: new Date((row.updated_at as number) || (row.created_at as number)),
+      importance: (row.importance as number) || 0.5,
+      tags,
+    };
+  }
+
+  private async getTagsForMemory(id: string): Promise<string[]> {
+    if (!this.dbReady) return [];
+    const rows = await databaseService.all<{ tag: string }>(
+      'SELECT tag FROM memory_tags WHERE memory_id = ?', [id]
+    );
+    return rows.map(r => r.tag);
+  }
+
+  private async setTagsForMemory(id: string, tags: string[]): Promise<void> {
+    if (!this.dbReady) return;
+    // Delete existing tags
+    await databaseService.run('DELETE FROM memory_tags WHERE memory_id = ?', [id]);
+    // Insert new tags
+    for (const tag of tags) {
+      await databaseService.run(
+        'INSERT OR IGNORE INTO memory_tags (memory_id, tag) VALUES (?, ?)',
+        [id, tag]
+      );
+    }
   }
 
   async remember(
@@ -59,136 +79,225 @@ class LongTermMemoryService {
     options: { importance?: number; tags?: string[] } = {}
   ): Promise<MemoryEntry> {
     await this.init();
-    if (!this.db) throw new Error('Database not initialized');
 
-    // Vérifier si une entrée existe déjà avec cette clé
     const existing = await this.getByKey(key);
-    
+    const now = Date.now();
+    const tags = options.tags ?? [];
+
     if (existing) {
-      // Mettre à jour l'entrée existante
-      const updated: MemoryEntry = {
+      const importance = options.importance ?? existing.importance;
+      await databaseService.run(
+        'UPDATE memories SET value = ?, importance = ?, updated_at = ?, metadata = ? WHERE id = ?',
+        [value, importance, now, null, existing.id]
+      );
+      await this.setTagsForMemory(existing.id, tags.length > 0 ? tags : existing.tags);
+
+      // Update FTS4
+      await databaseService.run(
+        'INSERT OR REPLACE INTO memories_fts (id, value, key) VALUES (?, ?, ?)',
+        [existing.id, value, key]
+      ).catch(() => {});
+
+      return {
         ...existing,
         value,
-        updatedAt: new Date(),
-        importance: options.importance ?? existing.importance,
-        tags: options.tags ?? existing.tags,
+        updatedAt: new Date(now),
+        importance,
+        tags: tags.length > 0 ? tags : existing.tags,
       };
-      await this.db.put('memories', updated);
-      return updated;
     }
 
-    // Créer une nouvelle entrée
-    const entry: MemoryEntry = {
-      id: crypto.randomUUID(),
-      type,
-      key,
-      value,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      accessCount: 0,
-      lastAccessedAt: new Date(),
-      importance: options.importance ?? 0.5,
-      tags: options.tags ?? [],
-    };
+    // Create new entry
+    const id = crypto.randomUUID();
+    const importance = options.importance ?? 0.5;
 
-    await this.db.put('memories', entry);
-    return entry;
+    await databaseService.run(
+      'INSERT INTO memories (id, type, key, value, importance, source, created_at, updated_at, access_count, conversation_id, metadata) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [id, type, key, value, importance, null, now, now, 0, null, null]
+    );
+    await this.setTagsForMemory(id, tags);
+
+    // Index in FTS4
+    await databaseService.run(
+      'INSERT INTO memories_fts (id, value, key) VALUES (?, ?, ?)',
+      [id, value, key]
+    ).catch(() => {});
+
+    return {
+      id, type, key, value,
+      createdAt: new Date(now),
+      updatedAt: new Date(now),
+      accessCount: 0,
+      lastAccessedAt: new Date(now),
+      importance, tags,
+    };
   }
 
   async recall(key: string): Promise<string | null> {
     await this.init();
-    if (!this.db) return null;
 
     const entry = await this.getByKey(key);
     if (!entry) return null;
 
-    // Mettre à jour les stats d'accès
-    entry.accessCount++;
-    entry.lastAccessedAt = new Date();
-    await this.db.put('memories', entry);
+    // Update access stats
+    await databaseService.run(
+      'UPDATE memories SET access_count = access_count + 1, updated_at = ? WHERE id = ?',
+      [Date.now(), entry.id]
+    );
 
     return entry.value;
   }
 
   async forget(key: string): Promise<boolean> {
     await this.init();
-    if (!this.db) return false;
 
     const entry = await this.getByKey(key);
     if (!entry) return false;
 
-    await this.db.delete('memories', entry.id);
+    await databaseService.run('DELETE FROM memories WHERE id = ?', [entry.id]);
+    // Tags are deleted via CASCADE, FTS4 needs manual cleanup
+    await databaseService.run('DELETE FROM memories_fts WHERE id = ?', [entry.id]).catch(() => {});
     return true;
   }
 
   async getByKey(key: string): Promise<MemoryEntry | null> {
     await this.init();
-    if (!this.db) return null;
+    if (!this.dbReady) return null;
 
-    const entries = await this.db.getAllFromIndex('memories', 'by-key', key);
-    return entries[0] || null;
+    const row = await databaseService.get<Record<string, unknown>>(
+      'SELECT * FROM memories WHERE key = ? LIMIT 1', [key]
+    );
+    if (!row) return null;
+
+    const tags = await this.getTagsForMemory(row.id as string);
+    return this.toEntry(row, tags);
   }
 
   async getByType(type: MemoryEntry['type']): Promise<MemoryEntry[]> {
     await this.init();
-    if (!this.db) return [];
+    if (!this.dbReady) return [];
 
-    return this.db.getAllFromIndex('memories', 'by-type', type);
+    const rows = await databaseService.all<Record<string, unknown>>(
+      'SELECT * FROM memories WHERE type = ?', [type]
+    );
+
+    const entries: MemoryEntry[] = [];
+    for (const row of rows) {
+      const tags = await this.getTagsForMemory(row.id as string);
+      entries.push(this.toEntry(row, tags));
+    }
+    return entries;
   }
 
   async getByTags(tags: string[]): Promise<MemoryEntry[]> {
     await this.init();
-    if (!this.db) return [];
+    if (!this.dbReady || tags.length === 0) return [];
 
-    const results: MemoryEntry[] = [];
-    for (const tag of tags) {
-      const entries = await this.db.getAllFromIndex('memories', 'by-tags', tag);
-      for (const entry of entries) {
-        if (!results.find(r => r.id === entry.id)) {
-          results.push(entry);
-        }
-      }
+    const placeholders = tags.map(() => '?').join(',');
+    const rows = await databaseService.all<Record<string, unknown>>(
+      `SELECT DISTINCT m.* FROM memories m
+       JOIN memory_tags t ON m.id = t.memory_id
+       WHERE t.tag IN (${placeholders})`,
+      tags
+    );
+
+    const entries: MemoryEntry[] = [];
+    for (const row of rows) {
+      const memTags = await this.getTagsForMemory(row.id as string);
+      entries.push(this.toEntry(row, memTags));
     }
-    return results;
+    return entries;
   }
 
   async getAll(): Promise<MemoryEntry[]> {
     await this.init();
-    if (!this.db) return [];
+    if (!this.dbReady) return [];
 
-    return this.db.getAll('memories');
+    const rows = await databaseService.all<Record<string, unknown>>('SELECT * FROM memories');
+    const entries: MemoryEntry[] = [];
+    for (const row of rows) {
+      const tags = await this.getTagsForMemory(row.id as string);
+      entries.push(this.toEntry(row, tags));
+    }
+    return entries;
   }
 
   async getMostImportant(limit: number = 10): Promise<MemoryEntry[]> {
     await this.init();
-    if (!this.db) return [];
+    if (!this.dbReady) return [];
 
-    const all = await this.db.getAll('memories');
-    return all.sort((a, b) => b.importance - a.importance).slice(0, limit);
+    const rows = await databaseService.all<Record<string, unknown>>(
+      'SELECT * FROM memories ORDER BY importance DESC LIMIT ?', [limit]
+    );
+    const entries: MemoryEntry[] = [];
+    for (const row of rows) {
+      const tags = await this.getTagsForMemory(row.id as string);
+      entries.push(this.toEntry(row, tags));
+    }
+    return entries;
   }
 
   async getRecentlyAccessed(limit: number = 10): Promise<MemoryEntry[]> {
     await this.init();
-    if (!this.db) return [];
+    if (!this.dbReady) return [];
 
-    const all = await this.db.getAll('memories');
-    return all
-      .sort((a, b) => new Date(b.lastAccessedAt).getTime() - new Date(a.lastAccessedAt).getTime())
-      .slice(0, limit);
+    const rows = await databaseService.all<Record<string, unknown>>(
+      'SELECT * FROM memories ORDER BY updated_at DESC LIMIT ?', [limit]
+    );
+    const entries: MemoryEntry[] = [];
+    for (const row of rows) {
+      const tags = await this.getTagsForMemory(row.id as string);
+      entries.push(this.toEntry(row, tags));
+    }
+    return entries;
   }
 
+  /**
+   * Full-text search using FTS4
+   */
   async search(query: string): Promise<MemoryEntry[]> {
     await this.init();
-    if (!this.db) return [];
+    if (!this.dbReady) return [];
 
-    const lowerQuery = query.toLowerCase();
-    const all = await this.db.getAll('memories');
-    
-    return all.filter(entry =>
-      entry.key.toLowerCase().includes(lowerQuery) ||
-      entry.value.toLowerCase().includes(lowerQuery) ||
-      entry.tags.some(tag => tag.toLowerCase().includes(lowerQuery))
+    // Try FTS4 first
+    try {
+      const ftsRows = await databaseService.all<{ id: string }>(
+        'SELECT id FROM memories_fts WHERE memories_fts MATCH ?',
+        [query + '*']  // Prefix matching
+      );
+
+      if (ftsRows.length > 0) {
+        const ids = ftsRows.map(r => r.id);
+        const placeholders = ids.map(() => '?').join(',');
+        const rows = await databaseService.all<Record<string, unknown>>(
+          `SELECT * FROM memories WHERE id IN (${placeholders})`,
+          ids
+        );
+
+        const entries: MemoryEntry[] = [];
+        for (const row of rows) {
+          const tags = await this.getTagsForMemory(row.id as string);
+          entries.push(this.toEntry(row, tags));
+        }
+        return entries;
+      }
+    } catch {
+      // FTS4 query failed, fall back to LIKE
+    }
+
+    // Fallback to LIKE search
+    const likeQuery = `%${query}%`;
+    const rows = await databaseService.all<Record<string, unknown>>(
+      'SELECT * FROM memories WHERE key LIKE ? OR value LIKE ?',
+      [likeQuery, likeQuery]
     );
+
+    const entries: MemoryEntry[] = [];
+    for (const row of rows) {
+      const tags = await this.getTagsForMemory(row.id as string);
+      entries.push(this.toEntry(row, tags));
+    }
+    return entries;
   }
 
   async buildContextForPrompt(): Promise<string> {
@@ -214,7 +323,6 @@ class LongTermMemoryService {
       sections.push(`## Instructions de l'utilisateur:\n${lines.join('\n')}`);
     }
 
-    // Ajouter les souvenirs importants non déjà inclus
     const addedIds = new Set([
       ...preferences.map(p => p.id),
       ...facts.map(f => f.id),
@@ -235,21 +343,52 @@ class LongTermMemoryService {
     updates: Partial<Pick<MemoryEntry, 'type' | 'key' | 'value' | 'importance' | 'tags'>>
   ): Promise<MemoryEntry | null> {
     await this.init();
-    if (!this.db) return null;
+    if (!this.dbReady) return null;
 
-    const entry = await this.db.get('memories', id);
-    if (!entry) return null;
+    const row = await databaseService.get<Record<string, unknown>>(
+      'SELECT * FROM memories WHERE id = ?', [id]
+    );
+    if (!row) return null;
 
-    const updated: MemoryEntry = { ...entry, ...updates, updatedAt: new Date() };
-    await this.db.put('memories', updated);
-    return updated;
+    const now = Date.now();
+    const sets: string[] = ['updated_at = ?'];
+    const params: unknown[] = [now];
+
+    if (updates.type !== undefined) { sets.push('type = ?'); params.push(updates.type); }
+    if (updates.key !== undefined) { sets.push('key = ?'); params.push(updates.key); }
+    if (updates.value !== undefined) { sets.push('value = ?'); params.push(updates.value); }
+    if (updates.importance !== undefined) { sets.push('importance = ?'); params.push(updates.importance); }
+
+    params.push(id);
+    await databaseService.run(`UPDATE memories SET ${sets.join(', ')} WHERE id = ?`, params);
+
+    if (updates.tags) {
+      await this.setTagsForMemory(id, updates.tags);
+    }
+
+    // Update FTS4
+    if (updates.value !== undefined || updates.key !== undefined) {
+      const key = updates.key ?? row.key as string;
+      const value = updates.value ?? row.value as string;
+      await databaseService.run(
+        'INSERT OR REPLACE INTO memories_fts (id, value, key) VALUES (?, ?, ?)',
+        [id, value, key]
+      ).catch(() => {});
+    }
+
+    const tags = updates.tags ?? await this.getTagsForMemory(id);
+    const updated = await databaseService.get<Record<string, unknown>>(
+      'SELECT * FROM memories WHERE id = ?', [id]
+    );
+    return updated ? this.toEntry(updated, tags) : null;
   }
 
   async deleteById(id: string): Promise<boolean> {
     await this.init();
-    if (!this.db) return false;
+    if (!this.dbReady) return false;
 
-    await this.db.delete('memories', id);
+    await databaseService.run('DELETE FROM memories WHERE id = ?', [id]);
+    await databaseService.run('DELETE FROM memories_fts WHERE id = ?', [id]).catch(() => {});
     return true;
   }
 
@@ -282,9 +421,11 @@ class LongTermMemoryService {
 
   async clearAll(): Promise<void> {
     await this.init();
-    if (!this.db) return;
+    if (!this.dbReady) return;
 
-    await this.db.clear('memories');
+    await databaseService.run('DELETE FROM memory_tags');
+    await databaseService.run('DELETE FROM memories');
+    await databaseService.run('DELETE FROM memories_fts').catch(() => {});
   }
 
   async export(): Promise<MemoryEntry[]> {
@@ -293,21 +434,18 @@ class LongTermMemoryService {
 
   async import(entries: MemoryEntry[]): Promise<void> {
     await this.init();
-    if (!this.db) return;
+    if (!this.dbReady) return;
 
     for (const entry of entries) {
-      await this.db.put('memories', {
-        ...entry,
-        createdAt: new Date(entry.createdAt),
-        updatedAt: new Date(entry.updatedAt),
-        lastAccessedAt: new Date(entry.lastAccessedAt),
+      await this.remember(entry.type, entry.key, entry.value, {
+        importance: entry.importance,
+        tags: entry.tags,
       });
     }
   }
 
   /**
    * Extraction automatique de souvenirs via LLM
-   * Fallback sur regex si aucun provider IA n'est configuré
    */
   async extractAndRemember(userMessage: string, assistantResponse: string): Promise<void> {
     try {
@@ -318,11 +456,7 @@ class LongTermMemoryService {
     }
   }
 
-  /**
-   * Extraction intelligente via LLM — analyse sémantique de la conversation
-   */
   private async extractWithLLM(userMessage: string, assistantResponse: string): Promise<void> {
-    // Vérifier qu'un provider est configuré
     const config = aiService.getConfig();
     if (!config.apiKey && config.provider !== 'lmstudio' && config.provider !== 'ollama') {
       throw new Error('No AI provider configured');
@@ -354,7 +488,6 @@ Règles:
 
     const response = await aiService.sendMessage(messages);
 
-    // Parser le JSON de la réponse
     const jsonMatch = response.match(/\[[\s\S]*\]/);
     if (!jsonMatch) return;
 
@@ -381,9 +514,6 @@ Règles:
     }
   }
 
-  /**
-   * Fallback regex — extraction basique quand le LLM n'est pas disponible
-   */
   private async extractWithRegex(userMessage: string): Promise<void> {
     const preferencePatterns = [
       /j'aime\s+(.+)/i, /je préfère\s+(.+)/i, /je n'aime pas\s+(.+)/i,

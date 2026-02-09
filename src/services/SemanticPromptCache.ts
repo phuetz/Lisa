@@ -10,13 +10,13 @@
  * - Semantic similarity matching using embeddings
  * - Configurable similarity threshold
  * - TTL-based expiration
- * - IndexedDB persistence
+ * - SQLite persistence (via DatabaseService)
  * - Cache statistics and monitoring
  */
 
-import { VectorStoreService, type VectorEntry, type SearchResult } from './VectorStoreService';
+import { VectorStoreService, type SearchResult } from './VectorStoreService';
 import { embeddingService } from './EmbeddingService';
-import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
+import { databaseService } from './DatabaseService';
 
 // ============================================================================
 // Types
@@ -42,10 +42,8 @@ export interface SemanticCacheConfig {
   maxSize: number;
   /** Embedding dimensions (default: 1536 for OpenAI) */
   dimensions: number;
-  /** Enable IndexedDB persistence (default: true) */
-  persistToIndexedDB: boolean;
-  /** IndexedDB database name */
-  dbName: string;
+  /** Enable persistence (default: true) */
+  persist: boolean;
   /** Enable cache (default: true) */
   enabled: boolean;
 }
@@ -68,35 +66,13 @@ export interface SemanticCacheStats {
 }
 
 // ============================================================================
-// IndexedDB Schema
-// ============================================================================
-
-interface SemanticCacheDB extends DBSchema {
-  entries: {
-    key: string;
-    value: SemanticCacheEntry;
-    indexes: {
-      'by-expires': number;
-      'by-model': string;
-    };
-  };
-  vectors: {
-    key: string;
-    value: {
-      id: string;
-      vector: number[];
-    };
-  };
-}
-
-// ============================================================================
 // Semantic Prompt Cache
 // ============================================================================
 
 export class SemanticPromptCache {
   private vectorStore: VectorStoreService;
   private entries: Map<string, SemanticCacheEntry> = new Map();
-  private db: IDBPDatabase<SemanticCacheDB> | null = null;
+  private dbReady = false;
   private config: SemanticCacheConfig;
   private stats = {
     hits: 0,
@@ -112,14 +88,12 @@ export class SemanticPromptCache {
       defaultTtlMs: 60 * 60 * 1000, // 1 hour
       maxSize: 500,
       dimensions: 1536,
-      persistToIndexedDB: true,
-      dbName: 'lisa-semantic-cache',
+      persist: true,
       enabled: true,
       ...config
     };
 
-    this.vectorStore = new VectorStoreService({
-      dimensions: this.config.dimensions,
+    this.vectorStore = new VectorStoreService(this.config.dimensions, {
       M: 12,
       efConstruction: 100,
       efSearch: 50
@@ -136,31 +110,18 @@ export class SemanticPromptCache {
   async initialize(): Promise<void> {
     if (this.initialized) return;
 
-    // Initialize vector store
+    // Initialize vector store (uses SQLite internally)
     await this.vectorStore.initialize();
 
-    // Initialize IndexedDB
-    if (this.config.persistToIndexedDB && typeof window !== 'undefined') {
+    // Initialize SQLite
+    if (this.config.persist && typeof window !== 'undefined') {
       try {
-        this.db = await openDB<SemanticCacheDB>(this.config.dbName, 1, {
-          upgrade(db) {
-            // Entries store
-            const entriesStore = db.createObjectStore('entries', { keyPath: 'id' });
-            entriesStore.createIndex('by-expires', 'expiresAt');
-            entriesStore.createIndex('by-model', 'model');
-
-            // Vectors store
-            db.createObjectStore('vectors', { keyPath: 'id' });
-          }
-        });
-
-        // Load from IndexedDB
+        await databaseService.init();
+        this.dbReady = true;
         await this.loadFromDB();
-
-        console.log('[SemanticCache] Initialized with IndexedDB');
+        console.log('[SemanticCache] Initialized with SQLite');
       } catch (error) {
-        console.warn('[SemanticCache] IndexedDB init failed, using memory only:', error);
-        this.db = null;
+        console.warn('[SemanticCache] SQLite init failed, using memory only:', error);
       }
     }
 
@@ -172,40 +133,43 @@ export class SemanticPromptCache {
   }
 
   /**
-   * Load entries from IndexedDB
+   * Load entries from SQLite
    */
   private async loadFromDB(): Promise<void> {
-    if (!this.db) return;
+    if (!this.dbReady) return;
 
     try {
-      const [entries, vectors] = await Promise.all([
-        this.db.getAll('entries'),
-        this.db.getAll('vectors')
-      ]);
+      const rows = await databaseService.all<{
+        id: string; prompt: string; response: string; model: string;
+        embedding: string; created_at: number; expires_at: number; hit_count: number;
+      }>('SELECT * FROM semantic_cache');
 
       const now = Date.now();
 
-      // Load non-expired entries
-      for (const entry of entries) {
-        if (entry.expiresAt > now) {
-          this.entries.set(entry.id, entry);
-        }
-      }
-
-      // Load vectors into vector store
-      for (const vec of vectors) {
-        if (this.entries.has(vec.id)) {
-          await this.vectorStore.add({
-            id: vec.id,
-            vector: vec.vector,
-            metadata: {}
+      for (const row of rows) {
+        if (row.expires_at > now) {
+          this.entries.set(row.id, {
+            id: row.id,
+            prompt: row.prompt,
+            response: row.response,
+            model: row.model || '',
+            createdAt: row.created_at,
+            expiresAt: row.expires_at,
+            hitCount: row.hit_count || 0,
+            lastAccessedAt: row.created_at
           });
+
+          // Load vector into in-memory HNSW
+          if (row.embedding) {
+            const vector = JSON.parse(row.embedding) as number[];
+            await this.vectorStore.add({ id: row.id, vector, metadata: {} });
+          }
         }
       }
 
-      console.log(`[SemanticCache] Loaded ${this.entries.size} entries from IndexedDB`);
+      console.log(`[SemanticCache] Loaded ${this.entries.size} entries from SQLite`);
     } catch (error) {
-      console.warn('[SemanticCache] Failed to load from IndexedDB:', error);
+      console.warn('[SemanticCache] Failed to load from SQLite:', error);
     }
   }
 
@@ -261,8 +225,11 @@ export class SemanticPromptCache {
         this.entries.set(entry.id, entry);
 
         // Persist update
-        if (this.db) {
-          this.db.put('entries', entry).catch(console.error);
+        if (this.dbReady) {
+          databaseService.run(
+            'UPDATE semantic_cache SET hit_count = ? WHERE id = ?',
+            [entry.hitCount, entry.id]
+          ).catch(console.error);
         }
 
         console.log(
@@ -312,8 +279,11 @@ export class SemanticPromptCache {
         entry.expiresAt = Date.now() + (options?.ttlMs ?? this.config.defaultTtlMs);
         this.entries.set(entry.id, entry);
 
-        if (this.db) {
-          await this.db.put('entries', entry);
+        if (this.dbReady) {
+          await databaseService.run(
+            'UPDATE semantic_cache SET response = ?, expires_at = ? WHERE id = ?',
+            [response, entry.expiresAt, entry.id]
+          );
         }
 
         console.log(`[SemanticCache] Updated existing entry with ${(existing.score * 100).toFixed(1)}% similarity`);
@@ -351,11 +321,11 @@ export class SemanticPromptCache {
     });
 
     // Persist
-    if (this.db) {
-      await Promise.all([
-        this.db.put('entries', entry),
-        this.db.put('vectors', { id, vector: embedding })
-      ]);
+    if (this.dbReady) {
+      await databaseService.run(
+        'INSERT OR REPLACE INTO semantic_cache (id, prompt, response, model, embedding, created_at, expires_at, hit_count) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+        [id, prompt, response, model, JSON.stringify(embedding), now, now + ttl, 0]
+      );
     }
 
     console.log(`[SemanticCache] Cached response for prompt (TTL: ${ttl}ms)`);
@@ -382,11 +352,8 @@ export class SemanticPromptCache {
     const existed = this.entries.delete(id);
     await this.vectorStore.remove(id);
 
-    if (this.db && existed) {
-      await Promise.all([
-        this.db.delete('entries', id),
-        this.db.delete('vectors', id)
-      ]);
+    if (this.dbReady && existed) {
+      await databaseService.run('DELETE FROM semantic_cache WHERE id = ?', [id]);
     }
 
     return existed;
@@ -400,9 +367,14 @@ export class SemanticPromptCache {
 
     for (const [id, entry] of this.entries) {
       if (entry.model === model) {
-        await this.remove(id);
+        this.entries.delete(id);
+        await this.vectorStore.remove(id);
         count++;
       }
+    }
+
+    if (this.dbReady) {
+      await databaseService.run('DELETE FROM semantic_cache WHERE model = ?', [model]);
     }
 
     console.log(`[SemanticCache] Invalidated ${count} entries for model: ${model}`);
@@ -413,17 +385,11 @@ export class SemanticPromptCache {
    * Clear all cache entries
    */
   async clear(): Promise<void> {
-    for (const id of this.entries.keys()) {
-      await this.vectorStore.remove(id);
-    }
-
+    await this.vectorStore.clear();
     this.entries.clear();
 
-    if (this.db) {
-      await Promise.all([
-        this.db.clear('entries'),
-        this.db.clear('vectors')
-      ]);
+    if (this.dbReady) {
+      await databaseService.run('DELETE FROM semantic_cache');
     }
 
     this.stats = { hits: 0, misses: 0, nearMisses: 0, totalHitSimilarity: 0 };
@@ -481,9 +447,14 @@ export class SemanticPromptCache {
 
     for (const [id, entry] of this.entries) {
       if (entry.expiresAt < now) {
-        await this.remove(id);
+        this.entries.delete(id);
+        await this.vectorStore.remove(id);
         count++;
       }
+    }
+
+    if (this.dbReady) {
+      await databaseService.run('DELETE FROM semantic_cache WHERE expires_at < ?', [now]);
     }
 
     if (count > 0) {

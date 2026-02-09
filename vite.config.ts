@@ -55,12 +55,17 @@ export default defineConfig({
       '@agents': path.resolve(__dirname, './src/features/agents')
     }
   },
+  optimizeDeps: {
+    exclude: ['sql.js'],
+  },
   build: {
     rollupOptions: {
       output: {
         manualChunks: {
           // React core
           'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          // SQLite WASM
+          'sql-vendor': ['sql.js'],
           // UI libraries
           'ui-vendor': ['@mui/material', '@mui/icons-material', '@emotion/react', '@emotion/styled'],
           // State management

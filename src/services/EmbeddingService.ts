@@ -1,10 +1,10 @@
 /**
  * EmbeddingService - Service for generating text embeddings
  * Supports multiple providers: OpenAI, local transformers
- * Inspired by OpenClaw: L2 normalization + persistent IndexedDB cache
+ * Inspired by OpenClaw: L2 normalization + persistent SQLite cache
  */
 
-import { openDB, type IDBPDatabase } from 'idb';
+import { databaseService } from './DatabaseService';
 import { auditActions } from './AuditService';
 
 export type EmbeddingProvider = 'openai' | 'local' | 'transformers';
@@ -25,57 +25,25 @@ export interface EmbeddingResult {
   };
 }
 
-interface CachedEmbedding {
-  key: string;
-  vector: number[];
-  model: string;
-  provider: string;
-  createdAt: number;
-}
-
 const DEFAULT_CONFIG: EmbeddingConfig = {
   provider: 'local',
   dimension: 384,
   model: 'text-embedding-3-small'
 };
 
-const IDB_CACHE_NAME = 'lisa-embedding-cache';
-const IDB_CACHE_VERSION = 1;
-const IDB_STORE_NAME = 'embeddings';
-const IDB_MAX_ENTRIES = 5000;
+const MAX_DB_ENTRIES = 5000;
 
 class EmbeddingServiceImpl {
   private config: EmbeddingConfig = DEFAULT_CONFIG;
   private cache: Map<string, number[]> = new Map();
   private readonly MAX_CACHE_SIZE = 500;
-  private idbCache: IDBPDatabase | null = null;
-  private idbInitPromise: Promise<void> | null = null;
+  private dbInitPromise: Promise<void> | null = null;
 
   constructor() {
-    // Fire-and-forget IDB init
-    this.idbInitPromise = this.initIdbCache().catch(err => {
-      console.warn('[EmbeddingService] IndexedDB cache init failed:', err);
+    // Fire-and-forget DB init
+    this.dbInitPromise = databaseService.init().catch(err => {
+      console.warn('[EmbeddingService] SQLite init failed:', err);
     });
-  }
-
-  /**
-   * Initialize persistent IndexedDB cache (OpenClaw-inspired)
-   */
-  private async initIdbCache(): Promise<void> {
-    try {
-      this.idbCache = await openDB(IDB_CACHE_NAME, IDB_CACHE_VERSION, {
-        upgrade(db) {
-          if (!db.objectStoreNames.contains(IDB_STORE_NAME)) {
-            const store = db.createObjectStore(IDB_STORE_NAME, { keyPath: 'key' });
-            store.createIndex('provider', 'provider');
-            store.createIndex('createdAt', 'createdAt');
-          }
-        },
-      });
-    } catch {
-      // IndexedDB not available (e.g., test environment)
-      this.idbCache = null;
-    }
   }
 
   /**
@@ -116,7 +84,7 @@ class EmbeddingServiceImpl {
 
   /**
    * Generate embeddings for text
-   * Cache lookup: LRU in-memory → IndexedDB persistent → generate + store
+   * Cache lookup: LRU in-memory → SQLite persistent → generate + store
    */
   async generateEmbedding(text: string): Promise<EmbeddingResult> {
     const provider = this.config.provider;
@@ -131,19 +99,23 @@ class EmbeddingServiceImpl {
       return { vector: memCached, model: this.config.model || 'cached' };
     }
 
-    // 2. Check persistent IndexedDB cache
-    await this.idbInitPromise;
-    if (this.idbCache) {
+    // 2. Check persistent SQLite cache
+    await this.dbInitPromise;
+    if (databaseService.ready) {
       try {
-        const idbEntry = await this.idbCache.get(IDB_STORE_NAME, cacheKey) as CachedEmbedding | undefined;
-        if (idbEntry) {
+        const row = await databaseService.get<{ vector: string; model: string }>(
+          'SELECT vector, model FROM embedding_cache WHERE key = ?',
+          [cacheKey]
+        );
+        if (row) {
+          const vector = JSON.parse(row.vector) as number[];
           // Promote to LRU
-          this.cache.set(cacheKey, idbEntry.vector);
+          this.cache.set(cacheKey, vector);
           if (this.cache.size > this.MAX_CACHE_SIZE) {
             const oldestKey = this.cache.keys().next().value;
             if (oldestKey !== undefined) this.cache.delete(oldestKey);
           }
-          return { vector: idbEntry.vector, model: idbEntry.model };
+          return { vector, model: row.model || 'cached' };
         }
       } catch {
         // Non-critical, continue to generation
@@ -177,16 +149,12 @@ class EmbeddingServiceImpl {
         if (oldestKey !== undefined) this.cache.delete(oldestKey);
       }
 
-      // Store in persistent IndexedDB cache (fire-and-forget)
-      if (this.idbCache) {
-        const entry: CachedEmbedding = {
-          key: cacheKey,
-          vector: result.vector,
-          model: result.model,
-          provider,
-          createdAt: Date.now(),
-        };
-        this.idbCache.put(IDB_STORE_NAME, entry).catch(() => {});
+      // Store in persistent SQLite cache (fire-and-forget)
+      if (databaseService.ready) {
+        databaseService.run(
+          'INSERT OR REPLACE INTO embedding_cache (key, vector, provider, model, created_at) VALUES (?, ?, ?, ?, ?)',
+          [cacheKey, JSON.stringify(result.vector), provider, result.model, Date.now()]
+        ).catch(() => {});
         // Evict old entries if over limit (async, non-blocking)
         this.evictOldEntries().catch(() => {});
       }
@@ -206,26 +174,20 @@ class EmbeddingServiceImpl {
   }
 
   /**
-   * Evict oldest IndexedDB entries when over limit
+   * Evict oldest SQLite entries when over limit
    */
   private async evictOldEntries(): Promise<void> {
-    if (!this.idbCache) return;
-    const count = await this.idbCache.count(IDB_STORE_NAME);
-    if (count <= IDB_MAX_ENTRIES) return;
+    if (!databaseService.ready) return;
+    const row = await databaseService.get<{ cnt: number }>('SELECT count(*) as cnt FROM embedding_cache');
+    if (!row || row.cnt <= MAX_DB_ENTRIES) return;
 
-    const toDelete = count - IDB_MAX_ENTRIES + 100; // Delete 100 extra to avoid frequent eviction
-    const tx = this.idbCache.transaction(IDB_STORE_NAME, 'readwrite');
-    const index = tx.store.index('createdAt');
-    let cursor = await index.openCursor();
-    let deleted = 0;
-
-    while (cursor && deleted < toDelete) {
-      await cursor.delete();
-      deleted++;
-      cursor = await cursor.continue();
-    }
-
-    await tx.done;
+    const toDelete = row.cnt - MAX_DB_ENTRIES + 100;
+    await databaseService.run(
+      `DELETE FROM embedding_cache WHERE key IN (
+        SELECT key FROM embedding_cache ORDER BY created_at ASC LIMIT ?
+      )`,
+      [toDelete]
+    );
   }
 
   /**
@@ -441,13 +403,13 @@ class EmbeddingServiceImpl {
   }
 
   /**
-   * Clear the embedding cache (both in-memory and IndexedDB)
+   * Clear the embedding cache (both in-memory and SQLite)
    */
   async clearCache(): Promise<void> {
     this.cache.clear();
-    if (this.idbCache) {
+    if (databaseService.ready) {
       try {
-        await this.idbCache.clear(IDB_STORE_NAME);
+        await databaseService.run('DELETE FROM embedding_cache');
       } catch {
         // Non-critical
       }
@@ -466,13 +428,14 @@ class EmbeddingServiceImpl {
   }
 
   /**
-   * Get full cache statistics including persistent IndexedDB count
+   * Get full cache statistics including persistent SQLite count
    */
   async getFullCacheStats() {
     let persistentSize = 0;
-    if (this.idbCache) {
+    if (databaseService.ready) {
       try {
-        persistentSize = await this.idbCache.count(IDB_STORE_NAME);
+        const row = await databaseService.get<{ cnt: number }>('SELECT count(*) as cnt FROM embedding_cache');
+        persistentSize = row?.cnt ?? 0;
       } catch {
         // Non-critical
       }

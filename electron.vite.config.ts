@@ -46,6 +46,7 @@ export default defineConfig({
         output: {
           manualChunks: {
             'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+            'sql-vendor': ['sql.js'],
             'ui-vendor': ['@mui/material', '@mui/icons-material', '@emotion/react', '@emotion/styled'],
             'state-vendor': ['zustand', 'rxjs'],
             'markdown-vendor': ['react-markdown', 'rehype-highlight', 'rehype-katex', 'remark-gfm', 'remark-math', 'katex', 'highlight.js'],
@@ -61,6 +62,9 @@ export default defineConfig({
       chunkSizeWarningLimit: 600,
     },
     plugins: [react()],
+    optimizeDeps: {
+      exclude: ['sql.js'],
+    },
     resolve: {
       alias: {
         '@': resolve(__dirname, './src'),

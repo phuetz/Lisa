@@ -3,15 +3,10 @@
  *
  * Caches LLM responses to reduce API costs and latency for repeated queries.
  * Supports TTL-based expiration and semantic similarity matching.
- *
- * Features:
- * - Hash-based exact matching
- * - Configurable TTL per cache entry
- * - Memory and IndexedDB storage options
- * - Cache statistics and monitoring
+ * Persistence via SQLite (DatabaseService).
  */
 
-import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
+import { databaseService } from './DatabaseService';
 
 // ============================================================================
 // Types
@@ -48,42 +43,21 @@ export interface CacheConfig {
   defaultTtlMs: number;
   /** Maximum cache size in entries (default: 1000) */
   maxSize: number;
-  /** Enable IndexedDB persistence (default: true) */
+  /** Enable persistence (default: true) */
   persistToIndexedDB: boolean;
-  /** IndexedDB database name */
+  /** Database name (legacy, unused with SQLite) */
   dbName: string;
   /** Enable cache (default: true) */
   enabled: boolean;
 }
 
 export interface CacheStats {
-  /** Total cache entries */
   size: number;
-  /** Cache hits */
   hits: number;
-  /** Cache misses */
   misses: number;
-  /** Hit rate percentage */
   hitRate: number;
-  /** Estimated tokens saved */
   tokensSaved: number;
-  /** Estimated cost saved (USD) */
   costSaved: number;
-}
-
-// ============================================================================
-// IndexedDB Schema
-// ============================================================================
-
-interface PromptCacheDB extends DBSchema {
-  prompts: {
-    key: string;
-    value: CachedPrompt;
-    indexes: {
-      'by-expires': number;
-      'by-model': string;
-    };
-  };
 }
 
 // ============================================================================
@@ -92,17 +66,17 @@ interface PromptCacheDB extends DBSchema {
 
 export class PromptCacheService {
   private memoryCache: Map<string, CachedPrompt> = new Map();
-  private db: IDBPDatabase<PromptCacheDB> | null = null;
   private config: CacheConfig;
   private stats = {
     hits: 0,
     misses: 0,
     tokensSaved: 0
   };
+  private dbReady = false;
 
   constructor(config?: Partial<CacheConfig>) {
     this.config = {
-      defaultTtlMs: 60 * 60 * 1000, // 1 hour
+      defaultTtlMs: 60 * 60 * 1000,
       maxSize: 1000,
       persistToIndexedDB: true,
       dbName: 'lisa-prompt-cache',
@@ -121,43 +95,50 @@ export class PromptCacheService {
 
   private async initDB(): Promise<void> {
     try {
-      this.db = await openDB<PromptCacheDB>(this.config.dbName, 1, {
-        upgrade(db) {
-          const store = db.createObjectStore('prompts', { keyPath: 'hash' });
-          store.createIndex('by-expires', 'expiresAt');
-          store.createIndex('by-model', 'model');
-        }
-      });
+      await databaseService.init();
+      this.dbReady = true;
 
-      // Load from IndexedDB to memory
+      // Load from SQLite to memory
       await this.loadFromDB();
 
       // Clean expired entries
       await this.cleanExpired();
 
-      console.log('[PromptCache] Initialized with IndexedDB');
+      console.log('[PromptCache] Initialized with SQLite');
     } catch (error) {
-      console.warn('[PromptCache] IndexedDB init failed, using memory only:', error);
-      this.db = null;
+      console.warn('[PromptCache] SQLite init failed, using memory only:', error);
     }
   }
 
   private async loadFromDB(): Promise<void> {
-    if (!this.db) return;
+    if (!this.dbReady) return;
 
     try {
-      const all = await this.db.getAll('prompts');
+      const rows = await databaseService.all<{
+        hash: string; model: string; response: string; messages: string;
+        created_at: number; expires_at: number; hit_count: number; last_hit: number;
+      }>('SELECT * FROM prompt_cache');
+
       const now = Date.now();
 
-      for (const entry of all) {
-        if (entry.expiresAt > now) {
-          this.memoryCache.set(entry.hash, entry);
+      for (const row of rows) {
+        if (row.expires_at > now) {
+          this.memoryCache.set(row.hash, {
+            hash: row.hash,
+            response: row.response,
+            model: row.model,
+            createdAt: row.created_at,
+            expiresAt: row.expires_at,
+            hitCount: row.hit_count,
+            lastAccessedAt: row.last_hit || row.created_at,
+            messages: row.messages ? JSON.parse(row.messages) : undefined,
+          });
         }
       }
 
-      console.log(`[PromptCache] Loaded ${this.memoryCache.size} entries from IndexedDB`);
+      console.log(`[PromptCache] Loaded ${this.memoryCache.size} entries from SQLite`);
     } catch (error) {
-      console.warn('[PromptCache] Failed to load from IndexedDB:', error);
+      console.warn('[PromptCache] Failed to load from SQLite:', error);
     }
   }
 
@@ -165,13 +146,9 @@ export class PromptCacheService {
   // Hash Functions
   // ==========================================================================
 
-  /**
-   * Generate a hash for messages + model combination
-   */
   private async hashPrompt(messages: AIMessage[], model: string): Promise<string> {
     const content = JSON.stringify({ messages, model });
 
-    // Use Web Crypto API for hashing
     if (typeof crypto !== 'undefined' && crypto.subtle) {
       const encoder = new TextEncoder();
       const data = encoder.encode(content);
@@ -180,19 +157,15 @@ export class PromptCacheService {
       return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
     }
 
-    // Fallback: simple hash for older environments
     return this.simpleHash(content);
   }
 
-  /**
-   * Simple hash function fallback
-   */
   private simpleHash(str: string): string {
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
       const char = str.charCodeAt(i);
       hash = ((hash << 5) - hash) + char;
-      hash = hash & hash; // Convert to 32-bit integer
+      hash = hash & hash;
     }
     return Math.abs(hash).toString(16).padStart(8, '0');
   }
@@ -201,9 +174,6 @@ export class PromptCacheService {
   // Cache Operations
   // ==========================================================================
 
-  /**
-   * Get cached response for messages
-   */
   async get(messages: AIMessage[], model: string): Promise<string | null> {
     if (!this.config.enabled) return null;
 
@@ -215,24 +185,25 @@ export class PromptCacheService {
       return null;
     }
 
-    // Check expiration
     if (entry.expiresAt < Date.now()) {
       this.memoryCache.delete(hash);
-      if (this.db) {
-        this.db.delete('prompts', hash).catch(console.error);
+      if (this.dbReady) {
+        databaseService.run('DELETE FROM prompt_cache WHERE hash = ?', [hash]).catch(() => {});
       }
       this.stats.misses++;
       return null;
     }
 
-    // Update hit count and last accessed
+    // Update hit count
     entry.hitCount++;
     entry.lastAccessedAt = Date.now();
     this.memoryCache.set(hash, entry);
 
-    // Update in IndexedDB (async, don't wait)
-    if (this.db) {
-      this.db.put('prompts', entry).catch(console.error);
+    if (this.dbReady) {
+      databaseService.run(
+        'UPDATE prompt_cache SET hit_count = ?, last_hit = ? WHERE hash = ?',
+        [entry.hitCount, entry.lastAccessedAt, hash]
+      ).catch(() => {});
     }
 
     this.stats.hits++;
@@ -242,9 +213,6 @@ export class PromptCacheService {
     return entry.response;
   }
 
-  /**
-   * Store response in cache
-   */
   async set(
     messages: AIMessage[],
     model: string,
@@ -269,24 +237,22 @@ export class PromptCacheService {
       messages
     };
 
-    // Enforce max size (LRU eviction)
     if (this.memoryCache.size >= this.config.maxSize) {
       await this.evictLRU();
     }
 
     this.memoryCache.set(hash, entry);
 
-    // Persist to IndexedDB
-    if (this.db) {
-      await this.db.put('prompts', entry);
+    if (this.dbReady) {
+      databaseService.run(
+        'INSERT OR REPLACE INTO prompt_cache (hash, model, response, messages, created_at, expires_at, hit_count, last_hit) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+        [hash, model, response, JSON.stringify(messages), now, now + ttl, 0, now]
+      ).catch(() => {});
     }
 
     console.log(`[PromptCache] Cached response for ${hash.slice(0, 8)}... (TTL: ${ttl}ms)`);
   }
 
-  /**
-   * Check if a prompt is cached
-   */
   async has(messages: AIMessage[], model: string): Promise<boolean> {
     if (!this.config.enabled) return false;
 
@@ -296,23 +262,17 @@ export class PromptCacheService {
     return entry !== undefined && entry.expiresAt > Date.now();
   }
 
-  /**
-   * Invalidate a specific cache entry
-   */
   async invalidate(messages: AIMessage[], model: string): Promise<boolean> {
     const hash = await this.hashPrompt(messages, model);
     const existed = this.memoryCache.delete(hash);
 
-    if (this.db) {
-      await this.db.delete('prompts', hash);
+    if (this.dbReady) {
+      databaseService.run('DELETE FROM prompt_cache WHERE hash = ?', [hash]).catch(() => {});
     }
 
     return existed;
   }
 
-  /**
-   * Invalidate all entries for a model
-   */
   async invalidateModel(model: string): Promise<number> {
     let count = 0;
 
@@ -323,28 +283,18 @@ export class PromptCacheService {
       }
     }
 
-    if (this.db) {
-      const tx = this.db.transaction('prompts', 'readwrite');
-      const index = tx.store.index('by-model');
-      let cursor = await index.openCursor(IDBKeyRange.only(model));
-
-      while (cursor) {
-        await cursor.delete();
-        cursor = await cursor.continue();
-      }
+    if (this.dbReady) {
+      databaseService.run('DELETE FROM prompt_cache WHERE model = ?', [model]).catch(() => {});
     }
 
     return count;
   }
 
-  /**
-   * Clear all cache entries
-   */
   async clear(): Promise<void> {
     this.memoryCache.clear();
 
-    if (this.db) {
-      await this.db.clear('prompts');
+    if (this.dbReady) {
+      databaseService.run('DELETE FROM prompt_cache').catch(() => {});
     }
 
     this.stats = { hits: 0, misses: 0, tokensSaved: 0 };
@@ -355,9 +305,6 @@ export class PromptCacheService {
   // Eviction
   // ==========================================================================
 
-  /**
-   * Evict least recently used entry
-   */
   private async evictLRU(): Promise<void> {
     let oldest: { hash: string; timestamp: number } | null = null;
 
@@ -369,16 +316,13 @@ export class PromptCacheService {
 
     if (oldest) {
       this.memoryCache.delete(oldest.hash);
-      if (this.db) {
-        await this.db.delete('prompts', oldest.hash);
+      if (this.dbReady) {
+        databaseService.run('DELETE FROM prompt_cache WHERE hash = ?', [oldest.hash]).catch(() => {});
       }
       console.log(`[PromptCache] Evicted LRU entry: ${oldest.hash.slice(0, 8)}...`);
     }
   }
 
-  /**
-   * Clean expired entries
-   */
   async cleanExpired(): Promise<number> {
     const now = Date.now();
     let count = 0;
@@ -390,15 +334,8 @@ export class PromptCacheService {
       }
     }
 
-    if (this.db) {
-      const tx = this.db.transaction('prompts', 'readwrite');
-      const index = tx.store.index('by-expires');
-      let cursor = await index.openCursor(IDBKeyRange.upperBound(now));
-
-      while (cursor) {
-        await cursor.delete();
-        cursor = await cursor.continue();
-      }
+    if (this.dbReady) {
+      databaseService.run('DELETE FROM prompt_cache WHERE expires_at < ?', [now]).catch(() => {});
     }
 
     if (count > 0) {
@@ -412,15 +349,10 @@ export class PromptCacheService {
   // Statistics
   // ==========================================================================
 
-  /**
-   * Get cache statistics
-   */
   getStats(): CacheStats {
     const total = this.stats.hits + this.stats.misses;
     const hitRate = total > 0 ? (this.stats.hits / total) * 100 : 0;
-
-    // Estimate cost saved (rough estimate based on average token pricing)
-    const costPerToken = 0.00001; // ~$10/1M tokens average
+    const costPerToken = 0.00001;
     const costSaved = this.stats.tokensSaved * costPerToken;
 
     return {
@@ -433,9 +365,6 @@ export class PromptCacheService {
     };
   }
 
-  /**
-   * Get all cached entries (for debugging)
-   */
   getEntries(): CachedPrompt[] {
     return Array.from(this.memoryCache.values());
   }
@@ -444,24 +373,15 @@ export class PromptCacheService {
   // Configuration
   // ==========================================================================
 
-  /**
-   * Update configuration
-   */
   setConfig(config: Partial<CacheConfig>): void {
     this.config = { ...this.config, ...config };
   }
 
-  /**
-   * Enable or disable caching
-   */
   setEnabled(enabled: boolean): void {
     this.config.enabled = enabled;
     console.log(`[PromptCache] Cache ${enabled ? 'enabled' : 'disabled'}`);
   }
 
-  /**
-   * Check if caching is enabled
-   */
   isEnabled(): boolean {
     return this.config.enabled;
   }
@@ -477,26 +397,18 @@ export const promptCacheService = new PromptCacheService();
 // Utility Functions
 // ============================================================================
 
-/**
- * Wrap an async function with caching
- */
 export function withCache<T extends AIMessage[]>(
   fn: (messages: T, model: string) => Promise<string>,
   options?: { ttlMs?: number }
 ): (messages: T, model: string) => Promise<string> {
   return async (messages: T, model: string) => {
-    // Check cache first
     const cached = await promptCacheService.get(messages, model);
     if (cached !== null) {
       return cached;
     }
 
-    // Execute function
     const response = await fn(messages, model);
-
-    // Cache result
     await promptCacheService.set(messages, model, response, options);
-
     return response;
   };
 }

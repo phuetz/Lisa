@@ -1,9 +1,10 @@
 /**
- * 🔍 RAG Service - Retrieval Augmented Generation
+ * RAG Service - Retrieval Augmented Generation
  * Augmente le contexte avec des souvenirs pertinents via embeddings
  *
  * Enhanced with HNSW vector index for O(log n) similarity search.
  * Falls back to linear search when vector index is not available.
+ * Persistence via SQLite (DatabaseService) instead of localStorage.
  */
 
 import type { Memory } from './MemoryService';
@@ -11,6 +12,7 @@ import { memoryService } from './MemoryService';
 import { auditActions } from './AuditService';
 import { embeddingService, type EmbeddingProvider } from './EmbeddingService';
 import { vectorStore } from './VectorStoreService';
+import { databaseService } from './DatabaseService';
 
 export interface Embedding {
   text: string;
@@ -51,16 +53,30 @@ class RAGServiceImpl {
   private config: RAGConfig = DEFAULT_RAG_CONFIG;
   private vectorIndexInitialized = false;
   private indexedMemoryIds: Set<string> = new Set();
+  private dbReady = false;
 
   constructor() {
-    this.loadEmbeddingsFromStorage();
-    this.loadConfigFromStorage();
+    this.initStorage();
     this.initializeVectorIndex();
+  }
 
-    // Auto-cleanup embeddings older than 30 days on startup
-    const removed = this.cleanupOldEmbeddings(30);
-    if (removed > 0) {
-      console.log(`[RAG] Auto-cleaned ${removed} stale embeddings`);
+  /**
+   * Initialize SQLite-backed storage (replaces localStorage)
+   */
+  private async initStorage(): Promise<void> {
+    try {
+      await databaseService.init();
+      this.dbReady = true;
+      await this.loadEmbeddingsFromStorage();
+      await this.loadConfigFromStorage();
+
+      // Auto-cleanup embeddings older than 30 days on startup
+      const removed = await this.cleanupOldEmbeddings(30);
+      if (removed > 0) {
+        console.log(`[RAG] Auto-cleaned ${removed} stale embeddings`);
+      }
+    } catch (err) {
+      console.warn('[RAG] SQLite init failed, running in-memory only:', err);
     }
   }
 
@@ -117,7 +133,6 @@ class RAGServiceImpl {
    * Generate a stable ID from text
    */
   private textToId(text: string): string {
-    // Simple hash for ID generation
     let hash = 0;
     for (let i = 0; i < text.length; i++) {
       const char = text.charCodeAt(i);
@@ -156,29 +171,30 @@ class RAGServiceImpl {
   }
 
   /**
-   * Générer un embedding pour un texte
+   * Generate embedding for text
    */
   async generateEmbedding(text: string): Promise<number[]> {
     try {
       const result = await embeddingService.generateEmbedding(text);
+      const id = this.textToId(text);
+      const timestamp = new Date().toISOString();
 
-      // Sauvegarder l'embedding
+      // Save to in-memory map
       this.embeddings.set(text, {
         text,
         vector: result.vector,
-        timestamp: new Date().toISOString(),
+        timestamp,
         model: result.model
       });
 
       // Also add to vector index
       if (this.config.useVectorIndex && this.vectorIndexInitialized) {
-        const id = this.textToId(text);
         if (!this.indexedMemoryIds.has(id)) {
           try {
             await vectorStore.add({
               id,
               vector: result.vector,
-              metadata: { text, timestamp: new Date().toISOString(), model: result.model }
+              metadata: { text, timestamp, model: result.model }
             });
             this.indexedMemoryIds.add(id);
           } catch {
@@ -187,7 +203,9 @@ class RAGServiceImpl {
         }
       }
 
-      this.saveEmbeddingsToStorage();
+      // Persist to SQLite
+      this.saveEmbeddingToDb(id, text, result.vector, result.model, timestamp);
+
       return result.vector;
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
@@ -209,7 +227,7 @@ class RAGServiceImpl {
     const maxResults = limit || this.config.maxResults;
 
     try {
-      // Générer l'embedding de la requête
+      // Generate query embedding
       const queryEmbedding = await this.generateEmbedding(query);
 
       // Use HNSW vector index if available
@@ -230,21 +248,18 @@ class RAGServiceImpl {
    * Fast O(log n) search using HNSW vector index
    */
   private async searchSimilarFast(queryEmbedding: number[], maxResults: number): Promise<Array<Memory & { similarity: number }>> {
-    const results = vectorStore.search(queryEmbedding, maxResults * 2); // Get extra for threshold filtering
+    const results = vectorStore.search(queryEmbedding, maxResults * 2);
 
     // Get all memories for ID lookup
     const context = memoryService.getContext();
     const allMemories = [...context.shortTerm, ...context.longTerm];
     const memoryMap = new Map(allMemories.map(m => [this.textToId(m.content), m]));
 
-    // Map results back to memories
     const scored: Array<Memory & { similarity: number }> = [];
 
     for (const result of results) {
-      // Try to find memory by ID
       let memory = memoryMap.get(result.id);
 
-      // If not found by ID, try to find by text from metadata
       if (!memory && result.metadata.text) {
         memory = allMemories.find(m => m.content === result.metadata.text);
       }
@@ -258,13 +273,12 @@ class RAGServiceImpl {
   }
 
   /**
-   * Linear O(n) search fallback — uses cached embeddings when available
+   * Linear O(n) search fallback
    */
   private async searchSimilarLinear(queryEmbedding: number[], maxResults: number): Promise<Array<Memory & { similarity: number }>> {
     const context = memoryService.getContext();
     const allMemories = [...context.shortTerm, ...context.longTerm];
 
-    // Separate memories with/without cached embeddings
     const uncachedTexts: string[] = [];
     const uncachedIndices: number[] = [];
 
@@ -300,15 +314,17 @@ class RAGServiceImpl {
               });
               this.indexedMemoryIds.add(id);
             } catch {
-              // Non-critical, linear search still works
+              // Non-critical
             }
           }
         }
+
+        // Persist individual embedding
+        this.saveEmbeddingToDb(this.textToId(text), text, batchResults[j].vector, batchResults[j].model, timestamp);
       }
-      this.saveEmbeddingsToStorage();
     }
 
-    // Score all memories using cached embeddings
+    // Score all memories
     const scored = allMemories.map((memory) => {
       const cached = this.embeddings.get(memory.content);
       const similarity = cached
@@ -338,13 +354,10 @@ class RAGServiceImpl {
     }
 
     try {
-      // Recherche hybride (BM25 + vecteurs) pour un meilleur rappel
       const scoredMemories = await this.hybridSearch(query, { limit });
 
-      // Convert to Memory[] (strip similarity for compatibility)
       const relevantMemories: Memory[] = scoredMemories.map(({ similarity: _similarity, ...memory }) => memory);
 
-      // Construire le contexte augmenté avec scores de similarité
       const contextParts = scoredMemories.map((memory, index) => {
         const similarityPercent = Math.round(memory.similarity * 100);
         return `[${index + 1}] (${similarityPercent}% match) [${memory.type}] ${memory.content}`;
@@ -354,7 +367,6 @@ class RAGServiceImpl {
         ? `Relevant context from memory:\n${contextParts.join('\n')}`
         : '';
 
-      // Calculate confidence based on similarity scores
       const confidence = scoredMemories.length > 0
         ? Math.round(
             scoredMemories.reduce((sum, m) => sum + m.similarity, 0) /
@@ -394,7 +406,6 @@ class RAGServiceImpl {
 
   /**
    * Recherche hybride BM25 + vecteurs (inspiré OpenClaw)
-   * Union-based: les résultats des deux méthodes contribuent au score final.
    */
   async hybridSearch(
     query: string,
@@ -409,13 +420,13 @@ class RAGServiceImpl {
     if (!this.config.enabled) return [];
 
     try {
-      // 1. Vector search (existant) — 4× candidates for better recall
+      // 1. Vector search — 4x candidates for better recall
       const vectorResults = await this.searchSimilar(query, limit * 4);
 
-      // 2. BM25 keyword search — 4× candidates for better recall
+      // 2. BM25 keyword search — 4x candidates for better recall
       const keywordResults = this.bm25Search(query, limit * 4);
 
-      // 3. Union et merge des scores
+      // 3. Union and merge scores
       const scoreMap = new Map<string, {
         memory: Memory;
         vectorScore: number;
@@ -443,7 +454,7 @@ class RAGServiceImpl {
         }
       }
 
-      // 4. Score hybride et tri
+      // 4. Hybrid score and sort
       return Array.from(scoreMap.values())
         .map(({ memory, vectorScore, textScore }) => ({
           ...memory,
@@ -459,8 +470,7 @@ class RAGServiceImpl {
   }
 
   /**
-   * BM25-like keyword scoring sur les mémoires en cache.
-   * TF-IDF avec normalisation longueur document.
+   * BM25-like keyword scoring on memories.
    */
   private bm25Search(query: string, limit: number): Array<{ memory: Memory; score: number }> {
     const context = memoryService.getContext();
@@ -475,7 +485,6 @@ class RAGServiceImpl {
     const N = allMemories.length;
     const avgDocLen = allMemories.reduce((sum, m) => sum + m.content.length, 0) / N;
 
-    // IDF: nombre de docs contenant chaque terme
     const termDocCounts = new Map<string, number>();
     for (const term of queryTerms) {
       let count = 0;
@@ -513,14 +522,14 @@ class RAGServiceImpl {
   }
 
   /**
-   * Obtenir les embeddings stockés
+   * Get stored embeddings
    */
   getEmbeddings(): Embedding[] {
     return Array.from(this.embeddings.values());
   }
 
   /**
-   * Obtenir les statistiques
+   * Get statistics
    */
   getStats() {
     const embeddings = Array.from(this.embeddings.values());
@@ -546,54 +555,151 @@ class RAGServiceImpl {
     };
   }
 
+  // ─── SQLite persistence (replaces localStorage) ─────────────────────────────
+
   /**
-   * Sauvegarder les embeddings dans localStorage
+   * Save a single embedding to SQLite
    */
-  private saveEmbeddingsToStorage(): void {
-    const embeddingsArray = Array.from(this.embeddings.values());
-    localStorage.setItem('lisa:rag:embeddings', JSON.stringify(embeddingsArray));
+  private saveEmbeddingToDb(id: string, text: string, vector: number[], model: string | undefined, timestamp: string): void {
+    if (!this.dbReady) return;
+    databaseService.run(
+      'INSERT OR REPLACE INTO rag_embeddings (id, document_id, content, embedding, metadata, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+      [id, 'inline', text, JSON.stringify(vector), JSON.stringify({ model }), Date.parse(timestamp)]
+    ).catch(() => {});
   }
 
   /**
-   * Charger les embeddings depuis localStorage
+   * Load all embeddings from SQLite into in-memory map
    */
-  private loadEmbeddingsFromStorage(): void {
+  private async loadEmbeddingsFromStorage(): Promise<void> {
+    if (!this.dbReady) return;
     try {
-      const stored = localStorage.getItem('lisa:rag:embeddings');
-      if (stored) {
-        const embeddingsArray = JSON.parse(stored);
-        embeddingsArray.forEach((emb: Embedding) => {
-          this.embeddings.set(emb.text, emb);
+      const rows = await databaseService.all<{
+        id: string; content: string; embedding: string; metadata: string; created_at: number;
+      }>('SELECT id, content, embedding, metadata, created_at FROM rag_embeddings');
+
+      for (const row of rows) {
+        const vector = JSON.parse(row.embedding) as number[];
+        const meta = JSON.parse(row.metadata || '{}');
+        this.embeddings.set(row.content, {
+          text: row.content,
+          vector,
+          timestamp: new Date(row.created_at).toISOString(),
+          model: meta.model
         });
       }
-    } catch (e) {
-      console.error('Erreur chargement embeddings:', e);
+
+      if (rows.length > 0) {
+        console.log(`[RAG] Loaded ${rows.length} embeddings from SQLite`);
+      }
+
+      // Migrate from localStorage if SQLite was empty but localStorage has data
+      if (rows.length === 0) {
+        this.migrateFromLocalStorage();
+      }
+    } catch (err) {
+      console.warn('[RAG] Failed to load embeddings from SQLite:', err);
     }
   }
 
   /**
-   * Nettoyer les embeddings obsolètes
+   * One-time migration from localStorage to SQLite
    */
-  cleanupOldEmbeddings(daysOld: number = 30): number {
+  private migrateFromLocalStorage(): void {
+    try {
+      const stored = localStorage.getItem('lisa:rag:embeddings');
+      if (!stored) return;
+
+      const embeddingsArray = JSON.parse(stored) as Embedding[];
+      if (embeddingsArray.length === 0) return;
+
+      console.log(`[RAG] Migrating ${embeddingsArray.length} embeddings from localStorage to SQLite`);
+
+      for (const emb of embeddingsArray) {
+        this.embeddings.set(emb.text, emb);
+        const id = this.textToId(emb.text);
+        this.saveEmbeddingToDb(id, emb.text, emb.vector, emb.model, emb.timestamp);
+      }
+
+      // Clean up localStorage after successful migration
+      localStorage.removeItem('lisa:rag:embeddings');
+      console.log('[RAG] localStorage migration complete');
+    } catch {
+      // Non-critical
+    }
+  }
+
+  /**
+   * Load config from SQLite
+   */
+  private async loadConfigFromStorage(): Promise<void> {
+    if (!this.dbReady) return;
+    try {
+      const row = await databaseService.get<{ value: string }>(
+        'SELECT value FROM rag_config WHERE key = ?', ['config']
+      );
+      if (row) {
+        const config = JSON.parse(row.value);
+        this.config = { ...DEFAULT_RAG_CONFIG, ...config };
+        embeddingService.updateConfig({ provider: this.config.provider });
+      } else {
+        // Migrate from localStorage
+        const stored = localStorage.getItem('lisa:rag:config');
+        if (stored) {
+          const config = JSON.parse(stored);
+          this.config = { ...DEFAULT_RAG_CONFIG, ...config };
+          embeddingService.updateConfig({ provider: this.config.provider });
+          this.saveConfigToStorage();
+          localStorage.removeItem('lisa:rag:config');
+        }
+      }
+    } catch {
+      // Use defaults
+    }
+  }
+
+  /**
+   * Save config to SQLite
+   */
+  private saveConfigToStorage(): void {
+    if (!this.dbReady) return;
+    databaseService.run(
+      'INSERT OR REPLACE INTO rag_config (key, value) VALUES (?, ?)',
+      ['config', JSON.stringify(this.config)]
+    ).catch(() => {});
+  }
+
+  /**
+   * Cleanup old embeddings
+   */
+  async cleanupOldEmbeddings(daysOld: number = 30): Promise<number> {
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - daysOld);
+    const cutoffMs = cutoffDate.getTime();
 
     const beforeCount = this.embeddings.size;
 
     for (const [key, embedding] of this.embeddings.entries()) {
-      if (new Date(embedding.timestamp) < cutoffDate) {
+      if (new Date(embedding.timestamp).getTime() < cutoffMs) {
         this.embeddings.delete(key);
       }
     }
 
     const removed = beforeCount - this.embeddings.size;
-    this.saveEmbeddingsToStorage();
+
+    // Also clean from SQLite
+    if (this.dbReady && removed > 0) {
+      databaseService.run(
+        'DELETE FROM rag_embeddings WHERE created_at < ?',
+        [cutoffMs]
+      ).catch(() => {});
+    }
 
     return removed;
   }
 
   /**
-   * Exporter les embeddings
+   * Export embeddings
    */
   exportEmbeddings() {
     return {
@@ -604,42 +710,14 @@ class RAGServiceImpl {
   }
 
   /**
-   * Importer les embeddings
+   * Import embeddings
    */
   importEmbeddings(data: ReturnType<typeof this.exportEmbeddings>): void {
     data.embeddings.forEach(emb => {
       this.embeddings.set(emb.text, emb);
+      const id = this.textToId(emb.text);
+      this.saveEmbeddingToDb(id, emb.text, emb.vector, emb.model, emb.timestamp);
     });
-    this.saveEmbeddingsToStorage();
-  }
-
-  /**
-   * Sauvegarder la configuration dans localStorage
-   */
-  private saveConfigToStorage(): void {
-    try {
-      localStorage.setItem('lisa:rag:config', JSON.stringify(this.config));
-    } catch (e) {
-      console.error('Erreur sauvegarde config RAG:', e);
-    }
-  }
-
-  /**
-   * Charger la configuration depuis localStorage
-   */
-  private loadConfigFromStorage(): void {
-    try {
-      const stored = localStorage.getItem('lisa:rag:config');
-      if (stored) {
-        const config = JSON.parse(stored);
-        this.config = { ...DEFAULT_RAG_CONFIG, ...config };
-
-        // Sync embedding service config
-        embeddingService.updateConfig({ provider: this.config.provider });
-      }
-    } catch (e) {
-      console.error('Erreur chargement config RAG:', e);
-    }
   }
 
   /**
@@ -651,7 +729,6 @@ class RAGServiceImpl {
 
   /**
    * Index a document by chunking its text and storing embeddings.
-   * Each chunk is stored as a separate embedding for fine-grained retrieval.
    */
   async indexDocument(text: string, metadata: { filename: string; keywords?: string[] }): Promise<number> {
     if (!this.config.enabled || !text.trim()) return 0;
@@ -662,6 +739,16 @@ class RAGServiceImpl {
     for (const chunk of chunks) {
       try {
         await this.generateEmbedding(chunk);
+
+        // Also index in FTS4 for full-text search
+        if (this.dbReady) {
+          const id = this.textToId(chunk);
+          databaseService.run(
+            'INSERT OR REPLACE INTO rag_fts (id, content) VALUES (?, ?)',
+            [id, chunk]
+          ).catch(() => {});
+        }
+
         indexed++;
       } catch {
         // Skip individual chunk failures
@@ -674,7 +761,6 @@ class RAGServiceImpl {
 
   /**
    * Split text into overlapping chunks for embedding.
-   * Uses ~1000 char chunks with ~200 char overlap, splitting on sentence boundaries.
    */
   private chunkText(text: string, chunkSize = 1000, overlap = 200): string[] {
     if (text.length <= chunkSize) return [text];
@@ -685,7 +771,6 @@ class RAGServiceImpl {
     while (start < text.length) {
       let end = Math.min(start + chunkSize, text.length);
 
-      // Try to break at a sentence boundary
       if (end < text.length) {
         const lastSentenceEnd = text.lastIndexOf('.', end);
         const lastNewline = text.lastIndexOf('\n', end);
@@ -700,7 +785,7 @@ class RAGServiceImpl {
       if (start >= text.length) break;
     }
 
-    return chunks.filter(c => c.length > 50); // Skip tiny fragments
+    return chunks.filter(c => c.length > 50);
   }
 }
 
