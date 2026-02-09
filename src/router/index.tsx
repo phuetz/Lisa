@@ -1,4 +1,4 @@
-import { createBrowserRouter, Navigate } from 'react-router-dom';
+import { createBrowserRouter, createHashRouter, Navigate } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
 import App from '../App';
 import LoadingFallback from '../components/LoadingFallback';
@@ -11,6 +11,10 @@ const FUTURE_FLAGS = {
   v7_startTransition: true,
   v7_relativeSplatPath: true,
 };
+
+// Electron loads via file:// protocol — BrowserRouter doesn't work with file://
+const isFileProtocol = typeof window !== 'undefined' && window.location.protocol === 'file:';
+const createRouter = isFileProtocol ? createHashRouter : createBrowserRouter;
 const DashboardPage = lazy(() => import('../pages/DashboardPage'));
 const AgentsPage = lazy(() => import('../pages/AgentsPage'));
 const VisionPage = lazy(() => import('../pages/VisionPage'));
@@ -34,7 +38,7 @@ const MemoryPage = lazy(() => import('../pages/MemoryPage'));
 // Eager import (non-lazy) for MonitoringPage
 import { MonitoringPage } from '../pages/MonitoringPage';
 
-export const router = createBrowserRouter([
+export const router = createRouter([
   {
     path: '/',
     element: <App />,

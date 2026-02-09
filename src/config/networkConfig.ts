@@ -131,9 +131,20 @@ export function logNetworkConfig(): void {
   });
 }
 
+/**
+ * Get API base URL — for Electron, use embedded server; for web, use relative paths
+ */
+export function getApiBaseUrl(): string {
+  if (isRunningInElectron()) {
+    return 'http://localhost:3001';
+  }
+  return '';
+}
+
 export default {
   getLMStudioUrl,
   getOllamaUrl,
+  getApiBaseUrl,
   getNetworkConfig,
   logNetworkConfig
 };
