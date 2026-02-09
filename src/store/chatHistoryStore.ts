@@ -10,69 +10,135 @@ import type { Message, Conversation } from '../types/chat';
 import type { ArtifactData } from '../components/chat/Artifact';
 
 /**
- * Résumer une conversation via LLM et stocker en mémoire long terme.
+ * Flush agentique unifié (inspiré OpenClaw).
+ * Un seul appel LLM pour extraire résumé + faits + préférences + instructions.
  * Appelé automatiquement quand l'utilisateur crée une nouvelle conversation
  * ou supprime une conversation existante.
  */
-async function _summarizeAndArchive(conversation: Conversation): Promise<void> {
-  if (conversation.messages.length < 4) return;
+async function _intelligentFlush(conversation: Conversation): Promise<void> {
+  if (conversation.messages.length < 3) return;
 
   try {
     const { aiService } = await import('../services/aiService');
     const { longTermMemoryService } = await import('../services/LongTermMemoryService');
 
-    const lastMessages = conversation.messages.slice(-20);
+    // Prendre les 15 derniers messages (comme OpenClaw)
+    const lastMessages = conversation.messages.slice(-15);
     const transcript = lastMessages
       .map(m => `${m.role === 'user' ? 'Utilisateur' : 'Lisa'}: ${m.content.slice(0, 500)}`)
       .join('\n');
 
     const response = await aiService.sendMessage([
-      { role: 'system', content: 'Résume cette conversation en 2-3 phrases concises en français. Capture les sujets principaux et décisions prises.' },
+      {
+        role: 'system',
+        content: `Tu es un extracteur de mémoire. Analyse cette conversation et extrais les informations importantes.
+Réponds UNIQUEMENT en JSON valide (pas de markdown, pas de commentaires).
+
+Format attendu:
+{
+  "summary": "Résumé de 2-3 phrases en français (sujets, décisions, résultat)",
+  "facts": [{"key": "clé_unique", "value": "information factuelle", "importance": 0.5-1.0}],
+  "preferences": [{"key": "clé_unique", "value": "préférence exprimée", "importance": 0.5-1.0}],
+  "instructions": [{"key": "clé_unique", "value": "instruction de mémorisation", "importance": 0.5-1.0}]
+}
+
+Règles:
+- summary: toujours rempli, capture les sujets principaux
+- facts: identité, âge, lieu, métier, famille, animaux, santé (importance 0.8-0.9)
+- preferences: goûts, outils, habitudes (importance 0.6-0.8)
+- instructions: demandes explicites "souviens-toi", "rappelle-toi" (importance 0.9)
+- Ignore les questions techniques et requêtes de code
+- Si rien à extraire pour une catégorie, tableau vide []`
+      },
       { role: 'user', content: transcript },
     ]);
 
-    if (response && response.trim().length > 10) {
+    // Parser le JSON
+    const jsonMatch = response.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      // Fallback: store raw response as summary
       const dateStr = new Date().toLocaleDateString('fr-FR');
       await longTermMemoryService.remember(
         'context',
         `session-${conversation.id.slice(0, 8)}`,
-        `[${dateStr}] ${conversation.title}: ${response}`,
+        `[${dateStr}] ${conversation.title}: ${response.slice(0, 500)}`,
         { importance: 0.6, tags: ['session-summary', 'auto-generated'] }
       );
-      console.log('[ChatHistory] Session summary stored for', conversation.id.slice(0, 8));
+      return;
     }
-  } catch (error) {
-    console.warn('[ChatHistory] Failed to summarize:', error);
-  }
-}
 
-/**
- * Extraire les souvenirs d'une conversation avant sa suppression.
- * Analyse les 5 dernières paires user/assistant.
- */
-async function _flushMemoriesBeforeDelete(conversation: Conversation): Promise<void> {
-  try {
-    const { longTermMemoryService } = await import('../services/LongTermMemoryService');
+    let extracted: {
+      summary?: string;
+      facts?: Array<{ key: string; value: string; importance?: number }>;
+      preferences?: Array<{ key: string; value: string; importance?: number }>;
+      instructions?: Array<{ key: string; value: string; importance?: number }>;
+    };
 
-    const messages = conversation.messages;
-    const pairs: Array<{ user: string; assistant: string }> = [];
+    try {
+      extracted = JSON.parse(jsonMatch[0]);
+    } catch {
+      console.warn('[ChatHistory] Failed to parse intelligent flush JSON');
+      return;
+    }
 
-    for (let i = 0; i < messages.length - 1; i++) {
-      if (messages[i].role === 'user' && messages[i + 1]?.role === 'assistant') {
-        pairs.push({ user: messages[i].content, assistant: messages[i + 1].content });
+    let storedCount = 0;
+
+    // 1. Store summary
+    if (extracted.summary && extracted.summary.trim().length > 10) {
+      const dateStr = new Date().toLocaleDateString('fr-FR');
+      await longTermMemoryService.remember(
+        'context',
+        `session-${conversation.id.slice(0, 8)}`,
+        `[${dateStr}] ${conversation.title}: ${extracted.summary}`,
+        { importance: 0.6, tags: ['session-summary', 'auto-generated'] }
+      );
+      storedCount++;
+    }
+
+    // 2. Store facts
+    if (Array.isArray(extracted.facts)) {
+      for (const fact of extracted.facts) {
+        if (fact.key && fact.value) {
+          await longTermMemoryService.remember('fact', fact.key, fact.value, {
+            importance: Math.min(1, Math.max(0, fact.importance ?? 0.8)),
+            tags: ['intelligent-flush', 'fact'],
+          });
+          storedCount++;
+        }
       }
     }
 
-    const recentPairs = pairs.slice(-5);
-    for (const pair of recentPairs) {
-      await longTermMemoryService.extractAndRemember(pair.user, pair.assistant);
+    // 3. Store preferences
+    if (Array.isArray(extracted.preferences)) {
+      for (const pref of extracted.preferences) {
+        if (pref.key && pref.value) {
+          await longTermMemoryService.remember('preference', pref.key, pref.value, {
+            importance: Math.min(1, Math.max(0, pref.importance ?? 0.7)),
+            tags: ['intelligent-flush', 'preference'],
+          });
+          storedCount++;
+        }
+      }
     }
 
-    if (recentPairs.length > 0) {
-      console.log(`[ChatHistory] Flushed ${recentPairs.length} message pairs before deletion`);
+    // 4. Store instructions
+    if (Array.isArray(extracted.instructions)) {
+      for (const instr of extracted.instructions) {
+        if (instr.key && instr.value) {
+          await longTermMemoryService.remember('instruction', instr.key, instr.value, {
+            importance: Math.min(1, Math.max(0, instr.importance ?? 0.9)),
+            tags: ['intelligent-flush', 'instruction'],
+          });
+          storedCount++;
+        }
+      }
+    }
+
+    if (storedCount > 0) {
+      console.log(`[ChatHistory] Intelligent flush: stored ${storedCount} items for session ${conversation.id.slice(0, 8)}`);
     }
   } catch (error) {
-    console.warn('[ChatHistory] Memory flush failed:', error);
+    console.warn('[ChatHistory] Intelligent flush failed:', error);
   }
 }
 
@@ -129,11 +195,11 @@ export const useChatHistoryStore = create<ChatHistoryStore>()(
       createConversation: () => {
         const { currentConversationId, conversations } = get();
 
-        // Résumer et archiver la conversation précédente (fire-and-forget)
+        // Flush intelligent de la conversation précédente (fire-and-forget)
         if (currentConversationId) {
           const prev = conversations.find(c => c.id === currentConversationId);
-          if (prev && prev.messages.length >= 4) {
-            _summarizeAndArchive(prev).catch(console.warn);
+          if (prev && prev.messages.length >= 3) {
+            _intelligentFlush(prev).catch(console.warn);
           }
         }
 
@@ -161,12 +227,9 @@ export const useChatHistoryStore = create<ChatHistoryStore>()(
         const { conversations } = get();
         const conversation = conversations.find(c => c.id === id);
 
-        // Flush mémoire avant suppression (fire-and-forget)
+        // Flush intelligent avant suppression (fire-and-forget)
         if (conversation && conversation.messages.length >= 2) {
-          Promise.all([
-            _flushMemoriesBeforeDelete(conversation),
-            _summarizeAndArchive(conversation),
-          ]).catch(console.warn);
+          _intelligentFlush(conversation).catch(console.warn);
         }
 
         set((state) => ({

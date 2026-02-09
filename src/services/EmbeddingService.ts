@@ -1,8 +1,10 @@
 /**
  * EmbeddingService - Service for generating text embeddings
  * Supports multiple providers: OpenAI, local transformers
+ * Inspired by OpenClaw: L2 normalization + persistent IndexedDB cache
  */
 
+import { openDB, type IDBPDatabase } from 'idb';
 import { auditActions } from './AuditService';
 
 export type EmbeddingProvider = 'openai' | 'local' | 'transformers';
@@ -23,16 +25,58 @@ export interface EmbeddingResult {
   };
 }
 
+interface CachedEmbedding {
+  key: string;
+  vector: number[];
+  model: string;
+  provider: string;
+  createdAt: number;
+}
+
 const DEFAULT_CONFIG: EmbeddingConfig = {
   provider: 'local',
   dimension: 384,
   model: 'text-embedding-3-small'
 };
 
+const IDB_CACHE_NAME = 'lisa-embedding-cache';
+const IDB_CACHE_VERSION = 1;
+const IDB_STORE_NAME = 'embeddings';
+const IDB_MAX_ENTRIES = 5000;
+
 class EmbeddingServiceImpl {
   private config: EmbeddingConfig = DEFAULT_CONFIG;
   private cache: Map<string, number[]> = new Map();
   private readonly MAX_CACHE_SIZE = 500;
+  private idbCache: IDBPDatabase | null = null;
+  private idbInitPromise: Promise<void> | null = null;
+
+  constructor() {
+    // Fire-and-forget IDB init
+    this.idbInitPromise = this.initIdbCache().catch(err => {
+      console.warn('[EmbeddingService] IndexedDB cache init failed:', err);
+    });
+  }
+
+  /**
+   * Initialize persistent IndexedDB cache (OpenClaw-inspired)
+   */
+  private async initIdbCache(): Promise<void> {
+    try {
+      this.idbCache = await openDB(IDB_CACHE_NAME, IDB_CACHE_VERSION, {
+        upgrade(db) {
+          if (!db.objectStoreNames.contains(IDB_STORE_NAME)) {
+            const store = db.createObjectStore(IDB_STORE_NAME, { keyPath: 'key' });
+            store.createIndex('provider', 'provider');
+            store.createIndex('createdAt', 'createdAt');
+          }
+        },
+      });
+    } catch {
+      // IndexedDB not available (e.g., test environment)
+      this.idbCache = null;
+    }
+  }
 
   /**
    * Update the embedding configuration
@@ -49,26 +93,68 @@ class EmbeddingServiceImpl {
   }
 
   /**
+   * L2-normalize a vector to unit length (OpenClaw pattern)
+   * Critical for cosine similarity accuracy across all providers.
+   */
+  private normalizeL2(vector: number[]): number[] {
+    const sanitized = vector.map(v => Number.isFinite(v) ? v : 0);
+    const magnitude = Math.sqrt(sanitized.reduce((sum, v) => sum + v * v, 0));
+    if (magnitude < 1e-10) return sanitized;
+    return sanitized.map(v => v / magnitude);
+  }
+
+  /**
+   * Compute a stable hash for cache key
+   */
+  private hashText(text: string): string {
+    let h = 0;
+    for (let i = 0; i < text.length; i++) {
+      h = ((h << 5) - h + text.charCodeAt(i)) | 0;
+    }
+    return (h >>> 0).toString(36);
+  }
+
+  /**
    * Generate embeddings for text
+   * Cache lookup: LRU in-memory → IndexedDB persistent → generate + store
    */
   async generateEmbedding(text: string): Promise<EmbeddingResult> {
-    // Check cache first (LRU: move to end on access)
-    const cacheKey = `${this.config.provider}:${text}`;
-    const cached = this.cache.get(cacheKey);
-    if (cached) {
-      // Move to end for LRU ordering
+    const provider = this.config.provider;
+    const contentHash = this.hashText(text);
+    const cacheKey = `${provider}:${contentHash}`;
+
+    // 1. Check in-memory LRU cache first
+    const memCached = this.cache.get(cacheKey);
+    if (memCached) {
       this.cache.delete(cacheKey);
-      this.cache.set(cacheKey, cached);
-      return {
-        vector: cached,
-        model: this.config.model || 'cached'
-      };
+      this.cache.set(cacheKey, memCached);
+      return { vector: memCached, model: this.config.model || 'cached' };
     }
 
+    // 2. Check persistent IndexedDB cache
+    await this.idbInitPromise;
+    if (this.idbCache) {
+      try {
+        const idbEntry = await this.idbCache.get(IDB_STORE_NAME, cacheKey) as CachedEmbedding | undefined;
+        if (idbEntry) {
+          // Promote to LRU
+          this.cache.set(cacheKey, idbEntry.vector);
+          if (this.cache.size > this.MAX_CACHE_SIZE) {
+            const oldestKey = this.cache.keys().next().value;
+            if (oldestKey !== undefined) this.cache.delete(oldestKey);
+          }
+          return { vector: idbEntry.vector, model: idbEntry.model };
+        }
+      } catch {
+        // Non-critical, continue to generation
+      }
+    }
+
+    // 3. Generate embedding
     try {
       let result: EmbeddingResult;
 
-      switch (this.config.provider) {
+      switch (provider) {
         case 'openai':
           result = await this.generateOpenAIEmbedding(text);
           break;
@@ -81,11 +167,28 @@ class EmbeddingServiceImpl {
           break;
       }
 
-      // Cache the result and evict oldest if over limit
+      // L2-normalize all vectors (local already normalizes, but idempotent)
+      result.vector = this.normalizeL2(result.vector);
+
+      // Store in LRU cache
       this.cache.set(cacheKey, result.vector);
       if (this.cache.size > this.MAX_CACHE_SIZE) {
         const oldestKey = this.cache.keys().next().value;
         if (oldestKey !== undefined) this.cache.delete(oldestKey);
+      }
+
+      // Store in persistent IndexedDB cache (fire-and-forget)
+      if (this.idbCache) {
+        const entry: CachedEmbedding = {
+          key: cacheKey,
+          vector: result.vector,
+          model: result.model,
+          provider,
+          createdAt: Date.now(),
+        };
+        this.idbCache.put(IDB_STORE_NAME, entry).catch(() => {});
+        // Evict old entries if over limit (async, non-blocking)
+        this.evictOldEntries().catch(() => {});
       }
 
       return result;
@@ -103,14 +206,39 @@ class EmbeddingServiceImpl {
   }
 
   /**
+   * Evict oldest IndexedDB entries when over limit
+   */
+  private async evictOldEntries(): Promise<void> {
+    if (!this.idbCache) return;
+    const count = await this.idbCache.count(IDB_STORE_NAME);
+    if (count <= IDB_MAX_ENTRIES) return;
+
+    const toDelete = count - IDB_MAX_ENTRIES + 100; // Delete 100 extra to avoid frequent eviction
+    const tx = this.idbCache.transaction(IDB_STORE_NAME, 'readwrite');
+    const index = tx.store.index('createdAt');
+    let cursor = await index.openCursor();
+    let deleted = 0;
+
+    while (cursor && deleted < toDelete) {
+      await cursor.delete();
+      deleted++;
+      cursor = await cursor.continue();
+    }
+
+    await tx.done;
+  }
+
+  /**
    * Generate embeddings for multiple texts in batch
    */
   async generateBatchEmbeddings(texts: string[]): Promise<EmbeddingResult[]> {
     if (this.config.provider === 'openai' && this.config.apiKey) {
-      return this.generateOpenAIBatchEmbedding(texts);
+      const results = await this.generateOpenAIBatchEmbedding(texts);
+      // L2-normalize batch results
+      return results.map(r => ({ ...r, vector: this.normalizeL2(r.vector) }));
     }
 
-    // For other providers, process sequentially
+    // For other providers, process sequentially (generateEmbedding already normalizes)
     return Promise.all(texts.map(text => this.generateEmbedding(text)));
   }
 
@@ -233,7 +361,7 @@ class EmbeddingServiceImpl {
       embedding[idx] += 0.1 * Math.sin(charCode);
     }
 
-    // Normalize to unit vector
+    // Normalize to unit vector (L2 normalization done here natively)
     const magnitude = Math.sqrt(embedding.reduce((sum, val) => sum + val * val, 0));
     if (magnitude > 0) {
       for (let i = 0; i < dimension; i++) {
@@ -278,7 +406,7 @@ class EmbeddingServiceImpl {
   }
 
   /**
-   * Hash function for strings
+   * Hash function for strings (used by local embedding)
    */
   private hashString(str: string): number {
     let hash = 5381;
@@ -313,18 +441,45 @@ class EmbeddingServiceImpl {
   }
 
   /**
-   * Clear the embedding cache
+   * Clear the embedding cache (both in-memory and IndexedDB)
    */
-  clearCache(): void {
+  async clearCache(): Promise<void> {
     this.cache.clear();
+    if (this.idbCache) {
+      try {
+        await this.idbCache.clear(IDB_STORE_NAME);
+      } catch {
+        // Non-critical
+      }
+    }
   }
 
   /**
-   * Get cache statistics
+   * Get cache statistics (sync — in-memory only)
    */
   getCacheStats() {
     return {
       size: this.cache.size,
+      provider: this.config.provider,
+      dimension: this.config.dimension
+    };
+  }
+
+  /**
+   * Get full cache statistics including persistent IndexedDB count
+   */
+  async getFullCacheStats() {
+    let persistentSize = 0;
+    if (this.idbCache) {
+      try {
+        persistentSize = await this.idbCache.count(IDB_STORE_NAME);
+      } catch {
+        // Non-critical
+      }
+    }
+    return {
+      size: this.cache.size,
+      persistentSize,
       provider: this.config.provider,
       dimension: this.config.dimension
     };

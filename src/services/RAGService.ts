@@ -402,18 +402,18 @@ class RAGServiceImpl {
   ): Promise<Array<Memory & { similarity: number }>> {
     const {
       limit = this.config.maxResults,
-      vectorWeight = 0.6,
-      textWeight = 0.4,
+      vectorWeight = 0.7,
+      textWeight = 0.3,
     } = options;
 
     if (!this.config.enabled) return [];
 
     try {
-      // 1. Vector search (existant)
-      const vectorResults = await this.searchSimilar(query, limit * 2);
+      // 1. Vector search (existant) — 4× candidates for better recall
+      const vectorResults = await this.searchSimilar(query, limit * 4);
 
-      // 2. BM25 keyword search
-      const keywordResults = this.bm25Search(query, limit * 2);
+      // 2. BM25 keyword search — 4× candidates for better recall
+      const keywordResults = this.bm25Search(query, limit * 4);
 
       // 3. Union et merge des scores
       const scoreMap = new Map<string, {
