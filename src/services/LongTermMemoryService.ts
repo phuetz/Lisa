@@ -1,9 +1,11 @@
 /**
  * Long-Term Memory Service
  * Service pour stocker et récupérer les souvenirs persistants de Lisa
+ * Utilise le LLM pour extraire intelligemment les informations mémorables
  */
 
 import { openDB, type IDBPDatabase } from 'idb';
+import { aiService, type AIMessage } from './aiService';
 
 interface MemoryEntry {
   id: string;
@@ -193,35 +195,26 @@ class LongTermMemoryService {
     const preferences = await this.getByType('preference');
     const facts = await this.getByType('fact');
     const instructions = await this.getByType('instruction');
-    const important = await this.getMostImportant(5);
+    const important = await this.getMostImportant(10);
 
-    let context = '';
-
-    if (preferences.length > 0) {
-      context += '## Préférences de l\'utilisateur:\n';
-      preferences.forEach(p => {
-        context += `- ${p.key}: ${p.value}\n`;
-      });
-      context += '\n';
-    }
+    const sections: string[] = [];
 
     if (facts.length > 0) {
-      context += '## Faits connus:\n';
-      facts.forEach(f => {
-        context += `- ${f.key}: ${f.value}\n`;
-      });
-      context += '\n';
+      const lines = facts.map(f => `- ${f.value}`);
+      sections.push(`## Informations sur l'utilisateur:\n${lines.join('\n')}`);
+    }
+
+    if (preferences.length > 0) {
+      const lines = preferences.map(p => `- ${p.value}`);
+      sections.push(`## Préférences:\n${lines.join('\n')}`);
     }
 
     if (instructions.length > 0) {
-      context += '## Instructions spéciales:\n';
-      instructions.forEach(i => {
-        context += `- ${i.value}\n`;
-      });
-      context += '\n';
+      const lines = instructions.map(i => `- ${i.value}`);
+      sections.push(`## Instructions de l'utilisateur:\n${lines.join('\n')}`);
     }
 
-    // Ajouter les souvenirs importants qui ne sont pas déjà inclus
+    // Ajouter les souvenirs importants non déjà inclus
     const addedIds = new Set([
       ...preferences.map(p => p.id),
       ...facts.map(f => f.id),
@@ -230,13 +223,11 @@ class LongTermMemoryService {
 
     const additionalImportant = important.filter(m => !addedIds.has(m.id));
     if (additionalImportant.length > 0) {
-      context += '## Contexte important:\n';
-      additionalImportant.forEach(m => {
-        context += `- ${m.key}: ${m.value}\n`;
-      });
+      const lines = additionalImportant.map(m => `- ${m.value}`);
+      sections.push(`## Contexte additionnel:\n${lines.join('\n')}`);
     }
 
-    return context;
+    return sections.join('\n\n');
   }
 
   async clearAll(): Promise<void> {
@@ -264,60 +255,130 @@ class LongTermMemoryService {
     }
   }
 
-  // Extraction automatique de souvenirs depuis une conversation
+  /**
+   * Extraction automatique de souvenirs via LLM
+   * Fallback sur regex si aucun provider IA n'est configuré
+   */
   async extractAndRemember(userMessage: string, assistantResponse: string): Promise<void> {
-    // Patterns pour détecter des préférences
+    try {
+      await this.extractWithLLM(userMessage, assistantResponse);
+    } catch (error) {
+      console.warn('[LongTermMemory] LLM extraction failed, using regex fallback:', error);
+      await this.extractWithRegex(userMessage);
+    }
+  }
+
+  /**
+   * Extraction intelligente via LLM — analyse sémantique de la conversation
+   */
+  private async extractWithLLM(userMessage: string, assistantResponse: string): Promise<void> {
+    // Vérifier qu'un provider est configuré
+    const config = aiService.getConfig();
+    if (!config.apiKey && config.provider !== 'lmstudio' && config.provider !== 'ollama') {
+      throw new Error('No AI provider configured');
+    }
+
+    const extractionPrompt = `Analyse cet échange et extrais les informations personnelles mémorables de l'UTILISATEUR.
+
+MESSAGE UTILISATEUR: "${userMessage}"
+RÉPONSE ASSISTANT: "${assistantResponse}"
+
+Réponds UNIQUEMENT avec un JSON valide (pas de markdown, pas de commentaires). Si rien n'est à retenir, réponds [].
+
+Format attendu:
+[{"type":"fact|preference|instruction","key":"clé_unique_descriptive","value":"information à retenir","importance":0.5-1.0}]
+
+Règles:
+- type "fact": identité, âge, lieu, métier, famille, animaux, santé, etc.
+- type "preference": goûts, préférences, habitudes, outils utilisés
+- type "instruction": demandes explicites de mémorisation ("souviens-toi", "remember", "n'oublie pas")
+- key: identifiant court et stable (ex: "nom", "ville", "métier", "animal_compagnie") — si l'info est déjà connue sous cette clé, elle sera mise à jour
+- importance: 0.9 pour identité/instructions, 0.7 pour préférences, 0.5 pour contexte
+- Extrais de toute langue (français, anglais, etc.)
+- N'extrais PAS les questions techniques, les requêtes de code, ou les demandes banales`;
+
+    const messages: AIMessage[] = [
+      { role: 'system', content: 'Tu es un extracteur de mémoire. Réponds uniquement en JSON valide.' },
+      { role: 'user', content: extractionPrompt },
+    ];
+
+    const response = await aiService.sendMessage(messages);
+
+    // Parser le JSON de la réponse
+    const jsonMatch = response.match(/\[[\s\S]*\]/);
+    if (!jsonMatch) return;
+
+    let extracted: Array<{ type: string; key: string; value: string; importance: number }>;
+    try {
+      extracted = JSON.parse(jsonMatch[0]);
+    } catch {
+      console.warn('[LongTermMemory] Failed to parse LLM JSON:', jsonMatch[0]);
+      return;
+    }
+
+    if (!Array.isArray(extracted) || extracted.length === 0) return;
+
+    console.log(`[LongTermMemory] LLM extracted ${extracted.length} memories`);
+
+    for (const item of extracted) {
+      const type = (['fact', 'preference', 'instruction'].includes(item.type) ? item.type : 'context') as MemoryEntry['type'];
+      const importance = Math.min(1, Math.max(0, item.importance ?? 0.5));
+
+      await this.remember(type, item.key, item.value, {
+        importance,
+        tags: ['llm-extracted', type],
+      });
+    }
+  }
+
+  /**
+   * Fallback regex — extraction basique quand le LLM n'est pas disponible
+   */
+  private async extractWithRegex(userMessage: string): Promise<void> {
     const preferencePatterns = [
-      /j'aime\s+(.+)/i,
-      /je préfère\s+(.+)/i,
-      /je n'aime pas\s+(.+)/i,
-      /je déteste\s+(.+)/i,
-      /mon.*préféré.*est\s+(.+)/i,
-      /j'utilise\s+(.+)/i,
+      /j'aime\s+(.+)/i, /je préfère\s+(.+)/i, /je n'aime pas\s+(.+)/i,
+      /je déteste\s+(.+)/i, /mon.*préféré.*est\s+(.+)/i, /j'utilise\s+(.+)/i,
+      /j'adore\s+(.+)/i, /i like\s+(.+)/i, /i prefer\s+(.+)/i, /i love\s+(.+)/i,
     ];
 
-    // Patterns pour détecter des faits
-    const factPatterns = [
-      /je m'appelle\s+(.+)/i,
-      /mon nom est\s+(.+)/i,
-      /je suis\s+(.+)/i,
-      /je travaille\s+(.+)/i,
-      /j'habite\s+(.+)/i,
-      /j'ai\s+(\d+)\s+ans/i,
+    const factPatterns: Array<[RegExp, string]> = [
+      [/je m'appelle\s+(.+)/i, 'nom'], [/mon nom est\s+(.+)/i, 'nom'],
+      [/my name is\s+(.+)/i, 'nom'], [/call me\s+(.+)/i, 'surnom'],
+      [/je suis\s+(.+)/i, 'identité'], [/i am\s+(.+)/i, 'identité'],
+      [/je travaille\s+(.+)/i, 'métier'], [/i work\s+(.+)/i, 'métier'],
+      [/j'habite\s+(.+)/i, 'ville'], [/i live in\s+(.+)/i, 'ville'],
+      [/j'ai\s+(\d+)\s+ans/i, 'âge'], [/i'?m\s+(\d+)\s+years?\s+old/i, 'âge'],
     ];
 
-    // Vérifier les préférences
     for (const pattern of preferencePatterns) {
       const match = userMessage.match(pattern);
       if (match) {
         const value = match[1].trim().replace(/[.!?]$/, '');
-        await this.remember('preference', `preference-${Date.now()}`, value, {
+        await this.remember('preference', `preference-${value.slice(0, 30).toLowerCase().replace(/\s+/g, '_')}`, value, {
           importance: 0.7,
-          tags: ['auto-extracted', 'preference'],
+          tags: ['regex-extracted', 'preference'],
         });
       }
     }
 
-    // Vérifier les faits
-    for (const pattern of factPatterns) {
+    for (const [pattern, key] of factPatterns) {
       const match = userMessage.match(pattern);
       if (match) {
         const value = match[1].trim().replace(/[.!?]$/, '');
-        const key = pattern.source.split('\\s')[0].replace(/[^a-z]/gi, '');
         await this.remember('fact', key, value, {
           importance: 0.8,
-          tags: ['auto-extracted', 'fact'],
+          tags: ['regex-extracted', 'fact'],
         });
       }
     }
 
-    // Détecter les instructions explicites
-    if (userMessage.toLowerCase().includes('souviens-toi') || 
-        userMessage.toLowerCase().includes('rappelle-toi') ||
-        userMessage.toLowerCase().includes('n\'oublie pas')) {
+    const lower = userMessage.toLowerCase();
+    if (lower.includes('souviens-toi') || lower.includes('rappelle-toi') ||
+        lower.includes("n'oublie pas") || lower.includes('remember that') ||
+        lower.includes("don't forget")) {
       await this.remember('instruction', `instruction-${Date.now()}`, userMessage, {
         importance: 0.9,
-        tags: ['explicit-instruction'],
+        tags: ['regex-extracted', 'instruction'],
       });
     }
   }
