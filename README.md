@@ -1,6 +1,32 @@
 # Lisa – Vision & Hearing Assistant
 
 Lisa est un assistant virtuel exécuté 100 % dans le navigateur qui perçoit le visage, les mains, les objets, la posture et les sons ambiants. Elle propose désormais une architecture basée sur des agents intelligents, des fonctionnalités PWA avancées et une API REST pour l'intégration externe.
+## Screenshots
+
+### Chat
+![Chat](chat.png)
+
+### Dashboard
+![Dashboard](dashboard.png)
+
+### Vision
+![Vision](vision.png)
+
+### Audio
+![Audio](audio.png)
+
+### Agents
+![Agents](agents.png)
+
+### Les 5 Sens
+![5 Sens](5sens.png)
+
+### Monitoring
+![Monitoring](monitoring.png)
+
+### Mémoire
+![Mémoire](memoire.png)
+
 
 ## Vue d'ensemble
 
