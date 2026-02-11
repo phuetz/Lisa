@@ -34,6 +34,7 @@ const PersonaPage = lazy(() => import('../pages/PersonaPage'));
 const SensesDashboard = lazy(() => import('../components/SensesDashboard'));
 const GrokCliPage = lazy(() => import('../pages/GrokCliPage'));
 const MemoryPage = lazy(() => import('../pages/MemoryPage'));
+const CopilotPage = lazy(() => import('../pages/CopilotPage'));
 
 // Eager import (non-lazy) for MonitoringPage
 import { MonitoringPage } from '../pages/MonitoringPage';
@@ -208,6 +209,14 @@ export const router = createRouter([
         element: (
           <Suspense fallback={<LoadingFallback />}>
             <MemoryPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'copilot',
+        element: (
+          <Suspense fallback={<LoadingFallback />}>
+            <CopilotPage />
           </Suspense>
         ),
       },

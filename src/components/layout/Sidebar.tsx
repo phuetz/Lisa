@@ -3,11 +3,14 @@ import {
   MessageSquare, LayoutDashboard, Eye, Mic, Bot, Workflow,
   Home, Heart, FileText, Code, Wrench, Brain, Activity, Zap,
   Database, Settings, Headphones, ChevronLeft, ChevronRight, Sun, Moon,
+  LogOut, LogIn, Sparkles,
 } from 'lucide-react';
 import { useState } from 'react';
+import { useAuth } from '../../hooks/useAuth';
 
 const navigationItems = [
   { icon: MessageSquare, label: 'Chat', path: '/' },
+  { icon: Sparkles, label: 'Copilote', path: '/copilot' },
   { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
   { icon: Eye, label: 'Vision', path: '/vision' },
   { icon: Mic, label: 'Audio', path: '/audio' },
@@ -33,6 +36,7 @@ export function Sidebar({ collapsed, onToggleCollapse }: SidebarProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const [lightMode, setLightMode] = useState(false);
+  const { isAuthenticated, logout } = useAuth();
 
   const isActive = (path: string) =>
     location.pathname === path || (path === '/' && location.pathname === '');
@@ -219,6 +223,43 @@ export function Sidebar({ collapsed, onToggleCollapse }: SidebarProps) {
             <Sun size={18} aria-hidden="true" style={{ flexShrink: 0 }} />
           )}
           {!collapsed && (lightMode ? 'Mode sombre' : 'Mode clair')}
+        </button>
+
+        {/* Auth button */}
+        <button
+          onClick={isAuthenticated ? logout : () => navigate('/settings')}
+          title={collapsed ? (isAuthenticated ? 'Déconnexion' : 'Connexion') : undefined}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            width: '100%',
+            padding: collapsed ? '10px 0' : '10px 12px',
+            justifyContent: collapsed ? 'center' : 'flex-start',
+            borderRadius: 'var(--radius-md)',
+            border: 'none',
+            cursor: 'pointer',
+            fontSize: '13px',
+            fontFamily: 'inherit',
+            backgroundColor: 'transparent',
+            color: 'var(--text-tertiary)',
+            transition: 'background-color var(--transition-fast), color var(--transition-fast)',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = 'var(--bg-hover)';
+            e.currentTarget.style.color = 'var(--text-primary)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'transparent';
+            e.currentTarget.style.color = 'var(--text-tertiary)';
+          }}
+        >
+          {isAuthenticated ? (
+            <LogOut size={18} aria-hidden="true" style={{ flexShrink: 0 }} />
+          ) : (
+            <LogIn size={18} aria-hidden="true" style={{ flexShrink: 0 }} />
+          )}
+          {!collapsed && (isAuthenticated ? 'Déconnexion' : 'Connexion')}
         </button>
 
         {/* Collapse toggle */}
