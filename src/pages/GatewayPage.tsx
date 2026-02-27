@@ -4,32 +4,34 @@
  * Inspired by OpenClaw's Gateway architecture - AudioReader Studio design
  */
 
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import {
   GatewayDashboard,
-  HealthDashboard,
-  ActivityPanel,
-  CachePanel,
-  ExportPanel,
-  BackupPanel,
-  SyncPanel,
-  AnalyticsDashboard,
-  ModelPanel,
-  QuickActionsPanel,
-  BrowserPanel,
-  TalkModePanel,
-  ScreenCapturePanel,
-  LocationPanel,
-  PermissionsPanel,
-  EmailPanel,
-  SkillsRegistryPanel,
-  DesktopPanel,
-  ChannelsPanel,
-  CompanionPanel,
   ThemeSwitcher,
   NotificationToast,
   ShortcutsButton
 } from '../components/gateway';
+
+// Lazy-loaded panel components
+const HealthDashboard = lazy(() => import('../components/gateway/HealthDashboard').then(m => ({ default: m.HealthDashboard })));
+const ActivityPanel = lazy(() => import('../components/gateway/ActivityPanel').then(m => ({ default: m.ActivityPanel })));
+const CachePanel = lazy(() => import('../components/gateway/CachePanel').then(m => ({ default: m.CachePanel })));
+const ExportPanel = lazy(() => import('../components/gateway/ExportPanel').then(m => ({ default: m.ExportPanel })));
+const BackupPanel = lazy(() => import('../components/gateway/BackupPanel').then(m => ({ default: m.BackupPanel })));
+const SyncPanel = lazy(() => import('../components/gateway/SyncPanel').then(m => ({ default: m.SyncPanel })));
+const AnalyticsDashboard = lazy(() => import('../components/gateway/AnalyticsDashboard').then(m => ({ default: m.AnalyticsDashboard })));
+const ModelPanel = lazy(() => import('../components/gateway/ModelPanel').then(m => ({ default: m.ModelPanel })));
+const QuickActionsPanel = lazy(() => import('../components/gateway/QuickActionsPanel').then(m => ({ default: m.QuickActionsPanel })));
+const BrowserPanel = lazy(() => import('../components/gateway/BrowserPanel').then(m => ({ default: m.BrowserPanel })));
+const TalkModePanel = lazy(() => import('../components/gateway/TalkModePanel').then(m => ({ default: m.TalkModePanel })));
+const ScreenCapturePanel = lazy(() => import('../components/gateway/ScreenCapturePanel').then(m => ({ default: m.ScreenCapturePanel })));
+const LocationPanel = lazy(() => import('../components/gateway/LocationPanel').then(m => ({ default: m.LocationPanel })));
+const PermissionsPanel = lazy(() => import('../components/gateway/PermissionsPanel').then(m => ({ default: m.PermissionsPanel })));
+const EmailPanel = lazy(() => import('../components/gateway/EmailPanel').then(m => ({ default: m.EmailPanel })));
+const SkillsRegistryPanel = lazy(() => import('../components/gateway/SkillsRegistryPanel').then(m => ({ default: m.SkillsRegistryPanel })));
+const DesktopPanel = lazy(() => import('../components/gateway/DesktopPanel').then(m => ({ default: m.DesktopPanel })));
+const ChannelsPanel = lazy(() => import('../components/gateway/ChannelsPanel').then(m => ({ default: m.ChannelsPanel })));
+const CompanionPanel = lazy(() => import('../components/gateway/CompanionPanel').then(m => ({ default: m.CompanionPanel })));
 
 type TabId = 'overview' | 'health' | 'companion' | 'analytics' | 'models' | 'actions' | 'skills' | 'channels' | 'desktop' | 'browser' | 'talk' | 'capture' | 'location' | 'permissions' | 'email' | 'activity' | 'cache' | 'backup' | 'sync' | 'export';
 
@@ -171,7 +173,9 @@ export default function GatewayPage() {
       </div>
 
       {/* Content */}
-      <div>{renderContent()}</div>
+      <Suspense fallback={<div style={{ padding: '48px', textAlign: 'center', color: 'var(--text-muted)' }}>Chargement...</div>}>
+        <div>{renderContent()}</div>
+      </Suspense>
 
       {/* Floating components */}
       <NotificationToast position="top-right" />

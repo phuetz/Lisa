@@ -211,7 +211,7 @@ class AIService {
         envKey = undefined;
     }
 
-    console.log(`[AIService] API key for ${provider} from env: ${envKey ? 'found (' + envKey.slice(0, 10) + '...)' : 'NOT FOUND'}`);
+    console.log(`[AIService] API key for ${provider} from env: ${envKey ? 'found' : 'NOT FOUND'}`);
     return envKey;
   }
 

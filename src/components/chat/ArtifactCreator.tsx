@@ -465,7 +465,7 @@ export const ArtifactCreator = ({ onClose, onInsert }: ArtifactCreatorProps) => 
                 key={previewKey}
                 srcDoc={previewHtml}
                 style={{ width: '100%', height: '100%', border: 'none' }}
-                sandbox="allow-scripts allow-modals allow-same-origin"
+                sandbox="allow-scripts allow-modals"
                 title="Preview"
               />
             </div>

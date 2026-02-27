@@ -1,111 +1,61 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { WorkflowExecutor } from '../../src/workflow/WorkflowExecutor';
-import type { BaseAgent, AgentExecuteProps, AgentExecuteResult } from '../../src/agents/types';
-import { AgentDomains } from '../../src/agents/types';
-import type { Node } from 'reactflow';
-
-/**
- * HelloAgent for testing - minimal agent that increments a counter
- */
-class HelloAgent implements BaseAgent {
-  public name = 'HelloAgent';
-  public description = 'Test agent that increments a counter';
-  public version = '1.0.0';
-  public domain = AgentDomains.GENERAL;
-  public capabilities = ['greet'];
-  public valid = true;
-  
-  // Counter to track calls
-  private static counter = 0;
-
-  public async execute(_props: AgentExecuteProps): Promise<AgentExecuteResult> {
-    // Increment counter
-    HelloAgent.counter++;
-    
-    return {
-      success: true,
-      output: {
-        greeting: `Hello #${HelloAgent.counter}!`,
-        counter: HelloAgent.counter
-      }
-    };
-  }
-  
-  // Method to get current counter value for testing
-  public static getCounter(): number {
-    return HelloAgent.counter;
-  }
-  
-  // Reset counter for clean tests
-  public static resetCounter(): void {
-    HelloAgent.counter = 0;
-  }
-}
+import { describe, it, expect } from 'vitest';
+import { WorkflowExecutor } from '../../src/features/workflow/executor/WorkflowExecutor';
+import type { ExecutionNode } from '../../src/features/workflow/executor/WorkflowExecutor';
 
 describe('WorkflowExecutor - Basic Flow', () => {
-  // Mock agent registry
-  const mockRegistry = {
-    register: vi.fn(),
-    getAgent: vi.fn(() => new HelloAgent()),
-    hasAgent: vi.fn(() => true)
-  };
-  
-  // Reset counter before each test
-  beforeEach(() => {
-    HelloAgent.resetCounter();
-    vi.clearAllMocks();
-  });
-
   it('should execute a simple two-node workflow', async () => {
-    // Create mock nodes
-    const nodes: Node[] = [
+    const nodes: ExecutionNode[] = [
       {
         id: 'node-1',
-        type: 'helloNode',
-        position: { x: 0, y: 0 },
-        data: {
-          agent: 'HelloAgent',
-          params: { action: 'greet' }
-        }
+        type: 'input',
+        config: { defaultValue: { message: 'hello' } },
       },
       {
         id: 'node-2',
-        type: 'helloNode',
-        position: { x: 100, y: 100 },
-        data: {
-          agent: 'HelloAgent',
-          params: { action: 'greet' }
-        }
-      }
+        type: 'output',
+        dependencies: ['node-1'],
+      },
     ];
 
-    // Create mock edges
     const edges = [
-      {
-        id: 'edge-1-2',
-        source: 'node-1',
-        target: 'node-2'
-      }
+      { source: 'node-1', target: 'node-2' },
     ];
 
-    // Create workflow executor with mocked dependencies
-    const executor = new WorkflowExecutor(
-      nodes,
-      edges,
-      { timeout: 5000 }
-    );
-
-    // Execute workflow
+    const executor = new WorkflowExecutor({ nodes, edges });
     const result = await executor.execute();
 
-    // Verify execution succeeded
     expect(result.success).toBe(true);
-    
-    // Verify both nodes were executed
-    expect(HelloAgent.getCounter()).toBe(2);
-    
-    // Verify results from nodes
     expect(result.nodeResults).toHaveProperty('node-1');
     expect(result.nodeResults).toHaveProperty('node-2');
+    expect(result.executionPath).toContain('node-1');
+    expect(result.executionPath).toContain('node-2');
+  });
+
+  it('should execute nodes in dependency order', async () => {
+    const executionOrder: string[] = [];
+
+    const nodes: ExecutionNode[] = [
+      { id: 'A', type: 'input', config: { defaultValue: 1 } },
+      { id: 'B', type: 'data-transform', config: { transformType: 'map' }, dependencies: ['A'] },
+      { id: 'C', type: 'output', dependencies: ['B'] },
+    ];
+
+    const edges = [
+      { source: 'A', target: 'B' },
+      { source: 'B', target: 'C' },
+    ];
+
+    const executor = new WorkflowExecutor({
+      nodes,
+      edges,
+      onNodeExecution: (nodeId, status) => {
+        if (status === 'completed') executionOrder.push(nodeId);
+      },
+    });
+
+    const result = await executor.execute();
+
+    expect(result.success).toBe(true);
+    expect(executionOrder).toEqual(['A', 'B', 'C']);
   });
 });

@@ -333,7 +333,7 @@ ${consoleCapture}
               key={previewKey}
               srcDoc={generatePreview()}
               style={{ flex: 1, border: 'none', backgroundColor: '#fff' }}
-              sandbox="allow-scripts allow-modals allow-same-origin"
+              sandbox="allow-scripts allow-modals"
               title={artifact.title}
             />
           </div>
@@ -665,7 +665,7 @@ ${consoleCapture}
                     height: '100%',
                     border: 'none',
                   }}
-                  sandbox="allow-scripts allow-modals allow-same-origin"
+                  sandbox="allow-scripts allow-modals"
                   title={artifact.title}
                 />
               </div>

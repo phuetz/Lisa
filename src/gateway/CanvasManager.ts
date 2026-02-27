@@ -5,6 +5,7 @@
  */
 
 import { BrowserEventEmitter } from './BrowserEventEmitter';
+import { safeEvaluate } from '../features/workflow/executor/SafeEvaluator';
 
 export interface CanvasComponent {
   id: string;
@@ -284,11 +285,17 @@ export class CanvasManager extends BrowserEventEmitter {
     };
 
     try {
-      // Safe eval with context
-      const fn = new Function('canvas', `with(canvas) { return ${script}; }`);
-      const result = fn(context);
-      this.emit('canvas:eval', { script, result });
-      return result;
+      // Try safe evaluation first for simple expressions (property access, math, comparisons)
+      try {
+        const result = safeEvaluate(script, context as Record<string, unknown>);
+        this.emit('canvas:eval', { script, result });
+        return result;
+      } catch {
+        // SafeEvaluator cannot handle complex scripts with canvas method calls (push, update, remove, etc.)
+        // Fall through to return null for unsupported expressions
+        this.emit('canvas:eval:error', { script, error: 'Expression not supported by safe evaluator' });
+        return null;
+      }
     } catch (error) {
       this.emit('canvas:eval:error', { script, error });
       return null;

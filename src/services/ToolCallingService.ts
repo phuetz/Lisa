@@ -11,6 +11,7 @@
  */
 
 import type { AIProvider } from './aiService';
+import { safeEvaluate } from '../features/workflow/executor/SafeEvaluator';
 
 // ============================================================================
 // Types
@@ -602,8 +603,7 @@ export function registerBuiltInTools(): void {
       const withMath = sanitized.replace(/sqrt/gi, 'Math.sqrt');
 
       try {
-        // Use Function constructor for safer evaluation
-        const result = new Function(`return ${withMath}`)();
+        const result = safeEvaluate(withMath, {});
         return { result, expression: expr };
       } catch (error) {
         return { error: 'Invalid expression', expression: expr };

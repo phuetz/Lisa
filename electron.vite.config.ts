@@ -49,7 +49,7 @@ export default defineConfig({
             'sql-vendor': ['sql.js'],
             'ui-vendor': ['@mui/material', '@mui/icons-material', '@emotion/react', '@emotion/styled'],
             'state-vendor': ['zustand', 'rxjs'],
-            'markdown-vendor': ['react-markdown', 'rehype-highlight', 'rehype-katex', 'remark-gfm', 'remark-math', 'katex', 'highlight.js'],
+            'markdown-vendor': ['react-markdown', 'rehype-highlight', 'rehype-katex', 'remark-gfm', 'remark-math', 'katex', 'highlight.js/lib/core'],
             'charts-vendor': ['recharts', 'reactflow'],
             'three-vendor': ['three', '@react-three/fiber', '@react-three/drei'],
             'ml-vendor': ['@tensorflow/tfjs', '@xenova/transformers'],

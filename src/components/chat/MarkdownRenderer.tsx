@@ -13,6 +13,7 @@ import rehypeHighlight from 'rehype-highlight';
 import remarkGfm from 'remark-gfm';
 import { Copy, Check, ExternalLink } from 'lucide-react';
 import { useArtifactPanelStore } from '../../store/chatHistoryStore';
+import { highlightLanguages } from '../../config/highlightLanguages';
 import 'katex/dist/katex.min.css';
 import 'highlight.js/styles/atom-one-dark.css';
 
@@ -309,7 +310,7 @@ export const MarkdownRenderer = ({ content }: MarkdownRendererProps) => {
       <style>{katexStyles}</style>
       <ReactMarkdown
         remarkPlugins={[remarkMath, remarkGfm]}
-        rehypePlugins={[rehypeKatex, rehypeHighlight]}
+        rehypePlugins={[rehypeKatex, [rehypeHighlight, { languages: highlightLanguages }]]}
         components={{
         // Pre wrapper pour les blocs de code (avec header et bouton copier)
         pre({ children, ...props }) {

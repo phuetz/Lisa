@@ -6,6 +6,7 @@
 
 import { BrowserEventEmitter } from './BrowserEventEmitter';
 import { getGateway } from './GatewayServer';
+import { safeEvaluateCondition } from '../features/workflow/executor/SafeEvaluator';
 
 export interface AgentDefinition {
   id: string;
@@ -524,8 +525,7 @@ export class AgentOrchestrator extends BrowserEventEmitter {
 
   private evaluateCondition(condition: string, variables: Record<string, unknown>): boolean {
     try {
-      const fn = new Function(...Object.keys(variables), `return ${condition}`);
-      return !!fn(...Object.values(variables));
+      return safeEvaluateCondition(condition, variables);
     } catch {
       return false;
     }

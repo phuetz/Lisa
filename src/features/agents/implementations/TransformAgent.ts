@@ -1,5 +1,6 @@
 import type { BaseAgent, AgentExecuteProps, AgentExecuteResult } from '../core/types';
 import { AgentDomains } from '../core/types';
+import { safeEvaluate } from '../../workflow/executor/SafeEvaluator';
 
 export class TransformAgent implements BaseAgent {
   name = "TransformAgent";
@@ -30,10 +31,8 @@ export class TransformAgent implements BaseAgent {
       // For now, we'll simulate or require an external code execution agent
       // In a real scenario, this would delegate to a secure code execution environment.
       try {
-        // This is a placeholder for actual expression evaluation.
-        // In a real system, you'd use a secure sandbox or a dedicated code execution agent.
-        const func = new Function('input', 'context', `with (context) { return ${expression}; }`);
-        const output = func(input, context);
+        const evalContext = { input, ...((context && typeof context === 'object') ? context : {}) };
+        const output = safeEvaluate(expression, evalContext);
         return { success: true, output };
       } catch (error: any) {
         return { success: false, output: null, error: `Expression evaluation failed: ${error.message}` };

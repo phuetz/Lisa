@@ -5,7 +5,7 @@ import { useHandLandmarker } from '../hooks/useHandLandmarker';
 import { usePoseLandmarker } from '../hooks/usePoseLandmarker';
 import { useObjectDetector } from '../hooks/useObjectDetector';
 import { useAudioClassifier } from '../hooks/useAudioClassifier';
-import { useVisionAudioStore } from '../store/visionAudioStore';
+import { useAppStore as useVisionAudioStore } from '../store/appStore';
 
 // Create a video element with valid dimensions for MediaPipe processing
 const video = document.createElement('video');

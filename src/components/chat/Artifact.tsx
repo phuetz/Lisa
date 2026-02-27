@@ -360,7 +360,7 @@ export const Artifact = ({ artifact, onUpdate, onClose, embedded = true }: Artif
               key={previewKey}
               srcDoc={generatePreview()}
               style={{ width: '100%', height: '100%', border: 'none' }}
-              sandbox="allow-scripts allow-modals allow-same-origin"
+              sandbox="allow-scripts allow-modals"
               title={artifact.title}
             />
           </div>

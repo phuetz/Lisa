@@ -71,17 +71,18 @@ export default defineConfig({
           // State management
           'state-vendor': ['zustand', 'rxjs'],
           // Markdown & code rendering
-          'markdown-vendor': ['react-markdown', 'rehype-highlight', 'rehype-katex', 'remark-gfm', 'remark-math', 'katex', 'highlight.js'],
-          // Charts & visualization
-          'charts-vendor': ['recharts', 'reactflow'],
+          'markdown-vendor': ['react-markdown', 'rehype-highlight', 'rehype-katex', 'remark-gfm', 'remark-math', 'katex', 'highlight.js/lib/core'],
+          // Charts
+          'charts-vendor': ['recharts'],
+          // Flow editor (Workflows page only)
+          'flow-vendor': ['reactflow'],
           // 3D rendering
           'three-vendor': ['three', '@react-three/fiber', '@react-three/drei'],
           // ML/AI libraries (lazy loaded)
           'ml-vendor': ['@tensorflow/tfjs', '@xenova/transformers'],
           // MediaPipe
           'mediapipe-vendor': ['@mediapipe/tasks-vision', '@mediapipe/tasks-audio'],
-          // PDF & Office
-          'office-vendor': ['pdfjs-dist', 'mammoth', 'xlsx', 'jspdf', 'html2canvas'],
+          // PDF & Office — loaded on-demand via dynamic imports, no manualChunks needed
           // Monaco editor
           'monaco-vendor': ['@monaco-editor/react'],
         }

@@ -8,6 +8,7 @@ import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
 import rehypeRaw from 'rehype-raw';
 import { CodeBlock } from './CodeBlock';
+import { highlightLanguages } from '../../config/highlightLanguages';
 import 'highlight.js/styles/github-dark.css';
 
 interface MessageRendererProps {
@@ -19,7 +20,7 @@ export const MessageRenderer = ({ content }: MessageRendererProps) => {
     <div className="prose prose-invert max-w-none">
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
-        rehypePlugins={[rehypeHighlight, rehypeRaw]}
+        rehypePlugins={[[rehypeHighlight, { languages: highlightLanguages }], rehypeRaw]}
         components={{
           code({node, inline, className, children, ...props}) {
             const match = /language-(\w+)/.exec(className || '');

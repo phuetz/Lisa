@@ -144,8 +144,10 @@ export class SkillExecutor extends BrowserEventEmitter {
       // Sandboxed execution (simplified)
       if (language === 'javascript') {
         try {
-          // Using Function constructor for basic sandboxing
-          // In production, use Web Workers or iframe sandbox
+          // eslint-disable-next-line no-new-func -- SafeEvaluator cannot replace arbitrary code execution.
+          // This handler runs user-submitted code snippets that may include statements, assignments,
+          // and function calls beyond what the expression-only SafeEvaluator supports.
+          // In production, use Web Workers or iframe sandbox instead.
           const fn = new Function('return ' + code);
           const result = fn();
           return { success: true, output: result, language };

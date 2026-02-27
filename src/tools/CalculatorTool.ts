@@ -3,6 +3,8 @@
  * Supporte expressions, conversions, et fonctions scientifiques
  */
 
+import { safeEvaluate } from '../features/workflow/executor/SafeEvaluator';
+
 interface ExecuteProps {
   expression: string;
   precision?: number;
@@ -55,14 +57,13 @@ function evaluateExpression(expr: string): number {
     throw new Error('Expression contient des caractères non autorisés');
   }
 
-  // Evaluate using Function constructor (safer than eval)
-  const func = new Function(`"use strict"; return (${cleaned})`);
-  const result = func();
-  
+  // Evaluate using SafeEvaluator (replaces dangerous new Function)
+  const result = safeEvaluate(cleaned, {});
+
   if (typeof result !== 'number' || !isFinite(result)) {
     throw new Error('Résultat invalide');
   }
-  
+
   return result;
 }
 
