@@ -77,9 +77,9 @@ const MessageActions = ({ content, messageId, role, onEdit, onRegenerate, onDele
             onClick={handleSaveEdit}
             style={{
               padding: '6px 12px',
-              backgroundColor: '#f5a623',
+              backgroundColor: 'var(--color-accent)',
               border: 'none',
-              borderRadius: '6px',
+              borderRadius: 'var(--radius-sm)',
               color: '#fff',
               cursor: 'pointer',
               fontSize: '12px'
@@ -91,10 +91,10 @@ const MessageActions = ({ content, messageId, role, onEdit, onRegenerate, onDele
             onClick={handleCancelEdit}
             style={{
               padding: '6px 12px',
-              backgroundColor: '#2d2d44',
+              backgroundColor: 'var(--border-primary)',
               border: 'none',
-              borderRadius: '6px',
-              color: '#fff',
+              borderRadius: 'var(--radius-sm)',
+              color: 'var(--text-primary)',
               cursor: 'pointer',
               fontSize: '12px'
             }}
@@ -183,7 +183,7 @@ const MessageContent = ({ content, role }: MessageContentProps) => {
       <div style={{
         fontSize: '15px',
         lineHeight: 1.7,
-        color: '#d1d5db',
+        color: 'var(--text-primary)',
         wordBreak: 'break-word'
       }}>
         {role === 'assistant' ? (
@@ -203,7 +203,7 @@ const MessageContent = ({ content, role }: MessageContentProps) => {
         <div style={{
           fontSize: '15px',
           lineHeight: 1.7,
-          color: '#d1d5db',
+          color: 'var(--text-primary)',
           wordBreak: 'break-word',
           marginBottom: parsed.artifacts.length > 0 ? '16px' : 0
         }}>
@@ -222,9 +222,9 @@ const MessageContent = ({ content, role }: MessageContentProps) => {
             key={artifact.id}
             style={{
               marginBottom: '16px',
-              backgroundColor: '#0a0a0f',
-              border: '1px solid #2d2d44',
-              borderRadius: '12px',
+              backgroundColor: 'var(--bg-deep)',
+              border: '1px solid var(--border-primary)',
+              borderRadius: 'var(--radius-lg)',
               overflow: 'hidden',
             }}
           >
@@ -245,16 +245,11 @@ const MessageContent = ({ content, role }: MessageContentProps) => {
                 alignItems: 'center',
                 gap: '12px',
                 padding: '12px 16px',
-                backgroundColor: '#1a1a2e',
+                backgroundColor: 'var(--bg-panel)',
                 cursor: 'pointer',
                 transition: 'background-color var(--transition-normal)',
               }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#252540';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#1a1a2e';
-              }}
+              className="hover-highlight-artifact"
             >
               {/* Icon */}
               <div style={{
@@ -276,18 +271,18 @@ const MessageContent = ({ content, role }: MessageContentProps) => {
                 <div style={{ 
                   fontSize: '14px', 
                   fontWeight: 600, 
-                  color: '#fff',
+                  color: 'var(--text-primary)',
                 }}>
                   {artifact.title}
                 </div>
-                <div style={{ 
-                  fontSize: '12px', 
-                  color: '#6a6a82',
+                <div style={{
+                  fontSize: '12px',
+                  color: 'var(--text-secondary)',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '6px'
                 }}>
-                  <span style={{ 
+                  <span style={{
                     color: getArtifactColor(artifact.type),
                     textTransform: 'uppercase',
                     fontWeight: 600,
@@ -295,7 +290,7 @@ const MessageContent = ({ content, role }: MessageContentProps) => {
                   }}>
                     {artifact.type}
                   </span>
-                  <span style={{ color: '#3d3d5c' }}>•</span>
+                  <span style={{ color: 'var(--text-muted)' }}>•</span>
                   <span>{codeLines.length} lignes</span>
                 </div>
               </div>
@@ -321,18 +316,18 @@ const MessageContent = ({ content, role }: MessageContentProps) => {
             {/* Code Preview */}
             <div style={{
               padding: '12px 16px',
-              backgroundColor: '#0a0a0f',
-              fontFamily: "'Fira Code', 'JetBrains Mono', monospace",
+              backgroundColor: 'var(--bg-deep)',
+              fontFamily: 'var(--font-mono)',
               fontSize: '13px',
               lineHeight: 1.5,
               overflowX: 'auto',
             }}>
-              <pre style={{ margin: 0, color: '#e1e1e1' }}>
+              <pre style={{ margin: 0, color: 'var(--text-primary)' }}>
                 {previewLines.map((line, i) => (
                   <div key={i} style={{ display: 'flex' }}>
                     <span style={{
-                      color: '#3d3d5c',
-                      marginRight: '16px', 
+                      color: 'var(--text-muted)',
+                      marginRight: '16px',
                       minWidth: '24px',
                       textAlign: 'right',
                       userSelect: 'none',
@@ -355,21 +350,14 @@ const MessageContent = ({ content, role }: MessageContentProps) => {
                     gap: '8px',
                     padding: '12px',
                     marginTop: '8px',
-                    backgroundColor: '#1a1a2e',
-                    borderRadius: '8px',
-                    color: '#6a6a82',
+                    backgroundColor: 'var(--bg-panel)',
+                    borderRadius: 'var(--radius-md)',
+                    color: 'var(--text-secondary)',
                     cursor: 'pointer',
                     fontSize: '12px',
-                    transition: 'all 0.2s',
+                    transition: 'background-color var(--transition-normal)',
                   }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = '#252540';
-                    e.currentTarget.style.color = '#fff';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = '#1a1a2e';
-                    e.currentTarget.style.color = '#6a6a82';
-                  }}
+                  className="hover-highlight-code"
                 >
                   <span>Voir les {codeLines.length - 8} lignes restantes</span>
                   <span>→</span>
@@ -516,9 +504,15 @@ export const ChatMessages = () => {
   const handleSuggestionClick = (text: string) => {
     if (!currentConversationId) return;
     // Simuler l'envoi d'un message (le composant ChatInput gère l'envoi réel)
-    const input = document.querySelector('textarea') as HTMLTextAreaElement;
+    const input = document.querySelector('textarea[aria-label="Message à envoyer"]') as HTMLTextAreaElement;
     if (input) {
-      input.value = text;
+      // Use native setter to trigger React's onChange
+      const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value')?.set;
+      if (nativeSetter) {
+        nativeSetter.call(input, text);
+      } else {
+        input.value = text;
+      }
       input.dispatchEvent(new Event('input', { bubbles: true }));
       input.focus();
     }
@@ -546,7 +540,7 @@ export const ChatMessages = () => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '0 20px 40px rgba(245, 166, 35, 0.3)',
+            boxShadow: '0 20px 40px color-mix(in srgb, var(--color-accent) 30%, transparent)',
             animation: 'float 3s ease-in-out infinite'
           }}>
             <Sparkles size={48} color="#fff" />
@@ -747,7 +741,7 @@ export const ChatMessages = () => {
               <div style={{
                 fontSize: '15px',
                 lineHeight: 1.7,
-                color: '#d1d5db',
+                color: 'var(--text-primary)',
                 wordBreak: 'break-word'
               }}>
                 <MarkdownRenderer content={streamingMessage} />

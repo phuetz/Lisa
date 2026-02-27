@@ -68,7 +68,7 @@ export const ArtifactPanel = () => {
   }] : []);
 
   const currentFile = files[selectedFileIndex] || files[0];
-  const config = artifact ? TYPE_CONFIG[artifact.type] : TYPE_CONFIG.html;
+  const config = artifact ? (TYPE_CONFIG[artifact.type] || TYPE_CONFIG.html) : TYPE_CONFIG.html;
 
   // Close on Escape key
   useEffect(() => {
@@ -180,10 +180,14 @@ ${consoleCapture}
 </head>
 <body>
   <script>
-    try {
-      const jsCode = ts.transpile(${JSON.stringify(code)}, { target: ts.ScriptTarget.ES2020 });
-      eval(jsCode);
-    } catch(e) { console.error(e.message); }
+    function __runTs() {
+      try {
+        const jsCode = ts.transpile(${JSON.stringify(code)}, { target: ts.ScriptTarget.ES2020 });
+        eval(jsCode);
+      } catch(e) { console.error(e.message); }
+    }
+    if (typeof ts !== 'undefined') { __runTs(); }
+    else { var s = document.querySelector('script[src*="typescript"]'); if (s) { s.addEventListener('load', __runTs); s.addEventListener('error', function() { console.error('Failed to load TypeScript compiler'); }); } }
   </script>
 </body></html>`;
 
@@ -544,30 +548,7 @@ ${consoleCapture}
                 {file.name}
               </button>
             ))}
-            <button
-              onClick={() => {
-                const newFileName = prompt('Nom du nouveau fichier:');
-                if (newFileName) {
-                  // TODO: Add file to artifact
-                  void newFileName;
-                }
-              }}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: '32px',
-                height: '32px',
-                backgroundColor: 'transparent',
-                border: '1px dashed var(--border-secondary)',
-                borderRadius: '6px',
-                color: 'var(--text-muted)',
-                cursor: 'pointer',
-              }}
-              title="Ajouter un fichier"
-            >
-              <Plus size={14} />
-            </button>
+            {/* Add file button hidden until store supports multi-file updates */}
           </div>
         )}
 

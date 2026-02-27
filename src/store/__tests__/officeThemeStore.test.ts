@@ -83,8 +83,8 @@ describe('officeThemeStore', () => {
       const colors = getCurrentColors();
 
       expect(colors).toBeDefined();
-      expect(colors.ribbon).toBe('#f3f2f1'); // Office Classic light ribbon color
-      expect(colors.accent).toBe('#0078d4');
+      expect(colors.ribbon).toBe('#eaeaee'); // AudioReader Studio light ribbon color
+      expect(colors.accent).toBe('#e08a00');
     });
   });
 
@@ -118,7 +118,7 @@ describe('officeThemeStore', () => {
       setMode('dark');
 
       const colors = getCurrentColors();
-      expect(colors.ribbon).toBe('#2d2d2d'); // Office Classic dark ribbon color
+      expect(colors.ribbon).toBe('#0e0e16'); // AudioReader Studio dark ribbon color
     });
   });
 

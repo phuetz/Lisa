@@ -180,7 +180,12 @@ export class CompanionMode extends BrowserEventEmitter {
 
   constructor(config: Partial<CompanionConfig> = {}) {
     super();
-    this.config = { ...DEFAULT_CONFIG, ...config };
+    this.config = {
+      ...DEFAULT_CONFIG,
+      ...config,
+      dailyRoutines: [...(config.dailyRoutines ?? DEFAULT_CONFIG.dailyRoutines).map(r => ({ ...r }))],
+      specialDates: [...(config.specialDates ?? DEFAULT_CONFIG.specialDates ?? []).map(d => ({ ...d }))],
+    };
     this.state = {
       currentMood: 'loving',
       lastInteraction: new Date(),

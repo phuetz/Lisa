@@ -14,7 +14,7 @@ const SettingsSection = ({
 }) => (
   <div style={{
     backgroundColor: 'var(--bg-surface)',
-    borderRadius: '12px',
+    borderRadius: 'var(--radius-lg)',
     padding: '20px',
     marginBottom: '16px',
     border: '1px solid var(--border-primary)'
@@ -23,7 +23,6 @@ const SettingsSection = ({
       fontSize: '16px',
       fontWeight: 600,
       color: 'var(--text-primary)',
-      marginBottom: '16px',
       margin: '0 0 16px 0'
     }}>
       {title}
@@ -62,10 +61,19 @@ const SettingsInput = ({
         padding: '12px 14px',
         backgroundColor: 'var(--bg-panel)',
         border: '1px solid var(--border-primary)',
-        borderRadius: '8px',
+        borderRadius: 'var(--radius-md)',
         color: 'var(--text-primary)',
         fontSize: '14px',
-        outline: 'none'
+        outline: 'none',
+        transition: 'border-color var(--transition-fast), box-shadow var(--transition-fast)',
+      }}
+      onFocus={(e) => {
+        e.currentTarget.style.borderColor = 'var(--color-accent)';
+        e.currentTarget.style.boxShadow = 'var(--focus-ring)';
+      }}
+      onBlur={(e) => {
+        e.currentTarget.style.borderColor = 'var(--border-primary)';
+        e.currentTarget.style.boxShadow = 'none';
       }}
     />
   </div>
@@ -100,11 +108,20 @@ const SettingsSelect = ({
         padding: '12px 14px',
         backgroundColor: 'var(--bg-panel)',
         border: '1px solid var(--border-primary)',
-        borderRadius: '8px',
+        borderRadius: 'var(--radius-md)',
         color: 'var(--text-primary)',
         fontSize: '14px',
         outline: 'none',
-        cursor: 'pointer'
+        cursor: 'pointer',
+        transition: 'border-color var(--transition-fast), box-shadow var(--transition-fast)',
+      }}
+      onFocus={(e) => {
+        e.currentTarget.style.borderColor = 'var(--color-accent)';
+        e.currentTarget.style.boxShadow = 'var(--focus-ring)';
+      }}
+      onBlur={(e) => {
+        e.currentTarget.style.borderColor = 'var(--border-primary)';
+        e.currentTarget.style.boxShadow = 'none';
       }}
     >
       {options.map(opt => (
@@ -184,7 +201,7 @@ const TabItem = ({
       alignItems: 'center',
       justifyContent: 'space-between',
       padding: '14px 16px',
-      backgroundColor: active ? 'rgba(245, 166, 35, 0.12)' : 'transparent',
+      backgroundColor: active ? 'var(--bg-active)' : 'transparent',
       border: 'none',
       borderRadius: '10px',
       cursor: 'pointer',
@@ -221,7 +238,7 @@ export default function SettingsPage() {
   });
 
   const handleSave = () => {
-    console.log('Saving settings:', settings);
+    // Settings are auto-persisted via zustand/persist
   };
 
   const tabs = [
@@ -245,11 +262,12 @@ export default function SettingsPage() {
             padding: '10px 16px',
             backgroundColor: 'var(--color-accent)',
             border: 'none',
-            borderRadius: '8px',
+            borderRadius: 'var(--radius-md)',
             color: 'var(--bg-deep)',
             cursor: 'pointer',
             fontSize: '14px',
             fontWeight: 500,
+            transition: 'opacity var(--transition-fast)',
             display: 'flex',
             alignItems: 'center',
             gap: '8px'
@@ -259,11 +277,16 @@ export default function SettingsPage() {
           Sauvegarder
         </button>
       </div>
-      <div style={{
+      <div className="settings-grid" style={{
         display: 'grid',
-        gridTemplateColumns: '280px 1fr',
-        gap: '24px'
+        gridTemplateColumns: '240px 1fr',
+        gap: '24px',
       }}>
+      <style>{`
+        @media (max-width: 768px) {
+          .settings-grid { grid-template-columns: 1fr !important; }
+        }
+      `}</style>
         {/* Sidebar Tabs */}
         <div style={{
           backgroundColor: 'var(--bg-panel)',

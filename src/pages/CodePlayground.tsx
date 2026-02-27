@@ -1260,15 +1260,22 @@ export default function CodePlayground() {
       window.parent.postMessage({ type: 'console-error', data: text }, '*');
     };
     
-    try {
-      const tsCode = ${JSON.stringify(ts)};
-      const jsCode = ts.transpile(tsCode, { 
-        target: ts.ScriptTarget.ES2020,
-        module: ts.ModuleKind.None 
-      });
-      eval(jsCode);
-    } catch(e) {
-      console.error('TypeScript Error:', e.message);
+    function __runTs() {
+      try {
+        const tsCode = ${JSON.stringify(ts)};
+        const jsCode = ts.transpile(tsCode, {
+          target: ts.ScriptTarget.ES2020,
+          module: ts.ModuleKind.None
+        });
+        eval(jsCode);
+      } catch(e) {
+        console.error('TypeScript Error:', e.message);
+      }
+    }
+    if (typeof ts !== 'undefined') { __runTs(); }
+    else {
+      var s = document.querySelector('script[src*="typescript"]');
+      if (s) { s.addEventListener('load', __runTs); s.addEventListener('error', function() { console.error('Failed to load TypeScript compiler'); }); }
     }
   </script>
 </body>

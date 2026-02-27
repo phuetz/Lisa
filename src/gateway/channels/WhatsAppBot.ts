@@ -70,7 +70,7 @@ export class WhatsAppBot extends BrowserEventEmitter {
   async start(): Promise<void> {
     try {
       // Dynamic import for Node.js compatibility
-      const { default: makeWASocket, useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion } = 
+      const { default: makeWASocket, useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion } =
         await import('@whiskeysockets/baileys');
       const { Boom } = await import('@hapi/boom');
 
@@ -78,6 +78,7 @@ export class WhatsAppBot extends BrowserEventEmitter {
       const { version } = await fetchLatestBaileysVersion();
 
       // Load auth state
+      // eslint-disable-next-line react-hooks/rules-of-hooks -- useMultiFileAuthState is not a React hook, it's a Baileys auth utility
       const { state: authState, saveCreds } = await useMultiFileAuthState(
         this.config.sessionPath || './whatsapp-session'
       );

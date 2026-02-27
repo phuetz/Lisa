@@ -131,7 +131,7 @@ describe('ChatSidebar', () => {
       render(<ChatSidebar {...defaultProps} />);
 
       const firstConvButton = screen.getByText('First Conversation').closest('button');
-      expect(firstConvButton).toHaveClass('bg-[#2a2a2a]');
+      expect(firstConvButton).toHaveClass('bg-[#1a1a26]');
     });
   });
 

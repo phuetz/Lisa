@@ -127,10 +127,14 @@ export const Artifact = ({ artifact, onUpdate, onClose, embedded = true }: Artif
     const _log = console.log, _error = console.error;
     console.log = (...args) => { _log(...args); output.innerHTML += '<div class="log">> ' + args.map(a => typeof a === 'object' ? JSON.stringify(a,null,2) : String(a)).join(' ') + '</div>'; };
     console.error = (...args) => { _error(...args); output.innerHTML += '<div class="error">❌ ' + args.join(' ') + '</div>'; };
-    try {
-      const jsCode = ts.transpile(${JSON.stringify(code)}, { target: ts.ScriptTarget.ES2020 });
-      eval(jsCode);
-    } catch(e) { console.error(e.message); }
+    function __runTs() {
+      try {
+        const jsCode = ts.transpile(${JSON.stringify(code)}, { target: ts.ScriptTarget.ES2020 });
+        eval(jsCode);
+      } catch(e) { console.error(e.message); }
+    }
+    if (typeof ts !== 'undefined') { __runTs(); }
+    else { var s = document.querySelector('script[src*="typescript"]'); if (s) { s.addEventListener('load', __runTs); s.addEventListener('error', function() { console.error('Failed to load TypeScript compiler'); }); } }
   </script>
 </body></html>`;
 

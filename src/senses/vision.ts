@@ -11,6 +11,7 @@ interface VisionWorkerMessage {
 import { Percept } from '../types';
 
 // Define the type for messages received from the worker
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface VisionResult extends Percept<any> {}
 
 let visionWorker: Worker | null = null;

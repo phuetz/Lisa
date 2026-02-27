@@ -189,7 +189,14 @@ describe('EmbeddingService', () => {
         })
       );
 
-      expect(result.vector).toEqual([0.1, 0.2, 0.3]);
+      // Vector is L2-normalized by the service
+      const rawVec = [0.1, 0.2, 0.3];
+      const mag = Math.sqrt(rawVec.reduce((s, v) => s + v * v, 0));
+      const expected = rawVec.map(v => v / mag);
+      expect(result.vector.length).toBe(3);
+      result.vector.forEach((val: number, i: number) => {
+        expect(val).toBeCloseTo(expected[i], 5);
+      });
       expect(result.model).toBe('text-embedding-3-small');
       expect(result.usage).toEqual({ promptTokens: 5, totalTokens: 5 });
     });

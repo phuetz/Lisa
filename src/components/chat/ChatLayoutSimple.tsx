@@ -27,6 +27,8 @@ export const ChatLayoutSimple = () => {
   const [exportOpen, setExportOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showShortcuts, setShowShortcuts] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   const {
     conversations,
@@ -73,10 +75,12 @@ export const ChatLayoutSimple = () => {
         try {
           const imported = JSON.parse(event.target?.result as string);
           if (Array.isArray(imported)) {
-            alert(`Import de ${imported.length} conversations réussi!`);
+            setToast(`Import de ${imported.length} conversations réussi!`);
+            setTimeout(() => setToast(null), 3000);
           }
         } catch {
-          alert('Erreur: fichier JSON invalide');
+          setToast('Erreur: fichier JSON invalide');
+          setTimeout(() => setToast(null), 3000);
         }
       };
       reader.readAsText(file);
@@ -217,7 +221,7 @@ export const ChatLayoutSimple = () => {
                     gap: '8px',
                     padding: '8px 16px',
                     backgroundColor: 'var(--color-accent)',
-                    color: '#0a0a0f',
+                    color: 'var(--bg-deep)',
                     borderRadius: 'var(--radius-md)',
                     border: 'none',
                     fontSize: '13px',
@@ -260,6 +264,15 @@ export const ChatLayoutSimple = () => {
                     fontSize: '13px',
                     outline: 'none',
                     fontFamily: 'inherit',
+                    transition: 'border-color var(--transition-fast), box-shadow var(--transition-fast)',
+                  }}
+                  onFocus={(e) => {
+                    e.currentTarget.style.borderColor = 'var(--color-accent)';
+                    e.currentTarget.style.boxShadow = 'var(--focus-ring)';
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.borderColor = 'var(--border-primary)';
+                    e.currentTarget.style.boxShadow = 'none';
                   }}
                 />
               </div>
@@ -318,19 +331,38 @@ export const ChatLayoutSimple = () => {
                         {conv.title}
                       </div>
                     </div>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (confirm('Supprimer cette conversation ?')) {
-                          deleteConversation(conv.id);
-                        }
-                      }}
-                      className="chat-icon-btn"
-                      style={{ padding: '4px', opacity: 0.6 }}
-                      aria-label={`Supprimer la conversation ${conv.title}`}
-                    >
-                      <Trash2 size={12} />
-                    </button>
+                    {pendingDeleteId === conv.id ? (
+                      <div style={{ display: 'flex', gap: '2px' }} onClick={e => e.stopPropagation()}>
+                        <button
+                          onClick={() => { deleteConversation(conv.id); setPendingDeleteId(null); }}
+                          className="chat-icon-btn"
+                          style={{ padding: '4px', color: '#ef4444', fontWeight: 600, fontSize: '11px' }}
+                          aria-label="Confirmer la suppression"
+                        >
+                          Oui
+                        </button>
+                        <button
+                          onClick={() => setPendingDeleteId(null)}
+                          className="chat-icon-btn"
+                          style={{ padding: '4px', opacity: 0.6, fontSize: '11px' }}
+                          aria-label="Annuler la suppression"
+                        >
+                          Non
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setPendingDeleteId(conv.id);
+                        }}
+                        className="chat-icon-btn"
+                        style={{ padding: '4px', opacity: 0.6 }}
+                        aria-label={`Supprimer la conversation ${conv.title}`}
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    )}
                   </div>
                 ))
               )}
@@ -382,6 +414,26 @@ export const ChatLayoutSimple = () => {
 
       {/* Artifact Panel */}
       <ArtifactPanel />
+
+      {/* Toast notification */}
+      {toast && (
+        <div style={{
+          position: 'fixed',
+          bottom: '24px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          padding: '10px 20px',
+          backgroundColor: 'var(--bg-surface, #1a1a26)',
+          color: 'var(--text-primary, #e8e8f0)',
+          borderRadius: '8px',
+          border: '1px solid var(--border-primary, #2d2d44)',
+          fontSize: '14px',
+          zIndex: 9999,
+          boxShadow: 'var(--shadow-elevated)',
+        }}>
+          {toast}
+        </div>
+      )}
     </div>
   );
 };

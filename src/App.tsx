@@ -14,7 +14,7 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { useFallDetector } from './hooks/useFallDetector';
 import { SkipLink } from './components/ui/SkipLink';
 import { useIsMobile } from './hooks/useIsMobile';
-import { AppOverlays, AppFooter, AppVideo } from './components/layout';
+import { AppOverlays, AppVideo } from './components/layout';
 import { MainLayout } from './components/layout/MainLayout';
 
 // Lazy-load MediaPipe hooks to reduce main bundle (~180KB savings)
@@ -87,9 +87,6 @@ function App() {
         <Suspense fallback={null}>
           <MediaPipeManager videoRef={videoRef} />
         </Suspense>
-
-        {/* Auth footer buttons */}
-        <AppFooter isAuthenticated={isAuthenticated} onLogout={logout} />
 
         {/* Main content - AudioReader Studio layout */}
         <MainLayout>

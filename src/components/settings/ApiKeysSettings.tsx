@@ -30,7 +30,7 @@ const ApiKeyInput = ({ label, value, onChange, placeholder, provider }: ApiKeyIn
     setIsEditing(false);
   };
 
-  const maskedValue = value ? '•'.repeat(Math.min(value.length, 40)) : '';
+  const maskedValue = value ? '•'.repeat(8) : '';
 
   return (
     <div style={{

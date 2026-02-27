@@ -12,7 +12,6 @@ export default function WeatherBanner() {
       if (intent === 'weather_now' || intent === 'weather_forecast') {
         const weatherAgent = agentRegistry.getAgent('WeatherAgent');
         if (!weatherAgent) {
-          console.error('WeatherAgent not found');
           return;
         }
 
@@ -23,17 +22,25 @@ export default function WeatherBanner() {
           const data = result.output;
           let msg = '';
           if (command === 'get_current') {
-            const temp = data.current_weather.temperature;
-            msg = t('current_temperature', { temp });
+            const temp = data?.current_weather?.temperature;
+            if (temp != null) {
+              msg = t('current_temperature', { temp });
+            }
           } else {
-            const max = data.daily.temperature_2m_max[1];
-            const min = data.daily.temperature_2m_min[1];
-            msg = t('tomorrow_forecast', { min, max });
+            const max = data?.daily?.temperature_2m_max?.[1];
+            const min = data?.daily?.temperature_2m_min?.[1];
+            if (max != null && min != null) {
+              msg = t('tomorrow_forecast', { min, max });
+            }
           }
-          setWeather(msg);
-          speechSynthesis.speak(new SpeechSynthesisUtterance(msg));
-        } else {
-          console.error('Failed to fetch weather:', result.error);
+          if (msg) {
+            setWeather(msg);
+            try {
+              speechSynthesis.speak(new SpeechSynthesisUtterance(msg));
+            } catch {
+              // speechSynthesis not available
+            }
+          }
         }
       }
     };

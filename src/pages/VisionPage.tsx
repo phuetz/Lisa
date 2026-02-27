@@ -157,23 +157,18 @@ export default function VisionPage() {
     setInitializingDetectors(true);
     setError(null);
     try {
-      console.log('[VisionPage] Loading VisionAgent...');
       const agent = await getVisionAgent();
       if (agent) {
-        console.log('[VisionPage] VisionAgent loaded, waiting for initialization...');
         if (agent.waitForInitialization) {
           const ready = await agent.waitForInitialization();
-          console.log('[VisionPage] Detectors ready:', ready);
           setDetectorsReady(ready);
           if (!ready) {
             setError('Les détecteurs MediaPipe n\'ont pas pu être initialisés. Vérifiez votre connexion internet.');
           }
         } else {
-          console.log('[VisionPage] No waitForInitialization, assuming ready');
           setDetectorsReady(true);
         }
       } else {
-        console.error('[VisionPage] VisionAgent not found');
         setError('VisionAgent non disponible');
         setDetectorsReady(false);
       }

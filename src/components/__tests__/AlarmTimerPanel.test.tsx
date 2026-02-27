@@ -100,7 +100,7 @@ describe('AlarmTimerPanel', () => {
       render(<AlarmTimerPanel />);
 
       // Triggered alarm and timer both show checkmarks
-      const checkmarks = screen.getAllByText(/✅/);
+      const checkmarks = screen.getAllByText(/✓/);
       expect(checkmarks.length).toBeGreaterThanOrEqual(1);
     });
 

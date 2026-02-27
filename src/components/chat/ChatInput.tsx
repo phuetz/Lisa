@@ -106,6 +106,9 @@ export const ChatInput = () => {
           name: file.name,
         }]);
       };
+      reader.onerror = () => {
+        console.warn('Failed to read file:', file.name);
+      };
       reader.readAsDataURL(file);
     });
     if (fileInputRef.current) fileInputRef.current.value = '';
@@ -472,12 +475,12 @@ Réponds en français, sois concis.`;
         <div style={{
           position: 'absolute', inset: 0,
           backgroundColor: 'rgba(255,255,255,0.05)',
-          border: '2px dashed #6a6a82',
-          borderRadius: '28px',
+          border: '2px dashed var(--text-muted)',
+          borderRadius: 'var(--radius-pill)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           zIndex: 20, pointerEvents: 'none',
         }}>
-          <span style={{ color: '#aaa', fontSize: '14px' }}>Déposez vos fichiers ici</span>
+          <span style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>Déposez vos fichiers ici</span>
         </div>
       )}
 
@@ -501,9 +504,9 @@ Réponds en français, sois concis.`;
         }}>
           <div style={{
             width: '8px', height: '8px', borderRadius: '50%',
-            backgroundColor: '#ef4444', animation: 'chatinput-pulse 1s infinite',
+            backgroundColor: 'var(--color-error)', animation: 'chatinput-pulse 1s infinite',
           }} />
-          <span style={{ fontSize: '13px', color: '#aaa' }}>
+          <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
             Écoute en cours... Parlez maintenant
           </span>
         </div>
@@ -511,10 +514,10 @@ Réponds en français, sois concis.`;
 
       {/* Main input container — ChatGPT style */}
       <div style={{
-        backgroundColor: '#1a1a26',
-        borderRadius: '26px',
-        border: isListening ? '1px solid #ef4444' : '1px solid #2d2d44',
-        transition: 'border-color 0.2s',
+        backgroundColor: 'var(--bg-panel)',
+        borderRadius: 'var(--radius-pill)',
+        border: isListening ? '1px solid var(--color-error)' : '1px solid var(--border-primary)',
+        transition: 'border-color var(--transition-normal)',
       }}>
         {/* Attachment previews */}
         {attachments.length > 0 && (
@@ -525,15 +528,15 @@ Réponds en français, sois concis.`;
             {attachments.map((att, idx) => (
               <div key={idx} style={{
                 position: 'relative', display: 'flex', alignItems: 'center', gap: '6px',
-                padding: '6px 10px', backgroundColor: '#2d2d44', borderRadius: '10px',
-                fontSize: '12px', color: '#d1d1d1',
+                padding: '6px 10px', backgroundColor: 'var(--border-primary)', borderRadius: 'var(--radius-md)',
+                fontSize: '12px', color: 'var(--text-primary)',
               }}>
                 {att.type === 'image' ? (
                   <img src={att.data} alt={att.name} style={{
                     width: '32px', height: '32px', borderRadius: '6px', objectFit: 'cover',
                   }} />
                 ) : (
-                  <Paperclip size={14} style={{ color: '#6a6a82' }} />
+                  <Paperclip size={14} style={{ color: 'var(--text-muted)' }} />
                 )}
                 <span style={{ maxWidth: '80px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {att.name}
@@ -615,8 +618,8 @@ Réponds en français, sois concis.`;
                 style={{
                   position: 'absolute', bottom: '100%', left: 0,
                   marginBottom: '6px', padding: '6px',
-                  backgroundColor: '#1a1a26', borderRadius: '14px',
-                  border: '1px solid #2d2d44',
+                  backgroundColor: 'var(--bg-panel)', borderRadius: 'var(--radius-lg)',
+                  border: '1px solid var(--border-primary)',
                   display: 'flex', flexDirection: 'column', gap: '2px',
                   minWidth: '180px', zIndex: 30,
                   boxShadow: 'var(--shadow-elevated)',
@@ -654,7 +657,12 @@ Réponds en français, sois concis.`;
               </button>
             )}
 
-            <button style={{ ...toolBtnStyle, cursor: 'default', opacity: 0.5 }} aria-label="Recherche web activée" aria-disabled="true">
+            <button
+              style={{ ...toolBtnStyle, cursor: 'default', opacity: 0.5 }}
+              aria-label="Recherche web (bientôt disponible)"
+              aria-disabled="true"
+              title="Recherche web — bientôt disponible"
+            >
               <Globe size={16} />
             </button>
           </div>
@@ -683,14 +691,14 @@ Réponds en français, sois concis.`;
                 style={{
                   width: '36px', height: '36px',
                   borderRadius: '50%',
-                  backgroundColor: '#fff',
-                  border: 'none', color: '#000',
+                  backgroundColor: 'var(--text-primary)',
+                  border: 'none', color: 'var(--bg-deep)',
                   cursor: 'pointer',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}
                 aria-label="Arrêter la génération (Escape)"
               >
-                <Square size={14} fill="#000" />
+                <Square size={14} fill="currentColor" />
               </button>
             ) : (
               <button
@@ -699,9 +707,9 @@ Réponds en français, sois concis.`;
                 style={{
                   width: '36px', height: '36px',
                   borderRadius: '50%',
-                  backgroundColor: hasContent ? '#fff' : 'transparent',
+                  backgroundColor: hasContent ? 'var(--text-primary)' : 'transparent',
                   border: 'none',
-                  color: hasContent ? '#000' : '#6a6a82',
+                  color: hasContent ? 'var(--bg-deep)' : 'var(--text-muted)',
                   cursor: hasContent ? 'pointer' : 'default',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   transition: 'background-color var(--transition-normal), color var(--transition-normal)',
@@ -741,20 +749,20 @@ Réponds en français, sois concis.`;
 
 const toolBtnStyle: React.CSSProperties = {
   padding: 0,
-  width: '32px', height: '32px',
+  width: '36px', height: '36px',
   backgroundColor: 'transparent',
   border: 'none',
-  color: '#9898b0',
+  color: 'var(--text-secondary)',
   cursor: 'pointer',
-  borderRadius: '8px',
+  borderRadius: 'var(--radius-md)',
   display: 'flex', alignItems: 'center', justifyContent: 'center',
-  transition: 'background-color 0.15s, color 0.15s',
+  transition: 'background-color var(--transition-fast), color var(--transition-fast)',
 };
 
 const iconBtnStyle: React.CSSProperties = {
   padding: '2px', backgroundColor: 'transparent',
-  border: 'none', color: '#6a6a82', cursor: 'pointer',
-  display: 'flex', alignItems: 'center', borderRadius: '4px',
+  border: 'none', color: 'var(--text-muted)', cursor: 'pointer',
+  display: 'flex', alignItems: 'center', borderRadius: 'var(--radius-sm)',
 };
 
 /* ── Action menu item ──────────────────────────────── */
@@ -783,7 +791,7 @@ function ActionItem({ icon, label, onClick, active }: {
         textAlign: 'left',
         transition: 'background-color var(--transition-fast)',
       }}
-      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#2d2d44')}
+      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-hover)')}
       onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
     >
       {icon}

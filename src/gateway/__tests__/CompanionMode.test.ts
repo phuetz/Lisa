@@ -9,6 +9,8 @@ describe('CompanionMode', () => {
   let companion: CompanionMode;
 
   beforeEach(() => {
+    // Clear stored state to prevent leaks between tests
+    try { localStorage.removeItem('lisa-companion'); } catch { /* localStorage may not be available in test env */ }
     resetCompanionMode();
     companion = new CompanionMode({
       userName: 'TestUser',

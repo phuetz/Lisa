@@ -169,7 +169,7 @@ describe('ChatMessages', () => {
 
       render(<ChatMessages />);
 
-      expect(screen.getByText('is thinking...')).toBeInTheDocument();
+      expect(screen.getByText('réfléchit...')).toBeInTheDocument();
     });
   });
 

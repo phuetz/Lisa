@@ -61,7 +61,7 @@ export class PlannerAgent implements BaseAgent {
     
     let plan: WorkflowStep[] = [];
     let revisionCount = 0;
-    let checkpointId: string | null = null;
+    const checkpointId: string | null = null;
     let explanation: string | null = null;
 
     try {

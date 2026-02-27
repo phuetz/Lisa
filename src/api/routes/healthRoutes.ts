@@ -54,9 +54,10 @@ async function probeHealth(): Promise<HealthSnapshot> {
   checks.uptime = process.uptime() > 10;
 
   const allHealthy = Object.values(checks).every(v => v);
+  const criticalFailed = !checks.memory;
 
   return {
-    status: allHealthy ? 'healthy' : checks.database ? 'degraded' : 'unhealthy',
+    status: allHealthy ? 'healthy' : criticalFailed ? 'unhealthy' : 'degraded',
     checks,
     details,
     cachedAt: Date.now(),

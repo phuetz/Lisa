@@ -253,7 +253,7 @@ export default function DashboardPage() {
   })) || [];
 
   return (
-    <div style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto' }}>
+    <div style={{ padding: '24px 16px', maxWidth: '1200px', margin: '0 auto' }}>
       {/* Header */}
       <div style={{
         display: 'flex',
@@ -297,12 +297,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Stats Grid */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-        gap: '16px',
-        marginBottom: '24px',
-      }}>
+      <div className="dashboard-stats-grid" style={{ marginBottom: '24px' }}>
         <StatCard label="Total Agents" value={stats.totalAgents} change={12} icon={Brain} color="accent" />
         <StatCard label="Agents Actifs" value={stats.activeAgents} change={5} icon={Zap} color="cyan" />
         <StatCard label="Tâches Complétées" value={stats.tasksCompleted} change={-3} icon={CheckCircle} color="green" />
@@ -310,11 +305,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Activity + Quick Actions */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
-        gap: '24px',
-      }}>
+      <div className="dashboard-content-grid">
         {/* Recent Activity */}
         <Card title="Activité Récente" icon={<Activity size={18} />}>
           {recentActivities.length > 0 ? (
@@ -345,11 +336,13 @@ export default function DashboardPage() {
       {/* Agents Status Table */}
       <div style={{ marginTop: '24px' }}>
         <Card title="État des Agents" icon={<Zap size={18} />}>
+          <div style={{ overflowX: 'auto', minWidth: 0 }}>
           {/* Table Header */}
           <div style={{
             display: 'grid',
             gridTemplateColumns: '2fr 1fr 1fr 1fr',
             padding: '12px 16px',
+            minWidth: '500px',
             backgroundColor: 'var(--bg-panel)',
             borderRadius: 'var(--radius-md)',
             marginBottom: '8px',
@@ -367,12 +360,13 @@ export default function DashboardPage() {
                 display: 'grid',
                 gridTemplateColumns: '2fr 1fr 1fr 1fr',
                 padding: '14px 16px',
+                minWidth: '500px',
                 backgroundColor: index % 2 === 0 ? 'transparent' : 'var(--bg-panel)',
                 borderRadius: 'var(--radius-md)',
                 alignItems: 'center',
               }}
             >
-              <span style={{ fontSize: '14px', color: 'var(--text-primary)' }}>{agent.name}</span>
+              <span style={{ fontSize: '14px', color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{agent.name}</span>
               <span style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>{agent.type}</span>
               <Badge color={agent.status === 'active' ? 'green' : 'muted'}>
                 {agent.status === 'active' ? 'Actif' : 'Inactif'}
@@ -380,6 +374,7 @@ export default function DashboardPage() {
               <span style={{ fontSize: '14px', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>{agent.tasks}</span>
             </div>
           ))}
+          </div>
         </Card>
       </div>
     </div>

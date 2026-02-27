@@ -144,9 +144,53 @@ html, body {
   to { transform: rotate(360deg); }
 }
 
+/* Pulse pour indicateurs de statut */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
 /* Hover effect pour les éléments de navigation */
 .nav-item:hover {
   background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* ChatMessages hover effects */
+.hover-highlight-artifact:hover {
+  background-color: var(--bg-elevated) !important;
+}
+
+.hover-highlight-code:hover {
+  background-color: var(--bg-elevated) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Dashboard responsive grid */
+.dashboard-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.dashboard-content-grid {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 24px;
+}
+
+@media (max-width: 1024px) {
+  .dashboard-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .dashboard-stats-grid {
+    grid-template-columns: 1fr;
+  }
+  .dashboard-content-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* ========================================

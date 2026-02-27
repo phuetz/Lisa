@@ -44,34 +44,48 @@ vi.mock('../AuditService', () => ({
   },
 }));
 
-vi.mock('../EmbeddingService', () => ({
-  embeddingService: {
-    generateEmbedding: vi.fn(async (text: string) => {
-      // Simple mock embedding based on text hash
-      const hash = text.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-      const vector = new Array(384).fill(0).map((_, i) => Math.sin(hash + i) * 0.1);
-      return { vector, model: 'mock' };
-    }),
-    cosineSimilarity: vi.fn((a: number[], b: number[]) => {
-      // Simple mock similarity
-      let dot = 0;
-      let magA = 0;
-      let magB = 0;
-      for (let i = 0; i < Math.min(a.length, b.length); i++) {
-        dot += a[i] * b[i];
-        magA += a[i] * a[i];
-        magB += b[i] * b[i];
-      }
-      return dot / (Math.sqrt(magA) * Math.sqrt(magB)) || 0;
-    }),
-    updateConfig: vi.fn(),
-    getConfig: vi.fn(() => ({
-      provider: 'local',
-      dimension: 384,
-      model: 'text-embedding-3-small'
-    })),
-  },
-}));
+vi.mock('../EmbeddingService', () => {
+  const mockGenerateEmbedding = vi.fn(async (text: string) => {
+    // Simple mock embedding based on text hash
+    const hash = text.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const vector = new Array(384).fill(0).map((_, i) => Math.sin(hash + i) * 0.1);
+    return { vector, model: 'mock' };
+  });
+
+  return {
+    embeddingService: {
+      generateEmbedding: mockGenerateEmbedding,
+      generateBatchEmbeddings: vi.fn(async (texts: string[]) => {
+        // Generate embeddings for each text using the same logic
+        const results = [];
+        for (const text of texts) {
+          const hash = text.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+          const vector = new Array(384).fill(0).map((_, i) => Math.sin(hash + i) * 0.1);
+          results.push({ vector, model: 'mock' });
+        }
+        return results;
+      }),
+      cosineSimilarity: vi.fn((a: number[], b: number[]) => {
+        // Simple mock similarity
+        let dot = 0;
+        let magA = 0;
+        let magB = 0;
+        for (let i = 0; i < Math.min(a.length, b.length); i++) {
+          dot += a[i] * b[i];
+          magA += a[i] * a[i];
+          magB += b[i] * b[i];
+        }
+        return dot / (Math.sqrt(magA) * Math.sqrt(magB)) || 0;
+      }),
+      updateConfig: vi.fn(),
+      getConfig: vi.fn(() => ({
+        provider: 'local',
+        dimension: 384,
+        model: 'text-embedding-3-small'
+      })),
+    },
+  };
+});
 
 // Import after mocks are set up
 import { ragService } from '../RAGService';
@@ -229,7 +243,7 @@ describe('RAGService', () => {
       await ragService.generateEmbedding('Test');
 
       // Cleanup with 0 days (remove all)
-      const removed = ragService.cleanupOldEmbeddings(0);
+      const removed = await ragService.cleanupOldEmbeddings(0);
 
       expect(removed).toBeGreaterThanOrEqual(0);
     });

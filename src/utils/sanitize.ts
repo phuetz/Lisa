@@ -232,6 +232,7 @@ export function sanitizeFilename(filename: string): string {
   let sanitized = filename.replace(/^.*[\\/]/, '');
 
   // Remove dangerous characters
+  // eslint-disable-next-line no-control-regex -- intentionally matching control characters for filename sanitization
   sanitized = sanitized.replace(/[<>:"/\\|?*\x00-\x1f]/g, '_');
 
   // Prevent hidden files on Unix

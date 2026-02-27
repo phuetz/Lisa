@@ -229,6 +229,7 @@ export class WorkflowExecutor {
    * @param transform Fonction ou expression de transformation
    * @returns Données transformées
    */
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
   private applyTransform(data: any, transform: string | Function): any {
     if (typeof transform === 'function') {
       return transform(data, this.context);
@@ -273,7 +274,7 @@ export class WorkflowExecutor {
       // Utiliser les agents spécialisés selon le type de nœud
       switch (type) {
         case 'trigger':
-        case 'webhook':
+        case 'webhook': {
           const triggerResult = await agentRegistry.execute('TriggerAgent', {
             intent: type === 'trigger' ? 'trigger' : 'webhook',
             parameters: {
@@ -286,9 +287,10 @@ export class WorkflowExecutor {
           }
 
           return triggerResult.output;
-          
+        }
+
         case 'httpRequest':
-        case 'apiCall':
+        case 'apiCall': {
           // Utiliser WorkflowHTTPAgent pour les requêtes HTTP
           const httpResult = await agentRegistry.execute('WorkflowHTTPAgent', {
             intent: type === 'httpRequest' ? 'httpRequest' : 'apiCall',
@@ -304,15 +306,16 @@ export class WorkflowExecutor {
               service: config.service
             }
           });
-          
+
           if (!httpResult.success) {
             throw new Error(httpResult.error || 'HTTP request failed');
           }
-          
+
           return httpResult.output;
-          
+        }
+
         case 'code':
-        case 'function':
+        case 'function': {
           // Utiliser WorkflowCodeAgent pour l'exécution de code
           const codeResult = await agentRegistry.execute('WorkflowCodeAgent', {
             intent: 'executeCode',
@@ -326,14 +329,15 @@ export class WorkflowExecutor {
               }
             }
           });
-          
+
           if (!codeResult.success) {
             throw new Error(codeResult.error || 'Code execution failed');
           }
-          
+
           return codeResult.output;
-          
-        case 'transform':
+        }
+
+        case 'transform': {
           const transformResult = await agentRegistry.execute('TransformAgent', {
             intent: 'transform',
             parameters: {
@@ -349,8 +353,9 @@ export class WorkflowExecutor {
           }
 
           return transformResult.output;
-          
-        case 'condition':
+        }
+
+        case 'condition': {
           const conditionResult = await agentRegistry.execute('ConditionAgent', {
             intent: 'evaluateCondition',
             parameters: {
@@ -365,8 +370,9 @@ export class WorkflowExecutor {
           }
 
           return conditionResult.output;
-          
-        case 'delay':
+        }
+
+        case 'delay': {
           const delayResult = await agentRegistry.execute('DelayAgent', {
             intent: 'delay',
             parameters: {
@@ -380,7 +386,8 @@ export class WorkflowExecutor {
           }
 
           return delayResult.output;
-        
+        }
+
         case 'windForecastNode': {
           const result = await agentRegistry.execute('WindsurfAgent', {
             intent: 'getForecast',
@@ -410,7 +417,7 @@ export class WorkflowExecutor {
         case 'rosTopic':
           return agentRegistry.execute('RosAgent', node.data);
 
-        default:
+        default: {
           // Essayer de trouver un agent capable de gérer ce type de nœud
           const agentName = `Workflow${type.charAt(0).toUpperCase() + type.slice(1)}Agent`;
           if (agentRegistry.hasAgent(agentName)) {
@@ -421,14 +428,14 @@ export class WorkflowExecutor {
                 input: inputData
               }
             });
-            
+
             if (!result.success) {
               throw new Error(result.error || `${type} execution failed`);
             }
-            
+
             return result.output;
           }
-          
+
           // Fallback pour les types inconnus
           this.log('warn', `No agent found for node type: ${type}, using default handling`);
           return {
@@ -437,6 +444,7 @@ export class WorkflowExecutor {
             timestamp: new Date().toISOString(),
             data: inputData
           };
+        }
       }
     } catch (error) {
       this.log('error', `Agent execution error for node ${node.id}`, { error });
