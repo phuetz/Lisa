@@ -4,8 +4,6 @@
  */
 
 import { useState, useRef, useEffect, useCallback, type KeyboardEvent, type DragEvent, type ClipboardEvent } from 'react';
-import { useTheme } from '@mui/material/styles';
-import useMediaQuery from '@mui/material/useMediaQuery';
 import { Send, Mic, MicOff, Volume2, VolumeX, Paperclip, X, Square, Camera, Wand2, Edit3, Plus, Globe } from 'lucide-react';
 import { useChatHistoryStore } from '../../store/chatHistoryStore';
 import { useChatSettingsStore } from '../../store/chatSettingsStore';
@@ -21,8 +19,9 @@ import type { ArtifactData } from './Artifact';
 import { AudioRecordButton } from './AudioRecordButton';
 import { ImageEditor } from './ImageEditor';
 import { documentAnalysisService } from '../../services/DocumentAnalysisService';
+import { useIsMobile } from '../../hooks/useIsMobile';
+import { captureWebcamFrame, isVisionRequest } from '../../utils/webcamCapture';
 
-/** Convert a DataURL (base64) string to a Blob */
 function dataURLtoBlob(dataURL: string): Blob {
   const [header, base64] = dataURL.split(',');
   const mime = header.match(/:(.*?);/)?.[1] || 'application/octet-stream';
@@ -32,9 +31,63 @@ function dataURLtoBlob(dataURL: string): Blob {
   return new Blob([bytes], { type: mime });
 }
 
+/* ── Action Menu Item ── */
+
+function ActionItem({ icon, label, onClick, active }: {
+  icon: React.ReactNode;
+  label: string;
+  onClick: () => void;
+  active?: boolean;
+}) {
+  return (
+    <button
+      role="menuitem"
+      onClick={onClick}
+      aria-label={label}
+      className={`action-menu-item${active ? ' active-item' : ''}`}
+    >
+      {icon}
+      {label}
+    </button>
+  );
+}
+
+/* ── File Attachments Preview ── */
+
+function AttachmentsPreview({ attachments, onRemove, onEdit }: {
+  attachments: { type: 'image' | 'file'; data: string; name: string }[];
+  onRemove: (index: number) => void;
+  onEdit: (index: number) => void;
+}) {
+  if (attachments.length === 0) return null;
+  return (
+    <div className="attachments-row">
+      {attachments.map((att, idx) => (
+        <div key={idx} className="attachment-chip">
+          {att.type === 'image' ? (
+            <img src={att.data} alt={att.name} className="attachment-thumb" />
+          ) : (
+            <Paperclip size={14} style={{ color: 'var(--text-muted)' }} />
+          )}
+          <span className="attachment-name">{att.name}</span>
+          {att.type === 'image' && (
+            <button onClick={() => onEdit(idx)} className="inline-icon-btn" title="Annoter">
+              <Edit3 size={12} />
+            </button>
+          )}
+          <button onClick={() => onRemove(idx)} className="inline-icon-btn" title="Retirer">
+            <X size={12} />
+          </button>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ── Main Chat Input ── */
+
 export const ChatInput = () => {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const isMobile = useIsMobile();
 
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -53,24 +106,13 @@ export const ChatInput = () => {
   const currentModel = DEFAULT_MODELS.find(m => m.id === selectedModelId) || DEFAULT_MODELS[0];
 
   const {
-    isListening,
-    transcript,
-    interimTranscript,
-    toggleListening,
-    isSpeaking,
-    speak,
-    stopSpeaking,
-    voices,
-    selectedVoice,
-    setSelectedVoice,
-    speechRate,
-    setSpeechRate,
-    isSupported: voiceSupported,
+    isListening, transcript, interimTranscript, toggleListening,
+    isSpeaking, speak, stopSpeaking, voices, selectedVoice, setSelectedVoice,
+    speechRate, setSpeechRate, isSupported: voiceSupported,
   } = useVoiceChat({ language: 'fr-FR' });
 
   const { currentConversationId, addMessage, getCurrentConversation, setStreamingMessage, setTyping, createConversation } = useChatHistoryStore();
 
-  // Close actions popup on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (actionsRef.current && !actionsRef.current.contains(e.target as Node)) {
@@ -88,10 +130,7 @@ export const ChatInput = () => {
   };
 
   const stopStreaming = useCallback(() => {
-    if (abortController) {
-      abortController.abort();
-      setAbortController(null);
-    }
+    if (abortController) { abortController.abort(); setAbortController(null); }
   }, [abortController]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -102,21 +141,16 @@ export const ChatInput = () => {
       reader.onload = () => {
         setAttachments((prev) => [...prev, {
           type: file.type.startsWith('image/') ? 'image' : 'file',
-          data: reader.result as string,
-          name: file.name,
+          data: reader.result as string, name: file.name,
         }]);
       };
-      reader.onerror = () => {
-        console.warn('Failed to read file:', file.name);
-      };
+      reader.onerror = () => console.warn('Failed to read file:', file.name);
       reader.readAsDataURL(file);
     });
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  const removeAttachment = (index: number) => {
-    setAttachments((prev) => prev.filter((_, i) => i !== index));
-  };
+  const removeAttachment = (index: number) => setAttachments((prev) => prev.filter((_, i) => i !== index));
 
   const handleScreenCapture = async () => {
     if (!screenCaptureService.isSupported()) {
@@ -126,8 +160,7 @@ export const ChatInput = () => {
     try {
       const capture = await screenCaptureService.captureScreen({ maxWidth: 1920, maxHeight: 1080 });
       setAttachments((prev) => [...prev, {
-        type: 'image',
-        data: capture.imageData,
+        type: 'image', data: capture.imageData,
         name: `capture-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.png`,
       }]);
     } catch (error) {
@@ -147,9 +180,7 @@ export const ChatInput = () => {
           const reader = new FileReader();
           reader.onload = () => {
             setAttachments((prev) => [...prev, {
-              type: 'image',
-              data: reader.result as string,
-              name: `pasted-image-${Date.now()}.png`,
+              type: 'image', data: reader.result as string, name: `pasted-image-${Date.now()}.png`,
             }]);
           };
           reader.readAsDataURL(file);
@@ -159,16 +190,12 @@ export const ChatInput = () => {
     }
   }, []);
 
-  const handleDragEnter = useCallback((e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault(); e.stopPropagation(); setIsDragging(true);
-  }, []);
+  const handleDragEnter = useCallback((e: DragEvent<HTMLDivElement>) => { e.preventDefault(); e.stopPropagation(); setIsDragging(true); }, []);
   const handleDragLeave = useCallback((e: DragEvent<HTMLDivElement>) => {
     e.preventDefault(); e.stopPropagation();
     if (dropZoneRef.current && !dropZoneRef.current.contains(e.relatedTarget as Node)) setIsDragging(false);
   }, []);
-  const handleDragOver = useCallback((e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault(); e.stopPropagation();
-  }, []);
+  const handleDragOver = useCallback((e: DragEvent<HTMLDivElement>) => { e.preventDefault(); e.stopPropagation(); }, []);
   const handleDrop = useCallback((e: DragEvent<HTMLDivElement>) => {
     e.preventDefault(); e.stopPropagation(); setIsDragging(false);
     const files = e.dataTransfer?.files;
@@ -179,8 +206,7 @@ export const ChatInput = () => {
         reader.onload = () => {
           setAttachments((prev) => [...prev, {
             type: file.type.startsWith('image/') ? 'image' : 'file',
-            data: reader.result as string,
-            name: file.name,
+            data: reader.result as string, name: file.name,
           }]);
         };
         reader.readAsDataURL(file);
@@ -189,9 +215,7 @@ export const ChatInput = () => {
   }, []);
 
   const handleAudioReady = useCallback((_audioBlob: Blob, base64: string) => {
-    setAttachments((prev) => [...prev, {
-      type: 'file', data: base64, name: `audio-${Date.now()}.webm`,
-    }]);
+    setAttachments((prev) => [...prev, { type: 'file', data: base64, name: `audio-${Date.now()}.webm` }]);
     setMessage((prev) => prev + (prev ? ' ' : '') + '[Message vocal joint]');
   }, []);
 
@@ -228,9 +252,7 @@ export const ChatInput = () => {
 
     if (!incognitoMode) {
       addMessage({
-        role: 'user',
-        content: messageContent,
-        conversationId: convId,
+        role: 'user', content: messageContent, conversationId: convId,
         image: currentAttachments.find((a) => a.type === 'image')?.data,
       });
     }
@@ -245,11 +267,7 @@ export const ChatInput = () => {
       const conversation = getCurrentConversation();
       const history: AIMessage[] = (conversation?.messages || [])
         .slice(-10)
-        .map((m) => ({
-          role: m.role as 'user' | 'assistant' | 'system',
-          content: m.content,
-          image: m.image
-        }));
+        .map((m) => ({ role: m.role as 'user' | 'assistant' | 'system', content: m.content, image: m.image }));
 
       const toolCallingSystemPrompt = `Tu es Lisa, une assistante IA avec accès à des outils.
 
@@ -259,6 +277,35 @@ Tu peux lire les fichiers joints par l'utilisateur (PDF, DOCX, TXT, images).
 Quand un fichier est joint, son contenu extrait apparaît dans le message entre balises [Contenu du fichier: nom] et [Fin du fichier].
 Analyse et utilise ce contenu pour répondre. Tu peux résumer, extraire des informations, répondre à des questions sur le document, etc.
 Si l'extraction a échoué, le message indiquera "Impossible d'extraire le texte" — dans ce cas, explique le problème.
+
+## GRAPHIQUES ET VISUALISATIONS
+
+Tu peux tracer des graphiques interactifs ! Pour afficher un graphique, utilise un bloc de code \`\`\`chart avec du JSON structuré :
+
+\`\`\`chart
+{
+  "type": "line",
+  "title": "Titre du graphique",
+  "data": [
+    { "annee": "2020", "valeur": 2303 },
+    { "annee": "2021", "valeur": 2501 }
+  ],
+  "xKey": "annee",
+  "yKey": "valeur"
+}
+\`\`\`
+
+Types supportés : "line", "bar", "area", "pie".
+- Pour les courbes d'évolution → utilise "line" ou "area"
+- Pour les comparaisons → utilise "bar"
+- Pour les répartitions → utilise "pie"
+- Tu peux inclure plusieurs séries avec "yKey": ["serie1", "serie2"]
+
+**RÈGLE ABSOLUE pour les graphiques** : Quand l'utilisateur demande un graphique, une courbe, ou une visualisation de données, tu DOIS TOUJOURS générer le bloc \`\`\`chart avec des données. Ne demande JAMAIS à l'utilisateur de fournir les données. Utilise tes propres connaissances pour fournir des données approximatives mais réalistes. Par exemple, pour "le PIB de la France depuis 1945", génère toi-même les valeurs approximatives du PIB pour chaque décennie ou période clé. Tu as suffisamment de connaissances pour fournir des ordres de grandeur corrects. Génère TOUJOURS le graphique, même si les données sont approximatives — précise simplement "valeurs approximatives" dans le titre ou une note.
+
+## VISION ET CAMÉRA
+
+Tu as accès à la caméra/webcam de l'utilisateur. Quand l'utilisateur te demande "que vois-tu ?", "regarde la caméra", "décris ce que tu vois", etc., une image de la webcam est automatiquement capturée et jointe à son message. Décris ce que tu vois dans l'image de manière détaillée et naturelle, comme si tu regardais réellement la scène. Tu peux identifier les objets, les personnes, les couleurs, l'environnement, etc.
 
 ## OUTILS DISPONIBLES
 
@@ -278,10 +325,6 @@ Quand un outil retourne un résultat:
 - Si "success": true → L'action a RÉUSSI. Confirme à l'utilisateur.
 - Si "success": false → L'action a ÉCHOUÉ. Explique l'erreur.
 
-Exemples:
-- add_todo retourne {"success": true, "message": "Tâche ajoutée: X"} → Dis "J'ai ajouté 'X' à ta liste !"
-- list_todos retourne {"todos": [...]} → Liste les tâches trouvées
-
 ## COMPORTEMENT
 
 1. "Ajoute une tâche..." → APPELLE add_todo
@@ -297,27 +340,20 @@ Réponds en français, sois concis.`;
         try {
           const memoryContext = await longTermMemoryService.buildContextForPrompt();
           if (memoryContext.trim()) {
-            history.unshift({
-              role: 'system',
-              content: `[Contexte de mémoire long-terme]\n${memoryContext}\n[Fin du contexte]`,
-            });
+            history.unshift({ role: 'system', content: `[Contexte de mémoire long-terme]\n${memoryContext}\n[Fin du contexte]` });
           }
         } catch (error) {
           console.warn('[ChatInput] Failed to load memory context:', error);
         }
       }
 
-      // Extract text from non-image file attachments (PDF, DOCX, TXT, etc.)
       let fileContentForAI = '';
       const fileAttachments = currentAttachments.filter(a => a.type === 'file');
       if (fileAttachments.length > 0) {
         for (const att of fileAttachments) {
           try {
             const blob = dataURLtoBlob(att.data);
-            const analysis = await documentAnalysisService.analyzeDocument(blob, att.name, {
-              extractEntities: false,
-              generateSummary: false,
-            });
+            const analysis = await documentAnalysisService.analyzeDocument(blob, att.name, { extractEntities: false, generateSummary: false });
             if (analysis.content?.text) {
               const text = analysis.content.text.substring(0, 15000);
               fileContentForAI += `\n\n[Contenu du fichier: ${att.name}]\n${text}\n[Fin du fichier]`;
@@ -329,7 +365,20 @@ Réponds en français, sois concis.`;
         }
       }
 
-      const imageAttachment = currentAttachments.find(a => a.type === 'image');
+      let imageAttachment = currentAttachments.find(a => a.type === 'image');
+
+      // Auto-capture webcam if the user asks about what Lisa sees
+      if (!imageAttachment && isVisionRequest(userMessage)) {
+        try {
+          const frame = await captureWebcamFrame();
+          if (frame) {
+            imageAttachment = { type: 'image', data: frame, name: 'webcam-capture.jpg' };
+          }
+        } catch (err) {
+          console.warn('[ChatInput] Webcam auto-capture failed:', err);
+        }
+      }
+
       const aiUserContent = fileContentForAI ? userMessage + fileContentForAI : userMessage;
       history.push({ role: 'user', content: aiUserContent, image: imageAttachment?.data });
 
@@ -337,12 +386,7 @@ Réponds en français, sois concis.`;
       if (routeResult.handled && routeResult.response) {
         const duration = Math.round(performance.now() - startTime);
         if (!incognitoMode) {
-          addMessage({
-            role: 'assistant',
-            content: routeResult.response,
-            conversationId: convId,
-            metadata: { model: routeResult.agentName || 'agent', duration },
-          });
+          addMessage({ role: 'assistant', content: routeResult.response, conversationId: convId, metadata: { model: routeResult.agentName || 'agent', duration } });
         }
         if (autoSpeakEnabled) speak(routeResult.response.replace(/[*#_`]/g, ''));
         setIsLoading(false);
@@ -353,20 +397,15 @@ Réponds en français, sois concis.`;
       const TOOL_CALLING_PROVIDERS = ['gemini', 'openai', 'anthropic'];
       let effectiveProvider = currentModel.provider as AIProvider;
       let effectiveModel = currentModel.id;
-
       if (!TOOL_CALLING_PROVIDERS.includes(effectiveProvider)) {
         effectiveProvider = 'gemini' as AIProvider;
         effectiveModel = 'gemini-2.0-flash';
       }
 
       aiService.updateConfig({
-        provider: effectiveProvider,
-        model: effectiveModel,
-        temperature,
-        maxTokens,
+        provider: effectiveProvider, model: effectiveModel, temperature, maxTokens,
         baseURL: currentModel.provider === 'lmstudio' ? '/lmstudio/v1' : undefined
       });
-
       aiWithToolsService.setConfig({ enableTools: true, showToolUsage: true, maxIterations: 5 });
 
       if (streamingEnabled) {
@@ -375,20 +414,13 @@ Réponds en français, sois concis.`;
           for await (const chunk of aiWithToolsService.streamMessage(history)) {
             if (controller.signal.aborted) break;
             if (chunk.error) throw new Error(chunk.error);
-            if (chunk.content) {
-              fullResponse += chunk.content;
-              setStreamingMessage(fullResponse);
-            }
+            if (chunk.content) { fullResponse += chunk.content; setStreamingMessage(fullResponse); }
             if (chunk.done) break;
           }
         } catch (error) {
           if (fullResponse && !incognitoMode) {
             setStreamingMessage(null);
-            addMessage({
-              role: 'assistant',
-              content: fullResponse + '\n\n*(Réponse interrompue)*',
-              conversationId: convId,
-            });
+            addMessage({ role: 'assistant', content: fullResponse + '\n\n*(Réponse interrompue)*', conversationId: convId });
           }
           if (!controller.signal.aborted) throw error;
           return;
@@ -410,8 +442,7 @@ Réponds en français, sois concis.`;
         const duration = Math.round(performance.now() - startTime);
         if (!incognitoMode) {
           addMessage({
-            role: 'assistant',
-            content: fullResponse || 'Désolé, je n\'ai pas pu générer de réponse.',
+            role: 'assistant', content: fullResponse || 'Désolé, je n\'ai pas pu générer de réponse.',
             conversationId: convId,
             metadata: { model: effectiveModel, duration, tokens: Math.round(fullResponse.length / 4), toolsUsed: result.toolsUsed.length },
           });
@@ -464,27 +495,18 @@ Réponds en français, sois concis.`;
   return (
     <div
       ref={dropZoneRef}
+      className="chat-drop-zone"
       onDragEnter={handleDragEnter}
       onDragLeave={handleDragLeave}
       onDragOver={handleDragOver}
       onDrop={handleDrop}
-      style={{ position: 'relative' }}
     >
-      {/* Drag overlay */}
       {isDragging && (
-        <div style={{
-          position: 'absolute', inset: 0,
-          backgroundColor: 'rgba(255,255,255,0.05)',
-          border: '2px dashed var(--text-muted)',
-          borderRadius: 'var(--radius-pill)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          zIndex: 20, pointerEvents: 'none',
-        }}>
-          <span style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>Déposez vos fichiers ici</span>
+        <div className="drag-overlay">
+          <span className="drag-overlay-text">Déposez vos fichiers ici</span>
         </div>
       )}
 
-      {/* Image Editor */}
       {editingImageIndex !== null && attachments[editingImageIndex]?.type === 'image' && (
         <ImageEditor
           imageUrl={attachments[editingImageIndex].data}
@@ -493,69 +515,21 @@ Réponds en français, sois concis.`;
         />
       )}
 
-      {/* Listening indicator */}
       {isListening && (
-        <div style={{
-          position: 'absolute', bottom: '100%', left: 0, right: 0,
-          marginBottom: '8px', padding: '8px 16px',
-          backgroundColor: 'rgba(255,255,255,0.05)',
-          borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)',
-          display: 'flex', alignItems: 'center', gap: '8px',
-        }}>
-          <div style={{
-            width: '8px', height: '8px', borderRadius: '50%',
-            backgroundColor: 'var(--color-error)', animation: 'chatinput-pulse 1s infinite',
-          }} />
-          <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
-            Écoute en cours... Parlez maintenant
-          </span>
+        <div className="listening-indicator">
+          <div className="listening-dot" />
+          <span className="listening-text">Écoute en cours... Parlez maintenant</span>
         </div>
       )}
 
-      {/* Main input container — ChatGPT style */}
-      <div style={{
-        backgroundColor: 'var(--bg-panel)',
-        borderRadius: 'var(--radius-pill)',
-        border: isListening ? '1px solid var(--color-error)' : '1px solid var(--border-primary)',
-        transition: 'border-color var(--transition-normal)',
-      }}>
-        {/* Attachment previews */}
-        {attachments.length > 0 && (
-          <div style={{
-            display: 'flex', flexWrap: 'wrap', gap: '8px',
-            padding: '12px 16px 0',
-          }}>
-            {attachments.map((att, idx) => (
-              <div key={idx} style={{
-                position: 'relative', display: 'flex', alignItems: 'center', gap: '6px',
-                padding: '6px 10px', backgroundColor: 'var(--border-primary)', borderRadius: 'var(--radius-md)',
-                fontSize: '12px', color: 'var(--text-primary)',
-              }}>
-                {att.type === 'image' ? (
-                  <img src={att.data} alt={att.name} style={{
-                    width: '32px', height: '32px', borderRadius: '6px', objectFit: 'cover',
-                  }} />
-                ) : (
-                  <Paperclip size={14} style={{ color: 'var(--text-muted)' }} />
-                )}
-                <span style={{ maxWidth: '80px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {att.name}
-                </span>
-                {att.type === 'image' && (
-                  <button onClick={() => setEditingImageIndex(idx)} style={iconBtnStyle} title="Annoter">
-                    <Edit3 size={12} />
-                  </button>
-                )}
-                <button onClick={() => removeAttachment(idx)} style={iconBtnStyle} title="Retirer">
-                  <X size={12} />
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
+      <div className={`input-container${isListening ? ' listening' : ''}`}>
+        <AttachmentsPreview
+          attachments={attachments}
+          onRemove={removeAttachment}
+          onEdit={(idx) => setEditingImageIndex(idx)}
+        />
 
-        {/* Textarea */}
-        <div style={{ padding: isMobile ? '12px 16px 0' : '14px 20px 0' }}>
+        <div className={`chat-textarea-wrap${isMobile ? ' mobile' : ''}`}>
           <textarea
             ref={textareaRef}
             value={displayText}
@@ -567,42 +541,18 @@ Réponds en français, sois concis.`;
             aria-label="Message à envoyer"
             aria-describedby="chat-input-hint"
             rows={1}
-            style={{
-              width: '100%',
-              padding: 0,
-              backgroundColor: 'transparent',
-              border: 'none', outline: 'none',
-              color: 'var(--text-primary)',
-              fontSize: isMobile ? '16px' : '15px',
-              lineHeight: '1.6',
-              resize: 'none',
-              minHeight: '24px',
-              maxHeight: '200px',
-              fontFamily: 'inherit',
-            }}
+            className={`chat-textarea${isMobile ? ' mobile' : ''}`}
           />
           <span id="chat-input-hint" className="sr-only">
             Appuyez sur Entrée pour envoyer, Shift+Entrée pour une nouvelle ligne
           </span>
         </div>
 
-        {/* Bottom toolbar */}
-        <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: isMobile ? '8px 10px' : '8px 14px',
-        }}>
-          {/* Left actions */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '2px', position: 'relative' }} ref={actionsRef}>
+        <div className={`input-toolbar${isMobile ? ' mobile' : ''}`}>
+          <div className="input-toolbar-left" ref={actionsRef}>
             <button
               onClick={() => setShowActions(!showActions)}
-              style={{
-                ...toolBtnStyle,
-                backgroundColor: showActions ? 'var(--border-primary)' : 'transparent',
-                borderRadius: '50%',
-                width: '32px', height: '32px',
-                transition: 'background-color var(--transition-fast), transform var(--transition-normal)',
-                transform: showActions ? 'rotate(45deg)' : 'none',
-              }}
+              className={`tool-btn plus${showActions ? ' open' : ''}`}
               aria-label={showActions ? 'Fermer le menu d\'options' : 'Plus d\'options'}
               aria-expanded={showActions}
               aria-haspopup="true"
@@ -610,21 +560,8 @@ Réponds en français, sois concis.`;
               <Plus size={18} />
             </button>
 
-            {/* Actions popup */}
             {showActions && (
-              <div
-                role="menu"
-                aria-label="Options supplémentaires"
-                style={{
-                  position: 'absolute', bottom: '100%', left: 0,
-                  marginBottom: '6px', padding: '6px',
-                  backgroundColor: 'var(--bg-panel)', borderRadius: 'var(--radius-lg)',
-                  border: '1px solid var(--border-primary)',
-                  display: 'flex', flexDirection: 'column', gap: '2px',
-                  minWidth: '180px', zIndex: 30,
-                  boxShadow: 'var(--shadow-elevated)',
-                }}
-              >
+              <div role="menu" aria-label="Options supplémentaires" className="actions-popup">
                 <ActionItem icon={<Paperclip size={16} />} label="Joindre un fichier" onClick={() => { fileInputRef.current?.click(); setShowActions(false); }} />
                 <ActionItem icon={<Camera size={16} />} label="Capturer l'écran" onClick={handleScreenCapture} />
                 <ActionItem icon={<Wand2 size={16} />} label="Créer un artefact" onClick={() => { setShowArtifactCreator(true); setShowActions(false); }} />
@@ -652,13 +589,13 @@ Réponds en français, sois concis.`;
             />
 
             {!isMobile && (
-              <button onClick={() => fileInputRef.current?.click()} style={toolBtnStyle} aria-label="Joindre un fichier">
+              <button onClick={() => fileInputRef.current?.click()} className="tool-btn" aria-label="Joindre un fichier">
                 <Paperclip size={16} />
               </button>
             )}
 
             <button
-              style={{ ...toolBtnStyle, cursor: 'default', opacity: 0.5 }}
+              className="tool-btn disabled"
               aria-label="Recherche web (bientôt disponible)"
               aria-disabled="true"
               title="Recherche web — bientôt disponible"
@@ -667,17 +604,11 @@ Réponds en français, sois concis.`;
             </button>
           </div>
 
-          {/* Right actions */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <div className="input-toolbar-right">
             {voiceSupported && (
               <button
                 onClick={toggleListening}
-                style={{
-                  ...toolBtnStyle,
-                  backgroundColor: isListening ? 'var(--color-error)' : 'transparent',
-                  color: isListening ? '#fff' : 'var(--text-secondary)',
-                  borderRadius: '50%',
-                }}
+                className={`tool-btn${isListening ? ' mic-active' : ''}`}
                 aria-label={isListening ? 'Arrêter la dictée' : 'Dicter un message'}
                 aria-pressed={isListening}
               >
@@ -686,34 +617,14 @@ Réponds en français, sois concis.`;
             )}
 
             {isLoading ? (
-              <button
-                onClick={stopStreaming}
-                style={{
-                  width: '36px', height: '36px',
-                  borderRadius: '50%',
-                  backgroundColor: 'var(--text-primary)',
-                  border: 'none', color: 'var(--bg-deep)',
-                  cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}
-                aria-label="Arrêter la génération (Escape)"
-              >
+              <button onClick={stopStreaming} className="send-btn stop" aria-label="Arrêter la génération (Escape)">
                 <Square size={14} fill="currentColor" />
               </button>
             ) : (
               <button
                 onClick={hasContent ? handleSend : undefined}
                 disabled={!hasContent}
-                style={{
-                  width: '36px', height: '36px',
-                  borderRadius: '50%',
-                  backgroundColor: hasContent ? 'var(--text-primary)' : 'transparent',
-                  border: 'none',
-                  color: hasContent ? 'var(--bg-deep)' : 'var(--text-muted)',
-                  cursor: hasContent ? 'pointer' : 'default',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  transition: 'background-color var(--transition-normal), color var(--transition-normal)',
-                }}
+                className={`send-btn ${hasContent ? 'active' : 'inactive'}`}
                 aria-label="Envoyer le message (Enter)"
               >
                 <Send size={16} />
@@ -722,13 +633,6 @@ Réponds en français, sois concis.`;
           </div>
         </div>
       </div>
-
-      <style>{`
-        @keyframes chatinput-pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.4; }
-        }
-      `}</style>
 
       {showArtifactCreator && (
         <ArtifactCreator
@@ -744,60 +648,5 @@ Réponds en français, sois concis.`;
     </div>
   );
 };
-
-/* ── Shared styles ─────────────────────────────────── */
-
-const toolBtnStyle: React.CSSProperties = {
-  padding: 0,
-  width: '36px', height: '36px',
-  backgroundColor: 'transparent',
-  border: 'none',
-  color: 'var(--text-secondary)',
-  cursor: 'pointer',
-  borderRadius: 'var(--radius-md)',
-  display: 'flex', alignItems: 'center', justifyContent: 'center',
-  transition: 'background-color var(--transition-fast), color var(--transition-fast)',
-};
-
-const iconBtnStyle: React.CSSProperties = {
-  padding: '2px', backgroundColor: 'transparent',
-  border: 'none', color: 'var(--text-muted)', cursor: 'pointer',
-  display: 'flex', alignItems: 'center', borderRadius: 'var(--radius-sm)',
-};
-
-/* ── Action menu item ──────────────────────────────── */
-
-function ActionItem({ icon, label, onClick, active }: {
-  icon: React.ReactNode;
-  label: string;
-  onClick: () => void;
-  active?: boolean;
-}) {
-  return (
-    <button
-      role="menuitem"
-      onClick={onClick}
-      aria-label={label}
-      style={{
-        display: 'flex', alignItems: 'center', gap: '10px',
-        padding: '8px 12px',
-        backgroundColor: 'transparent',
-        border: 'none',
-        color: active ? 'var(--color-accent)' : 'var(--text-primary)',
-        cursor: 'pointer',
-        borderRadius: '10px',
-        fontSize: '13px',
-        width: '100%',
-        textAlign: 'left',
-        transition: 'background-color var(--transition-fast)',
-      }}
-      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-hover)')}
-      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
-    >
-      {icon}
-      {label}
-    </button>
-  );
-}
 
 export default ChatInput;

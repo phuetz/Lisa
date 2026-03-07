@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { logComponent, startupLogger } from './utils/startupLogger';
 import { Outlet } from 'react-router-dom';
 import './App.css';
+import './styles/lisa.css';
 import './styles/fluentAnimations.css';
 import config from './config';
 

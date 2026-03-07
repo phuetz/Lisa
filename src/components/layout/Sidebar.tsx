@@ -46,58 +46,18 @@ export function Sidebar({ collapsed, onToggleCollapse }: SidebarProps) {
     document.documentElement.classList.toggle('light', !lightMode);
   };
 
+  const cls = `lisa-sidebar ${collapsed ? 'collapsed' : 'expanded'}`;
+
   return (
-    <aside
-      role="navigation"
-      aria-label="Menu principal"
-      style={{
-        width: collapsed ? '64px' : '224px',
-        minWidth: collapsed ? '64px' : '224px',
-        height: '100%',
-        backgroundColor: 'var(--bg-sidebar)',
-        borderRight: '1px solid var(--border-subtle)',
-        display: 'flex',
-        flexDirection: 'column',
-        transition: 'width 0.2s ease, min-width 0.2s ease',
-        overflow: 'hidden',
-      }}
-    >
+    <aside role="navigation" aria-label="Menu principal" className={cls}>
       {/* Logo */}
-      <div
-        style={{
-          padding: collapsed ? '16px 0' : '16px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '10px',
-          justifyContent: collapsed ? 'center' : 'flex-start',
-          height: '56px',
-          minHeight: '56px',
-        }}
-      >
-        <Headphones size={24} style={{ color: 'var(--color-accent)', flexShrink: 0 }} />
-        {!collapsed && (
-          <span
-            style={{
-              fontSize: '18px',
-              fontWeight: 700,
-              color: 'var(--text-primary)',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            Lisa AI
-          </span>
-        )}
+      <div className="sidebar-logo">
+        <Headphones size={24} className="sidebar-logo-icon icon-shrink" />
+        {!collapsed && <span className="sidebar-logo-text">Lisa AI</span>}
       </div>
 
       {/* Navigation */}
-      <nav
-        style={{
-          flex: 1,
-          overflowY: 'auto',
-          overflowX: 'hidden',
-          padding: collapsed ? '8px 6px' : '8px',
-        }}
-      >
+      <nav className="sidebar-nav">
         {navigationItems.map((item) => {
           const active = isActive(item.path);
           return (
@@ -106,39 +66,9 @@ export function Sidebar({ collapsed, onToggleCollapse }: SidebarProps) {
               onClick={() => navigate(item.path)}
               aria-current={active ? 'page' : undefined}
               title={collapsed ? item.label : undefined}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-                width: '100%',
-                padding: collapsed ? '10px 0' : '10px 12px',
-                justifyContent: collapsed ? 'center' : 'flex-start',
-                marginBottom: '2px',
-                borderRadius: 'var(--radius-md)',
-                border: 'none',
-                cursor: 'pointer',
-                fontSize: '13px',
-                fontFamily: 'inherit',
-                whiteSpace: 'nowrap',
-                backgroundColor: active ? 'var(--color-brand-subtle)' : 'transparent',
-                color: active ? 'var(--color-accent)' : 'var(--text-tertiary)',
-                borderRight: active ? '2px solid var(--color-accent)' : '2px solid transparent',
-                transition: 'background-color var(--transition-fast), color var(--transition-fast)',
-              }}
-              onMouseEnter={(e) => {
-                if (!active) {
-                  e.currentTarget.style.backgroundColor = 'var(--bg-hover)';
-                  e.currentTarget.style.color = 'var(--text-primary)';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!active) {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                  e.currentTarget.style.color = 'var(--text-tertiary)';
-                }
-              }}
+              className={`sidebar-nav-btn${active ? ' active' : ''}`}
             >
-              <item.icon size={18} aria-hidden="true" style={{ flexShrink: 0 }} />
+              <item.icon size={18} aria-hidden="true" className="icon-shrink" />
               {!collapsed && item.label}
             </button>
           );
@@ -146,155 +76,51 @@ export function Sidebar({ collapsed, onToggleCollapse }: SidebarProps) {
       </nav>
 
       {/* Bottom actions */}
-      <div
-        style={{
-          borderTop: '1px solid var(--border-subtle)',
-          padding: collapsed ? '8px 6px' : '8px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '2px',
-        }}
-      >
-        {/* Settings */}
+      <div className="sidebar-bottom">
         <button
           onClick={() => navigate('/settings')}
           title={collapsed ? 'Paramètres' : undefined}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px',
-            width: '100%',
-            padding: collapsed ? '10px 0' : '10px 12px',
-            justifyContent: collapsed ? 'center' : 'flex-start',
-            borderRadius: 'var(--radius-md)',
-            border: 'none',
-            cursor: 'pointer',
-            fontSize: '13px',
-            fontFamily: 'inherit',
-            backgroundColor: 'transparent',
-            color: 'var(--text-tertiary)',
-            transition: 'background-color var(--transition-fast), color var(--transition-fast)',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = 'var(--bg-hover)';
-            e.currentTarget.style.color = 'var(--text-primary)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'transparent';
-            e.currentTarget.style.color = 'var(--text-tertiary)';
-          }}
+          className="sidebar-nav-btn"
         >
-          <Settings size={18} aria-hidden="true" style={{ flexShrink: 0 }} />
+          <Settings size={18} aria-hidden="true" className="icon-shrink" />
           {!collapsed && 'Paramètres'}
         </button>
 
-        {/* Theme toggle */}
         <button
           onClick={handleThemeToggle}
           title={collapsed ? (lightMode ? 'Mode sombre' : 'Mode clair') : undefined}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px',
-            width: '100%',
-            padding: collapsed ? '10px 0' : '10px 12px',
-            justifyContent: collapsed ? 'center' : 'flex-start',
-            borderRadius: 'var(--radius-md)',
-            border: 'none',
-            cursor: 'pointer',
-            fontSize: '13px',
-            fontFamily: 'inherit',
-            backgroundColor: 'transparent',
-            color: 'var(--text-tertiary)',
-            transition: 'background-color var(--transition-fast), color var(--transition-fast)',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = 'var(--bg-hover)';
-            e.currentTarget.style.color = 'var(--text-primary)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'transparent';
-            e.currentTarget.style.color = 'var(--text-tertiary)';
-          }}
+          className="sidebar-nav-btn"
         >
           {lightMode ? (
-            <Moon size={18} aria-hidden="true" style={{ flexShrink: 0 }} />
+            <Moon size={18} aria-hidden="true" className="icon-shrink" />
           ) : (
-            <Sun size={18} aria-hidden="true" style={{ flexShrink: 0 }} />
+            <Sun size={18} aria-hidden="true" className="icon-shrink" />
           )}
           {!collapsed && (lightMode ? 'Mode sombre' : 'Mode clair')}
         </button>
 
-        {/* Auth button */}
         <button
           onClick={isAuthenticated ? logout : () => navigate('/settings')}
           title={collapsed ? (isAuthenticated ? 'Déconnexion' : 'Connexion') : undefined}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px',
-            width: '100%',
-            padding: collapsed ? '10px 0' : '10px 12px',
-            justifyContent: collapsed ? 'center' : 'flex-start',
-            borderRadius: 'var(--radius-md)',
-            border: 'none',
-            cursor: 'pointer',
-            fontSize: '13px',
-            fontFamily: 'inherit',
-            backgroundColor: 'transparent',
-            color: 'var(--text-tertiary)',
-            transition: 'background-color var(--transition-fast), color var(--transition-fast)',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = 'var(--bg-hover)';
-            e.currentTarget.style.color = 'var(--text-primary)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'transparent';
-            e.currentTarget.style.color = 'var(--text-tertiary)';
-          }}
+          className="sidebar-nav-btn"
         >
           {isAuthenticated ? (
-            <LogOut size={18} aria-hidden="true" style={{ flexShrink: 0 }} />
+            <LogOut size={18} aria-hidden="true" className="icon-shrink" />
           ) : (
-            <LogIn size={18} aria-hidden="true" style={{ flexShrink: 0 }} />
+            <LogIn size={18} aria-hidden="true" className="icon-shrink" />
           )}
           {!collapsed && (isAuthenticated ? 'Déconnexion' : 'Connexion')}
         </button>
 
-        {/* Collapse toggle */}
         <button
           onClick={onToggleCollapse}
           title={collapsed ? 'Développer' : 'Réduire'}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px',
-            width: '100%',
-            padding: collapsed ? '10px 0' : '10px 12px',
-            justifyContent: collapsed ? 'center' : 'flex-start',
-            borderRadius: 'var(--radius-md)',
-            border: 'none',
-            cursor: 'pointer',
-            fontSize: '13px',
-            fontFamily: 'inherit',
-            backgroundColor: 'transparent',
-            color: 'var(--text-tertiary)',
-            transition: 'background-color var(--transition-fast), color var(--transition-fast)',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = 'var(--bg-hover)';
-            e.currentTarget.style.color = 'var(--text-primary)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'transparent';
-            e.currentTarget.style.color = 'var(--text-tertiary)';
-          }}
+          className="sidebar-nav-btn"
         >
           {collapsed ? (
-            <ChevronRight size={18} aria-hidden="true" style={{ flexShrink: 0 }} />
+            <ChevronRight size={18} aria-hidden="true" className="icon-shrink" />
           ) : (
-            <ChevronLeft size={18} aria-hidden="true" style={{ flexShrink: 0 }} />
+            <ChevronLeft size={18} aria-hidden="true" className="icon-shrink" />
           )}
           {!collapsed && 'Réduire'}
         </button>

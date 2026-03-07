@@ -3,7 +3,7 @@
  * Export all chat components
  */
 
-export { ChatLayout } from './ChatLayout';
+export { ChatLayoutSimple } from './ChatLayoutSimple';
 export { ChatSidebar } from './ChatSidebar';
 export { ChatMain } from './ChatMain';
 export { ChatHeader } from './ChatHeader';

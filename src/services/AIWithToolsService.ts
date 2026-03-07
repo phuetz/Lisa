@@ -431,7 +431,7 @@ class AIWithToolsService {
 
     const contents: Array<{
       role: string;
-      parts: Array<{ text?: string; functionCall?: unknown; functionResponse?: unknown }>;
+      parts: Array<{ text?: string; inlineData?: { mimeType: string; data: string }; functionCall?: unknown; functionResponse?: unknown }>;
     }> = [];
 
     for (const msg of conversationMessages) {
@@ -440,7 +440,6 @@ class AIWithToolsService {
         const parsed = JSON.parse(msg.content);
 
         if (parsed._gemini_function_call) {
-          // This is a function call from the model
           contents.push({
             role: 'model',
             parts: [{
@@ -454,8 +453,6 @@ class AIWithToolsService {
         }
 
         if (parsed._gemini_function_response) {
-          // This is a function response
-          // Gemini API: functionResponse goes in a "function" role message
           contents.push({
             role: 'function',
             parts: [{
@@ -474,10 +471,20 @@ class AIWithToolsService {
         // Not JSON, treat as regular message
       }
 
-      // Regular text message
+      // Regular text message, with optional image
+      const parts: Array<{ text?: string; inlineData?: { mimeType: string; data: string } }> = [];
+      if (msg.content) parts.push({ text: msg.content });
+      if (msg.image) {
+        const matches = msg.image.match(/^data:(.+);base64,(.+)$/);
+        if (matches) {
+          parts.push({ inlineData: { mimeType: matches[1], data: matches[2] } });
+        } else {
+          parts.push({ inlineData: { mimeType: 'image/jpeg', data: msg.image } });
+        }
+      }
       contents.push({
         role: msg.role === 'assistant' ? 'model' : 'user',
-        parts: [{ text: msg.content }]
+        parts
       });
     }
 
@@ -564,6 +571,20 @@ class AIWithToolsService {
     // Format tools for OpenAI
     const openaiTools = toolCallingService.formatForOpenAI(tools);
 
+    const formattedMessages = messages.map(m => {
+      if (m.image) {
+        const imageUrl = m.image.startsWith('data:') ? m.image : `data:image/jpeg;base64,${m.image}`;
+        return {
+          role: m.role,
+          content: [
+            { type: 'text', text: m.content || '' },
+            { type: 'image_url', image_url: { url: imageUrl } }
+          ]
+        };
+      }
+      return { role: m.role, content: m.content };
+    });
+
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -572,7 +593,7 @@ class AIWithToolsService {
       },
       body: JSON.stringify({
         model,
-        messages: messages.map(m => ({ role: m.role, content: m.content })),
+        messages: formattedMessages,
         tools: openaiTools,
         tool_choice: 'auto',
         temperature: config.temperature || 0.7,
@@ -618,7 +639,19 @@ class AIWithToolsService {
       body: JSON.stringify({
         model,
         system: systemMessage?.content,
-        messages: conversationMessages.map(m => ({ role: m.role, content: m.content })),
+        messages: conversationMessages.map(m => {
+          if (m.image) {
+            const base64Data = m.image.startsWith('data:') ? m.image.split(',')[1] : m.image;
+            return {
+              role: m.role,
+              content: [
+                { type: 'text', text: m.content || '' },
+                { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: base64Data } }
+              ]
+            };
+          }
+          return { role: m.role, content: m.content };
+        }),
         tools: claudeTools,
         max_tokens: config.maxTokens || 4096,
         temperature: config.temperature || 0.7
@@ -647,6 +680,20 @@ class AIWithToolsService {
     // Format tools for OpenAI (LM Studio is OpenAI-compatible)
     const openaiTools = toolCallingService.formatForOpenAI(tools);
 
+    const formattedMessages = messages.map(m => {
+      if (m.image) {
+        const imageUrl = m.image.startsWith('data:') ? m.image : `data:image/jpeg;base64,${m.image}`;
+        return {
+          role: m.role,
+          content: [
+            { type: 'text', text: m.content || '' },
+            { type: 'image_url', image_url: { url: imageUrl } }
+          ]
+        };
+      }
+      return { role: m.role, content: m.content };
+    });
+
     const response = await fetch(`${baseUrl}/chat/completions`, {
       method: 'POST',
       headers: {
@@ -654,7 +701,7 @@ class AIWithToolsService {
       },
       body: JSON.stringify({
         model,
-        messages: messages.map(m => ({ role: m.role, content: m.content })),
+        messages: formattedMessages,
         tools: openaiTools,
         tool_choice: 'auto',
         temperature: config.temperature || 0.7,

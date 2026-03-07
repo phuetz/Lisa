@@ -60,6 +60,7 @@
     "@monaco-editor/react": "^4.7.0",
     "@mui/icons-material": "^7.1.2",
     "@mui/material": "^7.1.2",
+    "@phuetz/ai-providers": "file:..\\ai-providers",
     "@picovoice/porcupine-web": "^3.0.3",
     "@picovoice/web-voice-processor": "^4.0.9",
     "@prisma/client": "^6.11.1",

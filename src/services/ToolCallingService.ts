@@ -1,48 +1,70 @@
 /**
  * Tool Calling Service - Native LLM Function Calling Protocol
  *
- * Provides a unified interface for tool/function calling across all LLM providers.
- * Handles tool registration, format conversion, and execution.
- *
- * Supports:
- * - OpenAI function calling format
- * - Google Gemini function declarations
- * - Anthropic Claude tool use
+ * Uses shared types and format converters from @phuetz/ai-providers.
+ * Keeps Lisa-specific service class (tool registry, execution, history).
  */
 
 import type { AIProvider } from './aiService';
 import { safeEvaluate } from '../features/workflow/executor/SafeEvaluator';
 
+// Import and re-export shared types from @phuetz/ai-providers
+import type {
+  ToolDefinition as SharedToolDefinition,
+  ToolResult as SharedToolResult,
+  JSONSchema as SharedJSONSchema,
+} from '@phuetz/ai-providers';
+import {
+  toOpenAITools,
+  toGeminiTools,
+  toClaudeTools,
+  parseOpenAIToolCalls as sharedParseOpenAIToolCalls,
+  parseGeminiToolCalls as sharedParseGeminiToolCalls,
+  parseClaudeToolCalls as sharedParseClaudeToolCalls,
+  parseToolArguments,
+  hasToolCalls,
+  toOpenAIToolResult,
+  toGeminiFunctionResponse,
+  toClaudeToolResult,
+} from '@phuetz/ai-providers';
+
+// Re-export shared converters and utilities for consumers
+export {
+  toOpenAITools,
+  toGeminiTools,
+  toClaudeTools,
+  parseToolArguments,
+  hasToolCalls,
+  toOpenAIToolResult,
+  toGeminiFunctionResponse,
+  toClaudeToolResult,
+};
+
 // ============================================================================
-// Types
+// Types — Lisa-specific extensions over shared types
+//
+// Lisa's ToolDefinition adds an optional handler function.
+// Lisa's ToolCall uses parsed Record<string, unknown> arguments instead of
+// the shared JSON string format.
+// We re-export these Lisa-specific interfaces so existing imports work.
 // ============================================================================
 
 /**
- * JSON Schema for tool parameters
+ * JSON Schema for tool parameters (re-exported from shared package).
  */
-export interface JSONSchema {
-  type: 'object' | 'string' | 'number' | 'boolean' | 'array';
-  properties?: Record<string, JSONSchema>;
-  required?: string[];
-  items?: JSONSchema;
-  description?: string;
-  enum?: (string | number)[];
-  default?: unknown;
-}
+export type JSONSchema = SharedJSONSchema;
 
 /**
- * Tool definition - provider-agnostic format
+ * Tool definition - Lisa extension adds optional handler function.
  */
-export interface ToolDefinition {
-  name: string;
-  description: string;
-  parameters: JSONSchema;
-  /** Optional handler function */
+export interface ToolDefinition extends SharedToolDefinition {
+  /** Optional handler function for direct execution */
   handler?: (args: Record<string, unknown>) => Promise<unknown>;
 }
 
 /**
- * Tool call from LLM response
+ * Tool call from LLM response.
+ * Lisa uses parsed arguments (Record) instead of the shared JSON string format.
  */
 export interface ToolCall {
   id: string;
@@ -51,21 +73,14 @@ export interface ToolCall {
 }
 
 /**
- * Tool execution result
+ * Tool execution result (matches shared ToolResult).
  */
-export interface ToolResult {
-  tool_call_id: string;
-  content: string;
-  error?: boolean;
-}
+export type ToolResult = SharedToolResult;
 
 // ============================================================================
-// Provider-Specific Types
+// Provider-Specific Types (kept for backward compat, derived from shared)
 // ============================================================================
 
-/**
- * OpenAI tool format
- */
 export interface OpenAITool {
   type: 'function';
   function: {
@@ -75,31 +90,7 @@ export interface OpenAITool {
   };
 }
 
-/**
- * Gemini function declaration format
- */
-export interface GeminiFunctionDeclaration {
-  name: string;
-  description: string;
-  parameters: {
-    type: 'OBJECT';
-    properties: Record<string, {
-      type: string;
-      description?: string;
-      enum?: string[];
-    }>;
-    required?: string[];
-  };
-}
-
-/**
- * Claude tool format
- */
-export interface ClaudeTool {
-  name: string;
-  description: string;
-  input_schema: JSONSchema;
-}
+export type { GeminiFunctionDeclaration, ClaudeTool } from '@phuetz/ai-providers';
 
 // ============================================================================
 // Tool Calling Service
@@ -117,147 +108,58 @@ export class ToolCallingService {
   // Tool Registration
   // ==========================================================================
 
-  /**
-   * Register a tool
-   */
   registerTool(tool: ToolDefinition): void {
     if (this.tools.has(tool.name)) {
       console.warn(`[ToolCalling] Overwriting existing tool: ${tool.name}`);
     }
-
-    // Validate tool definition
     if (!tool.name || !tool.description) {
       throw new Error('Tool must have name and description');
     }
-
     this.tools.set(tool.name, tool);
     console.log(`[ToolCalling] Registered tool: ${tool.name}`);
   }
 
-  /**
-   * Register multiple tools
-   */
   registerTools(tools: ToolDefinition[]): void {
     for (const tool of tools) {
       this.registerTool(tool);
     }
   }
 
-  /**
-   * Unregister a tool
-   */
   unregisterTool(name: string): boolean {
     return this.tools.delete(name);
   }
 
-  /**
-   * Get all registered tools
-   */
   getTools(): ToolDefinition[] {
     return Array.from(this.tools.values());
   }
 
-  /**
-   * Get a specific tool
-   */
   getTool(name: string): ToolDefinition | undefined {
     return this.tools.get(name);
   }
 
-  /**
-   * Check if a tool exists
-   */
   hasTool(name: string): boolean {
     return this.tools.has(name);
   }
 
   // ==========================================================================
-  // Format Conversion
+  // Format Conversion — delegates to @phuetz/ai-providers
   // ==========================================================================
 
-  /**
-   * Format tools for OpenAI API
-   */
   formatForOpenAI(tools?: ToolDefinition[]): OpenAITool[] {
     const toolList = tools || this.getTools();
-
-    return toolList.map(tool => ({
-      type: 'function' as const,
-      function: {
-        name: tool.name,
-        description: tool.description,
-        parameters: tool.parameters
-      }
-    }));
+    return toOpenAITools(toolList) as OpenAITool[];
   }
 
-  /**
-   * Format tools for Google Gemini API
-   */
-  formatForGemini(tools?: ToolDefinition[]): GeminiFunctionDeclaration[] {
+  formatForGemini(tools?: ToolDefinition[]) {
     const toolList = tools || this.getTools();
-
-    return toolList.map(tool => ({
-      name: tool.name,
-      description: tool.description,
-      parameters: this.convertSchemaToGemini(tool.parameters)
-    }));
+    return toGeminiTools(toolList);
   }
 
-  /**
-   * Convert JSON Schema to Gemini format
-   */
-  private convertSchemaToGemini(schema: JSONSchema): GeminiFunctionDeclaration['parameters'] {
-    const properties: Record<string, { type: string; description?: string; enum?: string[] }> = {};
-
-    if (schema.properties) {
-      for (const [key, prop] of Object.entries(schema.properties)) {
-        properties[key] = {
-          type: this.typeToGeminiType(prop.type),
-          description: prop.description,
-          enum: prop.enum as string[] | undefined
-        };
-      }
-    }
-
-    return {
-      type: 'OBJECT',
-      properties,
-      required: schema.required
-    };
-  }
-
-  /**
-   * Convert JSON Schema type to Gemini type
-   */
-  private typeToGeminiType(type: string): string {
-    const typeMap: Record<string, string> = {
-      'string': 'STRING',
-      'number': 'NUMBER',
-      'integer': 'INTEGER',
-      'boolean': 'BOOLEAN',
-      'array': 'ARRAY',
-      'object': 'OBJECT'
-    };
-    return typeMap[type] || 'STRING';
-  }
-
-  /**
-   * Format tools for Anthropic Claude API
-   */
-  formatForClaude(tools?: ToolDefinition[]): ClaudeTool[] {
+  formatForClaude(tools?: ToolDefinition[]) {
     const toolList = tools || this.getTools();
-
-    return toolList.map(tool => ({
-      name: tool.name,
-      description: tool.description,
-      input_schema: tool.parameters
-    }));
+    return toClaudeTools(toolList);
   }
 
-  /**
-   * Format tools for a specific provider
-   */
   formatForProvider(provider: AIProvider, tools?: ToolDefinition[]): unknown {
     switch (provider) {
       case 'openai':
@@ -273,11 +175,12 @@ export class ToolCallingService {
 
   // ==========================================================================
   // Response Parsing
+  //
+  // The shared parsers return SharedToolCall (with JSON string arguments).
+  // Lisa expects ToolCall with parsed Record arguments.
+  // We bridge by parsing the JSON string.
   // ==========================================================================
 
-  /**
-   * Parse tool calls from LLM response
-   */
   parseToolCalls(response: unknown, provider: AIProvider): ToolCall[] {
     switch (provider) {
       case 'openai':
@@ -292,15 +195,13 @@ export class ToolCallingService {
     }
   }
 
-  /**
-   * Parse OpenAI tool calls
-   */
   private parseOpenAIToolCalls(response: unknown): ToolCall[] {
     const resp = response as {
       choices?: Array<{
         message?: {
           tool_calls?: Array<{
             id: string;
+            type: 'function';
             function: { name: string; arguments: string };
           }>;
         };
@@ -310,16 +211,15 @@ export class ToolCallingService {
     const toolCalls = resp.choices?.[0]?.message?.tool_calls;
     if (!toolCalls) return [];
 
-    return toolCalls.map(tc => ({
+    // Use shared parser, then convert to Lisa's parsed-arguments format
+    const shared = sharedParseOpenAIToolCalls(toolCalls);
+    return shared.map(tc => ({
       id: tc.id,
       name: tc.function.name,
-      arguments: this.safeParseJSON(tc.function.arguments)
+      arguments: parseToolArguments(tc.function.arguments),
     }));
   }
 
-  /**
-   * Parse Gemini tool calls
-   */
   private parseGeminiToolCalls(response: unknown): ToolCall[] {
     const resp = response as {
       candidates?: Array<{
@@ -334,18 +234,15 @@ export class ToolCallingService {
     const parts = resp.candidates?.[0]?.content?.parts;
     if (!parts) return [];
 
-    return parts
-      .filter(p => p.functionCall)
-      .map((p, idx) => ({
-        id: `gemini-call-${idx}-${Date.now()}`,
-        name: p.functionCall!.name,
-        arguments: p.functionCall!.args
-      }));
+    // Use shared parser, then convert to Lisa's parsed-arguments format
+    const shared = sharedParseGeminiToolCalls(parts);
+    return shared.map(tc => ({
+      id: tc.id,
+      name: tc.function.name,
+      arguments: parseToolArguments(tc.function.arguments),
+    }));
   }
 
-  /**
-   * Parse Claude tool calls
-   */
   private parseClaudeToolCalls(response: unknown): ToolCall[] {
     const resp = response as {
       content?: Array<{
@@ -358,34 +255,19 @@ export class ToolCallingService {
 
     if (!resp.content) return [];
 
-    return resp.content
-      .filter(c => c.type === 'tool_use')
-      .map(c => ({
-        id: c.id || `claude-call-${Date.now()}`,
-        name: c.name || '',
-        arguments: c.input || {}
-      }));
-  }
-
-  /**
-   * Safely parse JSON arguments
-   */
-  private safeParseJSON(str: string): Record<string, unknown> {
-    try {
-      return JSON.parse(str);
-    } catch {
-      console.warn('[ToolCalling] Failed to parse arguments:', str);
-      return {};
-    }
+    // Use shared parser, then convert to Lisa's parsed-arguments format
+    const shared = sharedParseClaudeToolCalls(resp.content);
+    return shared.map(tc => ({
+      id: tc.id,
+      name: tc.function.name,
+      arguments: parseToolArguments(tc.function.arguments),
+    }));
   }
 
   // ==========================================================================
-  // Tool Execution
+  // Tool Execution (Lisa-specific)
   // ==========================================================================
 
-  /**
-   * Execute a tool call
-   */
   async executeTool(call: ToolCall): Promise<ToolResult> {
     const tool = this.tools.get(call.name);
 
@@ -407,7 +289,6 @@ export class ToolCallingService {
 
     try {
       console.log(`[ToolCalling] Executing tool: ${call.name}`, call.arguments);
-
       const result = await tool.handler(call.arguments);
 
       const toolResult: ToolResult = {
@@ -415,7 +296,6 @@ export class ToolCallingService {
         content: typeof result === 'string' ? result : JSON.stringify(result)
       };
 
-      // Record execution
       this.executionHistory.push({
         toolCall: call,
         result: toolResult,
@@ -436,9 +316,6 @@ export class ToolCallingService {
     }
   }
 
-  /**
-   * Execute multiple tool calls
-   */
   async executeTools(calls: ToolCall[]): Promise<ToolResult[]> {
     return Promise.all(calls.map(call => this.executeTool(call)));
   }
@@ -447,9 +324,6 @@ export class ToolCallingService {
   // Result Formatting
   // ==========================================================================
 
-  /**
-   * Format tool results for OpenAI API
-   */
   formatResultsForOpenAI(results: ToolResult[]): Array<{ role: 'tool'; tool_call_id: string; content: string }> {
     return results.map(r => ({
       role: 'tool' as const,
@@ -458,26 +332,18 @@ export class ToolCallingService {
     }));
   }
 
-  /**
-   * Format tool results for Gemini API
-   */
   formatResultsForGemini(results: ToolResult[]): Array<{ functionResponse: { name: string; response: unknown } }> {
     return results.map(r => {
-      // Find the original call to get the function name
       const historyEntry = this.executionHistory.find(h => h.result.tool_call_id === r.tool_call_id);
-
       return {
         functionResponse: {
           name: historyEntry?.toolCall.name || 'unknown',
-          response: this.safeParseJSON(r.content)
+          response: parseToolArguments(r.content)
         }
       };
     });
   }
 
-  /**
-   * Format tool results for Claude API
-   */
   formatResultsForClaude(results: ToolResult[]): Array<{ type: 'tool_result'; tool_use_id: string; content: string }> {
     return results.map(r => ({
       type: 'tool_result' as const,
@@ -486,9 +352,6 @@ export class ToolCallingService {
     }));
   }
 
-  /**
-   * Format results for a specific provider
-   */
   formatResultsForProvider(provider: AIProvider, results: ToolResult[]): unknown {
     switch (provider) {
       case 'openai':
@@ -506,23 +369,14 @@ export class ToolCallingService {
   // History & Stats
   // ==========================================================================
 
-  /**
-   * Get execution history
-   */
   getHistory(): typeof this.executionHistory {
     return [...this.executionHistory];
   }
 
-  /**
-   * Clear execution history
-   */
   clearHistory(): void {
     this.executionHistory = [];
   }
 
-  /**
-   * Get execution stats
-   */
   getStats(): {
     registeredTools: number;
     totalExecutions: number;
@@ -530,7 +384,6 @@ export class ToolCallingService {
     failedExecutions: number;
   } {
     const successful = this.executionHistory.filter(h => !h.result.error).length;
-
     return {
       registeredTools: this.tools.size,
       totalExecutions: this.executionHistory.length,
@@ -550,11 +403,7 @@ export const toolCallingService = new ToolCallingService();
 // Built-in Tools
 // ============================================================================
 
-/**
- * Register common built-in tools
- */
 export function registerBuiltInTools(): void {
-  // Current time tool
   toolCallingService.registerTool({
     name: 'get_current_time',
     description: 'Get the current date and time',
@@ -570,16 +419,13 @@ export function registerBuiltInTools(): void {
     handler: async (args) => {
       const tz = args.timezone as string | undefined;
       const now = new Date();
-
       if (tz) {
         return now.toLocaleString('en-US', { timeZone: tz });
       }
-
       return now.toISOString();
     }
   });
 
-  // Calculator tool
   toolCallingService.registerTool({
     name: 'calculator',
     description: 'Perform basic mathematical calculations',
@@ -595,11 +441,7 @@ export function registerBuiltInTools(): void {
     },
     handler: async (args) => {
       const expr = args.expression as string;
-
-      // Safe math evaluation (no eval)
       const sanitized = expr.replace(/[^0-9+\-*/().sqrt\s]/gi, '');
-
-      // Replace sqrt with Math.sqrt
       const withMath = sanitized.replace(/sqrt/gi, 'Math.sqrt');
 
       try {

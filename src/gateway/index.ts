@@ -41,8 +41,12 @@ export { NodeManager, getNodeManager, resetNodeManager } from './NodeManager';
 export type { Node, NodeType, NodePlatform, NodeCapability, NodeAction, NodeActionResult } from './NodeManager';
 
 // Context Manager
-export { ContextManager, getContextManager, resetContextManager } from './ContextManager';
-export type { ContextEntry, ContextWindow, ContextConfig } from './ContextManager';
+export {
+  ContextManager, getContextManager, resetContextManager,
+  ContextTag, ALL_CONTEXT_TAGS,
+  wrapWithTag, stripTags, parseTaggedContent, getDefaultTagForEntryType,
+} from './ContextManager';
+export type { ContextEntry, ContextWindow, ContextConfig, ContextMetadata, ParsedTaggedContent } from './ContextManager';
 
 // Prompt Templates
 export { PromptTemplateManager, getPromptTemplateManager, resetPromptTemplateManager } from './PromptTemplates';
@@ -123,6 +127,19 @@ export type { QuickAction, QuickActionCategory, QuickActionType } from './QuickA
 // Browser Controller
 export { BrowserController, getBrowserController, resetBrowserController } from './BrowserController';
 export type { BrowserConfig, BrowserPage, BrowserAction, BrowserResult, PageSnapshot } from './BrowserController';
+
+// Chrome Bridge (Bidirectional browser control - Manus AI inspired)
+export { ChromeBridge, getChromeBridge, resetChromeBridge } from './ChromeBridge';
+export type {
+  BridgeBrowserAction,
+  BrowserActionResult,
+  ChromePageSnapshot,
+  ChromeBridgeMessage,
+  ChromeBridgeConfig,
+  DOMElementInfo,
+  NetworkRequest,
+  RecordedAction,
+} from './ChromeBridge';
 
 // Canvas Manager (A2UI)
 export { CanvasManager, getCanvasManager, resetCanvasManager } from './CanvasManager';

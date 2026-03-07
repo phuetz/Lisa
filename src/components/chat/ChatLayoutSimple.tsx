@@ -11,10 +11,8 @@ import { ChatSettingsPanel } from './ChatSettingsPanel';
 import { ArtifactPanel } from './ArtifactPanel';
 import { Modal } from '../ui/Modal';
 
-// Lazy load heavy components (html2canvas + jspdf = ~450KB)
 const ExportPDF = lazy(() => import('./ExportPDF').then(m => ({ default: m.ExportPDF })));
 
-// Loading fallback for lazy components
 const LazyFallback = () => (
   <div className="flex items-center justify-center p-8">
     <Loader2 className="w-6 h-6 animate-spin" style={{ color: 'var(--color-accent)' }} />
@@ -40,7 +38,6 @@ export const ChatLayoutSimple = () => {
 
   const currentConversation = conversations.find(c => c.id === currentConversationId);
 
-  // Filtrer les conversations par recherche
   const filteredConversations = useMemo(() => {
     if (!searchQuery.trim()) return conversations;
     const query = searchQuery.toLowerCase();
@@ -50,7 +47,6 @@ export const ChatLayoutSimple = () => {
     );
   }, [conversations, searchQuery]);
 
-  // Export conversations to JSON
   const handleExportJSON = () => {
     const data = JSON.stringify(conversations, null, 2);
     const blob = new Blob([data], { type: 'application/json' });
@@ -62,7 +58,6 @@ export const ChatLayoutSimple = () => {
     URL.revokeObjectURL(url);
   };
 
-  // Import conversations from JSON
   const handleImportJSON = () => {
     const input = document.createElement('input');
     input.type = 'file';
@@ -95,50 +90,22 @@ export const ChatLayoutSimple = () => {
   };
 
   return (
-    <div style={{
-      display: 'flex',
-      flexDirection: 'column',
-      flex: 1,
-      minHeight: 0,
-      backgroundColor: 'var(--bg-deep)',
-      color: 'var(--text-primary)',
-    }}>
+    <div className="chat-layout">
       {/* Chat toolbar */}
-      <div
-        style={{
-          height: '44px',
-          minHeight: '44px',
-          padding: '0 16px',
-          borderBottom: '1px solid var(--border-subtle)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          backgroundColor: 'var(--bg-surface)',
-        }}
-      >
+      <div className="chat-toolbar">
         <button
           onClick={() => setConversationPanelOpen(!conversationPanelOpen)}
           className="chat-icon-btn"
           aria-label="Conversations"
-          style={{ padding: '6px' }}
         >
           <MessageSquare size={18} />
         </button>
 
-        <h2 style={{
-          fontSize: '14px',
-          fontWeight: 500,
-          color: 'var(--text-primary)',
-          margin: 0,
-          flex: 1,
-          whiteSpace: 'nowrap',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-        }}>
+        <h2 className="chat-toolbar-title">
           {currentConversation?.title || 'Nouvelle conversation'}
         </h2>
 
-        <button onClick={handleNewChat} className="chat-icon-btn" aria-label="Nouvelle conversation" style={{ padding: '6px' }}>
+        <button onClick={handleNewChat} className="chat-icon-btn" aria-label="Nouvelle conversation">
           <Plus size={18} />
         </button>
         <button
@@ -146,33 +113,25 @@ export const ChatLayoutSimple = () => {
           disabled={!currentConversation || currentConversation.messages.length === 0}
           className="chat-icon-btn"
           aria-label="Exporter en PDF"
-          style={{ padding: '6px' }}
         >
           <FileDown size={18} />
         </button>
-        <button onClick={() => setShowShortcuts(true)} className="chat-icon-btn" aria-label="Raccourcis" style={{ padding: '6px' }}>
+        <button onClick={() => setShowShortcuts(true)} className="chat-icon-btn" aria-label="Raccourcis">
           <Keyboard size={18} />
         </button>
-        <button onClick={() => setSettingsOpen(true)} className="chat-icon-btn" aria-label="Paramètres du chat" style={{ padding: '6px' }}>
+        <button onClick={() => setSettingsOpen(true)} className="chat-icon-btn" aria-label="Paramètres du chat">
           <Settings size={18} />
         </button>
       </div>
 
       {/* Messages Area */}
-      <div
-        role="main"
-        aria-label="Messages de conversation"
-        style={{ flex: 1, overflow: 'auto', minHeight: 0 }}
-      >
+      <div role="main" aria-label="Messages de conversation" className="chat-messages-area">
         <ChatMessages />
       </div>
 
       {/* Input Area */}
-      <div style={{
-        padding: '8px 16px 16px',
-        backgroundColor: 'var(--bg-deep)',
-      }}>
-        <div style={{ maxWidth: '768px', margin: '0 auto' }}>
+      <div className="chat-input-area">
+        <div className="chat-input-wrapper">
           <ChatInput />
         </div>
       </div>
@@ -183,107 +142,41 @@ export const ChatLayoutSimple = () => {
           <div
             onClick={() => setConversationPanelOpen(false)}
             aria-hidden="true"
-            style={{
-              position: 'fixed',
-              inset: 0,
-              backgroundColor: 'rgba(10, 10, 15, 0.5)',
-              zIndex: 40,
-            }}
+            className="conv-overlay"
           />
-          <div
-            style={{
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              bottom: 0,
-              width: '300px',
-              backgroundColor: 'var(--bg-surface)',
-              borderRight: '1px solid var(--border-primary)',
-              zIndex: 50,
-              display: 'flex',
-              flexDirection: 'column',
-            }}
-          >
+          <div className="conv-panel">
             {/* Panel Header */}
-            <div style={{
-              padding: '12px 16px',
-              borderBottom: '1px solid var(--border-subtle)',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '8px',
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <button
-                  onClick={handleNewChat}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    padding: '8px 16px',
-                    backgroundColor: 'var(--color-accent)',
-                    color: 'var(--bg-deep)',
-                    borderRadius: 'var(--radius-md)',
-                    border: 'none',
-                    fontSize: '13px',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    flex: 1,
-                    fontFamily: 'inherit',
-                  }}
-                  aria-label="Nouvelle conversation"
-                >
+            <div className="conv-panel-header">
+              <div className="conv-panel-header-row">
+                <button onClick={handleNewChat} className="conv-new-btn" aria-label="Nouvelle conversation">
                   <Plus size={16} />
                   Nouvelle conversation
                 </button>
-                <button
-                  onClick={() => setConversationPanelOpen(false)}
-                  className="chat-icon-btn"
-                  aria-label="Fermer"
-                  style={{ padding: '6px' }}
-                >
+                <button onClick={() => setConversationPanelOpen(false)} className="chat-icon-btn" aria-label="Fermer">
                   <X size={18} />
                 </button>
               </div>
 
               {/* Search */}
-              <div style={{ position: 'relative' }}>
-                <Search size={16} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} aria-hidden="true" />
+              <div className="search-bar">
+                <Search size={16} className="search-bar-icon" aria-hidden="true" />
                 <input
                   type="search"
                   placeholder="Rechercher..."
                   aria-label="Rechercher dans les conversations"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '8px 8px 8px 34px',
-                    backgroundColor: 'var(--bg-panel)',
-                    border: '1px solid var(--border-primary)',
-                    borderRadius: 'var(--radius-md)',
-                    color: 'var(--text-primary)',
-                    fontSize: '13px',
-                    outline: 'none',
-                    fontFamily: 'inherit',
-                    transition: 'border-color var(--transition-fast), box-shadow var(--transition-fast)',
-                  }}
-                  onFocus={(e) => {
-                    e.currentTarget.style.borderColor = 'var(--color-accent)';
-                    e.currentTarget.style.boxShadow = 'var(--focus-ring)';
-                  }}
-                  onBlur={(e) => {
-                    e.currentTarget.style.borderColor = 'var(--border-primary)';
-                    e.currentTarget.style.boxShadow = 'none';
-                  }}
+                  className="search-input"
                 />
               </div>
 
               {/* Import/Export buttons */}
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <button onClick={handleExportJSON} className="msg-action-btn" style={{ flex: 1, justifyContent: 'center', fontSize: '12px' }} aria-label="Exporter JSON">
+              <div className="import-export-row">
+                <button onClick={handleExportJSON} className="msg-action-btn import-export-btn" aria-label="Exporter JSON">
                   <Download size={14} />
                   Export
                 </button>
-                <button onClick={handleImportJSON} className="msg-action-btn" style={{ flex: 1, justifyContent: 'center', fontSize: '12px' }} aria-label="Importer JSON">
+                <button onClick={handleImportJSON} className="msg-action-btn import-export-btn" aria-label="Importer JSON">
                   <Upload size={14} />
                   Import
                 </button>
@@ -291,14 +184,10 @@ export const ChatLayoutSimple = () => {
             </div>
 
             {/* Conversations List */}
-            <div style={{ flex: 1, overflowY: 'auto', padding: '8px' }}>
-              <div style={{ fontSize: '11px', color: 'var(--text-muted)', padding: '4px 8px', marginBottom: '4px' }}>
-                Conversations récentes
-              </div>
+            <div className="conv-list">
+              <div className="conv-list-label">Conversations récentes</div>
               {filteredConversations.length === 0 ? (
-                <div style={{ padding: '12px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px' }}>
-                  Aucune conversation
-                </div>
+                <div className="conv-empty">Aucune conversation</div>
               ) : (
                 filteredConversations.map(conv => (
                   <div
@@ -320,31 +209,21 @@ export const ChatLayoutSimple = () => {
                     }}
                   >
                     <MessageSquare size={14} style={{ color: 'var(--text-muted)', marginRight: '8px', flexShrink: 0 }} aria-hidden="true" />
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{
-                        color: 'var(--text-primary)',
-                        fontSize: '13px',
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                      }}>
-                        {conv.title}
-                      </div>
+                    <div className="conv-item-content">
+                      <div className="conv-item-title">{conv.title}</div>
                     </div>
                     {pendingDeleteId === conv.id ? (
-                      <div style={{ display: 'flex', gap: '2px' }} onClick={e => e.stopPropagation()}>
+                      <div className="conv-delete-actions" onClick={e => e.stopPropagation()}>
                         <button
                           onClick={() => { deleteConversation(conv.id); setPendingDeleteId(null); }}
-                          className="chat-icon-btn"
-                          style={{ padding: '4px', color: '#ef4444', fontWeight: 600, fontSize: '11px' }}
+                          className="chat-icon-btn conv-delete-confirm"
                           aria-label="Confirmer la suppression"
                         >
                           Oui
                         </button>
                         <button
                           onClick={() => setPendingDeleteId(null)}
-                          className="chat-icon-btn"
-                          style={{ padding: '4px', opacity: 0.6, fontSize: '11px' }}
+                          className="chat-icon-btn conv-delete-cancel"
                           aria-label="Annuler la suppression"
                         >
                           Non
@@ -356,8 +235,7 @@ export const ChatLayoutSimple = () => {
                           e.stopPropagation();
                           setPendingDeleteId(conv.id);
                         }}
-                        className="chat-icon-btn"
-                        style={{ padding: '4px', opacity: 0.6 }}
+                        className="chat-icon-btn conv-delete-btn"
                         aria-label={`Supprimer la conversation ${conv.title}`}
                       >
                         <Trash2 size={12} />
@@ -374,7 +252,7 @@ export const ChatLayoutSimple = () => {
       {/* Settings Panel */}
       <ChatSettingsPanel isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
 
-      {/* Export PDF Modal - Lazy loaded (~450KB) */}
+      {/* Export PDF Modal */}
       {exportOpen && currentConversation && (
         <Suspense fallback={<LazyFallback />}>
           <ExportPDF
@@ -387,7 +265,7 @@ export const ChatLayoutSimple = () => {
 
       {/* Keyboard Shortcuts Modal */}
       <Modal open={showShortcuts} onClose={() => setShowShortcuts(false)} title="Raccourcis clavier">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <div className="shortcuts-list">
           {[
             { keys: 'Ctrl + Enter', action: 'Envoyer le message' },
             { keys: 'Enter', action: 'Envoyer le message' },
@@ -396,17 +274,9 @@ export const ChatLayoutSimple = () => {
             { keys: 'Ctrl + /', action: 'Focus sur l\'input' },
             { keys: 'Escape', action: 'Annuler / Effacer' },
           ].map(({ keys, action }) => (
-            <div key={keys} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>{action}</span>
-              <kbd style={{
-                backgroundColor: 'var(--bg-panel)',
-                padding: '4px 10px',
-                borderRadius: 'var(--radius-sm)',
-                fontSize: '12px',
-                fontFamily: 'var(--font-mono)',
-                color: 'var(--text-primary)',
-                border: '1px solid var(--border-primary)',
-              }}>{keys}</kbd>
+            <div key={keys} className="shortcut-row">
+              <span className="shortcut-action">{action}</span>
+              <kbd className="shortcut-kbd">{keys}</kbd>
             </div>
           ))}
         </div>
@@ -416,24 +286,7 @@ export const ChatLayoutSimple = () => {
       <ArtifactPanel />
 
       {/* Toast notification */}
-      {toast && (
-        <div style={{
-          position: 'fixed',
-          bottom: '24px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          padding: '10px 20px',
-          backgroundColor: 'var(--bg-surface, #1a1a26)',
-          color: 'var(--text-primary, #e8e8f0)',
-          borderRadius: '8px',
-          border: '1px solid var(--border-primary, #2d2d44)',
-          fontSize: '14px',
-          zIndex: 9999,
-          boxShadow: 'var(--shadow-elevated)',
-        }}>
-          {toast}
-        </div>
-      )}
+      {toast && <div className="toast">{toast}</div>}
     </div>
   );
 };

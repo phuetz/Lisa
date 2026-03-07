@@ -250,6 +250,10 @@ VITE_MCP_TOKEN=...         # MCP protocol auth
 9. **PyodideService**: Uses `preload()` method (not `initialize()`) for initialization
 10. **ChatPage Layout**: `ChatPage.tsx` renders `ChatLayoutSimple` (not `ChatLayout`) — both exist but Simple is the active one
 11. **Vite Cache**: When debugging stale module issues, clear `node_modules/.vite` before rebuilding
+12. **Pre-commit Hook**: Husky + lint-staged runs `eslint --fix` on staged `*.{ts,tsx}` files. There are 101 pre-existing test failures from incomplete agent implementations — commits unrelated to those may need `--no-verify` if the hook runs the full test suite
+13. **French Localization**: The UI uses French throughout (i18next). Keep UI strings in French when adding/modifying user-facing text
+14. **Agent Import Paths**: Agent implementations in `implementations/` need `../../` to reach `src/` (not `../`)
+15. **Optional Dependencies**: `@google/generative-ai` is optional — use `@vite-ignore` dynamic imports
 
 ## Mobile Development (Capacitor)
 
@@ -317,6 +321,34 @@ Expected logs when LM Studio connection works:
 | `src/api/server.ts` | Express API entry point |
 | `packages/` | Publishable SDK packages |
 | `apps/mobile/` | Capacitor mobile app |
+
+## Electron Desktop Wrapper
+
+- **Tool**: electron-vite v5, Electron 40, electron-builder 26
+- **Config**: `electron.vite.config.ts` (main + preload + renderer)
+- **Main process**: `electron/main.ts` — BrowserWindow, Tray, IPC, embedded Express API
+- **Preload**: `electron/preload.ts` — contextBridge → `window.electronAPI`
+- **Scripts**: `electron:dev`, `electron:build`, `electron:preview`, `electron:package`
+- **Detection**: `isRunningInElectron()` in `src/config/networkConfig.ts` checks `window.electronAPI`
+
+## RAG Pipeline
+
+```
+DocumentAnalysisService → MemoryService → EmbeddingService → VectorStoreService (HNSW) → RAGService
+```
+
+- **EmbeddingService**: LRU cache (500 entries), local TF-IDF fallback, OpenAI/Transformers providers
+- **RAGService**: HNSW O(log n) search with linear O(n) fallback; auto-cleanup of 30-day-old embeddings
+- **Document indexing**: `ragService.indexDocument()` with 1000-char overlapping chunks
+- **Linear search syncs to vector index**: batch-generated embeddings are added to HNSW for fast path on next call
+
+## Bundle Optimization
+
+Main bundle reduced via aggressive lazy loading:
+- `App.tsx`: MediaPipe hooks extracted to lazy `MediaPipeManager` component
+- `SenseProvider`: vision/hearing/touch/environment use `import()` dynamic imports
+- `ServiceProvider`: Pyodide/HealthMonitoring/ProactiveSuggestions use `import()` dynamic imports
+- MQTT in its own chunk, loaded only when touch/environment senses init
 
 ## Accessibility
 

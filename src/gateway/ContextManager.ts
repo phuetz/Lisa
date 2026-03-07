@@ -5,11 +5,167 @@
  */
 
 import { BrowserEventEmitter } from './BrowserEventEmitter';
+import { getObservationVariator } from './ObservationVariator';
+import { getTodoTracker } from './TodoTracker';
+
+// ============================================================================
+// Typed Context Tags — structured XML-like wrappers for context sections
+// Helps the LLM understand the nature of each context block.
+// Ported from Code Buddy's context engineering system.
+// ============================================================================
+
+/**
+ * Typed context tags that wrap context sections with structured XML-like markers.
+ * Each tag tells the LLM what kind of information is being provided.
+ */
+export const ContextTag = {
+  KNOWLEDGE: 'knowledge',
+  LESSONS_CONTEXT: 'lessons_context',
+  TODO_CONTEXT: 'todo_context',
+  MEMORY_CONTEXT: 'memory_context',
+  FILE_CONTENT: 'file_content',
+  TOOL_RESULT: 'tool_result',
+  REASONING_GUIDANCE: 'reasoning_guidance',
+  USER_PREFERENCES: 'user_preferences',
+  CODEBASE_CONTEXT: 'codebase_context',
+  WEB_CONTENT: 'web_content',
+} as const;
+
+export type ContextTag = typeof ContextTag[keyof typeof ContextTag];
+
+/** All valid context tag values as an array (useful for validation). */
+export const ALL_CONTEXT_TAGS: readonly ContextTag[] = Object.values(ContextTag) as ContextTag[];
+
+/**
+ * Mapping from ContextEntryType to the default ContextTag used when
+ * auto-tagging entries. Not every entry type has a default tag (e.g.,
+ * 'message' entries are typically not wrapped).
+ */
+const ENTRY_TYPE_TO_TAG: Partial<Record<ContextEntryType, ContextTag>> = {
+  tool_result: ContextTag.TOOL_RESULT,
+  file_content: ContextTag.FILE_CONTENT,
+  web_content: ContextTag.WEB_CONTENT,
+  memory: ContextTag.MEMORY_CONTEXT,
+  system_prompt: undefined, // System prompts are not auto-tagged
+  summary: undefined,       // Summaries are not auto-tagged
+};
+
+/**
+ * Wrap content with a typed context tag.
+ *
+ * @param tag - The context tag to wrap with
+ * @param content - The content to wrap
+ * @param metadata - Optional key-value attributes rendered on the opening tag
+ * @returns The content wrapped in XML-like tags
+ *
+ * @example
+ * wrapWithTag('knowledge', 'TypeScript is...', { source: 'docs' })
+ * // => '<knowledge source="docs">\nTypeScript is...\n</knowledge>'
+ */
+export function wrapWithTag(
+  tag: ContextTag,
+  content: string,
+  metadata?: Record<string, string>,
+): string {
+  if (!content) return '';
+
+  let openTag = `<${tag}`;
+  if (metadata) {
+    for (const [key, value] of Object.entries(metadata)) {
+      // Escape double-quotes in attribute values
+      const escaped = value.replace(/"/g, '&quot;');
+      openTag += ` ${key}="${escaped}"`;
+    }
+  }
+  openTag += '>';
+
+  return `${openTag}\n${content}\n</${tag}>`;
+}
+
+/**
+ * Strip all context tags from text, leaving only the inner content.
+ * Handles nested tags and tags with attributes.
+ *
+ * @param text - Text potentially containing context tags
+ * @returns The text with all context tags removed
+ */
+export function stripTags(text: string): string {
+  if (!text) return '';
+
+  // Build a pattern that matches any known context tag (with optional attributes)
+  const tagNames = ALL_CONTEXT_TAGS.join('|');
+  const pattern = new RegExp(
+    `<(${tagNames})(\\s[^>]*)?>\\n?|</(${tagNames})>\\n?`,
+    'g',
+  );
+
+  return text.replace(pattern, '').trim();
+}
+
+/**
+ * A single parsed tagged section extracted from text.
+ */
+export interface ParsedTaggedContent {
+  tag: ContextTag;
+  content: string;
+  metadata?: Record<string, string>;
+}
+
+/**
+ * Parse text containing context tags into structured sections.
+ *
+ * @param text - Text containing one or more tagged sections
+ * @returns Array of parsed sections with tag, content, and optional metadata
+ */
+export function parseTaggedContent(text: string): ParsedTaggedContent[] {
+  if (!text) return [];
+
+  const tagNames = ALL_CONTEXT_TAGS.join('|');
+
+  // Match: <tagName optionalAttrs>\ncontent\n</tagName>
+  const pattern = new RegExp(
+    `<(${tagNames})((?:\\s+[a-zA-Z_][a-zA-Z0-9_-]*="[^"]*")*)>\\n?([\\s\\S]*?)\\n?<\\/\\1>`,
+    'g',
+  );
+
+  const results: ParsedTaggedContent[] = [];
+  let match: RegExpExecArray | null;
+
+  while ((match = pattern.exec(text)) !== null) {
+    const tag = match[1] as ContextTag;
+    const attrsRaw = match[2] || '';
+    const content = match[3].trim();
+
+    // Parse attributes from the opening tag
+    let metadata: Record<string, string> | undefined;
+    if (attrsRaw) {
+      metadata = {};
+      const attrPattern = /\s([a-zA-Z_][a-zA-Z0-9_-]*)="([^"]*)"/g;
+      let attrMatch: RegExpExecArray | null;
+      while ((attrMatch = attrPattern.exec(attrsRaw)) !== null) {
+        metadata[attrMatch[1]] = attrMatch[2].replace(/&quot;/g, '"');
+      }
+    }
+
+    results.push({ tag, content, metadata });
+  }
+
+  return results;
+}
+
+/**
+ * Get the default context tag for a given entry type, if any.
+ */
+export function getDefaultTagForEntryType(type: ContextEntryType): ContextTag | undefined {
+  return ENTRY_TYPE_TO_TAG[type];
+}
 
 export interface ContextEntry {
   id: string;
   type: ContextEntryType;
   content: string;
+  /** Content wrapped with its context tag (if applicable). Use this for LLM context building. */
+  taggedContent?: string;
   role: 'user' | 'assistant' | 'system' | 'tool';
   timestamp: Date;
   tokens: number;
@@ -36,6 +192,8 @@ export interface ContextMetadata {
   webUrl?: string;
   sourceId?: string;
   importance?: number; // 0-1
+  /** Explicit context tag override. When set, this tag is used instead of the auto-detected one. */
+  contextTag?: ContextTag;
 }
 
 export interface ContextWindow {
@@ -124,7 +282,7 @@ export class ContextManager extends BrowserEventEmitter {
   // Entry management
   addEntry(sessionId: string, entry: Omit<ContextEntry, 'id' | 'timestamp'>): ContextEntry {
     let window = this.windows.get(sessionId);
-    
+
     if (!window) {
       window = this.createWindow(sessionId);
     }
@@ -134,6 +292,23 @@ export class ContextManager extends BrowserEventEmitter {
       id: `ctx_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`,
       timestamp: new Date()
     };
+
+    // Auto-tag: determine the context tag from explicit metadata or entry type
+    const tag = fullEntry.metadata?.contextTag ?? getDefaultTagForEntryType(fullEntry.type);
+    if (tag && fullEntry.content) {
+      // Build tag metadata from entry metadata (only string values)
+      const tagMeta: Record<string, string> = {};
+      if (fullEntry.metadata?.toolName) tagMeta.tool = fullEntry.metadata.toolName;
+      if (fullEntry.metadata?.fileName) tagMeta.file = fullEntry.metadata.fileName;
+      if (fullEntry.metadata?.webUrl) tagMeta.url = fullEntry.metadata.webUrl;
+      if (fullEntry.metadata?.sourceId) tagMeta.source = fullEntry.metadata.sourceId;
+
+      fullEntry.taggedContent = wrapWithTag(
+        tag,
+        fullEntry.content,
+        Object.keys(tagMeta).length > 0 ? tagMeta : undefined,
+      );
+    }
 
     // Auto-pin if important
     if (entry.metadata?.importance && entry.metadata.importance >= this.config.pinImportantThreshold) {
@@ -174,13 +349,19 @@ export class ContextManager extends BrowserEventEmitter {
     });
   }
 
-  addToolResult(sessionId: string, toolId: string, result: string): ContextEntry {
+  addToolResult(sessionId: string, toolId: string, result: string, toolName?: string): ContextEntry {
+    // Apply observation variation to prevent repetition drift (Manus AI pattern)
+    const variator = getObservationVariator();
+    const variedContent = toolName
+      ? variator.wrapToolResult(toolName, result)
+      : result;
+
     return this.addEntry(sessionId, {
       type: 'tool_result',
-      content: result,
+      content: variedContent,
       role: 'tool',
-      tokens: this.estimateTokens(result),
-      metadata: { toolId }
+      tokens: this.estimateTokens(variedContent),
+      metadata: { toolId, toolName }
     });
   }
 
@@ -205,12 +386,68 @@ export class ContextManager extends BrowserEventEmitter {
   }
 
   addMemory(sessionId: string, content: string, sourceId?: string): ContextEntry {
+    // Apply observation variation to memory blocks (Manus AI pattern)
+    const variator = getObservationVariator();
+    const variedContent = variator.wrapMemoryBlock(content);
+
+    return this.addEntry(sessionId, {
+      type: 'memory',
+      content: variedContent,
+      role: 'system',
+      tokens: this.estimateTokens(variedContent),
+      metadata: { sourceId, importance: 0.7 }
+    });
+  }
+
+  // Convenience methods for tagged context injection
+
+  addKnowledge(sessionId: string, content: string, source?: string): ContextEntry {
     return this.addEntry(sessionId, {
       type: 'memory',
       content,
       role: 'system',
       tokens: this.estimateTokens(content),
-      metadata: { sourceId, importance: 0.7 }
+      metadata: { sourceId: source, contextTag: ContextTag.KNOWLEDGE, importance: 0.8 }
+    });
+  }
+
+  addLessons(sessionId: string, content: string): ContextEntry {
+    return this.addEntry(sessionId, {
+      type: 'memory',
+      content,
+      role: 'system',
+      tokens: this.estimateTokens(content),
+      metadata: { contextTag: ContextTag.LESSONS_CONTEXT, importance: 0.7 }
+    });
+  }
+
+  addReasoningGuidance(sessionId: string, content: string): ContextEntry {
+    return this.addEntry(sessionId, {
+      type: 'system_prompt',
+      content,
+      role: 'system',
+      tokens: this.estimateTokens(content),
+      metadata: { contextTag: ContextTag.REASONING_GUIDANCE }
+    });
+  }
+
+  addUserPreferences(sessionId: string, content: string): ContextEntry {
+    return this.addEntry(sessionId, {
+      type: 'memory',
+      content,
+      role: 'system',
+      tokens: this.estimateTokens(content),
+      metadata: { contextTag: ContextTag.USER_PREFERENCES, importance: 0.8 }
+    });
+  }
+
+  addCodebaseContext(sessionId: string, content: string, source?: string): ContextEntry {
+    return this.addEntry(sessionId, {
+      type: 'memory',
+      content,
+      role: 'system',
+      tokens: this.estimateTokens(content),
+      metadata: { sourceId: source, contextTag: ContextTag.CODEBASE_CONTEXT, importance: 0.6 }
     });
   }
 
@@ -255,6 +492,7 @@ export class ContextManager extends BrowserEventEmitter {
 
     const compressibleEntries = window.entries.filter(
       e => !e.pinned && !recentIds.has(e.id) && !e.compressed && e.type === 'message'
+        && !this.containsError(e.content) // Error preservation: keep errors (Manus AI pattern)
     );
 
     if (compressibleEntries.length < 3) return;
@@ -302,6 +540,24 @@ export class ContextManager extends BrowserEventEmitter {
       entriesCompressed: compressibleEntries.length,
       summaryId: summary.id
     });
+  }
+
+  /**
+   * Error preservation: detect error-containing messages to prevent
+   * compression. Keeping failed actions helps the model avoid repeating
+   * the same mistakes. (Manus AI "Keep the Wrong Stuff In" pattern)
+   */
+  private containsError(content: string): boolean {
+    const errorPatterns = [
+      /Error:/i,
+      /\bfailed\b/i,
+      /"success"\s*:\s*false/i,
+      /\[ERROR\]/i,
+      /\bexception\b/i,
+      /\btraceback\b/i,
+      /\bERROR\b/,
+    ];
+    return errorPatterns.some(p => p.test(content));
   }
 
   private createSummaryContent(entries: ContextEntry[]): string {
@@ -372,7 +628,36 @@ export class ContextManager extends BrowserEventEmitter {
     // Sort by timestamp
     result.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
 
+    // Inject todo context at END for attention bias (Manus AI pattern)
+    const todoContext = getTodoTracker().buildTodoContext(sessionId);
+    if (todoContext) {
+      const taggedTodo = wrapWithTag(ContextTag.TODO_CONTEXT, todoContext);
+      result.push({
+        id: `todo_inject_${Date.now().toString(36)}`,
+        type: 'system_prompt',
+        content: todoContext,
+        taggedContent: taggedTodo,
+        role: 'system',
+        timestamp: new Date(),
+        tokens: this.estimateTokens(todoContext),
+      });
+    }
+
     return result;
+  }
+
+  /**
+   * Build context for the LLM using tagged content where available.
+   * Returns an array of strings (one per entry) with context tags applied.
+   * This is the preferred method for constructing the LLM prompt.
+   */
+  buildTaggedContext(sessionId: string, options?: {
+    maxTokens?: number;
+    includeSystemPrompt?: boolean;
+    includeSummaries?: boolean;
+  }): string[] {
+    const entries = this.buildContext(sessionId, options);
+    return entries.map(e => e.taggedContent ?? e.content);
   }
 
   // Token estimation (simple approximation)

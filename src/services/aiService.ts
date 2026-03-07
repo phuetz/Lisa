@@ -2,6 +2,11 @@
  * AI Service - Service unifié pour les API IA
  * Supporte OpenAI, Anthropic (Claude), Gemini, et API locales (LM Studio, Ollama)
  * OpenClaw-inspired: connection management, retry, circuit breaker, model failover
+ *
+ * Types bridge:
+ *   Lisa AIMessage     ≈ @phuetz/ai-providers LLMMessage    (Lisa uses content:string, shared uses string|null)
+ *   Lisa AIStreamChunk ≈ @phuetz/ai-providers StreamChunk   (different shape: Lisa is simpler)
+ *   Lisa AIServiceConfig ≈ @phuetz/ai-providers ProviderConfig (Lisa adds provider field, uses baseURL not baseUrl)
  */
 
 import { getLMStudioUrl, getOllamaUrl, logNetworkConfig } from '../config/networkConfig';
@@ -11,8 +16,16 @@ import { getConnectionManager, type AIProviderType } from './ConnectionManager';
 import { RetryService, isRetryableError } from './RetryService';
 import { getCircuitBreaker, CircuitBreakerError } from './CircuitBreaker';
 
+// Shared types from @phuetz/ai-providers (imported as aliases for reference/interop)
+import type { LLMMessage, StreamChunk, ProviderConfig } from '@phuetz/ai-providers';
+export type { LLMMessage, StreamChunk, ProviderConfig };
+
 export type AIProvider = 'openai' | 'anthropic' | 'gemini' | 'xai' | 'local' | 'lmstudio' | 'ollama';
 
+/**
+ * Lisa-specific message type. Compatible with LLMMessage but uses
+ * non-nullable content (string instead of string | null).
+ */
 export interface AIMessage {
   role: 'system' | 'user' | 'assistant' | 'tool';
   content: string;
@@ -26,12 +39,20 @@ export interface AIMessage {
   tool_call_id?: string;
 }
 
+/**
+ * Lisa-specific stream chunk. Simpler than shared StreamChunk
+ * (which uses a discriminated type field).
+ */
 export interface AIStreamChunk {
   content: string;
   done: boolean;
   error?: string;
 }
 
+/**
+ * Lisa-specific service config. Extends shared ProviderConfig concept
+ * with a provider discriminator and baseURL (capital URL).
+ */
 export interface AIServiceConfig {
   provider: AIProvider;
   apiKey?: string;

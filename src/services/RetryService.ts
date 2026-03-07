@@ -1,15 +1,22 @@
 /**
- * RetryService - OpenClaw-Inspired Retry with Exponential Backoff
+ * RetryService - Retry with Exponential Backoff
  *
- * Provides automatic retry logic for transient failures with:
- * - Exponential backoff with configurable delays
- * - Jitter to prevent thundering herd
- * - Retryable error classification
- * - Attempt tracking and logging
+ * Delegates to @phuetz/ai-providers for core retry logic.
+ * Preserves Lisa-specific RetryService class for stateful config management
+ * and backward-compatible API (withRetry, withRetryResult, wrap).
  */
 
+// Re-export shared retry primitives from @phuetz/ai-providers
+export {
+  retry,
+  retryWithResult,
+  RetryStrategies,
+  RetryPredicates,
+} from '@phuetz/ai-providers';
+export type { RetryOptions, RetryResult } from '@phuetz/ai-providers';
+
 // ============================================================================
-// Types
+// Lisa-Specific Types (backward compat)
 // ============================================================================
 
 export interface RetryConfig {
@@ -25,19 +32,6 @@ export interface RetryConfig {
   retryableErrors: string[];
   /** Callback on each retry attempt */
   onRetry?: (attempt: number, error: Error, delayMs: number) => void;
-}
-
-export interface RetryResult<T> {
-  /** Whether the operation succeeded */
-  success: boolean;
-  /** The result if successful */
-  result?: T;
-  /** The error if all retries failed */
-  error?: Error;
-  /** Number of attempts made */
-  attempts: number;
-  /** Total time spent including delays (ms) */
-  totalTimeMs: number;
 }
 
 export type RetryableError =
@@ -77,7 +71,7 @@ const DEFAULT_CONFIG: RetryConfig = {
 };
 
 // ============================================================================
-// Error Classification
+// Error Classification (Lisa-specific, keyword-based)
 // ============================================================================
 
 /**
@@ -87,7 +81,6 @@ export function classifyError(error: Error): RetryableError | 'non_retryable' {
   const message = error.message.toLowerCase();
   const name = error.name.toLowerCase();
 
-  // Rate limiting
   if (
     message.includes('rate limit') ||
     message.includes('429') ||
@@ -97,7 +90,6 @@ export function classifyError(error: Error): RetryableError | 'non_retryable' {
     return 'rate_limit';
   }
 
-  // Timeout
   if (
     message.includes('timeout') ||
     message.includes('etimedout') ||
@@ -107,7 +99,6 @@ export function classifyError(error: Error): RetryableError | 'non_retryable' {
     return 'timeout';
   }
 
-  // Network errors
   if (
     message.includes('network') ||
     message.includes('econnreset') ||
@@ -119,7 +110,6 @@ export function classifyError(error: Error): RetryableError | 'non_retryable' {
     return 'network';
   }
 
-  // Server errors (5xx)
   if (
     message.includes('500') ||
     message.includes('502') ||
@@ -128,7 +118,6 @@ export function classifyError(error: Error): RetryableError | 'non_retryable' {
     return 'server_error';
   }
 
-  // Service unavailable
   if (
     message.includes('503') ||
     message.includes('unavailable') ||
@@ -137,7 +126,6 @@ export function classifyError(error: Error): RetryableError | 'non_retryable' {
     return 'unavailable';
   }
 
-  // Overloaded
   if (
     message.includes('504') ||
     message.includes('overloaded') ||
@@ -156,7 +144,6 @@ export function isRetryableError(error: Error, config: RetryConfig): boolean {
   const classification = classifyError(error);
 
   if (classification === 'non_retryable') {
-    // Check if any retryable keyword is in the error
     const message = error.message.toLowerCase();
     return config.retryableErrors.some(keyword =>
       message.includes(keyword.toLowerCase())
@@ -177,30 +164,26 @@ export function calculateDelay(
   attempt: number,
   config: RetryConfig
 ): number {
-  // Exponential backoff: minDelay * 2^attempt
   const exponentialDelay = config.minDelayMs * Math.pow(2, attempt - 1);
-
-  // Cap at maxDelay
   const cappedDelay = Math.min(exponentialDelay, config.maxDelayMs);
-
-  // Add jitter (+/- jitter%)
   const jitterRange = cappedDelay * config.jitter;
   const jitter = (Math.random() * 2 - 1) * jitterRange;
-
   return Math.round(cappedDelay + jitter);
 }
 
-/**
- * Sleep for a given number of milliseconds
- */
 function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 // ============================================================================
-// RetryService Class
+// Lisa-Specific RetryService Class
 // ============================================================================
 
+/**
+ * Stateful retry service used by AIService.
+ * Uses Lisa's RetryConfig (attempts/minDelayMs/maxDelayMs/jitter) API
+ * which differs from the shared `retry()` function's RetryOptions API.
+ */
 export class RetryService {
   private config: RetryConfig;
 
@@ -208,9 +191,6 @@ export class RetryService {
     this.config = { ...DEFAULT_CONFIG, ...config };
   }
 
-  /**
-   * Execute a function with automatic retry on failure
-   */
   async withRetry<T>(
     fn: () => Promise<T>,
     config?: Partial<RetryConfig>
@@ -221,24 +201,14 @@ export class RetryService {
 
     for (let attempt = 1; attempt <= mergedConfig.attempts; attempt++) {
       try {
-        const result = await fn();
-        return result;
+        return await fn();
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error));
 
-        // Check if we should retry
-        if (attempt >= mergedConfig.attempts) {
-          break; // No more retries
-        }
+        if (attempt >= mergedConfig.attempts) break;
+        if (!isRetryableError(lastError, mergedConfig)) throw lastError;
 
-        if (!isRetryableError(lastError, mergedConfig)) {
-          throw lastError; // Non-retryable error
-        }
-
-        // Calculate delay
         const delay = calculateDelay(attempt, mergedConfig);
-
-        // Notify callback
         if (mergedConfig.onRetry) {
           mergedConfig.onRetry(attempt, lastError, delay);
         }
@@ -249,12 +219,10 @@ export class RetryService {
           `Retrying in ${delay}ms...`
         );
 
-        // Wait before retry
         await sleep(delay);
       }
     }
 
-    // All retries exhausted
     const totalTime = Date.now() - startTime;
     console.error(
       `[RetryService] All ${mergedConfig.attempts} attempts failed after ${totalTime}ms`
@@ -263,13 +231,10 @@ export class RetryService {
     throw lastError || new Error('All retry attempts failed');
   }
 
-  /**
-   * Execute a function with retry and return detailed result
-   */
   async withRetryResult<T>(
     fn: () => Promise<T>,
     config?: Partial<RetryConfig>
-  ): Promise<RetryResult<T>> {
+  ): Promise<{ success: boolean; result?: T; error?: Error; attempts: number; totalTimeMs: number }> {
     const mergedConfig = { ...this.config, ...config };
     const startTime = Date.now();
     let attempts = 0;
@@ -277,47 +242,25 @@ export class RetryService {
 
     for (let attempt = 1; attempt <= mergedConfig.attempts; attempt++) {
       attempts = attempt;
-
       try {
         const result = await fn();
-        return {
-          success: true,
-          result,
-          attempts,
-          totalTimeMs: Date.now() - startTime
-        };
+        return { success: true, result, attempts, totalTimeMs: Date.now() - startTime };
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error));
-
-        if (attempt >= mergedConfig.attempts) {
-          break;
-        }
-
-        if (!isRetryableError(lastError, mergedConfig)) {
-          break;
-        }
+        if (attempt >= mergedConfig.attempts) break;
+        if (!isRetryableError(lastError, mergedConfig)) break;
 
         const delay = calculateDelay(attempt, mergedConfig);
-
         if (mergedConfig.onRetry) {
           mergedConfig.onRetry(attempt, lastError, delay);
         }
-
         await sleep(delay);
       }
     }
 
-    return {
-      success: false,
-      error: lastError,
-      attempts,
-      totalTimeMs: Date.now() - startTime
-    };
+    return { success: false, error: lastError, attempts, totalTimeMs: Date.now() - startTime };
   }
 
-  /**
-   * Create a retryable version of a function
-   */
   wrap<T extends unknown[], R>(
     fn: (...args: T) => Promise<R>,
     config?: Partial<RetryConfig>
@@ -325,16 +268,10 @@ export class RetryService {
     return (...args: T) => this.withRetry(() => fn(...args), config);
   }
 
-  /**
-   * Update configuration
-   */
   updateConfig(config: Partial<RetryConfig>): void {
     this.config = { ...this.config, ...config };
   }
 
-  /**
-   * Get current configuration
-   */
   getConfig(): RetryConfig {
     return { ...this.config };
   }
