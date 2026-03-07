@@ -29,6 +29,16 @@ export function ServiceProvider({ children }: ServiceProviderProps) {
           import('../services/ProactiveSuggestionsService'),
         ]);
 
+        // Load knowledge graph from localStorage
+        try {
+          const { getKnowledgeGraph } = await import('../services/KnowledgeGraphService');
+          const kg = getKnowledgeGraph();
+          const loaded = kg.load();
+          console.log('[ServiceProvider] Knowledge graph loaded:', loaded ? `${kg.stats().tripleCount} triples` : 'empty');
+        } catch (e) {
+          console.debug('[ServiceProvider] Knowledge graph load failed:', e);
+        }
+
         // Initialize Pyodide for Python execution
         await pyodideService.preload();
         console.log('[ServiceProvider] Pyodide initialized');

@@ -89,12 +89,22 @@ export {
   type GenerateResult
 } from './DeployService';
 
+// Knowledge Tools (LLM-callable)
+export { registerKnowledgeTools, getKnowledgeTools } from './KnowledgeTools';
+
+// Memory Context Builder
+export {
+  MemoryContextBuilder,
+  getMemoryContextBuilder
+} from './MemoryContextBuilder';
+
 // Knowledge Graph
 export {
   KnowledgeGraph,
   getKnowledgeGraph,
   type Triple,
   type Predicate,
+  type MemoryCategory,
   type TriplePattern,
   type GraphStats,
   type SubgraphResult,
@@ -102,3 +112,12 @@ export {
   type VisualizationEdge,
   type VisualizationData
 } from './KnowledgeGraphService';
+
+// Auto-Capture Service
+export {
+  AutoCaptureService,
+  getAutoCaptureService,
+  type CapturedFact,
+  type CaptureStats,
+  type FactCategory
+} from './AutoCaptureService';

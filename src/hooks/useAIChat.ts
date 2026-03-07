@@ -250,6 +250,20 @@ ${options.systemPrompt || ''}`;
         systemContent = options.systemPrompt || '';
       }
 
+      // Inject memory context from knowledge graph
+      try {
+        const { getMemoryContextBuilder } = await import('../services/MemoryContextBuilder');
+        const memoryBuilder = getMemoryContextBuilder();
+        const memoryContext = memoryBuilder.getRelevantContext(content);
+        if (memoryContext) {
+          systemContent = systemContent
+            ? `${systemContent}\n\n${memoryContext}`
+            : memoryContext;
+        }
+      } catch (e) {
+        console.debug('[Memory] Memory context injection failed:', e);
+      }
+
       // Add web search results if available
       if (webSearchContext) {
         systemContent = systemContent
@@ -394,6 +408,18 @@ ${options.systemPrompt || ''}`;
       // Finaliser le message
       updateMessage(assistantMessageId, fullContent);
       setStreamingStage('complete');
+
+      // Auto-capture facts from conversation into knowledge graph
+      try {
+        const { getAutoCaptureService } = await import('../services/AutoCaptureService');
+        const autoCapture = getAutoCaptureService();
+        await autoCapture.captureFromMessage(content, 'user');
+        if (fullContent) {
+          await autoCapture.captureFromMessage(fullContent, 'assistant');
+        }
+      } catch (e) {
+        console.debug('[Memory] Auto-capture failed:', e);
+      }
 
     } catch (error) {
       console.error('Error sending message:', error);

@@ -18,12 +18,13 @@ import { aiService, type AIMessage, type AIStreamChunk, type AIProvider } from '
 import { toolCallingService, type ToolCall, type ToolResult, type ToolDefinition } from './ToolCallingService';
 import { registerWebTools, getWebTools } from './WebTools';
 import { registerTodoTools, getTodoTools } from './TodoTools';
+import { registerKnowledgeTools, getKnowledgeTools } from './KnowledgeTools';
 import { sanitizeMessagesForProvider } from './ToolSanitizer';
 import { toolLogger } from './ToolLogger';
 import { toolPolicyService } from './ToolPolicy';
 
 // Re-export for external use
-export { getWebTools, getTodoTools };
+export { getWebTools, getTodoTools, getKnowledgeTools };
 export { toolLogger } from './ToolLogger';
 export { toolPolicyService, type ToolPolicy } from './ToolPolicy';
 
@@ -93,6 +94,9 @@ class AIWithToolsService {
 
     // Register todo tools
     registerTodoTools();
+
+    // Register knowledge graph tools
+    registerKnowledgeTools();
 
     this.initialized = true;
     const tools = toolCallingService.getTools();
@@ -721,7 +725,7 @@ class AIWithToolsService {
   /**
    * Detect what type of request this is (todo, web_search, general)
    */
-  private detectRequestType(messages: AIMessage[]): 'todo' | 'web' | 'news' | 'general' {
+  private detectRequestType(messages: AIMessage[]): 'todo' | 'web' | 'news' | 'knowledge' | 'general' {
     // Find the ORIGINAL user message (not function responses which are encoded as user role)
     // Skip messages that look like JSON (function call/response markers)
     const userMessages = messages.filter(m => {
@@ -775,6 +779,27 @@ class AIWithToolsService {
       return 'news';
     }
 
+    // Knowledge triggers
+    const knowledgeTriggers = [
+      'souviens-toi', 'souviens toi', 'retiens', 'mémorise', 'memorise',
+      'rappelle-toi', 'rappelle toi', 'n\'oublie pas', 'note que',
+      'tu sais que', 'tu connais', 'qu\'est-ce que tu sais',
+      'remember', 'what do you know',
+      'qui est', 'qui suis-je', 'tu te souviens', 'tu te rappelles',
+      'ce que tu sais sur', 'ce que tu sais de', 'parle-moi de',
+      'qu\'as tu mémorisé', 'qu\'as-tu mémorisé', 'ta mémoire',
+      'je m\'appelle', 'mon prénom est', 'mon nom est', 'mon nom c\'est',
+      'j\'habite', 'je vis à', 'je vis a', 'je travaille',
+      'j\'aime', 'je préfère', 'je prefere', 'je déteste', 'je deteste',
+      'mon métier', 'ma profession', 'mon âge', 'mon age',
+      'quel est mon', 'comment je m\'appelle', 'tu me connais'
+    ];
+
+    if (knowledgeTriggers.some(trigger => content.includes(trigger))) {
+      console.log('[AIWithTools] Detected KNOWLEDGE request');
+      return 'knowledge';
+    }
+
     // Web search triggers (other than news)
     const webTriggers = [
       'programme tv', 'programme télé', 'télé ce soir', 'tv ce soir',
@@ -795,9 +820,10 @@ class AIWithToolsService {
    * Get the appropriate tools for a given request type
    * Also applies policy-based filtering
    */
-  private getToolsForRequestType(requestType: 'todo' | 'web' | 'news' | 'general'): ToolDefinition[] {
+  private getToolsForRequestType(requestType: 'todo' | 'web' | 'news' | 'knowledge' | 'general'): ToolDefinition[] {
     const todoTools = getTodoTools();
     const webTools = getWebTools();
+    const knowledgeTools = getKnowledgeTools();
 
     let tools: ToolDefinition[];
 
@@ -817,10 +843,15 @@ class AIWithToolsService {
         tools = webTools;
         console.log('[AIWithTools] Providing WEB tools:', tools.map(t => t.name));
         break;
+      case 'knowledge':
+        // Return knowledge graph tools for memory/recall queries
+        tools = knowledgeTools;
+        console.log('[AIWithTools] Providing KNOWLEDGE tools:', tools.map(t => t.name));
+        break;
       case 'general':
       default:
         // Return all tools for general queries
-        tools = [...todoTools, ...webTools];
+        tools = [...todoTools, ...webTools, ...knowledgeTools];
         console.log('[AIWithTools] Providing ALL tools:', tools.map(t => t.name));
         break;
     }

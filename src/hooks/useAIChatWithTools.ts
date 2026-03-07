@@ -106,6 +106,18 @@ Tu peux utiliser des outils pour rechercher des informations sur le web quand n�
 Réponds toujours en français de manière naturelle et utile.
 Aujourd'hui nous sommes le ${new Date().toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}.`;
 
+      // Inject memory context from knowledge graph
+      try {
+        const { getMemoryContextBuilder } = await import('../services/MemoryContextBuilder');
+        const memoryBuilder = getMemoryContextBuilder();
+        const memoryContext = memoryBuilder.getRelevantContext(content);
+        if (memoryContext) {
+          systemContent += '\n\n' + memoryContext;
+        }
+      } catch (e) {
+        console.debug('[Memory] Memory context injection failed:', e);
+      }
+
       // RAG context
       const shouldUseRAG = options.enableRAG !== false && ragEnabled;
       if (shouldUseRAG) {
@@ -201,6 +213,18 @@ Aujourd'hui nous sommes le ${new Date().toLocaleDateString('fr-FR', { weekday: '
       // Finalize
       updateMessage(assistantMessageId, fullContent);
       setStreamingStage('complete');
+
+      // Auto-capture facts from conversation into knowledge graph
+      try {
+        const { getAutoCaptureService } = await import('../services/AutoCaptureService');
+        const autoCapture = getAutoCaptureService();
+        await autoCapture.captureFromMessage(content, 'user');
+        if (fullContent) {
+          await autoCapture.captureFromMessage(fullContent, 'assistant');
+        }
+      } catch (e) {
+        console.debug('[Memory] Auto-capture failed:', e);
+      }
 
     } catch (error) {
       console.error('[useAIChatWithTools] Error:', error);

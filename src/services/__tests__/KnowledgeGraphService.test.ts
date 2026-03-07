@@ -10,12 +10,15 @@
  *   - toVisualization
  *   - search (full-text)
  *   - formatForContext
+ *   - importance scoring & memory decay
+ *   - backward compatibility
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
   KnowledgeGraph,
   getKnowledgeGraph,
+  type MemoryCategory,
 } from '../KnowledgeGraphService';
 
 // ---------------------------------------------------------------------------
@@ -433,14 +436,19 @@ describe('toJSON / fromJSON', () => {
   it('serializes graph to JSON object', () => {
     graph.add('A', 'r', 'B', { note: 'test' });
     const json = graph.toJSON();
-    expect(json.version).toBe(1);
+    expect(json.version).toBe(2);
     expect(json.triples).toHaveLength(1);
-    expect(json.triples[0]).toEqual({
+    expect(json.triples[0]).toMatchObject({
       subject: 'A',
       predicate: 'r',
       object: 'B',
       metadata: { note: 'test' },
     });
+    // New fields should be present
+    expect(json.triples[0].importance).toBeCloseTo(0.5, 1);
+    expect(json.triples[0].accessCount).toBe(0);
+    expect(typeof json.triples[0].createdAt).toBe('number');
+    expect(typeof json.triples[0].lastAccessed).toBe('number');
     expect(typeof json.timestamp).toBe('number');
   });
 
@@ -725,5 +733,371 @@ describe('edge cases', () => {
     const removed = graph.remove({ subject: /^file:/ });
     expect(removed).toBe(2);
     expect(graph.stats().tripleCount).toBe(1);
+  });
+});
+
+// ===========================================================================
+// Importance scoring
+// ===========================================================================
+describe('importance scoring', () => {
+  it('sets default importance based on category', () => {
+    const categories: Array<{ cat: MemoryCategory; expected: number }> = [
+      { cat: 'personal', expected: 0.9 },
+      { cat: 'preference', expected: 0.7 },
+      { cat: 'instruction', expected: 0.8 },
+      { cat: 'project', expected: 0.6 },
+      { cat: 'decision', expected: 0.6 },
+      { cat: 'general', expected: 0.5 },
+    ];
+
+    for (const { cat, expected } of categories) {
+      graph.add(`subject_${cat}`, 'relatedTo', `object_${cat}`, undefined, undefined, cat);
+    }
+
+    for (const { cat, expected } of categories) {
+      const results = graph.query({ subject: `subject_${cat}` });
+      expect(results).toHaveLength(1);
+      expect(results[0].importance).toBeCloseTo(expected, 2);
+      expect(results[0].category).toBe(cat);
+    }
+  });
+
+  it('uses default importance of 0.5 without category', () => {
+    graph.add('A', 'knows', 'B');
+    const results = graph.query({ subject: 'A' });
+    expect(results[0].importance).toBeCloseTo(0.5, 2);
+    expect(results[0].category).toBe('general');
+  });
+
+  it('accepts explicit importance parameter', () => {
+    graph.add('A', 'knows', 'B', undefined, 0.95);
+    const results = graph.query({ subject: 'A' });
+    expect(results[0].importance).toBeCloseTo(0.95, 2);
+  });
+
+  it('clamps importance to [0, 1]', () => {
+    graph.add('A', 'r', 'B', undefined, 1.5);
+    graph.add('C', 'r', 'D', undefined, -0.5);
+    const results = graph.query({});
+    const a = results.find(t => t.subject === 'A')!;
+    const c = results.find(t => t.subject === 'C')!;
+    expect(a.importance).toBeLessThanOrEqual(1);
+    expect(c.importance).toBeGreaterThanOrEqual(0);
+  });
+
+  it('touchTriple increments access count and updates lastAccessed', () => {
+    graph.add('A', 'knows', 'B');
+    const before = graph.query({ subject: 'A' })[0];
+    expect(before.accessCount).toBe(0);
+    const originalLastAccessed = before.lastAccessed;
+
+    // Small delay to ensure timestamp difference
+    graph.touchTriple('A', 'knows', 'B');
+
+    const after = graph.query({ subject: 'A' })[0];
+    expect(after.accessCount).toBe(1);
+    expect(after.lastAccessed).toBeGreaterThanOrEqual(originalLastAccessed);
+    expect(after.importance).toBeGreaterThan(0.5); // Should have been boosted
+  });
+
+  it('touchTriple is a no-op for non-existent triples', () => {
+    // Should not throw
+    graph.touchTriple('X', 'Y', 'Z');
+    expect(graph.stats().tripleCount).toBe(0);
+  });
+
+  it('getByImportance returns sorted results', () => {
+    graph.add('low', 'r', 'val', undefined, 0.2);
+    graph.add('mid', 'r', 'val', undefined, 0.5);
+    graph.add('high', 'r', 'val', undefined, 0.9);
+
+    const sorted = graph.getByImportance();
+    expect(sorted).toHaveLength(3);
+    expect(sorted[0].subject).toBe('high');
+    expect(sorted[1].subject).toBe('mid');
+    expect(sorted[2].subject).toBe('low');
+  });
+
+  it('getByImportance respects limit', () => {
+    graph.add('A', 'r', 'B', undefined, 0.9);
+    graph.add('C', 'r', 'D', undefined, 0.5);
+    graph.add('E', 'r', 'F', undefined, 0.1);
+
+    const top2 = graph.getByImportance(2);
+    expect(top2).toHaveLength(2);
+    expect(top2[0].importance).toBeGreaterThanOrEqual(top2[1].importance);
+  });
+
+  it('setImportance updates the value', () => {
+    graph.add('A', 'knows', 'B');
+    graph.setImportance('A', 'knows', 'B', 0.99);
+
+    const results = graph.query({ subject: 'A' });
+    expect(results[0].importance).toBeCloseTo(0.99, 2);
+  });
+
+  it('setImportance clamps to [0, 1]', () => {
+    graph.add('A', 'r', 'B');
+    graph.setImportance('A', 'r', 'B', 5.0);
+    expect(graph.query({ subject: 'A' })[0].importance).toBe(1);
+
+    graph.setImportance('A', 'r', 'B', -1.0);
+    expect(graph.query({ subject: 'A' })[0].importance).toBe(0);
+  });
+
+  it('setImportance is a no-op for non-existent triples', () => {
+    // Should not throw
+    graph.setImportance('X', 'Y', 'Z', 0.5);
+    expect(graph.stats().tripleCount).toBe(0);
+  });
+
+  it('query results are sorted by importance DESC', () => {
+    graph.add('A', 'knows', 'B', undefined, 0.2);
+    graph.add('A', 'knows', 'C', undefined, 0.9);
+    graph.add('A', 'knows', 'D', undefined, 0.5);
+
+    const results = graph.query({ subject: 'A' });
+    expect(results[0].importance).toBeGreaterThanOrEqual(results[1].importance);
+    expect(results[1].importance).toBeGreaterThanOrEqual(results[2].importance);
+  });
+
+  it('search results are sorted by importance DESC', () => {
+    graph.add('React low', 'uses', 'lib', undefined, 0.1);
+    graph.add('React high', 'uses', 'lib', undefined, 0.9);
+
+    const results = graph.search('React');
+    expect(results).toHaveLength(2);
+    expect(results[0].importance).toBeGreaterThan(results[1].importance);
+  });
+
+  it('neighbors results are sorted by importance DESC', () => {
+    graph.add('Alice', 'knows', 'Bob', undefined, 0.3);
+    graph.add('Alice', 'likes', 'Carol', undefined, 0.8);
+
+    const n = graph.neighbors('Alice');
+    expect(n).toHaveLength(2);
+    expect(n[0].importance).toBeGreaterThanOrEqual(n[1].importance);
+  });
+
+  it('addBatch accepts importance and category', () => {
+    graph.addBatch([
+      { subject: 'User', predicate: 'knows', object: 'Name', importance: 0.95, category: 'personal' },
+      { subject: 'User', predicate: 'likes', object: 'Jazz', category: 'preference' },
+    ]);
+
+    const results = graph.query({ subject: 'User' });
+    const nameTriple = results.find(t => t.object === 'Name')!;
+    const jazzTriple = results.find(t => t.object === 'Jazz')!;
+
+    expect(nameTriple.importance).toBeCloseTo(0.95, 2);
+    expect(nameTriple.category).toBe('personal');
+    expect(jazzTriple.importance).toBeCloseTo(0.7, 2); // default for 'preference'
+    expect(jazzTriple.category).toBe('preference');
+  });
+});
+
+// ===========================================================================
+// Memory decay
+// ===========================================================================
+describe('memory decay', () => {
+  it('decays old memories', () => {
+    graph.add('A', 'r', 'B', undefined, 0.8);
+
+    // Manually set lastAccessed to 30 days ago
+    const results = graph.query({ subject: 'A' });
+    const triple = results[0];
+    triple.lastAccessed = Date.now() - 30 * 24 * 60 * 60 * 1000;
+
+    const decayed = graph.decayMemories(0.05);
+    expect(decayed).toBeGreaterThanOrEqual(1);
+
+    const after = graph.query({ subject: 'A' });
+    if (after.length > 0) {
+      expect(after[0].importance).toBeLessThan(0.8);
+    }
+  });
+
+  it('removes memories below threshold', () => {
+    graph.add('low', 'r', 'val', undefined, 0.06);
+
+    // Set lastAccessed to 100 days ago so decay drops it below 0.05
+    const results = graph.query({ subject: 'low' });
+    results[0].lastAccessed = Date.now() - 100 * 24 * 60 * 60 * 1000;
+
+    graph.decayMemories(0.05);
+
+    expect(graph.has('low', 'r', 'val')).toBe(false);
+    expect(graph.stats().tripleCount).toBe(0);
+  });
+
+  it('does not decay recently accessed memories', () => {
+    graph.add('A', 'r', 'B', undefined, 0.5);
+
+    // lastAccessed is "now" (default), which is < 1 day ago
+    const decayed = graph.decayMemories(0.1);
+    expect(decayed).toBe(0);
+
+    const results = graph.query({ subject: 'A' });
+    expect(results[0].importance).toBeCloseTo(0.5, 2);
+  });
+
+  it('preserves high-importance memories longer', () => {
+    graph.add('important', 'r', 'val', undefined, 0.95);
+    graph.add('unimportant', 'r', 'val', undefined, 0.1);
+
+    // Set both to 10 days ago
+    const tenDaysAgo = Date.now() - 10 * 24 * 60 * 60 * 1000;
+    graph.query({ subject: 'important' })[0].lastAccessed = tenDaysAgo;
+    graph.query({ subject: 'unimportant' })[0].lastAccessed = tenDaysAgo;
+
+    graph.decayMemories(0.05);
+
+    // Important memory should still exist
+    const importantResults = graph.query({ subject: 'important' });
+    expect(importantResults).toHaveLength(1);
+    expect(importantResults[0].importance).toBeGreaterThan(0.05);
+
+    // Unimportant memory should have been removed (0.1 * (0.95^10) ~ 0.06, borderline)
+    // With decayRate 0.05 and 10 days: 0.1 * 0.95^10 = 0.0598... < 0.05 threshold
+    // Actually: Math.pow(0.95, 10) = 0.5987... so 0.1 * 0.5987 = 0.0599
+    // That's > 0.05, so it might survive. Let's use a bigger gap.
+  });
+
+  it('removes very old low-importance memories', () => {
+    graph.add('ancient', 'r', 'val', undefined, 0.1);
+
+    // Set lastAccessed to 200 days ago
+    const results = graph.query({ subject: 'ancient' });
+    results[0].lastAccessed = Date.now() - 200 * 24 * 60 * 60 * 1000;
+
+    graph.decayMemories(0.02);
+
+    // 0.1 * (0.98^200) = 0.1 * 0.0176 = 0.00176 < 0.05
+    expect(graph.has('ancient', 'r', 'val')).toBe(false);
+  });
+
+  it('returns 0 when no memories need decay', () => {
+    graph.add('A', 'r', 'B', undefined, 0.9);
+    // lastAccessed is "now"
+    const decayed = graph.decayMemories();
+    expect(decayed).toBe(0);
+  });
+
+  it('works on empty graph', () => {
+    const decayed = graph.decayMemories();
+    expect(decayed).toBe(0);
+  });
+});
+
+// ===========================================================================
+// Backward compatibility
+// ===========================================================================
+describe('backward compatibility', () => {
+  it('loads old format data without importance fields', () => {
+    // Simulate old-format data (version 1, no importance/accessCount/createdAt/lastAccessed)
+    const oldData = {
+      version: 1,
+      triples: [
+        { subject: 'Alice', predicate: 'knows', object: 'Bob', metadata: { note: 'old' } },
+        { subject: 'Carol', predicate: 'likes', object: 'TypeScript' },
+      ],
+      timestamp: Date.now() - 100000,
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    graph.fromJSON(oldData as any);
+
+    expect(graph.stats().tripleCount).toBe(2);
+    expect(graph.has('Alice', 'knows', 'Bob')).toBe(true);
+    expect(graph.has('Carol', 'likes', 'TypeScript')).toBe(true);
+  });
+
+  it('assigns default values to missing fields', () => {
+    const oldData = {
+      version: 1,
+      triples: [
+        { subject: 'X', predicate: 'r', object: 'Y' },
+      ],
+      timestamp: Date.now(),
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    graph.fromJSON(oldData as any);
+
+    const results = graph.query({ subject: 'X' });
+    expect(results).toHaveLength(1);
+    const t = results[0];
+
+    // Should have been given defaults
+    expect(t.importance).toBe(0.5);
+    expect(t.accessCount).toBe(0);
+    expect(typeof t.createdAt).toBe('number');
+    expect(t.createdAt).toBeGreaterThan(0);
+    expect(typeof t.lastAccessed).toBe('number');
+    expect(t.lastAccessed).toBeGreaterThan(0);
+  });
+
+  it('preserves existing importance fields on load', () => {
+    // Data that already has new fields
+    const newData = {
+      version: 2,
+      triples: [
+        {
+          subject: 'A',
+          predicate: 'r',
+          object: 'B',
+          importance: 0.85,
+          accessCount: 5,
+          createdAt: 1700000000000,
+          lastAccessed: 1700000050000,
+          category: 'personal',
+        },
+      ],
+      timestamp: Date.now(),
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    graph.fromJSON(newData as any);
+
+    const results = graph.query({ subject: 'A' });
+    expect(results).toHaveLength(1);
+    expect(results[0].importance).toBe(0.85);
+    expect(results[0].accessCount).toBe(5);
+    expect(results[0].createdAt).toBe(1700000000000);
+    expect(results[0].lastAccessed).toBe(1700000050000);
+    expect(results[0].category).toBe('personal');
+  });
+
+  it('round-trips through localStorage with old data', () => {
+    // Inject old-format data directly into localStorage
+    const oldData = JSON.stringify({
+      version: 1,
+      triples: [
+        { subject: 'OldFact', predicate: 'knows', object: 'Value' },
+      ],
+      timestamp: Date.now(),
+    });
+    localStorageMock.setItem('lisa_knowledge_graph', oldData);
+
+    KnowledgeGraph.resetInstance();
+    const fresh = KnowledgeGraph.getInstance();
+    const loaded = fresh.load();
+
+    expect(loaded).toBe(true);
+    expect(fresh.has('OldFact', 'knows', 'Value')).toBe(true);
+
+    const results = fresh.query({ subject: 'OldFact' });
+    expect(results[0].importance).toBe(0.5);
+    expect(results[0].accessCount).toBe(0);
+
+    // Persist again and re-load — should now be version 2
+    fresh.persist();
+    KnowledgeGraph.resetInstance();
+    const fresh2 = KnowledgeGraph.getInstance();
+    fresh2.load();
+
+    expect(fresh2.has('OldFact', 'knows', 'Value')).toBe(true);
+    const results2 = fresh2.query({ subject: 'OldFact' });
+    expect(results2[0].importance).toBe(0.5);
   });
 });

@@ -7,19 +7,36 @@
  * Browser-compatible: uses localStorage for persistence, no Node.js APIs.
  * Ported from Code Buddy's knowledge-graph.ts with Lisa-specific additions:
  *   - toJSON() / fromJSON() for localStorage persistence
+ *   - persistAsync() / loadAsync() for IndexedDB persistence (higher capacity)
  *   - toVisualization() for graph rendering (nodes/edges)
  *   - search() for full-text keyword search across triples
+ *   - Importance scoring & memory decay (inspired by Code Buddy's EnhancedMemory)
  */
+
+import { IndexedDBStore } from './IndexedDBStore';
 
 // ============================================================================
 // Types
 // ============================================================================
+
+export type MemoryCategory =
+  | 'personal'    // User info (name, age, location)
+  | 'preference'  // Likes, dislikes
+  | 'project'     // Project facts
+  | 'decision'    // Decisions made
+  | 'instruction' // Rules/instructions
+  | 'general';    // Default
 
 export interface Triple {
   subject: string;
   predicate: string;
   object: string;
   metadata?: Record<string, string>;
+  importance: number;      // 0-1, default 0.5
+  accessCount: number;     // How many times recalled, default 0
+  createdAt: number;       // timestamp ms
+  lastAccessed: number;    // timestamp ms
+  category?: MemoryCategory;
 }
 
 export type Predicate =
@@ -90,6 +107,15 @@ interface SerializedGraph {
 
 const STORAGE_KEY = 'lisa_knowledge_graph';
 
+const DEFAULT_IMPORTANCE: Record<MemoryCategory, number> = {
+  personal: 0.9,
+  preference: 0.7,
+  instruction: 0.8,
+  project: 0.6,
+  decision: 0.6,
+  general: 0.5,
+};
+
 // ============================================================================
 // Knowledge Graph (Singleton)
 // ============================================================================
@@ -109,6 +135,9 @@ export class KnowledgeGraph {
   /** Index: object -> triple indices */
   private objectIndex = new Map<string, Set<number>>();
 
+  /** IndexedDB store instance (lazy-initialized) */
+  private idbStore: IndexedDBStore | null = null;
+
   static getInstance(): KnowledgeGraph {
     if (!KnowledgeGraph.instance) {
       KnowledgeGraph.instance = new KnowledgeGraph();
@@ -125,18 +154,36 @@ export class KnowledgeGraph {
   // ==========================================================================
 
   /**
-   * Add a triple to the graph (deduplicated)
+   * Add a triple to the graph (deduplicated).
+   * Accepts optional importance and category parameters.
+   * If not provided, importance defaults based on category (or 0.5 for general).
    */
   add(
     subject: string,
     predicate: string,
     object: string,
     metadata?: Record<string, string>,
+    importance?: number,
+    category?: MemoryCategory,
   ): void {
     if (this.has(subject, predicate, object)) return;
 
+    const now = Date.now();
+    const cat = category ?? 'general';
+    const imp = importance ?? DEFAULT_IMPORTANCE[cat] ?? 0.5;
+
     const idx = this.triples.length;
-    this.triples.push({ subject, predicate, object, metadata });
+    this.triples.push({
+      subject,
+      predicate,
+      object,
+      metadata,
+      importance: Math.min(1, Math.max(0, imp)),
+      accessCount: 0,
+      createdAt: now,
+      lastAccessed: now,
+      category: cat,
+    });
 
     this.addToIndex(this.subjectIndex, subject, idx);
     this.addToIndex(this.predicateIndex, predicate, idx);
@@ -152,12 +199,14 @@ export class KnowledgeGraph {
       predicate: string;
       object: string;
       metadata?: Record<string, string>;
+      importance?: number;
+      category?: MemoryCategory;
     }>,
   ): number {
     let added = 0;
     for (const t of triples) {
       if (!this.has(t.subject, t.predicate, t.object)) {
-        this.add(t.subject, t.predicate, t.object, t.metadata);
+        this.add(t.subject, t.predicate, t.object, t.metadata, t.importance, t.category);
         added++;
       }
     }
@@ -179,7 +228,8 @@ export class KnowledgeGraph {
   }
 
   /**
-   * Query triples matching a pattern (indexed lookup + regex support)
+   * Query triples matching a pattern (indexed lookup + regex support).
+   * Results are sorted by importance DESC by default.
    */
   query(pattern: TriplePattern): Triple[] {
     let candidates: Set<number> | null = null;
@@ -208,17 +258,33 @@ export class KnowledgeGraph {
       }
     }
 
+    // Sort by importance DESC
+    results.sort((a, b) => b.importance - a.importance);
+
     return results;
   }
 
   /**
-   * Get all triples connected to an entity (1-hop neighbors)
+   * Get all triples connected to an entity (1-hop neighbors).
+   * Results are sorted by importance DESC.
    */
   neighbors(entity: string): Triple[] {
-    return [
+    const results = [
       ...this.query({ subject: entity }),
       ...this.query({ object: entity }),
     ];
+    // Deduplicate (a triple could match both subject and object queries)
+    const seen = new Set<number>();
+    const deduped: Triple[] = [];
+    for (const t of results) {
+      const idx = this.triples.indexOf(t);
+      if (!seen.has(idx)) {
+        seen.add(idx);
+        deduped.push(t);
+      }
+    }
+    deduped.sort((a, b) => b.importance - a.importance);
+    return deduped;
   }
 
   /**
@@ -335,6 +401,93 @@ export class KnowledgeGraph {
   }
 
   // ==========================================================================
+  // Importance Scoring & Memory Decay
+  // ==========================================================================
+
+  /**
+   * Update importance when a fact is accessed/recalled.
+   * Increments accessCount, updates lastAccessed, boosts importance slightly.
+   */
+  touchTriple(subject: string, predicate: string, object: string): void {
+    const triple = this.findTriple(subject, predicate, object);
+    if (!triple) return;
+
+    triple.accessCount++;
+    triple.lastAccessed = Date.now();
+    // Slight importance boost on access (diminishing returns)
+    triple.importance = Math.min(1, triple.importance + 0.02 * (1 - triple.importance));
+  }
+
+  /**
+   * Get facts sorted by importance (most important first).
+   */
+  getByImportance(limit?: number): Triple[] {
+    const sorted = [...this.triples].sort((a, b) => b.importance - a.importance);
+    return limit !== undefined ? sorted.slice(0, limit) : sorted;
+  }
+
+  /**
+   * Decay old memories - reduce importance of facts not accessed recently.
+   * Returns number of memories decayed (including those removed).
+   *
+   * Formula: importance *= (1 - decayRate) for each day since lastAccessed.
+   * Removes memories with importance < 0.05.
+   */
+  decayMemories(decayRate: number = 0.01, maxAgeDays: number = 365): number {
+    const now = Date.now();
+    const msPerDay = 24 * 60 * 60 * 1000;
+    let decayedCount = 0;
+    const toRemoveIndices: number[] = [];
+
+    for (let i = 0; i < this.triples.length; i++) {
+      const t = this.triples[i];
+      const daysSinceAccess = (now - t.lastAccessed) / msPerDay;
+
+      // Skip recently accessed memories (less than 1 day old)
+      if (daysSinceAccess < 1) continue;
+
+      // Apply exponential decay: importance *= (1 - decayRate) ^ daysSinceAccess
+      const decayFactor = Math.pow(1 - decayRate, daysSinceAccess);
+      const oldImportance = t.importance;
+      t.importance = t.importance * decayFactor;
+
+      // Cap by maxAgeDays
+      const daysSinceCreation = (now - t.createdAt) / msPerDay;
+      if (daysSinceCreation > maxAgeDays) {
+        t.importance = Math.min(t.importance, 0.05);
+      }
+
+      if (t.importance !== oldImportance) {
+        decayedCount++;
+      }
+
+      // Mark for removal if below threshold
+      if (t.importance < 0.05) {
+        toRemoveIndices.push(i);
+      }
+    }
+
+    // Remove memories below threshold
+    if (toRemoveIndices.length > 0) {
+      const removeSet = new Set(toRemoveIndices);
+      const newTriples = this.triples.filter((_, i) => !removeSet.has(i));
+      this.rebuildIndices(newTriples);
+    }
+
+    return decayedCount;
+  }
+
+  /**
+   * Set importance for a specific fact.
+   */
+  setImportance(subject: string, predicate: string, object: string, importance: number): void {
+    const triple = this.findTriple(subject, predicate, object);
+    if (!triple) return;
+
+    triple.importance = Math.min(1, Math.max(0, importance));
+  }
+
+  // ==========================================================================
   // Lisa Additions: Persistence
   // ==========================================================================
 
@@ -343,14 +496,15 @@ export class KnowledgeGraph {
    */
   toJSON(): SerializedGraph {
     return {
-      version: 1,
+      version: 2,
       triples: [...this.triples],
       timestamp: Date.now(),
     };
   }
 
   /**
-   * Restore graph from serialized data
+   * Restore graph from serialized data.
+   * Backward compatible: old data without importance fields gets defaults.
    */
   fromJSON(data: SerializedGraph): void {
     this.clear();
@@ -358,8 +512,28 @@ export class KnowledgeGraph {
       console.debug('KnowledgeGraph: invalid data, skipping load');
       return;
     }
+    const now = Date.now();
     for (const t of data.triples) {
-      this.add(t.subject, t.predicate, t.object, t.metadata);
+      // Migrate old triples that lack new fields
+      const triple: Triple = {
+        subject: t.subject,
+        predicate: t.predicate,
+        object: t.object,
+        metadata: t.metadata,
+        importance: t.importance ?? 0.5,
+        accessCount: t.accessCount ?? 0,
+        createdAt: t.createdAt ?? now,
+        lastAccessed: t.lastAccessed ?? now,
+        category: t.category ?? undefined,
+      };
+
+      if (!this.has(triple.subject, triple.predicate, triple.object)) {
+        const idx = this.triples.length;
+        this.triples.push(triple);
+        this.addToIndex(this.subjectIndex, triple.subject, idx);
+        this.addToIndex(this.predicateIndex, triple.predicate, idx);
+        this.addToIndex(this.objectIndex, triple.object, idx);
+      }
     }
     console.debug(
       `KnowledgeGraph: loaded ${this.triples.length} triples from serialized data`,
@@ -382,7 +556,8 @@ export class KnowledgeGraph {
   }
 
   /**
-   * Load graph from localStorage
+   * Load graph from localStorage.
+   * Backward compatible with old format data.
    */
   load(): boolean {
     try {
@@ -395,6 +570,91 @@ export class KnowledgeGraph {
       console.debug('KnowledgeGraph: failed to load from localStorage', e);
       return false;
     }
+  }
+
+  // ==========================================================================
+  // Lisa Additions: Async Persistence (IndexedDB)
+  // ==========================================================================
+
+  /**
+   * Get or create the IndexedDB store instance.
+   * Returns null if IndexedDB is not available.
+   */
+  private async getIDBStore(): Promise<IndexedDBStore | null> {
+    if (this.idbStore) return this.idbStore;
+
+    if (!IndexedDBStore.isAvailable()) {
+      console.debug('KnowledgeGraph: IndexedDB not available, falling back to localStorage');
+      return null;
+    }
+
+    try {
+      this.idbStore = new IndexedDBStore('lisa-memory', 'knowledge');
+      await this.idbStore.open();
+      return this.idbStore;
+    } catch (e) {
+      console.debug('KnowledgeGraph: failed to open IndexedDB, falling back to localStorage', e);
+      this.idbStore = null;
+      return null;
+    }
+  }
+
+  /**
+   * Persist graph to IndexedDB (async, higher capacity).
+   * Falls back to localStorage if IndexedDB is not available.
+   */
+  async persistAsync(): Promise<void> {
+    const store = await this.getIDBStore();
+    if (store) {
+      try {
+        await store.set<SerializedGraph>(STORAGE_KEY, this.toJSON());
+        console.debug(
+          `KnowledgeGraph: persisted ${this.triples.length} triples to IndexedDB`,
+        );
+        return;
+      } catch (e) {
+        console.debug('KnowledgeGraph: IndexedDB persist failed, falling back to localStorage', e);
+      }
+    }
+    // Fallback to sync localStorage
+    this.persist();
+  }
+
+  /**
+   * Load graph from IndexedDB (async).
+   * Falls back to localStorage if IndexedDB is not available or has no data.
+   */
+  async loadAsync(): Promise<boolean> {
+    const store = await this.getIDBStore();
+    if (store) {
+      try {
+        const data = await store.get<SerializedGraph>(STORAGE_KEY);
+        if (data) {
+          this.fromJSON(data);
+          console.debug(
+            `KnowledgeGraph: loaded ${this.triples.length} triples from IndexedDB`,
+          );
+          return true;
+        }
+      } catch (e) {
+        console.debug('KnowledgeGraph: IndexedDB load failed, trying localStorage', e);
+      }
+    }
+    // Fallback to sync localStorage
+    return this.load();
+  }
+
+  /**
+   * Initialize the KnowledgeGraph asynchronously, loading from IndexedDB.
+   * Preferred over getInstance() + load() for async-capable callers.
+   */
+  static async initializeAsync(): Promise<KnowledgeGraph> {
+    const instance = KnowledgeGraph.getInstance();
+    // Only load if empty (avoid double-load)
+    if (instance.triples.length === 0) {
+      await instance.loadAsync();
+    }
+    return instance;
   }
 
   // ==========================================================================
@@ -437,7 +697,7 @@ export class KnowledgeGraph {
 
   /**
    * Full-text search across all triple fields (subject, predicate, object, metadata values).
-   * Case-insensitive keyword matching.
+   * Case-insensitive keyword matching. Results sorted by importance DESC.
    */
   search(keyword: string): Triple[] {
     if (!keyword) return [];
@@ -457,6 +717,9 @@ export class KnowledgeGraph {
         results.push(t);
       }
     }
+
+    // Sort by importance DESC
+    results.sort((a, b) => b.importance - a.importance);
 
     return results;
   }
@@ -481,6 +744,21 @@ export class KnowledgeGraph {
   // ==========================================================================
   // Private Helpers
   // ==========================================================================
+
+  /**
+   * Find a specific triple by its subject/predicate/object key.
+   * Returns the triple object reference (mutable) or undefined.
+   */
+  private findTriple(subject: string, predicate: string, object: string): Triple | undefined {
+    const subjectSet = this.subjectIndex.get(subject);
+    if (!subjectSet) return undefined;
+
+    for (const idx of subjectSet) {
+      const t = this.triples[idx];
+      if (t.predicate === predicate && t.object === object) return t;
+    }
+    return undefined;
+  }
 
   private addToIndex(
     index: Map<string, Set<number>>,
