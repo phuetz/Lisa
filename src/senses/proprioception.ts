@@ -114,7 +114,7 @@ async function getSystemMetrics(): Promise<ProprioceptionSystemPayload> {
   // Measure actual network latency
   try {
     const pingStart = performance.now();
-    const apiBase = typeof window !== 'undefined' && window.electronAPI ? 'http://localhost:3001' : '';
+    const apiBase = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window ? 'http://localhost:3001' : '';
     await fetch(`${apiBase}/api/health`, { method: 'HEAD', mode: 'no-cors' }).catch(() => {});
     networkLatency = Math.round(performance.now() - pingStart);
   } catch {

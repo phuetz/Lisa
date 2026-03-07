@@ -12,7 +12,7 @@ const FUTURE_FLAGS = {
   v7_relativeSplatPath: true,
 };
 
-// Electron loads via file:// protocol — BrowserRouter doesn't work with file://
+// Desktop (Tauri) uses custom protocol — HashRouter for non-HTTP contexts
 const isFileProtocol = typeof window !== 'undefined' && window.location.protocol === 'file:';
 const createRouter = isFileProtocol ? createHashRouter : createBrowserRouter;
 const DashboardPage = lazy(() => import('../pages/DashboardPage'));

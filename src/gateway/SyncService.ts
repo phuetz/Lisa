@@ -722,7 +722,7 @@ export class SyncService extends BrowserEventEmitter {
       if (/ipad|tablet/.test(ua)) return 'tablet';
       return 'mobile';
     }
-    if (/electron/.test(ua)) return 'desktop';
+    if (/electron/.test(ua) || (typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window)) return 'desktop';
     return 'web';
   }
 

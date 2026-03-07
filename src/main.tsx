@@ -42,9 +42,9 @@ createRoot(document.getElementById('root')!).render(
   </StrictMode>,
 );
 
-// Skip service worker in Electron (not needed for desktop apps)
-const isElectron = typeof window !== 'undefined' && window.electronAPI !== undefined;
-if (!isElectron) {
+// Skip service worker in desktop app (Tauri — not needed)
+const isDesktop = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
+if (!isDesktop) {
   // Register service worker after app has loaded
   window.addEventListener('load', registerServiceWorker);
 
