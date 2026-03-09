@@ -102,6 +102,12 @@ export async function startListening(): Promise<void> {
       workletNode.connect(audioContext.destination);
     } catch (e) {
       console.error('[Hearing] Mic capture failed', e);
+      // Clean up partially acquired resources
+      mediaStream?.getTracks().forEach(t => t.stop());
+      mediaStream = null;
+      audioContext?.close().catch(() => {});
+      audioContext = null;
+      workletNode = null;
       // Fallback to adapter if AudioWorklet fails
       void audioAdapter.startListening();
     }

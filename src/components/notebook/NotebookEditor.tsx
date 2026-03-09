@@ -138,14 +138,22 @@ const Cell: React.FC<CellProps> = ({
         );
       }
       if (data?.['text/html']) {
-        const html = Array.isArray(data['text/html']) 
-          ? (data['text/html'] as string[]).join('') 
+        const rawHtml = Array.isArray(data['text/html'])
+          ? (data['text/html'] as string[]).join('')
           : data['text/html'];
+        // Sanitize: remove script tags, event handlers (with or without quotes),
+        // dangerous tags, and javascript: protocols
+        const sanitized = String(rawHtml)
+          .replace(/<script[\s\S]*?<\/script>/gi, '')
+          .replace(/<style[\s\S]*?<\/style>/gi, '')
+          .replace(/<(iframe|object|embed|form|base|meta|link)\b[\s\S]*?(?:\/>|>[\s\S]*?<\/\1>)/gi, '')
+          .replace(/\bon\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]*)/gi, '')
+          .replace(/(href|src|action)\s*=\s*["']?\s*javascript:/gi, '$1="');
         return (
-          <div 
-            key={idx} 
+          <div
+            key={idx}
             className="p-2"
-            dangerouslySetInnerHTML={{ __html: String(html) }}
+            dangerouslySetInnerHTML={{ __html: sanitized }}
           />
         );
       }
@@ -178,8 +186,12 @@ const Cell: React.FC<CellProps> = ({
   };
 
   const renderMarkdownPreview = () => {
-    // Simple markdown rendering (pour une vraie app, utiliser react-markdown)
-    const html = source
+    // Escape HTML first, then apply markdown formatting
+    const escaped = source
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+    const html = escaped
       .replace(/^### (.*$)/gm, '<h3 class="text-lg font-bold mt-2">$1</h3>')
       .replace(/^## (.*$)/gm, '<h2 class="text-xl font-bold mt-3">$1</h2>')
       .replace(/^# (.*$)/gm, '<h1 class="text-2xl font-bold mt-4">$1</h1>')
@@ -187,9 +199,9 @@ const Cell: React.FC<CellProps> = ({
       .replace(/\*(.*?)\*/g, '<em>$1</em>')
       .replace(/`(.*?)`/g, '<code class="bg-slate-700 px-1 rounded">$1</code>')
       .replace(/\n/g, '<br/>');
-    
+
     return (
-      <div 
+      <div
         className="prose prose-invert max-w-none p-4"
         dangerouslySetInnerHTML={{ __html: html }}
       />

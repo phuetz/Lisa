@@ -356,13 +356,27 @@ export class WorkflowCodeAgent implements BaseAgent {
    * Gère la définition de fonctions
    * @param parameters Paramètres pour la définition
    */
+  /** Validate that a string is a safe JavaScript identifier */
+  private static readonly SAFE_IDENTIFIER = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/;
+
   private async handleFunctionDefinition(parameters: Record<string, any>): Promise<AgentExecuteResult> {
     const startTime = Date.now();
     const { name, code, params = [] } = parameters;
-    
+
     try {
+      // Validate function name is a safe identifier
+      if (!WorkflowCodeAgent.SAFE_IDENTIFIER.test(name)) {
+        throw new Error(`Invalid function name: ${name}`);
+      }
+      // Validate all parameter names are safe identifiers
+      for (const p of params) {
+        if (!WorkflowCodeAgent.SAFE_IDENTIFIER.test(p)) {
+          throw new Error(`Invalid parameter name: ${p}`);
+        }
+      }
+
       // Créer une fonction à partir du code
-      const functionBody = `return function ${name}(${params.join(', ')}) {\n${code}\n}`;
+      const functionBody = `"use strict"; return function ${name}(${params.join(', ')}) {\n${code}\n}`;
       const func = new Function(functionBody)();
       
       return {
@@ -398,15 +412,17 @@ export class WorkflowCodeAgent implements BaseAgent {
    */
   private async executeSandboxedCode(code: string, input: any, timeout: number): Promise<any> {
     return new Promise((resolve, reject) => {
+      let settled = false;
+
       // Créer un timeout pour l'exécution
       const timeoutId = setTimeout(() => {
-        reject(new Error(`Code execution timed out after ${timeout}ms`));
+        if (!settled) {
+          settled = true;
+          reject(new Error(`Code execution timed out after ${timeout}ms`));
+        }
       }, timeout);
-      
+
       try {
-        // Dans une implémentation réelle, nous utiliserions vm2/isolated-vm ou un Worker 
-        // pour exécuter le code dans un environnement isolé
-        
         // Préparation du code avec des protections
         const safeCode = `
           "use strict";
@@ -417,18 +433,18 @@ export class WorkflowCodeAgent implements BaseAgent {
 
         // Exécuter le code
         const result = new Function('input', safeCode)(input);
-        
-        // Nettoyer le timeout
-        clearTimeout(timeoutId);
-        
-        // Résoudre avec le résultat
-        resolve(result);
+
+        if (!settled) {
+          settled = true;
+          clearTimeout(timeoutId);
+          resolve(result);
+        }
       } catch (error) {
-        // Nettoyer le timeout
-        clearTimeout(timeoutId);
-        
-        // Rejeter avec l'erreur
-        reject(error);
+        if (!settled) {
+          settled = true;
+          clearTimeout(timeoutId);
+          reject(error);
+        }
       }
     });
   }
@@ -439,12 +455,20 @@ export class WorkflowCodeAgent implements BaseAgent {
    * @param context Contexte d'évaluation
    */
   private async evaluateSandboxedExpression(expression: string, context: Record<string, any>): Promise<any> {
+    // Validate all context keys are safe identifiers to prevent injection via parameter names
+    const keys = Object.keys(context);
+    for (const key of keys) {
+      if (!WorkflowCodeAgent.SAFE_IDENTIFIER.test(key)) {
+        throw new Error(`Invalid context key: ${key}`);
+      }
+    }
+
     // Créer une fonction qui évalue l'expression dans le contexte donné
     const evalFunction = new Function(
-      ...Object.keys(context),
+      ...keys,
       `"use strict"; return (${expression});`
     );
-    
+
     // Évaluer l'expression avec le contexte
     return evalFunction(...Object.values(context));
   }
@@ -456,13 +480,22 @@ export class WorkflowCodeAgent implements BaseAgent {
   private isSafeCode(code: string): boolean {
     // Liste des motifs dangereux
     const unsafePatterns = [
-      /eval\s*\(/,                   // eval()
-      /Function\s*\(/,               // Function constructor
-      /process/,                     // Node.js process object
-      /require\s*\([^)]*['"](fs|path|child_process|os|net|http|https|crypto|dns|dgram|stream|zlib|tls|v8)['"]/,  // Dangerous modules
-      /document\s*\.\s*(write|cookie)/,  // DOM manipulation
-      /localStorage/,                // Browser storage
-      /window\s*\.\s*(location|open|history)/, // Browser navigation
+      /\beval\s*\(/,                 // eval()
+      /\bFunction\s*\(/,             // Function constructor
+      /\bprocess\b/,                 // Node.js process object
+      /\brequire\s*\(/,              // require()
+      /\bimport\s*\(/,               // dynamic import
+      /\bdocument\b/,                // DOM access
+      /\blocalStorage\b/,            // Browser storage
+      /\bsessionStorage\b/,          // Browser storage
+      /\bwindow\b/,                  // Browser window object
+      /\bglobalThis\b/,              // Global object
+      /\bself\b/,                    // Worker/window global
+      /\bReflect\b/,                 // Reflect API
+      /\bProxy\b/,                   // Proxy constructor
+      /\b__proto__\b/,               // Prototype chain
+      /\.constructor\b/,             // Constructor access
+      /\.prototype\b/,               // Prototype access
     ];
     
     // Vérifier si le code contient des motifs dangereux

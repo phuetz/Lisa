@@ -541,7 +541,11 @@ class PyodideServiceClass {
 
         sendToConsole('log', '✓ Completed in ' + duration + 's');
       } catch(e) {
-        output.innerHTML = '<div class="error-box">Error: ' + e.message + '</div>';
+        var errDiv = document.createElement('div');
+        errDiv.className = 'error-box';
+        errDiv.textContent = 'Error: ' + e.message;
+        output.innerHTML = '';
+        output.appendChild(errDiv);
         sendToConsole('error', e.message);
       }
     }

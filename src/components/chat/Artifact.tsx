@@ -104,8 +104,9 @@ export const Artifact = ({ artifact, onUpdate, onClose, embedded = true }: Artif
   <script>
     const output = document.getElementById('output');
     const _log = console.log, _error = console.error;
-    console.log = (...args) => { _log(...args); output.innerHTML += '<div class="log">> ' + args.map(a => typeof a === 'object' ? JSON.stringify(a,null,2) : String(a)).join(' ') + '</div>'; };
-    console.error = (...args) => { _error(...args); output.innerHTML += '<div class="error">❌ ' + args.join(' ') + '</div>'; };
+    function _esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+    console.log = (...args) => { _log(...args); output.innerHTML += '<div class="log">> ' + args.map(a => typeof a === 'object' ? _esc(JSON.stringify(a,null,2)) : _esc(a)).join(' ') + '</div>'; };
+    console.error = (...args) => { _error(...args); output.innerHTML += '<div class="error"> ' + args.map(a=>_esc(a)).join(' ') + '</div>'; };
     try { ${code} } catch(e) { console.error(e.message); }
   </script>
 </body></html>`;
@@ -125,8 +126,9 @@ export const Artifact = ({ artifact, onUpdate, onClose, embedded = true }: Artif
   <script>
     const output = document.getElementById('output');
     const _log = console.log, _error = console.error;
-    console.log = (...args) => { _log(...args); output.innerHTML += '<div class="log">> ' + args.map(a => typeof a === 'object' ? JSON.stringify(a,null,2) : String(a)).join(' ') + '</div>'; };
-    console.error = (...args) => { _error(...args); output.innerHTML += '<div class="error">❌ ' + args.join(' ') + '</div>'; };
+    function _esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+    console.log = (...args) => { _log(...args); output.innerHTML += '<div class="log">> ' + args.map(a => typeof a === 'object' ? _esc(JSON.stringify(a,null,2)) : _esc(a)).join(' ') + '</div>'; };
+    console.error = (...args) => { _error(...args); output.innerHTML += '<div class="error"> ' + args.map(a=>_esc(a)).join(' ') + '</div>'; };
     function __runTs() {
       try {
         const jsCode = ts.transpile(${JSON.stringify(code)}, { target: ts.ScriptTarget.ES2020 });
@@ -151,7 +153,7 @@ export const Artifact = ({ artifact, onUpdate, onClose, embedded = true }: Artif
 <body>
   <div id="root"></div>
   <script type="text/babel">
-    try { ${code} } catch(e) { document.getElementById('root').innerHTML = '<div style="color:red;padding:20px;">Erreur: '+e.message+'</div>'; }
+    try { ${code} } catch(e) { var el=document.getElementById('root'); if(el){el.textContent='Erreur: '+e.message; el.style.color='red'; el.style.padding='20px';} }
   </script>
 </body></html>`;
 

@@ -25,6 +25,7 @@ interface FallEvent {
 class FallDetectorService {
     private isActive = false;
     private lastPoseAngle: number | null = null;
+    private lastPoseTime: number | null = null;
     private fallStartTime: number | null = null;
     private lastFallEvent: FallEvent | null = null;
     private onFallDetectedCallback: ((event: FallEvent) => void) | null = null;
@@ -58,6 +59,7 @@ class FallDetectorService {
      */
     private reset(): void {
         this.lastPoseAngle = null;
+        this.lastPoseTime = null;
         this.fallStartTime = null;
     }
 
@@ -118,9 +120,11 @@ class FallDetectorService {
         const torsoAngle = this.calculateTorsoAngle(shoulderCenter, hipCenter);
 
         // Détecter une chute potentielle
-        if (this.lastPoseAngle !== null) {
+        const now = Date.now();
+        if (this.lastPoseAngle !== null && this.lastPoseTime !== null) {
             const angleChange = Math.abs(torsoAngle - this.lastPoseAngle);
-            const velocity = angleChange / 0.1; // Estimation (assume 10 FPS)
+            const dt = Math.max(0.016, (now - this.lastPoseTime) / 1000); // actual elapsed time in seconds
+            const velocity = angleChange / dt;
 
             // Mouvement brusque détecté
             if (velocity > this.VELOCITY_THRESHOLD && torsoAngle < this.FALL_ANGLE_THRESHOLD) {
@@ -162,6 +166,7 @@ class FallDetectorService {
         }
 
         this.lastPoseAngle = torsoAngle;
+        this.lastPoseTime = now;
     }
 
     /**

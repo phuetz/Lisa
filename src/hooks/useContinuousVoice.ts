@@ -49,6 +49,7 @@ export const useContinuousVoice = (options: ContinuousVoiceOptions) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const recognitionRef = useRef<any>(null);
   const silenceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const restartTimerRef = useRef<NodeJS.Timeout | null>(null);
   const isActiveRef = useRef(false);
   const synthRef = useRef<SpeechSynthesisUtterance | null>(null);
 
@@ -120,9 +121,10 @@ export const useContinuousVoice = (options: ContinuousVoiceOptions) => {
 
       // Auto-restart on recoverable errors
       if (autoRestart && isActiveRef.current && event.error !== 'not-allowed') {
-        setTimeout(() => {
+        if (restartTimerRef.current) clearTimeout(restartTimerRef.current);
+        restartTimerRef.current = setTimeout(() => {
           if (isActiveRef.current) {
-            recognition.start();
+            try { recognition.start(); } catch { /* already started */ }
           }
         }, 1000);
       }
@@ -130,14 +132,15 @@ export const useContinuousVoice = (options: ContinuousVoiceOptions) => {
 
     recognition.onend = () => {
       setState(s => ({ ...s, isListening: false }));
-      
+
       // Auto-restart if still active
       if (autoRestart && isActiveRef.current) {
-        setTimeout(() => {
+        if (restartTimerRef.current) clearTimeout(restartTimerRef.current);
+        restartTimerRef.current = setTimeout(() => {
           if (isActiveRef.current && recognitionRef.current) {
             try {
               recognitionRef.current.start();
-            } catch (e) {
+            } catch {
               // Already started
             }
           }
@@ -260,6 +263,9 @@ export const useContinuousVoice = (options: ContinuousVoiceOptions) => {
       isActiveRef.current = false;
       if (silenceTimerRef.current) {
         clearTimeout(silenceTimerRef.current);
+      }
+      if (restartTimerRef.current) {
+        clearTimeout(restartTimerRef.current);
       }
       if (recognitionRef.current) {
         recognitionRef.current.stop();

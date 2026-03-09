@@ -1092,16 +1092,17 @@ export default function CodePlayground() {
         const pyodide = await loadPyodide();
         
         // Redirect stdout
+        function _esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
         pyodide.setStdout({
           batched: (text) => {
-            output.innerHTML += text;
+            output.innerHTML += _esc(text);
             window.parent.postMessage({ type: 'console', data: text.trim() }, '*');
           }
         });
-        
+
         pyodide.setStderr({
           batched: (text) => {
-            output.innerHTML += '<span class="error">' + text + '</span>';
+            output.innerHTML += '<span class="error">' + _esc(text) + '</span>';
             window.parent.postMessage({ type: 'console-error', data: text.trim() }, '*');
           }
         });
@@ -1112,7 +1113,7 @@ export default function CodePlayground() {
         await pyodide.runPythonAsync(\`${pythonCode.replace(/`/g, '\\`').replace(/\\/g, '\\\\')}\`);
         
       } catch (e) {
-        output.innerHTML = '<span class="error">❌ Erreur: ' + e.message + '</span>';
+        output.innerHTML = '<span class="error">Erreur: ' + _esc(e.message) + '</span>';
         window.parent.postMessage({ type: 'console-error', data: e.message }, '*');
       }
     }
@@ -1193,14 +1194,15 @@ export default function CodePlayground() {
     console.log = function(...args) {
       originalLog.apply(console, args);
       const text = args.map(a => typeof a === 'object' ? JSON.stringify(a, null, 2) : String(a)).join(' ');
-      output.innerHTML += '<div class="log">> ' + text + '</div>';
+      function _esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+      output.innerHTML += '<div class="log">> ' + _esc(text) + '</div>';
       window.parent.postMessage({ type: 'console', data: text }, '*');
     };
     
     console.error = function(...args) {
       originalError.apply(console, args);
       const text = args.map(a => String(a)).join(' ');
-      output.innerHTML += '<div class="error">❌ ' + text + '</div>';
+      output.innerHTML += '<div class="error">' + _esc(text) + '</div>';
       window.parent.postMessage({ type: 'console-error', data: text }, '*');
     };
     
@@ -1249,14 +1251,15 @@ export default function CodePlayground() {
     console.log = function(...args) {
       originalLog.apply(console, args);
       const text = args.map(a => typeof a === 'object' ? JSON.stringify(a, null, 2) : String(a)).join(' ');
-      output.innerHTML += '<div class="log">> ' + text + '</div>';
+      function _esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+      output.innerHTML += '<div class="log">> ' + _esc(text) + '</div>';
       window.parent.postMessage({ type: 'console', data: text }, '*');
     };
     
     console.error = function(...args) {
       originalError.apply(console, args);
       const text = args.map(a => String(a)).join(' ');
-      output.innerHTML += '<div class="error">❌ ' + text + '</div>';
+      output.innerHTML += '<div class="error">' + _esc(text) + '</div>';
       window.parent.postMessage({ type: 'console-error', data: text }, '*');
     };
     

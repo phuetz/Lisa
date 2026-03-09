@@ -35,15 +35,17 @@ interface SidebarProps {
 export function Sidebar({ collapsed, onToggleCollapse }: SidebarProps) {
   const navigate = useNavigate();
   const location = useLocation();
-  const [lightMode, setLightMode] = useState(false);
+  const [lightMode, setLightMode] = useState(() => localStorage.getItem('lisa-theme') === 'light');
   const { isAuthenticated, logout } = useAuth();
 
   const isActive = (path: string) =>
-    location.pathname === path || (path === '/' && location.pathname === '');
+    location.pathname === path || location.pathname.startsWith(path + '/') || (path === '/' && location.pathname === '');
 
   const handleThemeToggle = () => {
-    setLightMode(!lightMode);
-    document.documentElement.classList.toggle('light', !lightMode);
+    const newMode = !lightMode;
+    setLightMode(newMode);
+    document.documentElement.classList.toggle('light', newMode);
+    localStorage.setItem('lisa-theme', newMode ? 'light' : 'dark');
   };
 
   const cls = `lisa-sidebar ${collapsed ? 'collapsed' : 'expanded'}`;

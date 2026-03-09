@@ -48,6 +48,8 @@ class HealthMonitoringServiceImpl {
   private listeners: Set<(alerts: HealthAlert[]) => void> = new Set();
   private inactivityCheckInterval: ReturnType<typeof setInterval> | null = null;
   private inactivityThreshold = 30 * 60 * 1000; // 30 minutes
+  private unsubscribeFallDetection: (() => void) | null = null;
+  private snoozeTimers: Set<ReturnType<typeof setTimeout>> = new Set();
 
   constructor() {
     this.loadFromStorage();
@@ -78,6 +80,15 @@ class HealthMonitoringServiceImpl {
       clearInterval(this.inactivityCheckInterval);
       this.inactivityCheckInterval = null;
     }
+    if (this.unsubscribeFallDetection) {
+      this.unsubscribeFallDetection();
+      this.unsubscribeFallDetection = null;
+    }
+    // Clear all snooze timers
+    for (const timer of this.snoozeTimers) {
+      clearTimeout(timer);
+    }
+    this.snoozeTimers.clear();
     console.log('[HealthMonitoring] Service arrêté');
   }
 
@@ -85,7 +96,8 @@ class HealthMonitoringServiceImpl {
    * Configurer l'écoute de la détection de chute
    */
   private setupFallDetectionListener(): void {
-    useAppStore.subscribe(
+    // Store unsubscribe function for cleanup in stop()
+    this.unsubscribeFallDetection = useAppStore.subscribe(
       state => state.fallDetected,
       (fallDetected) => {
         if (fallDetected) {
@@ -279,7 +291,8 @@ class HealthMonitoringServiceImpl {
       case 'snooze': {
         this.acknowledgeAlert(alertId);
         const minutes = (action.payload?.minutes as number) || 15;
-        setTimeout(() => {
+        const timer = setTimeout(() => {
+          this.snoozeTimers.delete(timer);
           // Recréer l'alerte après le snooze
           this.createAlert({
             type: alert.type,
@@ -289,6 +302,7 @@ class HealthMonitoringServiceImpl {
             actions: alert.actions,
           });
         }, minutes * 60 * 1000);
+        this.snoozeTimers.add(timer);
         break;
       }
       case 'call_emergency':

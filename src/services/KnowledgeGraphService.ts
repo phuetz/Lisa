@@ -138,6 +138,9 @@ export class KnowledgeGraph {
   /** IndexedDB store instance (lazy-initialized) */
   private idbStore: IndexedDBStore | null = null;
 
+  /** Serialized IDB init to prevent concurrent open() calls */
+  private idbInitPromise: Promise<IndexedDBStore | null> | null = null;
+
   static getInstance(): KnowledgeGraph {
     if (!KnowledgeGraph.instance) {
       KnowledgeGraph.instance = new KnowledgeGraph();
@@ -583,20 +586,30 @@ export class KnowledgeGraph {
   private async getIDBStore(): Promise<IndexedDBStore | null> {
     if (this.idbStore) return this.idbStore;
 
+    // Prevent concurrent initialization — reuse in-flight promise
+    if (this.idbInitPromise) return this.idbInitPromise;
+
     if (!IndexedDBStore.isAvailable()) {
       console.debug('KnowledgeGraph: IndexedDB not available, falling back to localStorage');
       return null;
     }
 
-    try {
-      this.idbStore = new IndexedDBStore('lisa-memory', 'knowledge');
-      await this.idbStore.open();
-      return this.idbStore;
-    } catch (e) {
-      console.debug('KnowledgeGraph: failed to open IndexedDB, falling back to localStorage', e);
-      this.idbStore = null;
-      return null;
-    }
+    this.idbInitPromise = (async () => {
+      try {
+        const store = new IndexedDBStore('lisa-memory', 'knowledge');
+        await store.open();
+        this.idbStore = store;
+        return store;
+      } catch (e) {
+        console.debug('KnowledgeGraph: failed to open IndexedDB, falling back to localStorage', e);
+        this.idbStore = null;
+        return null;
+      } finally {
+        this.idbInitPromise = null;
+      }
+    })();
+
+    return this.idbInitPromise;
   }
 
   /**

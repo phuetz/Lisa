@@ -198,7 +198,7 @@ export const uiActions = {
 
   /** Update conversation context */
   updateConversationContext: (partial: Partial<ConversationContext>) => {
-    const current = useAppStore.getState().conversationContext;
+    const current = useAppStore.getState().conversationContext || {};
     useAppStore.getState().setState({
       conversationContext: { ...current, ...partial, timestamp: Date.now() } as ConversationContext
     });

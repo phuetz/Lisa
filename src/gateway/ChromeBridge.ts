@@ -296,6 +296,16 @@ export class ChromeBridge extends BrowserEventEmitter {
     if (!url) {
       return { success: false, error: 'Navigate requires a URL', timestamp: Date.now() };
     }
+    // Validate URL protocol to prevent javascript: and data: injection
+    const ALLOWED_PROTOCOLS = ['http:', 'https:', 'about:'];
+    try {
+      const parsed = new URL(url, window.location.href);
+      if (!ALLOWED_PROTOCOLS.includes(parsed.protocol)) {
+        return { success: false, error: `Blocked navigation to unsafe protocol: ${parsed.protocol}`, timestamp: Date.now() };
+      }
+    } catch {
+      return { success: false, error: `Invalid URL: ${url}`, timestamp: Date.now() };
+    }
     const previousUrl = this.currentUrl;
     if (typeof window !== 'undefined') {
       window.location.href = url;
@@ -693,15 +703,19 @@ export class ChromeBridge extends BrowserEventEmitter {
     if (typeof console === 'undefined') return;
 
     this.originalConsoleError = console.error;
-    const self = this;
+    const origError = this.originalConsoleError;
+    const errors = this.consoleErrors;
+    const maxErrors = this.config.maxConsoleErrors;
+    const trimArr = this.trimArray.bind(this);
+    const emit = this.emit.bind(this);
     console.error = function (...args: unknown[]) {
       const message = args.map((a) => (typeof a === 'string' ? a : JSON.stringify(a))).join(' ');
-      self.consoleErrors.push(message);
-      self.trimArray(self.consoleErrors, self.config.maxConsoleErrors);
-      self.emit('console:error', message);
+      errors.push(message);
+      trimArr(errors, maxErrors);
+      emit('console:error', message);
       // Call original
-      if (self.originalConsoleError) {
-        self.originalConsoleError.apply(console, args);
+      if (origError) {
+        origError.apply(console, args);
       }
     };
   }

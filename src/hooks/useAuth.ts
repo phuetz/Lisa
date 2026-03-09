@@ -130,9 +130,14 @@ export const useAuth = (): UseAuthReturn => {
       const token = await getStoredToken();
       if (token) {
         try {
-          const payload = JSON.parse(atob(token.split('.')[1]));
+          // Validate JWT structure: must have 3 dot-separated parts
+          const parts = token.split('.');
+          if (parts.length !== 3 || !parts[1]) {
+            throw new Error('Malformed JWT');
+          }
+          const payload = JSON.parse(atob(parts[1]));
 
-          if (payload.exp * 1000 > Date.now()) {
+          if (payload && typeof payload.exp === 'number' && payload.exp * 1000 > Date.now()) {
             finishLoading({
               user: { id: payload.userId, email: payload.email, name: payload.name },
               token,

@@ -67,7 +67,7 @@ export const ArtifactPanel = () => {
     language: artifact.language
   }] : []);
 
-  const currentFile = files[selectedFileIndex] || files[0];
+  const currentFile = files.length > 0 ? (files[selectedFileIndex] || files[0]) : null;
   const config = artifact ? (TYPE_CONFIG[artifact.type] || TYPE_CONFIG.html) : TYPE_CONFIG.html;
 
   // Close on Escape key
@@ -84,11 +84,16 @@ export const ArtifactPanel = () => {
     }
   }, [isOpen, isFullscreen, closePanel]);
 
-  // Listen for console messages from iframe
+  // Listen for console messages from iframe (validate origin to prevent spoofing)
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
+      // Only accept messages from same origin or null (sandboxed iframes)
+      if (event.origin !== window.location.origin && event.origin !== 'null') return;
       if (event.data?.type === 'console') {
         const { method, message } = event.data;
+        if (typeof message !== 'string') return;
+        // Only accept known console methods
+        if (method !== 'log' && method !== 'error' && method !== 'warn') return;
         const prefix = method === 'error' ? '❌ ' : method === 'warn' ? '⚠️ ' : '> ';
         setConsoleOutput(prev => [...prev.slice(-50), prefix + message]);
       }

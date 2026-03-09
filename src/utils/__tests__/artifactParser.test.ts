@@ -59,8 +59,8 @@ root.render(<App />);
     expect(result.artifacts[0].code).toContain('createRoot');
   });
 
-  it('should detect Python artifacts with sufficient code length', () => {
-    // Python must be > 100 chars and contain a keyword like print/class/def/import
+  it('should NOT detect Python as artifact (handled by InlineCodeCell)', () => {
+    // Python blocks are rendered by InlineCodeCell with inline execution, not as artifacts
     const pythonCode = `
 import numpy as np
 
@@ -76,10 +76,7 @@ calculate_statistics([1, 2, 3, 4, 5])
 
     const result = parseArtifacts(content);
 
-    expect(result.artifacts).toHaveLength(1);
-    expect(result.artifacts[0].type).toBe('python');
-    expect(result.artifacts[0].title).toBe('Python Script');
-    expect(result.artifacts[0].language).toBe('python');
+    expect(result.artifacts).toHaveLength(0);
   });
 
   it('should NOT detect short Python snippets (<=100 chars)', () => {

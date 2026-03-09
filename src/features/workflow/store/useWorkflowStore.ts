@@ -114,22 +114,9 @@ const useWorkflowStore = create<WorkflowState>()(
 
 
 
-          redo: () => {
-            const { past, future, nodes, edges } = get();
-            if (future.length === 0) return;
-
-            const next = future[0];
-            const newFuture = future.slice(1);
-
-            set({
-              nodes: next.nodes,
-              edges: next.edges,
-              past: [...past, { nodes, edges }],
-              future: newFuture,
-              canUndo: true,
-              canRedo: newFuture.length > 0,
-            });
-          },
+          // Note: undo/redo is handled by the zundo temporal middleware.
+          // The temporal() wrapper provides useWorkflowStore.temporal.getState().undo/redo.
+          // Do NOT define custom redo() here — it references non-existent `past`/`future` fields.
 
 
           clipboard: null,
@@ -417,7 +404,7 @@ const useWorkflowStore = create<WorkflowState>()(
             const oldNodeIdMap = new Map<string, string>();
 
             state.clipboard.nodes.forEach((node: Node) => {
-              const newNodeId = `${node.id}_copy_${Date.now()}`;
+              const newNodeId = `${node.id}_copy_${crypto.randomUUID()}`;
               newNodes.push({
                 ...node,
                 id: newNodeId,
@@ -434,7 +421,7 @@ const useWorkflowStore = create<WorkflowState>()(
               if (newSource && newTarget) {
                 newEdges.push({
                   ...edge,
-                  id: `${edge.id}_copy_${Date.now()}`,
+                  id: `${edge.id}_copy_${crypto.randomUUID()}`,
                   source: newSource,
                   target: newTarget,
                   selected: false,

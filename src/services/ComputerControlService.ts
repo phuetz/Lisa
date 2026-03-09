@@ -550,9 +550,29 @@ class ComputerControlService {
   // --------------------------------------------------------------------------
 
   /**
+   * Validate file path to prevent path traversal attacks.
+   * Rejects paths containing "..", absolute Unix paths, or UNC paths.
+   */
+  private validateFilePath(filePath: string): boolean {
+    // Block path traversal sequences
+    if (filePath.includes('..')) return false;
+    // Block absolute Unix paths trying to access system files
+    if (/^\/(?:etc|proc|sys|dev|var|tmp|root|bin|sbin|usr)/.test(filePath)) return false;
+    // Block UNC paths
+    if (filePath.startsWith('\\\\')) return false;
+    // Block null bytes
+    if (filePath.includes('\0')) return false;
+    return true;
+  }
+
+  /**
    * Read a file's contents
    */
   async fileRead(path: string): Promise<string | null> {
+    if (!this.validateFilePath(path)) {
+      console.error('[ComputerControl] Blocked unsafe file path:', path);
+      return null;
+    }
     if (this.isBackendConnected) {
       try {
         const response = await fetch(`${this.config.backendUrl}/files/read`, {
@@ -573,6 +593,9 @@ class ComputerControlService {
    * Write content to a file
    */
   async fileWrite(path: string, content: string): Promise<ExecutionResult> {
+    if (!this.validateFilePath(path)) {
+      return { success: false, error: 'Blocked: unsafe file path' };
+    }
     if (!this.isBackendConnected) {
       return { success: false, error: 'File operations require desktop backend' };
     }
@@ -593,6 +616,10 @@ class ComputerControlService {
    * List files in a directory
    */
   async fileList(path: string): Promise<{ name: string; type: 'file' | 'directory'; size?: number }[]> {
+    if (!this.validateFilePath(path)) {
+      console.error('[ComputerControl] Blocked unsafe file path:', path);
+      return [];
+    }
     if (this.isBackendConnected) {
       try {
         const response = await fetch(`${this.config.backendUrl}/files/list`, {

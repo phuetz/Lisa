@@ -242,10 +242,12 @@ const nodeHandlers: Record<string, NodeHandler> = {
  */
 class Semaphore {
   private permits: number;
+  private readonly maxPermits: number;
   private waiting: Array<() => void> = [];
 
   constructor(permits: number) {
     this.permits = permits;
+    this.maxPermits = permits;
   }
 
   async acquire(): Promise<void> {
@@ -259,11 +261,13 @@ class Semaphore {
   }
 
   release(): void {
-    this.permits++;
     const next = this.waiting.shift();
     if (next) {
-      this.permits--;
+      // Hand permit directly to next waiter (no increment needed)
       next();
+    } else if (this.permits < this.maxPermits) {
+      // Only increment if below original capacity
+      this.permits++;
     }
   }
 
@@ -420,9 +424,23 @@ export class WorkflowExecutor {
    */
   private async waitForStepConfirmation(): Promise<void> {
     if (!this.stepByStepMode) return Promise.resolve();
-    
-    return new Promise<void>(resolve => {
+
+    return new Promise<void>((resolve, reject) => {
+      // Check if already aborted
+      if (this.abortController?.signal.aborted) {
+        reject(new Error('Workflow execution aborted'));
+        return;
+      }
+
       this.stepResolver = resolve;
+
+      // Listen for abort to prevent deadlock
+      const onAbort = () => {
+        this.stepResolver = null;
+        reject(new Error('Workflow execution aborted while waiting for step confirmation'));
+      };
+
+      this.abortController?.signal.addEventListener('abort', onAbort, { once: true });
     });
   }
   
@@ -545,6 +563,12 @@ export class WorkflowExecutor {
     const eligibleNodes = this.getEligibleNodes(executedNodes);
 
     if (eligibleNodes.length === 0) return;
+
+    // Guard against excessive recursion (max 200 nodes)
+    if (executedNodes.size > 200) {
+      console.error('[WorkflowExecutor] Max execution depth reached (200 nodes)');
+      return;
+    }
 
     // Execute all eligible nodes in parallel (semaphore controls concurrency)
     const executions = eligibleNodes.map(async (node) => {

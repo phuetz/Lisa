@@ -501,6 +501,7 @@ class AIService {
 
     console.log('[AIService] Gemini streaming request:', { model, url: url.replace(this.config.apiKey, '***') });
 
+    let reader: ReadableStreamDefaultReader<Uint8Array> | undefined;
     try {
       const response = await fetch(url, {
           method: 'POST',
@@ -522,7 +523,7 @@ class AIService {
         return;
       }
 
-      const reader = response.body?.getReader();
+      reader = response.body?.getReader();
       const decoder = new TextDecoder();
 
       if (!reader) {
@@ -590,6 +591,8 @@ class AIService {
       console.error('[AIService] Gemini streaming error:', error);
       connectionManager.reportFailure('gemini', error as Error);
       yield { content: '', done: true, error: (error as Error).message };
+    } finally {
+      reader?.cancel().catch(() => {});
     }
   }
 
@@ -612,6 +615,13 @@ class AIService {
             inlineData: {
               mimeType: matches[1],
               data: matches[2]
+            }
+          });
+        } else {
+          parts.push({
+            inlineData: {
+              mimeType: 'image/jpeg',
+              data: msg.image
             }
           });
         }
@@ -722,6 +732,7 @@ class AIService {
     // Fallback logic for Ollama (Ollama implementation remains as is, using standard fetch)
     const messagesWithSystem = messages; // Simplify for now
 
+    let reader: ReadableStreamDefaultReader<Uint8Array> | undefined;
     try {
       const endpoint = `${baseURL}/api/chat`;
       const body = {
@@ -746,7 +757,7 @@ class AIService {
         return;
       }
 
-      const reader = response.body?.getReader();
+      reader = response.body?.getReader();
       const decoder = new TextDecoder();
 
       if (!reader) {
@@ -760,10 +771,10 @@ class AIService {
         if (done) break;
 
         buffer += decoder.decode(value, { stream: true });
-        
+
         const chunks = buffer.split('\n');
         buffer = chunks.pop() || '';
-        
+
         for (const chunk of chunks) {
           if (!chunk.trim()) continue;
           try {
@@ -782,6 +793,8 @@ class AIService {
     } catch (error) {
       const err = error as Error;
       yield { content: '', done: true, error: err.message };
+    } finally {
+      reader?.cancel().catch(() => {});
     }
   }
 
@@ -829,6 +842,7 @@ class AIService {
       return;
     }
 
+    let reader: ReadableStreamDefaultReader<Uint8Array> | undefined;
     try {
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
@@ -852,7 +866,7 @@ class AIService {
         return;
       }
 
-      const reader = response.body?.getReader();
+      reader = response.body?.getReader();
       const decoder = new TextDecoder();
 
       if (!reader) {
@@ -872,7 +886,7 @@ class AIService {
         for (const line of lines) {
           const trimmedLine = line.trim();
           if (!trimmedLine || !trimmedLine.startsWith('data: ')) continue;
-          
+
           const data = trimmedLine.slice(6);
           if (data === '[DONE]') {
             yield { content: '', done: true };
@@ -894,6 +908,8 @@ class AIService {
     } catch (error) {
       connectionManager.reportFailure('openai', error as Error);
       yield { content: '', done: true, error: (error as Error).message };
+    } finally {
+      reader?.cancel().catch(() => {});
     }
   }
 
@@ -941,6 +957,7 @@ class AIService {
       return;
     }
 
+    let reader: ReadableStreamDefaultReader<Uint8Array> | undefined;
     try {
       const response = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
@@ -965,7 +982,7 @@ class AIService {
         return;
       }
 
-      const reader = response.body?.getReader();
+      reader = response.body?.getReader();
       const decoder = new TextDecoder();
 
       if (!reader) {
@@ -985,7 +1002,7 @@ class AIService {
         for (const line of lines) {
           const trimmedLine = line.trim();
           if (!trimmedLine || !trimmedLine.startsWith('data: ')) continue;
-          
+
           const data = trimmedLine.slice(6);
           try {
             const json = JSON.parse(data);
@@ -1007,6 +1024,8 @@ class AIService {
     } catch (error) {
       connectionManager.reportFailure('anthropic', error as Error);
       yield { content: '', done: true, error: (error as Error).message };
+    } finally {
+      reader?.cancel().catch(() => {});
     }
   }
 
@@ -1054,6 +1073,7 @@ class AIService {
       return;
     }
 
+    let reader: ReadableStreamDefaultReader<Uint8Array> | undefined;
     try {
       const response = await fetch(`${XAI_API_BASE}/chat/completions`, {
         method: 'POST',
@@ -1077,7 +1097,7 @@ class AIService {
         return;
       }
 
-      const reader = response.body?.getReader();
+      reader = response.body?.getReader();
       const decoder = new TextDecoder();
 
       if (!reader) {
@@ -1097,7 +1117,7 @@ class AIService {
         for (const line of lines) {
           const trimmedLine = line.trim();
           if (!trimmedLine || !trimmedLine.startsWith('data: ')) continue;
-          
+
           const data = trimmedLine.slice(6);
           if (data === '[DONE]') {
             yield { content: '', done: true };
@@ -1119,6 +1139,8 @@ class AIService {
     } catch (error) {
       connectionManager.reportFailure('xai', error as Error);
       yield { content: '', done: true, error: (error as Error).message };
+    } finally {
+      reader?.cancel().catch(() => {});
     }
   }
 

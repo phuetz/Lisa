@@ -131,7 +131,7 @@ export function useVoiceChat(options: UseVoiceChatOptions = {}): UseVoiceChatRet
       loadVoices();
       synthRef.current.onvoiceschanged = loadVoices;
     }
-  }, [selectedVoice]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Start listening
   const startListening = useCallback(() => {
@@ -142,6 +142,13 @@ export function useVoiceChat(options: UseVoiceChatOptions = {}): UseVoiceChatRet
     if (synthRef.current) {
       synthRef.current.cancel();
       setIsSpeaking(false);
+    }
+
+    // Stop any existing recognition instance to prevent leaks
+    if (recognitionRef.current) {
+      recognitionRef.current.onend = null;
+      recognitionRef.current.stop();
+      recognitionRef.current = null;
     }
 
     const recognition = new SpeechRecognitionAPI();

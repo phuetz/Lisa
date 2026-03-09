@@ -36,6 +36,16 @@ export class SafeExpressionEvaluator {
       return { valid: false, error: 'Condition must be a non-empty string' };
     }
 
+    // Block unicode escape sequences that could bypass keyword detection
+    if (/\\u[0-9a-fA-F]{4}|\\x[0-9a-fA-F]{2}/.test(condition)) {
+      return { valid: false, error: 'Unicode/hex escapes not allowed in expressions' };
+    }
+
+    // Block comment sequences that could hide code
+    if (/\/\*|\/\//.test(condition)) {
+      return { valid: false, error: 'Comments not allowed in expressions' };
+    }
+
     for (const pattern of SafeExpressionEvaluator.UNSAFE_PATTERNS) {
       if (pattern.test(condition)) {
         return { valid: false, error: 'Unsafe pattern detected in expression' };
@@ -87,6 +97,10 @@ export class ConditionAgent implements BaseAgent {
 
   async execute(props: AgentExecuteProps): Promise<AgentExecuteResult> {
     const { intent, parameters } = props;
+
+    if (!parameters) {
+      return { success: false, output: null, error: 'Parameters are required' };
+    }
 
     if (intent === 'validateCondition') {
       const { condition } = parameters;

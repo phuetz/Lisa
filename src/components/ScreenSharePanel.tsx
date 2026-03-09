@@ -30,6 +30,7 @@ const ScreenSharePanel: React.FC = () => {
   const [notification, setNotification] = useState<{message: string, type: 'success' | 'error' | 'info'} | null>(null);
 
   const videoRef = useRef<HTMLVideoElement>(null);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
   const { intent } = useAppStore();
 
   // Charger l'historique des sessions depuis le localStorage
@@ -72,7 +73,11 @@ const ScreenSharePanel: React.FC = () => {
   // Nettoyer la session de partage lors du démontage du composant
   useEffect(() => {
     return () => {
-      stopSharing();
+      // Use ref to access current stream — avoids stale closure from empty deps
+      if (mediaStreamRef.current) {
+        mediaStreamRef.current.getTracks().forEach(track => track.stop());
+        mediaStreamRef.current = null;
+      }
     };
   }, []);
 
@@ -96,6 +101,7 @@ const ScreenSharePanel: React.FC = () => {
 
       const stream = (execResult as any)?.stream as MediaStream | undefined;
       if (stream) {
+        mediaStreamRef.current = stream;
         setMediaStream(stream);
         setIsSharing(true);
         
@@ -129,6 +135,7 @@ const ScreenSharePanel: React.FC = () => {
   const stopSharing = () => {
     if (mediaStream) {
       mediaStream.getTracks().forEach(track => track.stop());
+      mediaStreamRef.current = null;
       setMediaStream(null);
     }
     

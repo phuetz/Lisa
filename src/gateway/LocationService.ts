@@ -64,6 +64,7 @@ export class LocationService extends BrowserEventEmitter {
   private locationHistory: GeoLocation[] = [];
   private watchId: number | null = null;
   private permissionStatus: PermissionStatus = 'unknown';
+  private permissionStatusObj: { onchange: ((this: PermissionStatus, ev: Event) => void) | null } | null = null;
   private maxHistorySize = 100;
 
   constructor(config: Partial<LocationConfig> = {}) {
@@ -83,10 +84,11 @@ export class LocationService extends BrowserEventEmitter {
       const result = await navigator.permissions.query({ name: 'geolocation' });
       this.permissionStatus = result.state as PermissionStatus;
       
-      result.addEventListener('change', () => {
+      result.onchange = () => {
         this.permissionStatus = result.state as PermissionStatus;
         this.emit('permission:changed', { status: this.permissionStatus });
-      });
+      };
+      this.permissionStatusObj = result as any;
     } catch {
       this.permissionStatus = 'unknown';
     }
@@ -337,6 +339,11 @@ export function getLocationService(): LocationService {
 export function resetLocationService(): void {
   if (locationServiceInstance) {
     locationServiceInstance.stopWatching();
+    // Clean up permission change listener
+    if ((locationServiceInstance as any).permissionStatusObj) {
+      (locationServiceInstance as any).permissionStatusObj.onchange = null;
+      (locationServiceInstance as any).permissionStatusObj = null;
+    }
     locationServiceInstance.removeAllListeners();
     locationServiceInstance = null;
   }

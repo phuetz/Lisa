@@ -3,7 +3,7 @@
  * Hook pour enregistrer l'audio depuis le microphone
  */
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 
 export interface AudioRecorderState {
   isRecording: boolean;
@@ -192,6 +192,11 @@ export const useAudioRecorder = (): UseAudioRecorderReturn => {
       reader.readAsDataURL(state.audioBlob);
     });
   }, [state.audioBlob]);
+
+  // Cleanup on unmount — stop timer and media stream to prevent leaks
+  useEffect(() => {
+    return () => { cleanup(); };
+  }, [cleanup]);
 
   return {
     ...state,

@@ -26,7 +26,7 @@ const EXT_TO_LANGUAGE: Record<string, string> = {
 const ARTIFACT_PATTERNS = [
   // Format explicite: ```artifact:type title
   {
-    regex: /```artifact:(\w+)\s+([^\n]+)\n([\s\S]*?)```/g,
+    regex: /```artifact:(\w+)\s+([^\n]+)\n([\s\S]*?)```/gi,
     handler: (match: RegExpExecArray): ArtifactData | null => {
       const type = match[1].toLowerCase() as ArtifactType;
       const title = match[2].trim();
@@ -36,7 +36,7 @@ const ARTIFACT_PATTERNS = [
   },
   // Format React/JSX complet avec ReactDOM.render ou createRoot
   {
-    regex: /```(?:jsx|react)\n([\s\S]*?(?:ReactDOM\.render|createRoot)[\s\S]*?)```/g,
+    regex: /```(?:jsx|react)\n([\s\S]*?(?:ReactDOM\.render|createRoot)[\s\S]*?)```/gi,
     handler: (match: RegExpExecArray): ArtifactData | null => {
       const code = match[1].trim();
       return createArtifact('react', 'React Component', code);
@@ -60,23 +60,14 @@ const ARTIFACT_PATTERNS = [
   },
   // Format Mermaid
   {
-    regex: /```mermaid\n([\s\S]*?)```/g,
+    regex: /```mermaid\n([\s\S]*?)```/gi,
     handler: (match: RegExpExecArray): ArtifactData | null => {
       const code = match[1].trim();
       return createArtifact('mermaid', 'Diagram', code);
     },
   },
-  // Python avec print ou classes
-  {
-    regex: /```python\n([\s\S]*?(?:print|class |def |import )[\s\S]*?)```/g,
-    handler: (match: RegExpExecArray): ArtifactData | null => {
-      const code = match[1].trim();
-      if (code.length > 100) { // Only for substantial code
-        return createArtifact('python', 'Python Script', code);
-      }
-      return null;
-    },
-  },
+  // Python: handled by InlineCodeCell (syntax highlighting + inline execution via react-py)
+  // No artifact extraction needed — InlineCodeCell is superior
 ];
 
 // Map type to Monaco language
@@ -169,9 +160,12 @@ export function parseArtifacts(content: string): ParsedContent {
     
     artifacts.push(multiArtifact);
     
-    // Remove all matched blocks from remaining text
+    // Remove all matched blocks from remaining text (indexOf-based to avoid $ injection)
     for (const matchStr of multiFileMatches) {
-      remainingText = remainingText.replace(matchStr, '');
+      const idx = remainingText.indexOf(matchStr);
+      if (idx !== -1) {
+        remainingText = remainingText.slice(0, idx) + remainingText.slice(idx + matchStr.length);
+      }
     }
     remainingText = remainingText.replace(/\n{3,}/g, '\n\n');
     remainingText += `\n[📦 Artefact: ${multiArtifact.title} (${potentialFiles.length} fichiers)]\n`;
@@ -190,10 +184,13 @@ export function parseArtifacts(content: string): ParsedContent {
       if (artifact) {
         artifacts.push(artifact);
         // Replace artifact code block with placeholder
-        remainingText = remainingText.replace(
-          match[0],
-          `\n[📦 Artefact: ${artifact.title}]\n`
-        );
+        // Use split/join instead of replace to avoid $& / $1 injection in replacement string
+        const idx = remainingText.indexOf(match[0]);
+        if (idx !== -1) {
+          remainingText = remainingText.slice(0, idx) +
+            `\n[📦 Artefact: ${artifact.title}]\n` +
+            remainingText.slice(idx + match[0].length);
+        }
       }
     }
   }
@@ -208,7 +205,11 @@ export function parseArtifacts(content: string): ParsedContent {
  * Détecte si un message contient des artefacts potentiels
  */
 export function hasArtifacts(content: string): boolean {
-  return ARTIFACT_PATTERNS.some(pattern => pattern.regex.test(content));
+  // Create fresh regex instances to avoid lastIndex state mutation from global 'g' flag
+  return ARTIFACT_PATTERNS.some(pattern => {
+    const fresh = new RegExp(pattern.regex.source, pattern.regex.flags);
+    return fresh.test(content);
+  });
 }
 
 /**

@@ -19,12 +19,13 @@ interface SenseProviderProps {
 export function SenseProvider({ children }: SenseProviderProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [micStream, setMicStream] = useState<MediaStream>();
-  const [audioCtx] = useState(() => new AudioContext());
   const isMobile = useIsMobile();
 
   // Disable heavy features by default on mobile unless explicitly enabled in config
   const [advancedVision] = useState(config.features.advancedVision && !isMobile);
   const [advancedHearing] = useState(config.features.advancedHearing);
+  // Lazy AudioContext — only created when advanced hearing is enabled
+  const [audioCtx] = useState(() => advancedHearing ? new AudioContext() : null);
 
   /* ---------- Sense Initialization ---------- */
 
@@ -44,20 +45,24 @@ export function SenseProvider({ children }: SenseProviderProps) {
     // Touch & Environment (dynamically loaded — pulls in mqtt package)
     let touchCleanup: (() => void) | undefined;
     let envCleanup: (() => void) | undefined;
+    let unmounted = false;
 
     import('../senses/touch').then(({ touchSense }) => {
+      if (unmounted) { touchSense.terminate(); return; }
       touchSense.setOnPerceptCallback(updateStore);
       touchSense.initialize();
       touchCleanup = () => touchSense.terminate();
     }).catch(err => console.warn('[SenseProvider] Touch sense failed to load:', err));
 
     import('../senses/environment').then(({ environmentSense }) => {
+      if (unmounted) { environmentSense.terminate(); return; }
       environmentSense.setOnPerceptCallback(updateStore);
       environmentSense.initialize();
       envCleanup = () => environmentSense.terminate();
     }).catch(err => console.warn('[SenseProvider] Environment sense failed to load:', err));
 
     return () => {
+      unmounted = true;
       proprioceptionSense.terminate();
       touchCleanup?.();
       envCleanup?.();
@@ -66,18 +71,34 @@ export function SenseProvider({ children }: SenseProviderProps) {
 
   // Get media streams
   useEffect(() => {
+    let cancelled = false;
+    let activeStream: MediaStream | undefined;
+
     navigator.mediaDevices
       .getUserMedia({
         video: { width: 640, height: 360, facingMode: 'user' },
         audio: true,
       })
       .then((stream) => {
+        if (cancelled) {
+          // Component unmounted before stream was ready — stop all tracks
+          stream.getTracks().forEach(t => t.stop());
+          return;
+        }
+        activeStream = stream;
         if (videoRef.current) videoRef.current.srcObject = stream;
         setMicStream(stream);
       })
       .catch((error) => {
         console.error('[SenseProvider] Failed to get media devices:', error);
       });
+
+    return () => {
+      cancelled = true;
+      if (activeStream) {
+        activeStream.getTracks().forEach(t => t.stop());
+      }
+    };
   }, [advancedVision]);
 
   // Advanced Vision processing loop (dynamically loaded)
@@ -162,6 +183,15 @@ export function SenseProvider({ children }: SenseProviderProps) {
       audioWorkletNode?.disconnect();
     };
   }, [advancedHearing, audioCtx, micStream]);
+
+  // Cleanup AudioContext on unmount
+  useEffect(() => {
+    return () => {
+      if (audioCtx && audioCtx.state !== 'closed') {
+        audioCtx.close().catch(() => {/* ignore */});
+      }
+    };
+  }, [audioCtx]);
 
   /* ---------- Render ---------- */
 

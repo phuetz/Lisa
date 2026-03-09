@@ -411,8 +411,14 @@ export class SkillExecutor extends BrowserEventEmitter {
     timeout: number
   ): Promise<unknown> {
     return new Promise((resolve, reject) => {
+      let settled = false;
+
       const timer = setTimeout(() => {
-        reject(new Error(`Execution timed out after ${timeout}ms`));
+        if (!settled) {
+          settled = true;
+          if (context.signal) context.signal.removeEventListener('abort', abortHandler);
+          reject(new Error(`Execution timed out after ${timeout}ms`));
+        }
       }, timeout);
 
       // Check abort signal
@@ -422,19 +428,34 @@ export class SkillExecutor extends BrowserEventEmitter {
         return;
       }
 
-      context.signal?.addEventListener('abort', () => {
-        clearTimeout(timer);
-        reject(new Error('Execution aborted'));
-      });
+      const abortHandler = () => {
+        if (!settled) {
+          settled = true;
+          clearTimeout(timer);
+          reject(new Error('Execution aborted'));
+        }
+      };
+
+      if (context.signal) {
+        context.signal.addEventListener('abort', abortHandler);
+      }
 
       handler(params, context)
         .then(result => {
-          clearTimeout(timer);
-          resolve(result);
+          if (!settled) {
+            settled = true;
+            clearTimeout(timer);
+            if (context.signal) context.signal.removeEventListener('abort', abortHandler);
+            resolve(result);
+          }
         })
         .catch(error => {
-          clearTimeout(timer);
-          reject(error);
+          if (!settled) {
+            settled = true;
+            clearTimeout(timer);
+            if (context.signal) context.signal.removeEventListener('abort', abortHandler);
+            reject(error);
+          }
         });
     });
   }

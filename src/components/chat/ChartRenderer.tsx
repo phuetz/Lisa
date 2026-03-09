@@ -51,11 +51,12 @@ const ChartRendererComponent: React.FC<ChartRendererProps> = ({ chartData }) => 
   
   // Memoize computed values to prevent re-renders
   const { actualXKey, actualYKeys } = useMemo(() => {
-    const keys = data.length > 0 ? Object.keys(data[0]) : [];
+    const firstItem = data.length > 0 && data[0] && typeof data[0] === 'object' ? data[0] : {};
+    const keys = Object.keys(firstItem);
     const xk = xKey || keys[0] || 'name';
-    const yk = yKey 
+    const yk = yKey
       ? (Array.isArray(yKey) ? yKey : [yKey])
-      : keys.filter(k => k !== xk && typeof data[0]?.[k] === 'number');
+      : keys.filter(k => k !== xk && typeof firstItem[k] === 'number');
     return { actualXKey: xk, actualYKeys: yk };
   }, [data, xKey, yKey]);
 

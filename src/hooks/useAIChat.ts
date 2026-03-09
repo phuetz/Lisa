@@ -4,7 +4,7 @@
  * Intégration OpenClaw-inspired avec Gateway Skills
  */
 
-import { useState, useCallback, useRef, useMemo } from 'react';
+import { useState, useCallback, useRef, useMemo, useEffect } from 'react';
 import { aiService, type AIMessage, type AIProvider } from '../services/aiService';
 import { aiWithToolsService, type ToolUsageInfo } from '../services/AIWithToolsService';
 import { useChatHistoryStore } from '../store/chatHistoryStore';
@@ -492,6 +492,16 @@ ${options.systemPrompt || ''}`;
   // Clear tools used
   const clearToolsUsed = useCallback(() => {
     setToolsUsed([]);
+  }, []);
+
+  // Cleanup: abort in-flight requests on unmount
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+        abortControllerRef.current = null;
+      }
+    };
   }, []);
 
   return {

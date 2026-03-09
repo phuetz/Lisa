@@ -39,7 +39,7 @@ export const parseChartData = (content: string): ChartData | null => {
     const parsed = JSON.parse(cleanContent);
     
     // Validate required fields
-    if (!parsed.type || !parsed.data || !Array.isArray(parsed.data)) {
+    if (!parsed.type || !parsed.data || !Array.isArray(parsed.data) || parsed.data.length === 0) {
       return null;
     }
     

@@ -130,8 +130,10 @@ export class VoiceWakePro extends BrowserEventEmitter {
     if (this.state.isListening) return;
 
     try {
-      // Request microphone permission
-      await navigator.mediaDevices.getUserMedia({ audio: true });
+      // Request microphone permission and immediately release the stream
+      // (WebVoiceProcessor manages its own audio capture internally)
+      const permissionStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      permissionStream.getTracks().forEach(t => t.stop());
 
       // Start processing
       if (this.webVoiceProcessor && this.porcupine) {
@@ -414,7 +416,10 @@ export class VoiceWakeFallback extends BrowserEventEmitter {
     if (this.state.isListening || !this.recognition) return;
 
     try {
-      await navigator.mediaDevices.getUserMedia({ audio: true });
+      // Request microphone permission and immediately release the stream
+      // (SpeechRecognition manages its own audio capture internally)
+      const permissionStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      permissionStream.getTracks().forEach(t => t.stop());
       this.recognition.start();
       this.state.isListening = true;
       this.emit('started');

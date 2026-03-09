@@ -2,7 +2,7 @@
  * ChatLayoutSimple - Chat content area (sidebar/topbar provided by MainLayout)
  */
 
-import { useState, useMemo, lazy, Suspense } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback, lazy, Suspense } from 'react';
 import { Plus, Trash2, MessageSquare, X, FileDown, Search, Download, Upload, Keyboard, Settings, Loader2 } from 'lucide-react';
 import { useChatHistoryStore } from '../../store/chatHistoryStore';
 import { ChatMessages } from './ChatMessages';
@@ -26,7 +26,21 @@ export const ChatLayoutSimple = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+
+  const showToast = useCallback((msg: string) => {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    setToast(msg);
+    toastTimerRef.current = setTimeout(() => setToast(null), 3000);
+  }, []);
+
+  // Cleanup toast timer on unmount
+  useEffect(() => {
+    return () => {
+      if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    };
+  }, []);
 
   const {
     conversations,
@@ -62,21 +76,21 @@ export const ChatLayoutSimple = () => {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = '.json';
+    const cleanup = () => { input.onchange = null; };
     input.onchange = (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
-      if (!file) return;
+      if (!file) { cleanup(); return; }
       const reader = new FileReader();
       reader.onload = (event) => {
         try {
           const imported = JSON.parse(event.target?.result as string);
           if (Array.isArray(imported)) {
-            setToast(`Import de ${imported.length} conversations réussi!`);
-            setTimeout(() => setToast(null), 3000);
+            showToast(`Import de ${imported.length} conversations réussi!`);
           }
         } catch {
-          setToast('Erreur: fichier JSON invalide');
-          setTimeout(() => setToast(null), 3000);
+          showToast('Erreur: fichier JSON invalide');
         }
+        cleanup();
       };
       reader.readAsText(file);
     };

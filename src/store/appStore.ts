@@ -175,7 +175,7 @@ const createUiSlice = (set: any, get: any): UiSlice => ({
     set({ lastPlanExplanation: explanation, lastPlanTraceId: traceId }),
   setLastSpokenText: (text) =>
     set((state: AppState) => ({
-      conversationContext: { ...state.conversationContext, lastSpokenText: text, timestamp: Date.now() },
+      conversationContext: { ...(state.conversationContext || {}), lastSpokenText: text, timestamp: Date.now() },
     })),
   addTodo: (todo) =>
     set((state: AppState) => ({ todos: [...state.todos, todo as Todo] })),

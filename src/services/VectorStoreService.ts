@@ -190,7 +190,14 @@ export class VectorStoreService {
       this.entryPoint = index;
       this.maxLevel = level;
     } else {
-      await this.insertNode(index, vector, level);
+      try {
+        await this.insertNode(index, vector, level);
+      } catch (error) {
+        // Roll back on failure to prevent orphaned nodes
+        this.nodes.delete(index);
+        this.idToIndex.delete(entry.id);
+        throw error;
+      }
     }
 
     await this.saveNode(index);
@@ -214,14 +221,17 @@ export class VectorStoreService {
     const query = new Float32Array(queryVector);
     const results = this.searchKNN(query, k);
 
-    return results.map(([index, distance]) => {
-      const node = this.nodes.get(index)!;
-      return {
-        id: node.id,
-        score: 1 - distance,
-        metadata: node.metadata
-      };
-    });
+    return results
+      .map(([index, distance]) => {
+        const node = this.nodes.get(index);
+        if (!node) return null;
+        return {
+          id: node.id,
+          score: Math.max(0, Math.min(1, 1 - distance)),
+          metadata: node.metadata
+        };
+      })
+      .filter((r): r is SearchResult => r !== null);
   }
 
   async remove(id: string): Promise<boolean> {

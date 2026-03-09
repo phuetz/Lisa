@@ -32,6 +32,15 @@ function App() {
   const [audioCtx] = useState(() => new AudioContext());
   const isMobile = useIsMobile();
 
+  // Clean up AudioContext on unmount
+  useEffect(() => {
+    return () => {
+      if (audioCtx.state !== 'closed') {
+        audioCtx.close().catch(() => {/* ignore */});
+      }
+    };
+  }, [audioCtx]);
+
   const { isAuthenticated, isLoading, logout } = useAuth();
 
   // Fall detector integration

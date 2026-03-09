@@ -53,6 +53,7 @@ export class ScreenCapture extends BrowserEventEmitter {
   private mediaStream: MediaStream | null = null;
   private mediaRecorder: MediaRecorder | null = null;
   private currentRecording: Recording | null = null;
+  private maxDurationTimer: ReturnType<typeof setTimeout> | null = null;
   private screenshots: Screenshot[] = [];
   private recordings: Recording[] = [];
 
@@ -222,8 +223,9 @@ export class ScreenCapture extends BrowserEventEmitter {
         this.stopRecording();
       };
 
-      // Auto-stop after max duration
-      setTimeout(() => {
+      // Auto-stop after max duration (track timer for cleanup)
+      this.maxDurationTimer = setTimeout(() => {
+        this.maxDurationTimer = null;
         if (this.currentRecording?.status === 'recording') {
           this.stopRecording();
         }
@@ -268,9 +270,18 @@ export class ScreenCapture extends BrowserEventEmitter {
       return null;
     }
 
+    // Clear auto-stop timer
+    if (this.maxDurationTimer) {
+      clearTimeout(this.maxDurationTimer);
+      this.maxDurationTimer = null;
+    }
+
     this.mediaRecorder.stop();
-    
+
     if (this.mediaStream) {
+      // Remove onended handler before stopping tracks to prevent re-entry
+      const videoTrack = this.mediaStream.getVideoTracks()[0];
+      if (videoTrack) videoTrack.onended = null;
       this.stopStream(this.mediaStream);
       this.mediaStream = null;
     }

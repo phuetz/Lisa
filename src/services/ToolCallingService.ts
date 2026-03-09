@@ -98,6 +98,7 @@ export type { GeminiFunctionDeclaration, ClaudeTool } from '@phuetz/ai-providers
 
 export class ToolCallingService {
   private tools: Map<string, ToolDefinition> = new Map();
+  private static readonly MAX_HISTORY_SIZE = 500;
   private executionHistory: Array<{
     toolCall: ToolCall;
     result: ToolResult;
@@ -301,6 +302,10 @@ export class ToolCallingService {
         result: toolResult,
         timestamp: Date.now()
       });
+      // Trim history to prevent unbounded growth
+      if (this.executionHistory.length > ToolCallingService.MAX_HISTORY_SIZE) {
+        this.executionHistory = this.executionHistory.slice(-ToolCallingService.MAX_HISTORY_SIZE);
+      }
 
       return toolResult;
     } catch (error) {

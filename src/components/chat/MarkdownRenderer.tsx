@@ -291,14 +291,14 @@ export const MarkdownRenderer = ({ content }: MarkdownRendererProps) => {
   // Extract and cache charts from content before rendering
   // This ensures charts persist even when streaming adds text after them
   const cachedCharts = useMemo(() => {
-    const chartRegex = /```(?:chart|json)\s*([\s\S]*?)```/g;
+    const chartRegex = /```chart\s*([\s\S]*?)```/g;
     let match;
     while ((match = chartRegex.exec(processedContent)) !== null) {
       const chartContent = match[1].trim();
       const chartData = parseChartData(chartContent);
       if (chartData) {
         // Use a hash of the chart data as key
-        const key = JSON.stringify(chartData.data).substring(0, 100);
+        const key = JSON.stringify(chartData).substring(0, 200);
         chartCacheRef.current.set(key, chartData);
       }
     }
@@ -323,15 +323,16 @@ export const MarkdownRenderer = ({ content }: MarkdownRendererProps) => {
           const codeContent = extractTextFromChildren(children);
           
           // Check if this is a chart code block (non-inline only)
-          if (!isInline && match && (match[1] === 'chart' || match[1] === 'json')) {
+          if (!isInline && match && match[1] === 'chart') {
             // Try to parse current content
             let chartData = parseChartData(codeContent);
             
             // If parsing fails, check cache for a matching chart
             if (!chartData && cachedCharts.size > 0) {
-              // Try to find a cached chart that starts similarly
-              for (const [_key, cached] of cachedCharts) {
-                if (codeContent.includes('"type"') && codeContent.includes(cached.type)) {
+              // During streaming, try to find a cached chart with matching partial content
+              for (const [key, cached] of cachedCharts) {
+                const partialKey = JSON.stringify(cached).substring(0, Math.min(codeContent.length, 200));
+                if (codeContent.length > 20 && partialKey.includes(cached.type)) {
                   chartData = cached;
                   break;
                 }
@@ -400,11 +401,12 @@ export const MarkdownRenderer = ({ content }: MarkdownRendererProps) => {
             </em>
           );
         },
-        // Links
+        // Links - validate href to block javascript: and data: URIs
         a({ href, children }) {
+          const safeHref = href && /^(https?:|mailto:|#|\/)/i.test(href) ? href : undefined;
           return (
             <a
-              href={href}
+              href={safeHref}
               target="_blank"
               rel="noopener noreferrer"
               style={{

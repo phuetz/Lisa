@@ -294,24 +294,26 @@ export function useSenses(options: UseSensesOptions = {}): UseSensesReturn {
 
   // Initialize enabled senses on mount
   useEffect(() => {
+    let cancelled = false;
     const currentSenses = sensesRef.current;
-    
+
     const init = async () => {
       const promises: Promise<void>[] = [];
-      
-      if (opts.enableVision) promises.push(initVision());
-      if (opts.enableHearing) promises.push(initHearing());
-      if (opts.enableTouch) promises.push(initTouch());
-      if (opts.enableEnvironment) promises.push(initEnvironment());
-      if (opts.enableProprioception) promises.push(initProprioception());
-      
+
+      if (opts.enableVision) promises.push(initVision().catch(e => console.warn('[useSenses] Vision init failed:', e)));
+      if (opts.enableHearing) promises.push(initHearing().catch(e => console.warn('[useSenses] Hearing init failed:', e)));
+      if (opts.enableTouch) promises.push(initTouch().catch(e => console.warn('[useSenses] Touch init failed:', e)));
+      if (opts.enableEnvironment) promises.push(initEnvironment().catch(e => console.warn('[useSenses] Environment init failed:', e)));
+      if (opts.enableProprioception) promises.push(initProprioception().catch(e => console.warn('[useSenses] Proprioception init failed:', e)));
+
       await Promise.all(promises);
     };
 
     void init();
 
-    // Cleanup on unmount
+    // Cleanup on unmount — stop all senses that were initialized
     return () => {
+      cancelled = true;
       Object.keys(currentSenses).forEach(key => {
         const modality = key as SenseModality;
         const sense = currentSenses[modality];
@@ -321,6 +323,7 @@ export function useSenses(options: UseSensesOptions = {}): UseSensesReturn {
           } else if ('terminate' in sense) {
             (sense as { terminate: () => void }).terminate();
           }
+          currentSenses[modality] = null;
         }
       });
     };

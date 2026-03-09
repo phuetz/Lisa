@@ -29,9 +29,11 @@ export class WebSearchAgent implements BaseAgent {
       const result = await this.tool.execute({ query });
 
       if (result.success && result.output) {
-        // Fallback summarization since tool no longer does it
-        // Ideally this should use an LLM, but for now we formatting the snippets
-        const snippets = result.output.results.map(r => `• ${r.title}: ${r.snippet}`).join('\n');
+        const results = Array.isArray(result.output.results) ? result.output.results : [];
+        const snippets = results
+          .filter(r => r && typeof r.title === 'string' && typeof r.snippet === 'string')
+          .map(r => `• ${r.title}: ${r.snippet}`)
+          .join('\n');
         return {
           success: true,
           output: snippets || 'No results found.'

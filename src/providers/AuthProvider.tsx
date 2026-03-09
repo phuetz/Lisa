@@ -4,7 +4,7 @@
  * Extracts auth logic from App.tsx
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { LoginForm } from '../components/LoginForm';
 import { RegisterForm } from '../components/RegisterForm';
@@ -14,13 +14,15 @@ interface AuthProviderProps {
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  const { isAuthenticated, isLoading, logout } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
   const [showAuthForm, setShowAuthForm] = useState<'login' | 'register' | null>(null);
 
-  // If not authenticated and not loading, show auth form
-  if (!isAuthenticated && !isLoading && !showAuthForm) {
-    setShowAuthForm('login');
-  }
+  // Show auth form when not authenticated (in effect, not during render)
+  useEffect(() => {
+    if (!isAuthenticated && !isLoading && !showAuthForm) {
+      setShowAuthForm('login');
+    }
+  }, [isAuthenticated, isLoading, showAuthForm]);
 
   // Show authentication forms
   if (showAuthForm === 'login') {

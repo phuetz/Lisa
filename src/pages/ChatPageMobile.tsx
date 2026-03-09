@@ -3,22 +3,28 @@
  * Page principale du chat pour mobile avec design ChatGPT-like
  */
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useChatHistoryStore } from '../store/chatHistoryStore';
 import { ChatLayoutMobile } from '../components/chat/ChatLayoutMobile';
 
 export const ChatPageMobile = () => {
-  const { conversations, currentConversationId, createConversation, setCurrentConversation } = useChatHistoryStore();
+  const hasInitialized = useRef(false);
 
-  // Auto-create first conversation if none exists
+  // Auto-create first conversation if none exists (run once)
   useEffect(() => {
+    if (hasInitialized.current) return;
+    hasInitialized.current = true;
+
+    const { conversations, currentConversationId, createConversation, setCurrentConversation } =
+      useChatHistoryStore.getState();
+
     if (conversations.length === 0) {
       const id = createConversation();
       setCurrentConversation(id);
     } else if (!currentConversationId && conversations.length > 0) {
       setCurrentConversation(conversations[0].id);
     }
-  }, [conversations, currentConversationId, createConversation, setCurrentConversation]);
+  }, []);
 
   return <ChatLayoutMobile />;
 };

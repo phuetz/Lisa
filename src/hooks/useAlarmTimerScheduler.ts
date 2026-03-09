@@ -31,7 +31,9 @@ export default function useAlarmTimerScheduler() {
         setState({ alarms: newAlarms, timers: newTimers });
         
         // Speak notification
-        speechSynthesis.speak(new SpeechSynthesisUtterance('Time\'s up'));
+        if (typeof window !== 'undefined' && window.speechSynthesis) {
+          window.speechSynthesis.speak(new SpeechSynthesisUtterance('Time\'s up'));
+        }
         
         // Send notification if permission granted
         if (permissionState === 'granted') {

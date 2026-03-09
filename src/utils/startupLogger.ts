@@ -307,8 +307,8 @@ export const logError = (category: LogCategory, message: string, error: Error | 
 export const logPerformance = (name: string, duration: number) =>
   startupLogger.log('info', 'performance', `${name}: ${duration}ms`);
 
-// Exposer globalement pour debug
-if (typeof window !== 'undefined') {
+// Exposer globalement pour debug (dev mode only)
+if (typeof window !== 'undefined' && import.meta.env.DEV) {
   (window as any).startupLogger = startupLogger;
   (window as any).printStartupSummary = () => startupLogger.printSummary();
   (window as any).exportStartupLogs = () => {

@@ -3,7 +3,7 @@
  * Hook React pour accéder au gestionnaire de contexte
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAppStore } from '../store/appStore';
 import { agentRegistry } from '../features/agents/core/registry';
 import { ContextAgent } from '../features/agents/implementations/ContextAgent';
@@ -23,14 +23,27 @@ export function useContextManager() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [recentContexts, setRecentContexts] = useState<ContextItem[]>([]);
-  
+  // Track concurrent loading operations to prevent premature isLoading=false
+  const loadingCountRef = useRef(0);
+
+  const startLoading = useCallback(() => {
+    loadingCountRef.current++;
+    if (loadingCountRef.current === 1) setIsLoading(true);
+  }, []);
+
+  const stopLoading = useCallback(() => {
+    loadingCountRef.current = Math.max(0, loadingCountRef.current - 1);
+    if (loadingCountRef.current === 0) setIsLoading(false);
+  }, []);
+
   /**
    * Obtient l'agent de contexte du registre
    */
-  const getContextAgent = useCallback((): ContextAgent => {
+  const getContextAgent = useCallback((): ContextAgent | null => {
     const agent = agentRegistry.getAgent('context-agent');
     if (!agent) {
-      throw new Error("Agent de contexte non disponible");
+      setError("Agent de contexte non disponible");
+      return null;
     }
     return agent as ContextAgent;
   }, []);
@@ -40,9 +53,10 @@ export function useContextManager() {
    */
   const addContext = useCallback(async (contextItem: Omit<ContextItem, 'id' | 'timestamp'>): Promise<ContextItem | null> => {
     try {
-      setIsLoading(true);
-      
+      startLoading();
+
       const agent = getContextAgent();
+      if (!agent) return null;
       const props = {
         intent: 'add_context',
         parameters: { contextItem }
@@ -62,18 +76,19 @@ export function useContextManager() {
       setError(err instanceof Error ? err.message : String(err));
       return null;
     } finally {
-      setIsLoading(false);
+      stopLoading();
     }
-  }, [getContextAgent]);
-  
+  }, [getContextAgent, startLoading, stopLoading]);
+
   /**
    * Obtient un élément de contexte par ID
    */
   const getContext = useCallback(async (id: string): Promise<ContextItem | null> => {
     try {
-      setIsLoading(true);
-      
+      startLoading();
+
       const agent = getContextAgent();
+      if (!agent) return null;
       const props = {
         intent: 'get_context',
         parameters: { id }
@@ -90,18 +105,19 @@ export function useContextManager() {
       setError(err instanceof Error ? err.message : String(err));
       return null;
     } finally {
-      setIsLoading(false);
+      stopLoading();
     }
-  }, [getContextAgent]);
+  }, [getContextAgent, startLoading, stopLoading]);
   
   /**
    * Met à jour un élément de contexte
    */
   const updateContext = useCallback(async (id: string, updates: Partial<Omit<ContextItem, 'id' | 'type'>>): Promise<ContextItem | null> => {
     try {
-      setIsLoading(true);
-      
+      startLoading();
+
       const agent = getContextAgent();
+      if (!agent) return null;
       const props = {
         intent: 'update_context',
         parameters: { id, updates }
@@ -121,18 +137,19 @@ export function useContextManager() {
       setError(err instanceof Error ? err.message : String(err));
       return null;
     } finally {
-      setIsLoading(false);
+      stopLoading();
     }
-  }, [getContextAgent]);
+  }, [getContextAgent, startLoading, stopLoading]);
   
   /**
    * Supprime un élément de contexte
    */
   const removeContext = useCallback(async (id: string): Promise<boolean> => {
     try {
-      setIsLoading(true);
-      
+      startLoading();
+
       const agent = getContextAgent();
+      if (!agent) return false;
       const props = {
         intent: 'delete_context',
         parameters: { id }
@@ -152,18 +169,19 @@ export function useContextManager() {
       setError(err instanceof Error ? err.message : String(err));
       return false;
     } finally {
-      setIsLoading(false);
+      stopLoading();
     }
-  }, [getContextAgent]);
+  }, [getContextAgent, startLoading, stopLoading]);
   
   /**
    * Recherche des éléments de contexte
    */
   const queryContext = useCallback(async (options?: ContextQueryOptions): Promise<ContextItem[]> => {
     try {
-      setIsLoading(true);
-      
+      startLoading();
+
       const agent = getContextAgent();
+      if (!agent) return [];
       const props = {
         intent: 'query_context',
         parameters: { options }
@@ -180,18 +198,19 @@ export function useContextManager() {
       setError(err instanceof Error ? err.message : String(err));
       return [];
     } finally {
-      setIsLoading(false);
+      stopLoading();
     }
-  }, [getContextAgent]);
+  }, [getContextAgent, startLoading, stopLoading]);
   
   /**
    * Obtient le contexte pertinent pour une entrée
    */
   const getRelevantContext = useCallback(async (input: string, maxItems: number = 10): Promise<ContextItem[]> => {
     try {
-      setIsLoading(true);
-      
+      startLoading();
+
       const agent = getContextAgent();
+      if (!agent) return [];
       const props = {
         intent: 'get_relevant_context',
         parameters: { input, maxItems }
@@ -208,9 +227,9 @@ export function useContextManager() {
       setError(err instanceof Error ? err.message : String(err));
       return [];
     } finally {
-      setIsLoading(false);
+      stopLoading();
     }
-  }, [getContextAgent]);
+  }, [getContextAgent, startLoading, stopLoading]);
   
   /**
    * Ajoute un élément de contexte de conversation
@@ -222,6 +241,7 @@ export function useContextManager() {
   ): Promise<ConversationContextItem | null> => {
     try {
       const agent = getContextAgent();
+      if (!agent) return null;
       const result = await agent.addConversationContext(text, role, metadata);
       
       // Rafraîchit la liste des contextes récents
@@ -245,6 +265,7 @@ export function useContextManager() {
   ): Promise<EntityContextItem | null> => {
     try {
       const agent = getContextAgent();
+      if (!agent) return null;
       const result = await agent.addEntityContext(entityType, name, attributes, references);
       
       // Rafraîchit la liste des contextes récents
@@ -268,6 +289,7 @@ export function useContextManager() {
   ): Promise<IntentHistoryContextItem | null> => {
     try {
       const agent = getContextAgent();
+      if (!agent) return null;
       const result = await agent.addIntentContext(intent, parameters, fulfilled, followUpIntent);
       
       // Rafraîchit la liste des contextes récents
@@ -285,9 +307,10 @@ export function useContextManager() {
    */
   const mergeContexts = useCallback(async (): Promise<boolean> => {
     try {
-      setIsLoading(true);
-      
+      startLoading();
+
       const agent = getContextAgent();
+      if (!agent) return false;
       const props = {
         intent: 'merge_contexts'
       };
@@ -306,18 +329,19 @@ export function useContextManager() {
       setError(err instanceof Error ? err.message : String(err));
       return false;
     } finally {
-      setIsLoading(false);
+      stopLoading();
     }
-  }, [getContextAgent]);
+  }, [getContextAgent, startLoading, stopLoading]);
   
   /**
    * Nettoie les contextes expirés
    */
   const pruneContexts = useCallback(async (): Promise<boolean> => {
     try {
-      setIsLoading(true);
-      
+      startLoading();
+
       const agent = getContextAgent();
+      if (!agent) return false;
       const props = {
         intent: 'prune_contexts'
       };
@@ -336,18 +360,19 @@ export function useContextManager() {
       setError(err instanceof Error ? err.message : String(err));
       return false;
     } finally {
-      setIsLoading(false);
+      stopLoading();
     }
-  }, [getContextAgent]);
+  }, [getContextAgent, startLoading, stopLoading]);
   
   /**
    * Supprime tous les contextes
    */
   const clearContexts = useCallback(async (types?: ContextType[]): Promise<boolean> => {
     try {
-      setIsLoading(true);
-      
+      startLoading();
+
       const agent = getContextAgent();
+      if (!agent) return false;
       const props = {
         intent: 'clear_contexts',
         parameters: { types }
@@ -367,18 +392,19 @@ export function useContextManager() {
       setError(err instanceof Error ? err.message : String(err));
       return false;
     } finally {
-      setIsLoading(false);
+      stopLoading();
     }
-  }, [getContextAgent]);
+  }, [getContextAgent, startLoading, stopLoading]);
   
   /**
    * Récupère les statistiques du contexte
    */
   const getContextStats = useCallback(async (): Promise<any> => {
     try {
-      setIsLoading(true);
-      
+      startLoading();
+
       const agent = getContextAgent();
+      if (!agent) return null;
       const props = {
         intent: 'get_stats'
       };
@@ -394,18 +420,19 @@ export function useContextManager() {
       setError(err instanceof Error ? err.message : String(err));
       return null;
     } finally {
-      setIsLoading(false);
+      stopLoading();
     }
-  }, [getContextAgent]);
+  }, [getContextAgent, startLoading, stopLoading]);
   
   /**
    * Exporte tous les éléments de contexte
    */
   const exportContexts = useCallback(async (): Promise<ContextItem[]> => {
     try {
-      setIsLoading(true);
-      
+      startLoading();
+
       const agent = getContextAgent();
+      if (!agent) return [];
       const props = {
         intent: 'export_contexts'
       };
@@ -421,18 +448,19 @@ export function useContextManager() {
       setError(err instanceof Error ? err.message : String(err));
       return [];
     } finally {
-      setIsLoading(false);
+      stopLoading();
     }
-  }, [getContextAgent]);
+  }, [getContextAgent, startLoading, stopLoading]);
   
   /**
    * Importe des éléments de contexte
    */
   const importContexts = useCallback(async (contexts: ContextItem[]): Promise<boolean> => {
     try {
-      setIsLoading(true);
-      
+      startLoading();
+
       const agent = getContextAgent();
+      if (!agent) return false;
       const props = {
         intent: 'import_contexts',
         parameters: { contexts }
@@ -452,18 +480,19 @@ export function useContextManager() {
       setError(err instanceof Error ? err.message : String(err));
       return false;
     } finally {
-      setIsLoading(false);
+      stopLoading();
     }
-  }, [getContextAgent]);
+  }, [getContextAgent, startLoading, stopLoading]);
   
   /**
    * Rafraîchit la liste des contextes récents
    */
   const refreshRecentContexts = useCallback(async (): Promise<ContextItem[]> => {
     try {
-      setIsLoading(true);
-      
+      startLoading();
+
       const agent = getContextAgent();
+      if (!agent) return [];
       const props = {
         intent: 'get_recent_contexts',
         parameters: { limit: 5 }
@@ -482,9 +511,9 @@ export function useContextManager() {
       setError(err instanceof Error ? err.message : String(err));
       return [];
     } finally {
-      setIsLoading(false);
+      stopLoading();
     }
-  }, [getContextAgent]);
+  }, [getContextAgent, startLoading, stopLoading]);
   
   // Note: useEffect pour lastIntent/lastSpokenText désactivé car les types ne correspondent pas
   // TODO: Réactiver quand le store sera mis à jour avec les bons types

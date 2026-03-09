@@ -4,7 +4,7 @@
  * Utilise les mêmes stores que la version web
  */
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { Menu, X, Plus, Settings, MessageSquare, Search, Download } from 'lucide-react';
 import { SwipeableItem } from './SwipeableItem';
 import { useChatHistoryStore } from '../../store/chatHistoryStore';
@@ -32,16 +32,18 @@ export const ChatLayoutMobile = () => {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const { hapticTap } = useMobile();
-  
-  const { 
+  const hapticTapRef = useRef(hapticTap);
+  hapticTapRef.current = hapticTap;
+
+  const {
     conversations,
     currentConversationId,
     createConversation,
     setCurrentConversation,
     deleteConversation,
-    getCurrentConversation 
+    getCurrentConversation
   } = useChatHistoryStore();
-  
+
   const currentConversation = getCurrentConversation();
 
   // Android back button handler
@@ -50,17 +52,17 @@ export const ChatLayoutMobile = () => {
       if (settingsOpen) {
         e.preventDefault();
         setSettingsOpen(false);
-        hapticTap();
+        hapticTapRef.current();
       } else if (sidebarOpen) {
         e.preventDefault();
         setSidebarOpen(false);
-        hapticTap();
+        hapticTapRef.current();
       }
     };
 
     window.addEventListener('popstate', handleBackButton);
     return () => window.removeEventListener('popstate', handleBackButton);
-  }, [sidebarOpen, settingsOpen, hapticTap]);
+  }, [sidebarOpen, settingsOpen]);
 
   // Filtrer les conversations par recherche
   const filteredConversations = useMemo(() => {

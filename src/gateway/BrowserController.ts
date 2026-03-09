@@ -181,11 +181,24 @@ export class BrowserController extends BrowserEventEmitter {
     return true;
   }
 
+  private static readonly ALLOWED_PROTOCOLS = new Set(['http:', 'https:', 'file:']);
+  private static readonly MAX_HISTORY_SIZE = 1000;
+
   // Navigation
   async navigate(url: string): Promise<BrowserResult> {
     const start = Date.now();
-    
+
     try {
+      // Validate URL to prevent javascript: / data: URI injection
+      try {
+        const parsed = new URL(url);
+        if (!BrowserController.ALLOWED_PROTOCOLS.has(parsed.protocol)) {
+          return this.createErrorResult('navigate', `Disallowed protocol: ${parsed.protocol}`, start);
+        }
+      } catch {
+        return this.createErrorResult('navigate', `Invalid URL: ${url}`, start);
+      }
+
       const page = this.getActivePage();
       if (!page) {
         await this.newPage();
@@ -203,7 +216,7 @@ export class BrowserController extends BrowserEventEmitter {
         duration: Date.now() - start
       };
 
-      this.actionHistory.push(result);
+      this.pushHistory(result);
       this.emit('action:navigate', result);
       return result;
     } catch (error) {
@@ -233,7 +246,7 @@ export class BrowserController extends BrowserEventEmitter {
         duration: Date.now() - start
       };
 
-      this.actionHistory.push(result);
+      this.pushHistory(result);
       this.emit('action:click', result);
       return result;
     } catch (error) {
@@ -253,7 +266,7 @@ export class BrowserController extends BrowserEventEmitter {
         duration: Date.now() - start
       };
 
-      this.actionHistory.push(result);
+      this.pushHistory(result);
       this.emit('action:type', result);
       return result;
     } catch (error) {
@@ -276,7 +289,7 @@ export class BrowserController extends BrowserEventEmitter {
         duration: Date.now() - start
       };
 
-      this.actionHistory.push(result);
+      this.pushHistory(result);
       this.emit('action:screenshot', result);
       return result;
     } catch (error) {
@@ -312,7 +325,7 @@ export class BrowserController extends BrowserEventEmitter {
         duration: Date.now() - start
       };
 
-      this.actionHistory.push(result);
+      this.pushHistory(result);
       this.emit('action:evaluate', result);
       return result;
     } catch (error) {
@@ -331,7 +344,7 @@ export class BrowserController extends BrowserEventEmitter {
         duration: Date.now() - start
       };
 
-      this.actionHistory.push(result);
+      this.pushHistory(result);
       this.emit('action:scroll', result);
       return result;
     } catch (error) {
@@ -351,7 +364,7 @@ export class BrowserController extends BrowserEventEmitter {
       duration: Date.now() - start
     };
 
-    this.actionHistory.push(result);
+    this.pushHistory(result);
     return result;
   }
 
@@ -369,7 +382,7 @@ export class BrowserController extends BrowserEventEmitter {
         duration: Date.now() - start
       };
 
-      this.actionHistory.push(result);
+      this.pushHistory(result);
       return result;
     } catch (error) {
       return this.createErrorResult('wait', error, start);
@@ -387,7 +400,7 @@ export class BrowserController extends BrowserEventEmitter {
         duration: Date.now() - start
       };
 
-      this.actionHistory.push(result);
+      this.pushHistory(result);
       this.emit('action:select', result);
       return result;
     } catch (error) {
@@ -406,7 +419,7 @@ export class BrowserController extends BrowserEventEmitter {
         duration: Date.now() - start
       };
 
-      this.actionHistory.push(result);
+      this.pushHistory(result);
       this.emit('action:hover', result);
       return result;
     } catch (error) {
@@ -425,7 +438,7 @@ export class BrowserController extends BrowserEventEmitter {
         duration: Date.now() - start
       };
 
-      this.actionHistory.push(result);
+      this.pushHistory(result);
       this.emit('action:press', result);
       return result;
     } catch (error) {
@@ -444,7 +457,7 @@ export class BrowserController extends BrowserEventEmitter {
         duration: Date.now() - start
       };
 
-      this.actionHistory.push(result);
+      this.pushHistory(result);
       this.emit('action:pdf', result);
       return result;
     } catch (error) {
@@ -538,6 +551,14 @@ export class BrowserController extends BrowserEventEmitter {
     this.actionHistory = [];
   }
 
+  // Push to history and trim to prevent unbounded growth
+  private pushHistory(result: BrowserResult): void {
+    this.actionHistory.push(result);
+    if (this.actionHistory.length > BrowserController.MAX_HISTORY_SIZE) {
+      this.actionHistory = this.actionHistory.slice(-BrowserController.MAX_HISTORY_SIZE);
+    }
+  }
+
   // Error helper
   private createErrorResult(action: BrowserActionType, error: unknown, start: number): BrowserResult {
     const result: BrowserResult = {
@@ -546,7 +567,7 @@ export class BrowserController extends BrowserEventEmitter {
       error: error instanceof Error ? error.message : String(error),
       duration: Date.now() - start
     };
-    this.actionHistory.push(result);
+    this.pushHistory(result);
     this.emit('action:error', result);
     return result;
   }

@@ -218,9 +218,10 @@ export class ElevatedMode extends BrowserEventEmitter {
     this.logAction('elevated.grant', level, true, `Elevated to ${level}`);
     this.emit('elevated', this.currentSession);
 
-    // Auto-expire
+    // Auto-expire — only end if the same session is still active
+    const sessionId = this.currentSession.id;
     setTimeout(() => {
-      if (this.currentSession?.id === this.currentSession?.id) {
+      if (this.currentSession?.id === sessionId) {
         this.endSession();
       }
     }, duration * 60 * 1000);

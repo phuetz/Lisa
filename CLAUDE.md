@@ -248,7 +248,7 @@ VITE_MCP_TOKEN=...         # MCP protocol auth
 7. **Android Bundle Sync**: After code changes, always run `pnpm build && cd apps/mobile && npx cap sync android` before testing on Android
 8. **Re-export vs Import**: `export { X } from './module'` is a pure re-export — it does NOT make `X` available locally. If you need `X` in the same file, use `import { X } from './module'` then `export { X }` separately
 9. **PyodideService**: Uses `preload()` method (not `initialize()`) for initialization
-10. **ChatPage Layout**: `ChatPage.tsx` renders `ChatLayoutSimple` (not `ChatLayout`) — both exist but Simple is the active one
+10. **ChatPage Layout**: `ChatPage.tsx` renders `ChatLayoutSimple` — the only remaining layout (ChatLayout, ChatLayoutFluent, ChatLayoutOffice, ChatLayoutAuto were deleted)
 11. **Vite Cache**: When debugging stale module issues, clear `node_modules/.vite` before rebuilding
 12. **Pre-commit Hook**: Husky + lint-staged runs `eslint --fix` on staged `*.{ts,tsx}` files. There are 101 pre-existing test failures from incomplete agent implementations — commits unrelated to those may need `--no-verify` if the hook runs the full test suite
 13. **French Localization**: The UI uses French throughout (i18next). Keep UI strings in French when adding/modifying user-facing text
@@ -349,6 +349,28 @@ Main bundle reduced via aggressive lazy loading:
 - `SenseProvider`: vision/hearing/touch/environment use `import()` dynamic imports
 - `ServiceProvider`: Pyodide/HealthMonitoring/ProactiveSuggestions use `import()` dynamic imports
 - MQTT in its own chunk, loaded only when touch/environment senses init
+
+## Security Audit (45+ bugs fixed)
+
+Comprehensive audit completed across 7 rounds, fixing 45+ bugs in 30+ files:
+
+### Patterns Applied
+- **Resource cleanup**: All streaming methods use `try/finally` with `reader?.cancel()`; MediaStream tracks stopped on unmount; AudioContext closed; ImageBitmap closed
+- **Race condition guards**: `cancelled`/`unmounted`/`settled` flags in all async useEffect hooks and Promise races
+- **XSS prevention**: HTML sanitization chains (script, style, iframe, event handlers, javascript: protocol); URL protocol whitelists; postMessage origin + method validation
+- **Injection prevention**: `SAFE_IDENTIFIER` regex for dynamic code execution keys; path traversal validation; Unicode escape blocking
+- **State consistency**: Stale closure prevention via refs; proper Zustand unsubscribe; timer tracking in Sets for cleanup
+
+### Key Files Hardened
+- `aiService.ts` — 5 streaming readers properly cleaned up
+- `BrowserController.ts` — infinite recursion fix + URL injection prevention
+- `ComputerControlService.ts` — path traversal validation
+- `VectorStoreService.ts` — null safety + HNSW rollback on failure
+- `WorkflowCodeAgent.ts` — sandbox escape prevention + settled flag pattern
+- `SenseProvider.tsx` — dynamic import race conditions + TDZ fix
+- `ArtifactPanel.tsx` — postMessage origin + method validation
+- `ScreenCapture.ts` / `ScreenSharePanel.tsx` — stream cleanup + re-entry prevention
+- `ElevatedMode.ts` — session auto-expire logic fix
 
 ## Accessibility
 

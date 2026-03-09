@@ -253,7 +253,7 @@ export const ArtifactCreator = ({ onClose, onInsert }: ArtifactCreatorProps) => 
       case 'python':
         return pyodideService.generatePythonHTML(code);
       default:
-        return `<pre style="background:#1a1a2e;color:#fff;padding:20px;margin:0;min-height:100vh;">${code}</pre>`;
+        return `<pre style="background:#1a1a2e;color:#fff;padding:20px;margin:0;min-height:100vh;">${code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>`;
     }
   }, [code, selectedType]);
 

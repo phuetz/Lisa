@@ -15,6 +15,8 @@ export function useWakeWord(audioCtx?: AudioContext, micStream?: MediaStream) {
   useEffect(() => {
     if (!audioCtx || !micStream) return;
 
+    let cancelled = false;
+
     (async () => {
       try {
         const accessKey = import.meta.env.VITE_PV_ACCESS_KEY as string | undefined;
@@ -29,8 +31,8 @@ export function useWakeWord(audioCtx?: AudioContext, micStream?: MediaStream) {
           BuiltInKeyword,
         } = await import('@picovoice/porcupine-web');
 
-        // TODO: Load "Hey Lisa" custom keyword if available
-        // For now, we stick to the built-in PORCUPINE keyword as fallback
+        if (cancelled) return;
+
         const keyword = BuiltInKeyword.PORCUPINE;
 
         const porcupine = await PorcupineWorkerFactory.create({
@@ -38,27 +40,37 @@ export function useWakeWord(audioCtx?: AudioContext, micStream?: MediaStream) {
           keywords: [keyword],
         });
 
+        if (cancelled) {
+          porcupine.terminate?.();
+          return;
+        }
+
         porcupine.onmessage = (event: MessageEvent) => {
           if (event.data.keywordLabel) {
             console.log('[WakeWord] Detected:', event.data.keywordLabel);
             setWakeWordDetected(true);
             setIsListening(true);
-
-            // Reset detection flag after a delay? 
-            // Usually we just start listening.
           }
         };
 
         const wvp = await WebVoiceProcessor.init({ engines: [porcupine] });
+        if (cancelled) {
+          wvp.release?.();
+          return;
+        }
         processorRef.current = wvp;
         await wvp.startProcessing(micStream);
       } catch (err) {
-        console.warn('Wake-word engine failed initialization:', err);
+        if (!cancelled) {
+          console.warn('Wake-word engine failed initialization:', err);
+        }
       }
     })();
 
     return () => {
+      cancelled = true;
       processorRef.current?.release();
+      processorRef.current = null;
     };
   }, [audioCtx, micStream, setIsListening, setWakeWordDetected]);
 }

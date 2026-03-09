@@ -207,9 +207,20 @@ class LMStudioService {
     const isNative = Capacitor.isNativePlatform();
 
     // Mobile: Fallback to non-streaming request
+    // Note: use makeRequest directly instead of this.chat() to avoid double system prompt
     if (isNative) {
       try {
-        const fullResponse = await this.chat(messages);
+        const data = await this.makeRequest('/chat/completions', {
+          method: 'POST',
+          body: JSON.stringify({
+            model: this.config.model,
+            messages: messagesWithSystem,
+            temperature: this.config.temperature,
+            max_tokens: this.config.maxTokens,
+            stream: false,
+          }),
+        }) as { choices?: Array<{ message?: { content?: string } }> };
+        const fullResponse = data.choices?.[0]?.message?.content || '';
         // Simulate streaming by yielding the full response at once
         yield { content: fullResponse, done: false };
         yield { content: '', done: true };
@@ -221,59 +232,64 @@ class LMStudioService {
     }
 
     // Web: Use fetch streaming
-    const response = await fetch(`${this.config.baseUrl}/chat/completions`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: this.config.model,
-        messages: messagesWithSystem,
-        temperature: this.config.temperature,
-        max_tokens: this.config.maxTokens,
-        stream: true,
-      }),
-    });
+    let reader: ReadableStreamDefaultReader<Uint8Array> | undefined;
+    try {
+      const response = await fetch(`${this.config.baseUrl}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: this.config.model,
+          messages: messagesWithSystem,
+          temperature: this.config.temperature,
+          max_tokens: this.config.maxTokens,
+          stream: true,
+        }),
+      });
 
-    if (!response.ok) {
-      throw new Error(`LM Studio error: ${response.status} ${response.statusText}`);
-    }
-
-    const reader = response.body?.getReader();
-    if (!reader) throw new Error('No response body');
-
-    const decoder = new TextDecoder();
-    let buffer = '';
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) {
-        yield { content: '', done: true };
-        break;
+      if (!response.ok) {
+        throw new Error(`LM Studio error: ${response.status} ${response.statusText}`);
       }
 
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split('\n');
-      buffer = lines.pop() || '';
+      reader = response.body?.getReader();
+      if (!reader) throw new Error('No response body');
 
-      for (const line of lines) {
-        if (line.startsWith('data: ')) {
-          const data = line.slice(6);
-          if (data === '[DONE]') {
-            yield { content: '', done: true };
-            return;
-          }
-          try {
-            const parsed = JSON.parse(data);
-            const content = parsed.choices?.[0]?.delta?.content || '';
-            if (content) {
-              yield { content, done: false };
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) {
+          yield { content: '', done: true };
+          break;
+        }
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            if (data === '[DONE]') {
+              yield { content: '', done: true };
+              return;
             }
-          } catch {
-            // Ignore parsing errors for incomplete chunks
+            try {
+              const parsed = JSON.parse(data);
+              const content = parsed.choices?.[0]?.delta?.content || '';
+              if (content) {
+                yield { content, done: false };
+              }
+            } catch {
+              // Ignore parsing errors for incomplete chunks
+            }
           }
         }
       }
+    } finally {
+      reader?.cancel().catch(() => {});
     }
   }
 

@@ -22,6 +22,13 @@ export default defineConfig({
   server: {
     port: 5180,
     strictPort: true,
+    proxy: {
+      '/lmstudio': {
+        target: 'http://localhost:1234',
+        rewrite: (path) => path.replace(/^\/lmstudio/, ''),
+        changeOrigin: true,
+      },
+    },
   },
   plugins: [react(), visionStatePlugin()],
   resolve: {

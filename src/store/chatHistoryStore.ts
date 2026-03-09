@@ -308,7 +308,7 @@ export const useChatHistoryStore = create<ChatHistoryStore>()(
                   ...conv,
                   messages: conv.messages.map((msg) =>
                     msg.id === messageId 
-                      ? { ...msg, content, ...(metadata && { metadata: { ...msg.metadata, ...metadata } }) } 
+                      ? { ...msg, content, ...(metadata && { metadata: { ...(msg.metadata || {}), ...metadata } }) } 
                       : msg
                   ),
                   updatedAt: new Date(),
@@ -376,10 +376,27 @@ export const useChatHistoryStore = create<ChatHistoryStore>()(
       
       importConversation: (data) => {
         try {
-          const conversation: Conversation = JSON.parse(data);
-          conversation.id = crypto.randomUUID(); // New ID
-          conversation.createdAt = new Date();
-          conversation.updatedAt = new Date();
+          const parsed = JSON.parse(data);
+
+          // Validate required Conversation shape
+          if (
+            typeof parsed !== 'object' || parsed === null ||
+            typeof parsed.title !== 'string' ||
+            !Array.isArray(parsed.messages)
+          ) {
+            console.error('Failed to import conversation: invalid format — expected { title: string, messages: [] }');
+            return;
+          }
+
+          const conversation: Conversation = {
+            ...parsed,
+            id: crypto.randomUUID(), // New ID
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            archived: parsed.archived ?? false,
+            pinned: parsed.pinned ?? false,
+            tags: Array.isArray(parsed.tags) ? parsed.tags : [],
+          };
 
           set((state) => ({
             conversations: [conversation, ...state.conversations],

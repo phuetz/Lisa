@@ -100,34 +100,39 @@ export class CoordinatorAgent implements BaseAgent {
     
     // 5. Exécuter niveau par niveau
     const results: TaskResult[] = [];
-    
+    const totalTaskCount = levels.reduce((sum, level) => sum + level.length, 0);
+    let abortedDueToFailure = false;
+
     for (const level of levels) {
       console.log(`[CoordinatorAgent] Executing level with ${level.length} tasks`);
-      
+
       // Exécution parallèle du niveau
       const levelResults = await Promise.all(
         level.map(taskId => this.executeTask(taskId))
       );
-      
+
       results.push(...levelResults);
-      
+
       // Vérifier si tous ont réussi
       const allSuccess = levelResults.every(r => r.success);
       if (!allSuccess) {
         console.warn('[CoordinatorAgent] Level execution failed, stopping workflow');
+        abortedDueToFailure = true;
         break;
       }
     }
-    
+
     const totalDuration = Date.now() - startTime;
     const parallelism = this.calculateParallelism(levels);
-    
+    const skippedCount = totalTaskCount - results.length;
+
     return {
-      success: results.every(r => r.success),
+      success: results.every(r => r.success) && !abortedDueToFailure,
       results,
       totalDuration,
       parallelism,
-      output: `Executed ${results.length} tasks in ${totalDuration}ms (parallelism: ${parallelism.toFixed(2)}x)`
+      output: `Executed ${results.length}/${totalTaskCount} tasks in ${totalDuration}ms (parallelism: ${parallelism.toFixed(2)}x)` +
+        (skippedCount > 0 ? ` — ${skippedCount} tasks skipped due to earlier failure` : '')
     };
   }
   
@@ -327,10 +332,4 @@ export class CoordinatorAgent implements BaseAgent {
     return totalTasks / sequentialLevels;
   }
   
-  /**
-   * Obtenir la tâche
-   */
-  private getTask(id: string): Task | undefined {
-    return this.tasks.get(id);
-  }
 }

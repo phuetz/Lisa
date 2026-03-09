@@ -713,6 +713,10 @@ class RAGServiceImpl {
    * Import embeddings
    */
   importEmbeddings(data: ReturnType<typeof this.exportEmbeddings>): void {
+    if (!data?.embeddings || !Array.isArray(data.embeddings)) {
+      console.warn('[RAG] importEmbeddings: invalid data — expected { embeddings: [] }');
+      return;
+    }
     data.embeddings.forEach(emb => {
       this.embeddings.set(emb.text, emb);
       const id = this.textToId(emb.text);

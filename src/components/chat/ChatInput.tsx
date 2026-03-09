@@ -107,8 +107,7 @@ export const ChatInput = () => {
 
   const {
     isListening, transcript, interimTranscript, toggleListening,
-    isSpeaking, speak, stopSpeaking, voices, selectedVoice, setSelectedVoice,
-    speechRate, setSpeechRate, isSupported: voiceSupported,
+    speak, isSupported: voiceSupported,
   } = useVoiceChat({ language: 'fr-FR' });
 
   const { currentConversationId, addMessage, getCurrentConversation, setStreamingMessage, setTyping, createConversation } = useChatHistoryStore();

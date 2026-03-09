@@ -51,12 +51,14 @@ export function useMediaPermissions(): UseMediaPermissionsResult {
     refreshPermissions();
 
     // Register onchange listeners if supported
+    let unmounted = false;
     const listeners: Array<PermissionStatus> = [];
     if ('permissions' in navigator && (navigator as any).permissions.query) {
       (async () => {
         try {
           const camStatus = await (navigator as any).permissions.query({ name: 'camera' });
           const micStatus = await (navigator as any).permissions.query({ name: 'microphone' });
+          if (unmounted) return; // Don't register if already cleaned up
           camStatus.onchange = micStatus.onchange = () => refreshPermissions();
           listeners.push(camStatus, micStatus);
         } catch {
@@ -66,6 +68,7 @@ export function useMediaPermissions(): UseMediaPermissionsResult {
     }
 
     return () => {
+      unmounted = true;
       listeners.forEach((l) => (l.onchange = null));
     };
   }, [refreshPermissions]);

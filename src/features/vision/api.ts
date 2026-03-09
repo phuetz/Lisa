@@ -87,6 +87,9 @@ export function processVideoFrame(frame: ImageData | HTMLVideoElement): void {
     createImageBitmap(frame).then(bitmap => {
       if (worker) {
         worker.postMessage({ type: 'PROCESS_FRAME', payload: bitmap }, [bitmap]);
+      } else {
+        // Worker was terminated between createImageBitmap and postMessage — close to prevent leak
+        bitmap.close();
       }
     }).catch(err => console.error('[Vision] Frame conversion failed:', err));
   } else {

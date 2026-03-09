@@ -219,11 +219,19 @@ const NotebookCell: React.FC<CellProps> = ({
       }
       
       if (data?.['text/html']) {
+        // Sanitize: remove script tags, event handlers (with or without quotes),
+        // dangerous tags, and javascript: protocols
+        const sanitized = String(data['text/html'])
+          .replace(/<script[\s\S]*?<\/script>/gi, '')
+          .replace(/<style[\s\S]*?<\/style>/gi, '')
+          .replace(/<(iframe|object|embed|form|base|meta|link)\b[\s\S]*?(?:\/>|>[\s\S]*?<\/\1>)/gi, '')
+          .replace(/\bon\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]*)/gi, '')
+          .replace(/(href|src|action)\s*=\s*["']?\s*javascript:/gi, '$1="');
         return (
-          <div 
-            key={idx} 
+          <div
+            key={idx}
             className="p-2 text-sm"
-            dangerouslySetInnerHTML={{ __html: String(data['text/html']) }}
+            dangerouslySetInnerHTML={{ __html: sanitized }}
           />
         );
       }
