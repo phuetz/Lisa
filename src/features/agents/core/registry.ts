@@ -126,6 +126,11 @@ class AgentRegistry {
       // Workflow Specific Agents
       { name: 'AFlowOptimizerAgent', modulePath: '../implementations/AFlowOptimizerAgent', priority: 'low', domain: 'workflow' },
       { name: 'WindsurfAgent', modulePath: '../implementations/WindsurfAgent', priority: 'low', domain: 'workflow' },
+
+      // PromptCommander Integration — New Agents
+      { name: 'CalculatorAgent', modulePath: '../implementations/CalculatorAgent', priority: 'normal', domain: 'utility', description: 'Evaluates math expressions with mathjs (derivatives, simplify, variables)' },
+      { name: 'PPTXGeneratorAgent', modulePath: '../implementations/PPTXGeneratorAgent', priority: 'low', domain: 'utility', description: 'Generates PowerPoint presentations from structured data' },
+      { name: 'ImageGenerationAgent', modulePath: '../implementations/ImageGenerationAgent', priority: 'low', domain: 'media', description: 'Generates images via DALL-E 3 API' },
     ];
 
     agentDefinitions.forEach((metadata) => {
