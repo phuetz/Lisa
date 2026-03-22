@@ -372,6 +372,43 @@ Comprehensive audit completed across 7 rounds, fixing 45+ bugs in 30+ files:
 - `ScreenCapture.ts` / `ScreenSharePanel.tsx` — stream cleanup + re-entry prevention
 - `ElevatedMode.ts` — session auto-expire logic fix
 
+## PromptCommander Integration
+
+All features from PromptCommander have been integrated into Lisa:
+
+### Database Layer
+- **Dexie ORM** (`src/db/database.ts`): `LisaDB` with 11 tables (conversations, messages, usageRecords, roles, snippets, credentials, models, folders, auditLog, knowledgeBases, knowledgeChunks)
+- **Migration** (`src/db/migrations.ts`): One-shot localStorage → Dexie with 30-day backup
+- **Settings** (`src/db/settings.ts`): Workspace settings persistence
+
+### Provider System
+- **Unified SSE parser** (`src/services/providers/base.ts`): Shared streaming, token estimation, cost calculation
+- **Adapters** (`src/services/providers/openaiCompatible.ts`): OpenAI, Perplexity, Mistral, custom endpoints
+- **Model Catalog** (`src/domain/modelCatalog.ts`): 35+ models with pricing across 10 providers
+- **Settings Store** (`src/store/settingsStore.ts`): Credentials, model catalog, workspace settings
+
+### New Agents
+- **CalculatorAgent**: mathjs evaluation (lazy-loaded), derivatives, simplification, variables
+- **PPTXGeneratorAgent**: PowerPoint generation via pptxgenjs (lazy-loaded)
+- **ImageGenerationAgent**: DALL-E 3 image generation
+
+### Features
+- **Snippets** (`src/hooks/useSnippets.ts`): CRUD + shortcut expansion
+- **File Attachments** (`src/hooks/useFileAttachments.ts`): Images, PDF, DOCX, text, CSV
+- **Folders** (`src/hooks/useFolders.ts`): Conversation folder tree with nesting
+- **Compare Mode** (`src/hooks/useCompareMode.ts`): Send to multiple models in parallel
+- **Fork/Edit-Resend** (`src/hooks/useConversationActions.ts`): Fork, edit, regenerate
+- **Usage Records** (`src/hooks/useUsageRecords.ts`): Per-message cost tracking
+- **MCP Client** (`src/mcp/mcpClient.ts`): JSON-RPC 2.0 client + store
+- **Export** (`src/utils/export.ts`): MD/JSON/HTML + ChatGPT import
+- **KB Manager** (`src/utils/kbManager.ts`): Knowledge base CRUD + BM25 + RAG bridge
+- **Prompt Variables** (`src/utils/prompts.ts`): Template substitution
+- **Tavily Search**: Priority web search backend in WebTools.ts
+- **Command Palette** (`src/components/common/CommandPalette.tsx`): Ctrl+K quick nav
+- **Onboarding Wizard** (`src/components/common/OnboardingWizard.tsx`): First-run setup
+- **Search Panel** (`src/components/common/SearchPanel.tsx`): Cross-conversation search
+- **Diagnostics Panel** (`src/components/common/DiagnosticsPanel.tsx`): System diagnostics
+
 ## Accessibility
 
 WCAG 2.1 AA compliant. When adding UI:
