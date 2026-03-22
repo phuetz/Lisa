@@ -55,6 +55,17 @@ class AuditServiceImpl {
 
     localStorage.setItem('lisa:audit:logs', JSON.stringify(logs));
 
+    // Also persist to Dexie (non-blocking)
+    import('../db/database').then(({ db }) => {
+      db.auditLog.put({
+        id: log.id,
+        type: severity === 'error' || severity === 'critical' ? 'error' : severity === 'warning' ? 'warning' : 'info',
+        message: `[${category}] ${action}`,
+        context: JSON.stringify(details),
+        createdAt: Date.now(),
+      }).catch(() => {});
+    }).catch(() => {});
+
     // Logger dans la console en développement
     if (process.env.NODE_ENV === 'development') {
       const prefix = `[${category.toUpperCase()}] ${action}`;
