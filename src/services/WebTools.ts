@@ -40,7 +40,18 @@ const webSearchTool: ToolDefinition = {
 
     console.log('[WebTools] web_search called with query:', query);
 
-    // Try Serper API first (if configured)
+    // Try Tavily API first (if configured) — high quality, includes AI answer
+    const tavilyKey = import.meta.env.VITE_TAVILY_API_KEY;
+    if (tavilyKey) {
+      console.log('[WebTools] Using Tavily API');
+      try {
+        return await searchWithTavily(query, numResults, tavilyKey);
+      } catch (error) {
+        console.error('[WebTools] Tavily failed, trying fallbacks:', error);
+      }
+    }
+
+    // Try Serper API (if configured)
     const serperKey = import.meta.env.VITE_SERPER_API_KEY;
     if (serperKey) {
       console.log('[WebTools] Using Serper API');
@@ -68,6 +79,37 @@ const webSearchTool: ToolDefinition = {
     return searchWithDuckDuckGo(query, numResults);
   }
 };
+
+async function searchWithTavily(query: string, numResults: number, apiKey: string) {
+  const response = await fetch('https://api.tavily.com/search', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      api_key: apiKey,
+      query,
+      max_results: numResults,
+      include_answer: true,
+      search_depth: 'basic',
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Tavily API error: ${response.status}`);
+  }
+
+  const data = await response.json();
+  const results = (data.results || []).map((r: { title: string; url: string; content: string }) => ({
+    title: r.title,
+    link: r.url,
+    snippet: r.content,
+  }));
+
+  return {
+    results,
+    answer: data.answer || null,
+    source: 'Tavily',
+  };
+}
 
 async function searchWithSerper(query: string, numResults: number, apiKey: string) {
   try {

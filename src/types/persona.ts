@@ -17,6 +17,13 @@ export interface LisaPersona {
   createdAt: Date;
   updatedAt: Date;
   isDefault?: boolean;
+  // ─── PromptCommander Role fields ────────────────────────
+  enabledTools?: string[];      // Tool IDs enabled for this persona
+  defaultModelId?: string;      // Override model per persona
+  temperature?: number;         // Override temperature per persona
+  tags?: string[];              // Categorization tags
+  icon?: string;                // Emoji icon (from PC roles)
+  systemPrompt?: string;        // Alias for instructions (PC compat)
 }
 
 export interface PersonaCapabilities {
