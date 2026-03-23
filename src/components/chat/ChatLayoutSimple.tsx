@@ -3,7 +3,7 @@
  */
 
 import { useState, useMemo, useEffect, useRef, useCallback, lazy, Suspense } from 'react';
-import { Plus, Trash2, MessageSquare, X, FileDown, Search, Download, Upload, Keyboard, Settings, Loader2 } from 'lucide-react';
+import { Plus, Trash2, MessageSquare, X, FileDown, Search, Download, Upload, Keyboard, Settings, Loader2, FolderOpen, BarChart3, Activity, BookOpen, FileText } from 'lucide-react';
 import { useChatHistoryStore } from '../../store/chatHistoryStore';
 import { ChatMessages } from './ChatMessages';
 import { ChatInput } from './ChatInput';
@@ -12,6 +12,8 @@ import { ArtifactPanel } from './ArtifactPanel';
 import { Modal } from '../ui/Modal';
 
 const ExportPDF = lazy(() => import('./ExportPDF').then(m => ({ default: m.ExportPDF })));
+const SearchPanel = lazy(() => import('../common/SearchPanel'));
+const DiagnosticsPanel = lazy(() => import('../common/DiagnosticsPanel'));
 
 const LazyFallback = () => (
   <div className="flex items-center justify-center p-8">
@@ -25,6 +27,8 @@ export const ChatLayoutSimple = () => {
   const [exportOpen, setExportOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showShortcuts, setShowShortcuts] = useState(false);
+  const [showSearchPanel, setShowSearchPanel] = useState(false);
+  const [showDiagnostics, setShowDiagnostics] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
@@ -146,8 +150,14 @@ export const ChatLayoutSimple = () => {
         >
           <FileDown size={18} />
         </button>
+        <button onClick={() => setShowSearchPanel(true)} className="chat-icon-btn" aria-label="Rechercher" title="Rechercher (Ctrl+Shift+F)">
+          <Search size={18} />
+        </button>
         <button onClick={() => setShowShortcuts(true)} className="chat-icon-btn" aria-label="Raccourcis">
           <Keyboard size={18} />
+        </button>
+        <button onClick={() => setShowDiagnostics(true)} className="chat-icon-btn" aria-label="Diagnostics">
+          <Activity size={18} />
         </button>
         <button onClick={() => setSettingsOpen(true)} className="chat-icon-btn" aria-label="Paramètres du chat">
           <Settings size={18} />
@@ -309,6 +319,7 @@ export const ChatLayoutSimple = () => {
             { keys: 'Enter', action: 'Envoyer le message' },
             { keys: 'Shift + Enter', action: 'Nouvelle ligne' },
             { keys: 'Ctrl + N', action: 'Nouvelle conversation' },
+            { keys: 'Ctrl + K', action: 'Palette de commandes' },
             { keys: 'Ctrl + /', action: 'Focus sur l\'input' },
             { keys: 'Escape', action: 'Annuler / Effacer' },
           ].map(({ keys, action }) => (
@@ -322,6 +333,23 @@ export const ChatLayoutSimple = () => {
 
       {/* Artifact Panel */}
       <ArtifactPanel />
+
+      {/* PromptCommander: Search Panel */}
+      <Suspense fallback={null}>
+        <SearchPanel
+          isOpen={showSearchPanel}
+          onClose={() => setShowSearchPanel(false)}
+          onSelectConversation={(id) => { setCurrentConversation(id); setShowSearchPanel(false); }}
+        />
+      </Suspense>
+
+      {/* PromptCommander: Diagnostics Panel */}
+      <Suspense fallback={null}>
+        <DiagnosticsPanel
+          isOpen={showDiagnostics}
+          onClose={() => setShowDiagnostics(false)}
+        />
+      </Suspense>
 
       {/* Toast notification */}
       {toast && <div className="toast">{toast}</div>}

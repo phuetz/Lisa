@@ -203,6 +203,9 @@ importers:
       idb:
         specifier: ^8.0.3
         version: 8.0.3
+      js-tiktoken:
+        specifier: ^1.0.21
+        version: 1.0.21
       jsonwebtoken:
         specifier: ^9.0.2
         version: 9.0.3
@@ -3809,6 +3812,9 @@ packages:
 
   js-sdsl@4.3.0:
     resolution: {integrity: sha512-mifzlm2+5nZ+lEcLJMoBK0/IH/bDg8XnJfd/Wq6IP+xoCjLZsTOnV2QpxlVbX9bMnkl5PdEjNtBJ9Cj1NjifhQ==}
+
+  js-tiktoken@1.0.21:
+    resolution: {integrity: sha512-biOj/6M5qdgx5TKjDnFT1ymSpM5tbd3ylwDtrQvFQSu0Z7bBYko2dF+W/aUkXUPuk6IVpRxk/3Q2sHOzGlS36g==}
 
   js-tokens@4.0.0:
     resolution: {integrity: sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==}
@@ -9067,6 +9073,10 @@ snapshots:
   joycon@3.1.1: {}
 
   js-sdsl@4.3.0: {}
+
+  js-tiktoken@1.0.21:
+    dependencies:
+      base64-js: 1.5.1
 
   js-tokens@4.0.0: {}
 

@@ -21,6 +21,7 @@ import { ImageEditor } from './ImageEditor';
 import { documentAnalysisService } from '../../services/DocumentAnalysisService';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { captureWebcamFrame, isVisionRequest } from '../../utils/webcamCapture';
+import { useSnippetExpansion } from '../../hooks/useSnippets';
 
 function dataURLtoBlob(dataURL: string): Blob {
   const [header, base64] = dataURL.split(',');
@@ -112,6 +113,9 @@ export const ChatInput = () => {
 
   const { currentConversationId, addMessage, getCurrentConversation, setStreamingMessage, setTyping, createConversation } = useChatHistoryStore();
 
+  // PromptCommander: snippet expansion
+  const { tryExpand } = useSnippetExpansion();
+
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (actionsRef.current && !actionsRef.current.contains(e.target as Node)) {
@@ -123,7 +127,22 @@ export const ChatInput = () => {
   }, [showActions]);
 
   const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setMessage(e.target.value);
+    const value = e.target.value;
+
+    // Snippet expansion: if text matches a shortcut, replace with snippet content
+    if (value.endsWith(' ') || value.endsWith('\n')) {
+      const word = value.trimEnd().split(/\s/).pop() || '';
+      const expanded = tryExpand(word);
+      if (expanded) {
+        const before = value.slice(0, value.lastIndexOf(word));
+        setMessage(before + expanded);
+        e.target.style.height = 'auto';
+        e.target.style.height = `${Math.min(e.target.scrollHeight, 200)}px`;
+        return;
+      }
+    }
+
+    setMessage(value);
     e.target.style.height = 'auto';
     e.target.style.height = `${Math.min(e.target.scrollHeight, 200)}px`;
   };
@@ -430,7 +449,27 @@ Réponds en français, sois concis.`;
           addMessage({ role: 'assistant', content: 'Désolé, je n\'ai pas pu générer de réponse.', conversationId: convId });
           return;
         }
-        addMessage({ role: 'assistant', content: fullResponse, conversationId: convId });
+        const duration = Math.round(performance.now() - startTime);
+        addMessage({ role: 'assistant', content: fullResponse, conversationId: convId, metadata: { model: effectiveModel, duration } });
+
+        // Record usage in Dexie (non-blocking)
+        import('../../hooks/useUsageRecords').then(async ({ useUsageRecords }) => {
+          const { addRecord } = useUsageRecords.getState?.() || {};
+          if (!addRecord) return;
+          const { estimateTokens } = await import('../../services/providers/base');
+          const inputTok = estimateTokens(aiUserContent);
+          const outputTok = estimateTokens(fullResponse);
+          addRecord({
+            messageId: convId + '-' + Date.now(),
+            conversationId: convId,
+            provider: effectiveProvider as import('../../types/promptcommander').ProviderKey,
+            modelId: effectiveModel,
+            inputTokens: inputTok,
+            outputTokens: outputTok,
+            cost: 0, // Would need model pricing lookup
+          });
+        }).catch(() => {});
+
         if (!incognitoMode) {
           if (longTermMemoryEnabled) longTermMemoryService.extractAndRemember(userMessage, fullResponse).catch(console.warn);
           if (autoSpeakEnabled) speak(fullResponse.replace(/[*#_`]/g, ''));

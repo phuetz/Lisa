@@ -95,6 +95,7 @@
     "html2canvas": "^1.4.1",
     "i18next": "^23.6.3",
     "idb": "^8.0.3",
+    "js-tiktoken": "^1.0.21",
     "jsonwebtoken": "^9.0.2",
     "jspdf": "^4.1.0",
     "katex": "^0.16.28",
