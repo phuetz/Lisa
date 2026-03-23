@@ -72,6 +72,22 @@ export const ChatLayoutSimple = () => {
     URL.revokeObjectURL(url);
   };
 
+  const handleExportMarkdown = () => {
+    if (!currentConversation) return;
+    import('../../utils/export').then(({ downloadMarkdown }) => {
+      downloadMarkdown(currentConversation);
+      showToast('Export Markdown téléchargé');
+    });
+  };
+
+  const handleExportHTML = () => {
+    if (!currentConversation) return;
+    import('../../utils/export').then(({ downloadHTML }) => {
+      downloadHTML(currentConversation);
+      showToast('Export HTML téléchargé');
+    });
+  };
+
   const handleImportJSON = () => {
     const input = document.createElement('input');
     input.type = 'file';
@@ -188,7 +204,15 @@ export const ChatLayoutSimple = () => {
               <div className="import-export-row">
                 <button onClick={handleExportJSON} className="msg-action-btn import-export-btn" aria-label="Exporter JSON">
                   <Download size={14} />
-                  Export
+                  JSON
+                </button>
+                <button onClick={handleExportMarkdown} className="msg-action-btn import-export-btn" aria-label="Exporter Markdown">
+                  <Download size={14} />
+                  MD
+                </button>
+                <button onClick={handleExportHTML} className="msg-action-btn import-export-btn" aria-label="Exporter HTML">
+                  <Download size={14} />
+                  HTML
                 </button>
                 <button onClick={handleImportJSON} className="msg-action-btn import-export-btn" aria-label="Importer JSON">
                   <Upload size={14} />

@@ -5,7 +5,7 @@
 
 import { useRef, useEffect, useMemo, useState } from 'react';
 import { useChatHistoryStore } from '../../store/chatHistoryStore';
-import { Bot, User, Sparkles, Code, FileText, Lightbulb, Zap, Copy, Check, Clock, Hash, Edit2, RefreshCw, Trash2, Package, Play, Brain, Search } from 'lucide-react';
+import { Bot, User, Sparkles, Code, FileText, Lightbulb, Zap, Copy, Check, Clock, Hash, Edit2, RefreshCw, Trash2, Package, Play, Brain, Search, GitFork } from 'lucide-react';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import { parseArtifacts } from '../../utils/artifactParser';
 import { useArtifactPanelStore } from '../../store/chatHistoryStore';
@@ -27,6 +27,10 @@ interface MessageActionsProps {
   onEdit?: (messageId: string, content: string) => void;
   onRegenerate?: (messageId: string) => void;
   onDelete?: (messageId: string) => void;
+  onFork?: (messageId: string) => void;
+  cost?: number;
+  inputTokens?: number;
+  outputTokens?: number;
 }
 
 const MessageActions = ({ content, messageId, role, onEdit, onRegenerate, onDelete }: MessageActionsProps) => {
@@ -93,10 +97,22 @@ const MessageActions = ({ content, messageId, role, onEdit, onRegenerate, onDele
         </button>
       )}
 
+      {onFork && (
+        <button onClick={() => onFork(messageId)} className="msg-action-btn" aria-label="Dupliquer la conversation depuis ce message">
+          <GitFork size={12} /> Fork
+        </button>
+      )}
+
       {onDelete && (
         <button onClick={() => onDelete(messageId)} className="msg-action-btn danger" aria-label="Supprimer le message">
           <Trash2 size={12} />
         </button>
+      )}
+
+      {cost != null && cost > 0 && (
+        <span style={{ marginLeft: 'auto', fontSize: '10px', color: 'var(--text-muted)', fontFamily: 'monospace' }}>
+          {inputTokens || 0}→{outputTokens || 0} · ${cost.toFixed(4)}
+        </span>
       )}
     </div>
   );
@@ -383,6 +399,9 @@ export const ChatMessages = () => {
                 onEdit={handleEditMessage}
                 onRegenerate={handleRegenerate}
                 onDelete={handleDeleteMessage}
+                cost={message.cost}
+                inputTokens={message.inputTokens}
+                outputTokens={message.outputTokens}
               />
             </div>
           </div>

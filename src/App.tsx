@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState, useCallback } from 'react';
 import { logComponent, startupLogger } from './utils/startupLogger';
 import { Outlet } from 'react-router-dom';
 import './App.css';
@@ -21,6 +21,10 @@ import { MainLayout } from './components/layout/MainLayout';
 // Lazy-load MediaPipe hooks to reduce main bundle (~180KB savings)
 const MediaPipeManager = lazy(() => import('./components/MediaPipeManager'));
 
+// Lazy-load PromptCommander integration components
+const CommandPalette = lazy(() => import('./components/common/CommandPalette'));
+const OnboardingWizard = lazy(() => import('./components/common/OnboardingWizard'));
+
 function App() {
   // Log only once on mount, not on every render
   useEffect(() => {
@@ -31,6 +35,60 @@ function App() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [audioCtx] = useState(() => new AudioContext());
   const isMobile = useIsMobile();
+
+  // ─── PromptCommander integration: DB init, onboarding, command palette ───
+  const [dbReady, setDbReady] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showCommandPalette, setShowCommandPalette] = useState(false);
+
+  // Initialize Dexie DB + settings store + run migration
+  useEffect(() => {
+    (async () => {
+      try {
+        const { initializeDatabase } = await import('./db/database');
+        const { runMigrationIfNeeded } = await import('./db/migrations');
+        const { useSettingsStore } = await import('./store/settingsStore');
+
+        await initializeDatabase();
+        await runMigrationIfNeeded();
+        await useSettingsStore.getState().init();
+
+        // Check onboarding
+        const { loadSettings } = await import('./db/settings');
+        const settings = loadSettings();
+        if (!settings.onboardingCompleted) {
+          setShowOnboarding(true);
+        }
+
+        // Load MCP servers (non-blocking)
+        import('./mcp/mcpClientStore').then(({ useMCPClientStore }) => {
+          useMCPClientStore.getState().loadServers();
+          useMCPClientStore.getState().refreshTools();
+        }).catch(() => {});
+
+        setDbReady(true);
+      } catch (error) {
+        console.error('[App] DB initialization failed:', error);
+        setDbReady(true); // Continue anyway — features degrade gracefully
+      }
+    })();
+  }, []);
+
+  // Global keyboard shortcuts: Ctrl+K → Command Palette
+  useEffect(() => {
+    const handleKeyDown = (e: globalThis.KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        setShowCommandPalette(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  const handleOnboardingComplete = useCallback(() => {
+    setShowOnboarding(false);
+  }, []);
 
   // Clean up AudioContext on unmount
   useEffect(() => {
@@ -81,6 +139,18 @@ function App() {
       <div style={{ position: 'relative', height: '100dvh', overflow: 'hidden' }}>
         {/* Skip Link pour accessibilité - WCAG 2.4.1 */}
         <SkipLink targetId="main-content" label="Aller au contenu principal" />
+
+        {/* PromptCommander: Onboarding Wizard */}
+        {showOnboarding && (
+          <Suspense fallback={null}>
+            <OnboardingWizard onComplete={handleOnboardingComplete} />
+          </Suspense>
+        )}
+
+        {/* PromptCommander: Command Palette (Ctrl+K) */}
+        <Suspense fallback={null}>
+          <CommandPalette isOpen={showCommandPalette} onClose={() => setShowCommandPalette(false)} />
+        </Suspense>
 
         {/* Global overlays */}
         <AppOverlays
