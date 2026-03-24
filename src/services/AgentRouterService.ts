@@ -90,6 +90,28 @@ const INTENT_PATTERNS: Array<{
     intent: 'translate',
     extractParams: (match) => ({ targetLanguage: match[1], text: match[2] })
   },
+
+  // Calculator — math expressions (numbers + operators, with optional "calcule", "combien fait", etc.)
+  {
+    pattern: /^(?:calcule?|combien\s+(?:fait|font|vaut)|compute|evaluate|résou[sd]s?)\s+(.+)/i,
+    agent: 'CalculatorAgent',
+    intent: 'calculate',
+    extractParams: (match) => ({ expressions: match[1].trim() })
+  },
+  {
+    // Pure math expression: digits, operators, parens, decimal, spaces — at least one operator
+    pattern: /^[\d\s+\-*/^().,%]+$/,
+    agent: 'CalculatorAgent',
+    intent: 'calculate',
+    extractParams: (_match, query) => ({ expressions: query.trim() })
+  },
+  {
+    // Math with functions: sqrt(x), sin(x), log(x), derive(...), simplify(...)
+    pattern: /^(?:[\d\s+\-*/^().]+|(?:sqrt|sin|cos|tan|log|ln|exp|abs|ceil|floor|round|derive|derivative|simplify)\s*\()/i,
+    agent: 'CalculatorAgent',
+    intent: 'calculate',
+    extractParams: (_match, query) => ({ expressions: query.trim() })
+  },
 ];
 
 class AgentRouterService {
@@ -146,13 +168,31 @@ class AgentRouterService {
     if (agent === 'WeatherAgent') {
       return this.formatWeatherResponse(intent, data);
     }
-    
+
+    if (agent === 'CalculatorAgent') {
+      return this.formatCalculatorResponse(data);
+    }
+
     // Default formatting
     if (typeof data === 'string') {
       return data;
     }
-    
+
     return JSON.stringify(data, null, 2);
+  }
+
+  private formatCalculatorResponse(data: unknown): string {
+    const d = data as { results?: Array<{ expression: string; result: string; type: string }>; summary?: string };
+    if (!d?.results?.length) return String(d);
+
+    const lines = d.results.map(r => {
+      if (r.type === 'error') return `❌ \`${r.expression}\` → ${r.result}`;
+      if (r.type === 'derivative') return `📐 d/dx(${r.expression}) = **${r.result}**`;
+      if (r.type === 'simplification') return `✨ ${r.expression} = **${r.result}**`;
+      return `🔢 \`${r.expression}\` = **${r.result}**`;
+    });
+
+    return lines.join('\n');
   }
   
   /**
