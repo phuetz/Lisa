@@ -46,7 +46,7 @@ export const openaiAdapter: ProviderAdapter = {
           messages.push({
             role: 'tool',
             tool_call_id: toolResult.toolCallId,
-            content: JSON.stringify(toolResult.output),
+            content: JSON.stringify(toolResult.text ?? toolResult.args ?? ''),
           });
         } else {
           messages.push({ role: msg.role, content: msg.content });

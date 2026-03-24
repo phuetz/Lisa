@@ -117,9 +117,9 @@ export async function searchKnowledgeBase(kbId: string, query: string, limit = 5
   // Try RAG first (vector search)
   try {
     const { ragService } = await import('../services/RAGService');
-    if (ragService?.search) {
-      const results = await ragService.search(query, limit);
-      if (results.length > 0) return results.map(r => r.content || r.text || String(r));
+    if (ragService?.searchSimilar) {
+      const results = await ragService.searchSimilar(query, limit);
+      if (results.length > 0) return results.map((r: { content?: string; text?: string }) => r.content || r.text || String(r));
     }
   } catch {
     // Fall through to BM25
@@ -142,8 +142,8 @@ export async function searchKnowledgeBase(kbId: string, query: string, limit = 5
         score += count;
       }
     }
-    // Length normalization
-    score = score / Math.sqrt(chunk.content.length);
+    // Length normalization (guard against empty chunks)
+    score = chunk.content.length > 0 ? score / Math.sqrt(chunk.content.length) : 0;
     return { chunk, score };
   });
 

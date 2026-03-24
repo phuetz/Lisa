@@ -26,6 +26,7 @@ export function useCompareMode() {
   const [results, setResults] = useState<Map<string, CompareResult>>(new Map());
   const [isComparing, setIsComparing] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
+  const cancelledRef = useRef(false);
   // textAccumulator prevents read-modify-write race conditions
   const textAccumulator = useRef<Map<string, string>>(new Map());
 
@@ -51,6 +52,12 @@ export function useCompareMode() {
     const controller = new AbortController();
     abortRef.current = controller;
     textAccumulator.current.clear();
+    cancelledRef.current = false;
+
+    // Guard all setState calls against cancellation/unmount
+    const safeSetResults = (updater: (prev: Map<string, CompareResult>) => Map<string, CompareResult>) => {
+      if (!cancelledRef.current) setResults(updater);
+    };
 
     setIsComparing(true);
 
@@ -70,7 +77,7 @@ export function useCompareMode() {
       });
       textAccumulator.current.set(modelId, '');
     }
-    setResults(new Map(initial));
+    safeSetResults(() => new Map(initial));
 
     // Send to all models in parallel
     const promises = compareModels.map(async (modelId) => {
@@ -92,7 +99,7 @@ export function useCompareMode() {
       };
 
       // Mark as streaming
-      setResults(prev => {
+      safeSetResults(prev => {
         const next = new Map(prev);
         const existing = next.get(modelId);
         if (existing) next.set(modelId, { ...existing, status: 'streaming' });
@@ -106,7 +113,7 @@ export function useCompareMode() {
             const accumulated = (textAccumulator.current.get(modelId) || '') + text;
             textAccumulator.current.set(modelId, accumulated);
 
-            setResults(prev => {
+            safeSetResults(prev => {
               const next = new Map(prev);
               const existing = next.get(modelId);
               if (existing) next.set(modelId, { ...existing, content: accumulated });
@@ -118,7 +125,7 @@ export function useCompareMode() {
             const cost = (response.inputTokens * (model.priceInputPer1M || 0) +
                          response.outputTokens * (model.priceOutputPer1M || 0)) / 1_000_000;
 
-            setResults(prev => {
+            safeSetResults(prev => {
               const next = new Map(prev);
               next.set(modelId, {
                 modelId,
@@ -136,7 +143,7 @@ export function useCompareMode() {
         }, controller.signal, baseUrl);
       } catch (error) {
         if ((error as Error).name === 'AbortError') return;
-        setResults(prev => {
+        safeSetResults(prev => {
           const next = new Map(prev);
           next.set(modelId, {
             modelId,
@@ -160,6 +167,7 @@ export function useCompareMode() {
   }, [compareModels]);
 
   const cancelCompare = useCallback(() => {
+    cancelledRef.current = true;
     abortRef.current?.abort();
     abortRef.current = null;
     setIsComparing(false);

@@ -63,13 +63,16 @@ export function useSnippetExpansion() {
   const [shortcuts, setShortcuts] = useState<Map<string, string>>(new Map());
 
   useEffect(() => {
+    let unmounted = false;
     db.snippets.toArray().then(snippets => {
+      if (unmounted) return;
       const map = new Map<string, string>();
       for (const s of snippets) {
         if (s.shortcut) map.set(s.shortcut, s.content);
       }
       setShortcuts(map);
     }).catch(() => {});
+    return () => { unmounted = true; };
   }, []);
 
   const tryExpand = useCallback((text: string): string | null => {

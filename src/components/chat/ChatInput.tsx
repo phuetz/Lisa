@@ -155,10 +155,8 @@ export const ChatInput = () => {
     const files = e.target.files;
     if (!files) return;
 
-    // Use enhanced file attachments hook for PDF/DOCX/text extraction
+    // Use enhanced file processing for PDF/DOCX/text extraction
     try {
-      const { useFileAttachments } = await import('../../hooks/useFileAttachments');
-      // Process files through the hook's processor for rich extraction
       const processed = await processFilesEnhanced(Array.from(files));
       setAttachments(prev => [...prev, ...processed]);
     } catch {

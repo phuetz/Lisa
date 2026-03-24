@@ -33,7 +33,7 @@ interface MessageActionsProps {
   outputTokens?: number;
 }
 
-const MessageActions = ({ content, messageId, role, onEdit, onRegenerate, onDelete }: MessageActionsProps) => {
+const MessageActions = ({ content, messageId, role, onEdit, onRegenerate, onDelete, onFork, cost, inputTokens, outputTokens }: MessageActionsProps) => {
   const [copied, setCopied] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(content);

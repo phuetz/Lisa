@@ -33,6 +33,9 @@ export const SearchPanel = ({ isOpen, onClose, onSelectConversation }: SearchPan
       setResults([]);
       setTimeout(() => inputRef.current?.focus(), 50);
     }
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
   }, [isOpen]);
 
   const doSearch = useCallback(async (q: string) => {
