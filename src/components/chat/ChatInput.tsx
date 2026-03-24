@@ -466,7 +466,14 @@ Réponds en français, sois concis.`;
       }
 
       const aiUserContent = fileContentForAI ? userMessage + fileContentForAI : userMessage;
-      history.push({ role: 'user', content: aiUserContent, image: imageAttachment?.data });
+
+      // Update the last user message in history with file content + image (instead of pushing a duplicate)
+      const lastUserIdx = history.findLastIndex(m => m.role === 'user');
+      if (lastUserIdx >= 0) {
+        history[lastUserIdx] = { role: 'user', content: aiUserContent, image: imageAttachment?.data };
+      } else {
+        history.push({ role: 'user', content: aiUserContent, image: imageAttachment?.data });
+      }
 
       const routeResult = await agentRouterService.route(userMessage);
       if (routeResult.handled && routeResult.response) {
