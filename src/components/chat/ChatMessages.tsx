@@ -222,6 +222,53 @@ export const ChatMessages = () => {
     }
   };
 
+  const handleFork = async (messageId: string) => {
+    if (!currentConversationId) return;
+    try {
+      const store = useChatHistoryStore.getState();
+      const conv = store.conversations.find(c => c.id === currentConversationId);
+      if (!conv) return;
+
+      const msgIndex = conv.messages.findIndex(m => m.id === messageId);
+      if (msgIndex === -1) return;
+
+      const forkedMessages = conv.messages.slice(0, msgIndex + 1);
+      const newId = crypto.randomUUID();
+      const now = new Date();
+
+      const newConv = {
+        id: newId,
+        title: `${conv.title} (fork)`,
+        messages: forkedMessages.map(m => ({ ...m, id: `${newId}-${m.id}`, conversationId: newId })),
+        createdAt: now,
+        updatedAt: now,
+        tags: [...(conv.tags || [])],
+        parentConversationId: currentConversationId,
+        forkedFromMessageId: messageId,
+      };
+
+      // Add directly to store state
+      useChatHistoryStore.setState(state => ({
+        conversations: [newConv, ...state.conversations],
+        currentConversationId: newId,
+      }));
+
+      // Persist to Dexie (non-blocking)
+      import('../../db/database').then(({ db }) => {
+        db.conversations.put({
+          id: newId, title: newConv.title, status: 'active',
+          isPinned: false, isArchived: false, tags: [], webSearchEnabled: false,
+          totalInputTokens: 0, totalOutputTokens: 0, totalCost: 0,
+          messageCount: forkedMessages.length, parentConversationId: currentConversationId,
+          forkedFromMessageId: messageId,
+          createdAt: now.getTime(), updatedAt: now.getTime(), lastOpenedAt: now.getTime(),
+        }).catch(() => {});
+      }).catch(() => {});
+    } catch (error) {
+      console.error('[Fork] Failed:', error);
+    }
+  };
+
   const handleRegenerate = async (messageId: string) => {
     if (!currentConversationId || isRegenerating) return;
 
@@ -399,6 +446,7 @@ export const ChatMessages = () => {
                 onEdit={handleEditMessage}
                 onRegenerate={handleRegenerate}
                 onDelete={handleDeleteMessage}
+                onFork={handleFork}
                 cost={message.cost}
                 inputTokens={message.inputTokens}
                 outputTokens={message.outputTokens}

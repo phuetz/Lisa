@@ -151,22 +151,88 @@ export const ChatInput = () => {
     if (abortController) { abortController.abort(); setAbortController(null); }
   }, [abortController]);
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
-    Array.from(files).forEach((file) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        setAttachments((prev) => [...prev, {
-          type: file.type.startsWith('image/') ? 'image' : 'file',
-          data: reader.result as string, name: file.name,
-        }]);
-      };
-      reader.onerror = () => console.warn('Failed to read file:', file.name);
-      reader.readAsDataURL(file);
-    });
+
+    // Use enhanced file attachments hook for PDF/DOCX/text extraction
+    try {
+      const { useFileAttachments } = await import('../../hooks/useFileAttachments');
+      // Process files through the hook's processor for rich extraction
+      const processed = await processFilesEnhanced(Array.from(files));
+      setAttachments(prev => [...prev, ...processed]);
+    } catch {
+      // Fallback to basic FileReader if hook fails
+      Array.from(files).forEach((file) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          setAttachments((prev) => [...prev, {
+            type: file.type.startsWith('image/') ? 'image' : 'file',
+            data: reader.result as string, name: file.name,
+          }]);
+        };
+        reader.onerror = () => console.warn('Failed to read file:', file.name);
+        reader.readAsDataURL(file);
+      });
+    }
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
+
+  // Enhanced file processing with PDF/DOCX/CSV support
+  async function processFilesEnhanced(files: File[]): Promise<{ type: 'image' | 'file'; data: string; name: string }[]> {
+    const results: { type: 'image' | 'file'; data: string; name: string }[] = [];
+    for (const file of files) {
+      if (file.type.startsWith('image/')) {
+        const data = await readFileAsDataURL(file);
+        results.push({ type: 'image', data, name: file.name });
+      } else if (file.name.endsWith('.pdf')) {
+        try {
+          const pdfjsLib = await import(/* @vite-ignore */ 'pdfjs-dist');
+          const buf = await file.arrayBuffer();
+          const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+          const pages: string[] = [];
+          for (let i = 1; i <= Math.min(pdf.numPages, 30); i++) {
+            const page = await pdf.getPage(i);
+            const content = await page.getTextContent();
+            pages.push(content.items.map((it: { str?: string }) => it.str || '').join(' '));
+          }
+          results.push({ type: 'file', data: pages.join('\n\n'), name: file.name });
+        } catch {
+          const data = await readFileAsDataURL(file);
+          results.push({ type: 'file', data, name: file.name });
+        }
+      } else if (file.name.endsWith('.docx')) {
+        try {
+          const mammoth = await import(/* @vite-ignore */ 'mammoth');
+          const buf = await file.arrayBuffer();
+          const result = await mammoth.extractRawText({ arrayBuffer: buf });
+          results.push({ type: 'file', data: result.value, name: file.name });
+        } catch {
+          const data = await readFileAsDataURL(file);
+          results.push({ type: 'file', data, name: file.name });
+        }
+      } else {
+        // Text/code/CSV files
+        try {
+          const text = await file.text();
+          results.push({ type: 'file', data: text.slice(0, 100000), name: file.name });
+        } catch {
+          const data = await readFileAsDataURL(file);
+          results.push({ type: 'file', data, name: file.name });
+        }
+      }
+    }
+    return results;
+  }
+
+  function readFileAsDataURL(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
 
   const removeAttachment = (index: number) => setAttachments((prev) => prev.filter((_, i) => i !== index));
 
@@ -218,8 +284,12 @@ export const ChatInput = () => {
     e.preventDefault(); e.stopPropagation(); setIsDragging(false);
     const files = e.dataTransfer?.files;
     if (!files || files.length === 0) return;
-    Array.from(files).forEach((file) => {
-      if (file.type.startsWith('image/') || file.type === 'application/pdf' || file.type.startsWith('text/')) {
+    // Use enhanced processing for PDF/DOCX support
+    processFilesEnhanced(Array.from(files)).then(processed => {
+      setAttachments(prev => [...prev, ...processed]);
+    }).catch(() => {
+      // Fallback
+      Array.from(files).forEach((file) => {
         const reader = new FileReader();
         reader.onload = () => {
           setAttachments((prev) => [...prev, {
@@ -228,7 +298,7 @@ export const ChatInput = () => {
           }]);
         };
         reader.readAsDataURL(file);
-      }
+      });
     });
   }, []);
 
@@ -453,22 +523,25 @@ Réponds en français, sois concis.`;
         addMessage({ role: 'assistant', content: fullResponse, conversationId: convId, metadata: { model: effectiveModel, duration } });
 
         // Record usage in Dexie (non-blocking)
-        import('../../hooks/useUsageRecords').then(async ({ useUsageRecords }) => {
-          const { addRecord } = useUsageRecords.getState?.() || {};
-          if (!addRecord) return;
-          const { estimateTokens } = await import('../../services/providers/base');
-          const inputTok = estimateTokens(aiUserContent);
-          const outputTok = estimateTokens(fullResponse);
-          addRecord({
-            messageId: convId + '-' + Date.now(),
-            conversationId: convId,
-            provider: effectiveProvider as import('../../types/promptcommander').ProviderKey,
-            modelId: effectiveModel,
-            inputTokens: inputTok,
-            outputTokens: outputTok,
-            cost: 0, // Would need model pricing lookup
-          });
-        }).catch(() => {});
+        (async () => {
+          try {
+            const { db } = await import('../../db/database');
+            const { estimateTokens } = await import('../../services/providers/base');
+            const inputTok = estimateTokens(aiUserContent);
+            const outputTok = estimateTokens(fullResponse);
+            await db.usageRecords.put({
+              id: `usage-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
+              messageId: convId + '-' + Date.now(),
+              conversationId: convId,
+              provider: effectiveProvider as import('../../types/promptcommander').ProviderKey,
+              modelId: effectiveModel,
+              inputTokens: inputTok,
+              outputTokens: outputTok,
+              cost: 0,
+              createdAt: Date.now(),
+            });
+          } catch { /* non-critical */ }
+        })();
 
         if (!incognitoMode) {
           if (longTermMemoryEnabled) longTermMemoryService.extractAndRemember(userMessage, fullResponse).catch(console.warn);

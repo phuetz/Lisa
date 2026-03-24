@@ -14,12 +14,102 @@ import { Modal } from '../ui/Modal';
 const ExportPDF = lazy(() => import('./ExportPDF').then(m => ({ default: m.ExportPDF })));
 const SearchPanel = lazy(() => import('../common/SearchPanel'));
 const DiagnosticsPanel = lazy(() => import('../common/DiagnosticsPanel'));
+const StatsPanel = lazy(() => import('../stats/StatsPanel'));
+const KnowledgeBasePanel = lazy(() => import('../knowledge/KnowledgeBasePanel'));
 
 const LazyFallback = () => (
   <div className="flex items-center justify-center p-8">
     <Loader2 className="w-6 h-6 animate-spin" style={{ color: 'var(--color-accent)' }} />
   </div>
 );
+
+/* ── Folder Management Bar (inline) ── */
+function FolderBar() {
+  const [folders, setFolders] = useState<Array<{ id: string; name: string; icon: string }>>([]);
+  const [showCreate, setShowCreate] = useState(false);
+  const [newName, setNewName] = useState('');
+
+  useEffect(() => {
+    import('../../db/database').then(({ db }) => {
+      db.folders.toArray().then(f => setFolders(f.map(x => ({ id: x.id, name: x.name, icon: x.icon }))));
+    }).catch(() => {});
+  }, [showCreate]); // refresh after create
+
+  const handleCreate = async () => {
+    if (!newName.trim()) return;
+    const { db } = await import('../../db/database');
+    await db.folders.put({
+      id: `folder-${Date.now().toString(36)}`,
+      name: newName.trim(),
+      color: '#6366f1',
+      icon: '📁',
+      parentId: null,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+    setNewName('');
+    setShowCreate(false);
+    // trigger refresh
+    const f = await db.folders.toArray();
+    setFolders(f.map(x => ({ id: x.id, name: x.name, icon: x.icon })));
+  };
+
+  if (folders.length === 0 && !showCreate) {
+    return (
+      <div style={{ padding: '4px 12px' }}>
+        <button
+          onClick={() => setShowCreate(true)}
+          style={{
+            fontSize: '11px', color: 'var(--text-muted)', background: 'none',
+            border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px',
+          }}
+        >
+          <FolderOpen size={12} /> Créer un dossier
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ padding: '4px 12px', display: 'flex', flexWrap: 'wrap', gap: '4px', alignItems: 'center' }}>
+      {folders.map(f => (
+        <span key={f.id} style={{
+          fontSize: '11px', padding: '2px 8px', borderRadius: 'var(--radius-sm)',
+          backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-secondary)',
+          display: 'inline-flex', alignItems: 'center', gap: '3px',
+        }}>
+          {f.icon} {f.name}
+        </span>
+      ))}
+      {showCreate ? (
+        <input
+          type="text"
+          value={newName}
+          onChange={e => setNewName(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter') handleCreate(); if (e.key === 'Escape') setShowCreate(false); }}
+          onBlur={() => { if (!newName.trim()) setShowCreate(false); }}
+          autoFocus
+          placeholder="Nom..."
+          style={{
+            width: '100px', padding: '2px 6px', fontSize: '11px',
+            borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-primary)',
+            backgroundColor: 'var(--bg-surface)', color: 'var(--text-primary)', outline: 'none',
+          }}
+        />
+      ) : (
+        <button
+          onClick={() => setShowCreate(true)}
+          style={{
+            fontSize: '11px', color: 'var(--text-muted)', background: 'none',
+            border: 'none', cursor: 'pointer', padding: '2px 4px',
+          }}
+        >
+          <Plus size={12} />
+        </button>
+      )}
+    </div>
+  );
+}
 
 export const ChatLayoutSimple = () => {
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -29,6 +119,8 @@ export const ChatLayoutSimple = () => {
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [showSearchPanel, setShowSearchPanel] = useState(false);
   const [showDiagnostics, setShowDiagnostics] = useState(false);
+  const [showStats, setShowStats] = useState(false);
+  const [showKnowledgeBase, setShowKnowledgeBase] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
@@ -153,6 +245,12 @@ export const ChatLayoutSimple = () => {
         <button onClick={() => setShowSearchPanel(true)} className="chat-icon-btn" aria-label="Rechercher" title="Rechercher (Ctrl+Shift+F)">
           <Search size={18} />
         </button>
+        <button onClick={() => setShowStats(true)} className="chat-icon-btn" aria-label="Statistiques" title="Statistiques">
+          <BarChart3 size={18} />
+        </button>
+        <button onClick={() => setShowKnowledgeBase(true)} className="chat-icon-btn" aria-label="Base de connaissances" title="Base de connaissances">
+          <BookOpen size={18} />
+        </button>
         <button onClick={() => setShowShortcuts(true)} className="chat-icon-btn" aria-label="Raccourcis">
           <Keyboard size={18} />
         </button>
@@ -230,6 +328,9 @@ export const ChatLayoutSimple = () => {
                 </button>
               </div>
             </div>
+
+            {/* Folder quick-create */}
+            <FolderBar />
 
             {/* Conversations List */}
             <div className="conv-list">
@@ -348,6 +449,22 @@ export const ChatLayoutSimple = () => {
         <DiagnosticsPanel
           isOpen={showDiagnostics}
           onClose={() => setShowDiagnostics(false)}
+        />
+      </Suspense>
+
+      {/* PromptCommander: Stats Panel */}
+      <Suspense fallback={null}>
+        <StatsPanel
+          isOpen={showStats}
+          onClose={() => setShowStats(false)}
+        />
+      </Suspense>
+
+      {/* PromptCommander: Knowledge Base Panel */}
+      <Suspense fallback={null}>
+        <KnowledgeBasePanel
+          isOpen={showKnowledgeBase}
+          onClose={() => setShowKnowledgeBase(false)}
         />
       </Suspense>
 
