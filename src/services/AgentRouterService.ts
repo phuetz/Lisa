@@ -123,27 +123,49 @@ class AgentRouterService {
     
     for (const { pattern, agent, intent, extractParams } of INTENT_PATTERNS) {
       const match = normalizedMessage.match(pattern);
-      
+
       if (match) {
         console.log(`[AgentRouter] Matched pattern for ${agent} with intent ${intent}`);
-        
+
+        // Calculator: use mathjs directly (bypasses registry lazy-load issues)
+        if (agent === 'CalculatorAgent') {
+          try {
+            const params = extractParams ? extractParams(match, message) : {};
+            const expr = (params.expressions as string) || message;
+            const math = await import('mathjs');
+            const result = math.evaluate(expr);
+            return {
+              handled: true,
+              agentName: 'CalculatorAgent',
+              response: `🔢 \`${expr}\` = **${String(result)}**`,
+              data: { expression: expr, result: String(result) },
+            };
+          } catch (error) {
+            return {
+              handled: true,
+              agentName: 'CalculatorAgent',
+              response: `❌ Erreur de calcul : ${error instanceof Error ? error.message : String(error)}`,
+            };
+          }
+        }
+
         try {
           // Check if agent is available
           if (!agentRegistry.hasAgent(agent)) {
             console.warn(`[AgentRouter] Agent ${agent} not available`);
             continue;
           }
-          
+
           // Extract parameters
           const params = extractParams ? extractParams(match, message) : {};
-          
+
           // Execute agent
           const result = await agentRegistry.execute(agent, {
             intent,
             parameters: params,
             language: 'fr'
           });
-          
+
           if (result.success && result.output) {
             return {
               handled: true,
