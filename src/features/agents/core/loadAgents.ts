@@ -9,6 +9,7 @@ import { WebSearchAgent } from '../implementations/WebSearchAgent';
 import { WebContentReaderAgent } from '../implementations/WebContentReaderAgent';
 import { ResearchAgent } from '../implementations/ResearchAgent';
 import { CodeInterpreterAgent } from '../implementations/CodeInterpreterAgent';
+import { GitNexusAgent } from '../implementations/GitNexusAgent';
 
 /**
  * Initializes and registers all the agents in the system.
@@ -32,6 +33,7 @@ export function loadAgents(): void {
   agentRegistry.register(new WebContentReaderAgent(webContentReaderTool));
   agentRegistry.register(new ResearchAgent(webSearchTool, webContentReaderTool));
   agentRegistry.register(new CodeInterpreterAgent(codeInterpreterTool));
+  agentRegistry.register(new GitNexusAgent());
 
   console.log('All agents have been loaded and registered.');
 }
