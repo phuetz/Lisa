@@ -19,13 +19,13 @@ import type { Predicate } from './KnowledgeGraphService';
 
 const knowledgeStoreTool: ToolDefinition = {
   name: 'knowledge_store',
-  description: 'Store a fact or relationship in the knowledge graph. Use this to remember information about the user, their preferences, projects, or any relationship between entities. Examples: "Patrick likes TypeScript", "Lisa project uses React", "User lives in Strasbourg".',
+  description: 'Store a fact or relationship in the knowledge graph. Use this to remember information about the user, their preferences, projects, or any relationship between entities. Examples: "Alice likes TypeScript", "Lisa project uses React", "User lives in Paris".',
   parameters: {
     type: 'object',
     properties: {
       subject: {
         type: 'string',
-        description: 'The subject entity (e.g., "Patrick", "Lisa project", "User")'
+        description: 'The subject entity (e.g., "Alice", "Lisa project", "User")'
       },
       predicate: {
         type: 'string',
@@ -33,7 +33,7 @@ const knowledgeStoreTool: ToolDefinition = {
       },
       object: {
         type: 'string',
-        description: 'The object entity (e.g., "TypeScript", "React", "Strasbourg")'
+        description: 'The object entity (e.g., "TypeScript", "React", "Paris")'
       }
     },
     required: ['subject', 'predicate', 'object']
@@ -176,7 +176,7 @@ const knowledgeNeighborsTool: ToolDefinition = {
     properties: {
       entity: {
         type: 'string',
-        description: 'The entity to look up (e.g., "Patrick", "Lisa", "React")'
+        description: 'The entity to look up (e.g., "Alice", "Lisa", "React")'
       }
     },
     required: ['entity']
